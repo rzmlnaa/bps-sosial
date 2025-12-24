@@ -22,6 +22,29 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/dashboard.css') }}" rel="stylesheet">
 
+    <style>
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* PENTING */
+            border-radius: 6px;
+            /* opsional */
+            background: #fff;
+            /* opsional */
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* AGAR LOGO TIDAK TERPOTONG */
+        }
+    </style>
+
     @stack('styles')
 </head>
 
@@ -30,8 +53,9 @@
     <!-- Mobile Navbar -->
     <div class="mobile-nav d-lg-none">
         <div class="d-flex align-items-center gap-2">
-            <div class="logo-icon" style="width: 32px; height: 32px; font-size: 1rem;">
-                <i class="fas fa-chart-line"></i>
+            <div class="logo-icon">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
+                    alt="Logo BPS">
             </div>
             <span class="fw-bold text-navy">BPS Kalbar</span>
         </div>
@@ -44,11 +68,12 @@
     <nav class="sidebar client-sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-icon">
-                <i class="fas fa-chart-line"></i>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
+                    alt="Logo BPS">
             </div>
             <div>
                 <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">BPS Kalbar</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">Sosial & Kemiskinan</small>
+                <small class="text-muted" style="font-size: 0.7rem;">Tim Sosial</small>
             </div>
         </div>
 
@@ -56,7 +81,7 @@
             <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                 style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
 
-            <a href="{{ route('dashboard') }}" class="nav-link active">
+            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
