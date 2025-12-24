@@ -56,7 +56,7 @@
             <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                 style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
 
-            <a href="#" class="nav-link active">
+            <a href="{{ route('dashboard') }}" class="nav-link active">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
