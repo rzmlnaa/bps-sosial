@@ -21,6 +21,10 @@
                 <button class="btn btn-primary text-white" style="background-color: var(--bps-blue); border: none;">
                     <i class="fas fa-filter"></i> Filter
                 </button>
+                <a href="{{ route('poverty.input') }}" class="btn btn-success text-white"
+                    style="background-color: var(--bps-green); border: none;">
+                    <i class="fas fa-plus"></i> Input Data
+                </a>
             </div>
         </div>
 

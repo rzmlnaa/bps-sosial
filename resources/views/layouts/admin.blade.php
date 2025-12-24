@@ -86,7 +86,8 @@
                 <span>Dashboard</span>
             </a>
 
-            <a href="{{ route('poverty') }}" class="nav-link {{ request()->routeIs('poverty') ? 'active' : '' }}">
+            <a href="{{ route('poverty') }}"
+                class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
                 <i class="fas fa-chart-bar"></i>
                 <span>Kemiskinan</span>
             </a>

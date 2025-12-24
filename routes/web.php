@@ -17,3 +17,7 @@ Route::get('/layouts', function () {
 Route::get('/poverty', function () {
     return view('poverty.index');
 })->name('poverty');
+
+Route::get('/poverty/input', function () {
+    return view('poverty.input');
+})->name('poverty.input');
