@@ -96,8 +96,8 @@
                                                     <span class="badge bg-light text-dark border">{{ $kab['admin'] }}</span>
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-danger border-0"><i
-                                                            class="fas fa-trash-alt"></i></button>
+                                                    <button class="btn btn-sm btn-outline-warning border-0"><i
+                                                            class="fas fa-edit"></i></button>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -186,63 +186,98 @@
             <!-- Tab 3: Input Data -->
             <div class="tab-pane fade" id="pills-input" role="tabpanel">
                 <div class="row g-4">
-                    <!-- Selection Panel -->
-                    <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <!-- Left Column: Input Form -->
+                    <div class="col-lg-4">
+                        <!-- Filters -->
+                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                             <div class="card-body p-4">
-                                <h5 class="fw-bold mb-4">Filter Data Input</h5>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Pilih
-                                            Kabupaten/Kota</label>
-                                        <select class="form-select">
-                                            <option selected disabled>-- Pilih Wilayah --</option>
-                                            @foreach($kabupatens as $kab)
-                                                <option>{{ $kab['name'] }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Pilih
-                                            Variabel</label>
-                                        <select class="form-select">
-                                            <option selected disabled>-- Pilih Variabel --</option>
-                                            <option>GK 2024</option>
-                                            <option>GKS 2024</option>
-                                            <option>Rilis 2024</option>
-                                        </select>
-                                    </div>
-
+                                <h6 class="fw-bold mb-3 text-uppercase text-muted"
+                                    style="font-size: 0.8rem; letter-spacing: 0.5px;">1. Filter Data</h6>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-medium">Kabupaten/Kota</label>
+                                    <select class="form-select bg-light border-0">
+                                        <option selected disabled>-- Pilih Wilayah --</option>
+                                        @foreach($kabupatens as $kab)
+                                            <option>{{ $kab['name'] }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
+                                <div class="mb-0">
+                                    <label class="form-label small fw-medium">Variabel</label>
+                                    <select class="form-select bg-light border-0">
+                                        <option selected disabled>-- Pilih Variabel --</option>
+                                        <option>GK 2024</option>
+                                        <option>GKS 2024</option>
+                                        <option>Rilis 2024</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                            <div class="card-header bg-white py-3 border-bottom-0">
+                                <h6 class="fw-bold mb-0 text-uppercase text-muted"
+                                    style="font-size: 0.8rem; letter-spacing: 0.5px;">2. Paste Data</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="p-3">
+                                    <textarea class="form-control fw-mono border-0 bg-light" rows="15"
+                                        placeholder="Paste data dari Excel/SPSS disini...&#10;Contoh:&#10;547005,00&#10;547005,00&#10;..."
+                                        style="font-family: 'Courier New', monospace; font-size: 1rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 py-3">
+                                <button class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
+                                    style="background-color: var(--bps-orange); border: none;">
+                                    <i class="fas fa-save me-2"></i>Simpan Data
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Input Column -->
-                    <div class="col-lg-6 mx-auto">
-                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <!-- Right Column: Data Table -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                             <div
                                 class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0">Input Data</h5>
-                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-save me-1"></i> Simpan
-                                    Data</button>
+                                <h5 class="fw-bold mb-0">Data Tersimpan - Kab. Sambas</h5>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-download me-1"></i>
+                                    Export</button>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="p-4">
-                                    <label class="form-label text-muted small fw-bold text-uppercase mb-2">Data Input (Paste
-                                        dari SPSS)</label>
-                                    <textarea class="form-control fw-mono" rows="15"
-                                        placeholder="547005,00&#10;547005,00&#10;547005,00&#10;..."
-                                        style="font-family: 'Courier New', monospace; font-size: 1.1rem; resize: vertical; background-color: #f8fafc;"></textarea>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-white border-top-0 py-3">
-                                <small class="text-muted d-block text-center mb-2">Pastikan format angka menggunakan koma
-                                    (,) sebagai pemisah desimal.</small>
-                                <button class="btn btn-primary w-100 fw-bold py-2"
-                                    style="background-color: var(--bps-orange); border: none;">
-                                    Simpan Perubahan
-                                </button>
+                            <div class="table-responsive h-100">
+                                <table class="table table-hover table-striped mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="bg-light sticky-top" style="z-index: 1;">
+                                        <tr class="fw-bold text-secondary">
+                                            <th class="py-3" style="width: 60px;">Persentil</th>
+                                            <th class="py-3">2022 Asli</th>
+                                            <th class="py-3">2022 Rilis</th>
+                                            <th class="py-3">GK 2022</th>
+                                            <th class="py-3">2023 Asli</th>
+                                            <th class="py-3">GKS 2023</th>
+                                            <th class="py-3">2024 Asli</th>
+                                            <th class="py-3">GKS 2024</th>
+                                            <th class="py-3">2025 Asli</th>
+                                            <th class="py-3">GKS 2025</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="border-top-0">
+                                        @for ($i = 1; $i <= 20; $i++)
+                                            <tr>
+                                                <td class="fw-bold text-muted bg-light">{{ $i }}</td>
+                                                <td>{{ number_format(rand(400000, 900000), 2, ',', '.') }}</td>
+                                                <td>{{ number_format(rand(300000, 800000), 2, ',', '.') }}</td>
+                                                <td>{{ number_format(472079, 2, ',', '.') }}</td>
+                                                <td>{{ number_format(rand(400000, 900000), 2, ',', '.') }}</td>
+                                                <td>{{ number_format(497618, 2, ',', '.') }}</td>
+                                                <td>{{ number_format(rand(500000, 950000), 2, ',', '.') }}</td>
+                                                <td>{{ number_format(511611, 2, ',', '.') }}</td>
+                                                <td>{{ number_format(rand(600000, 990000), 2, ',', '.') }}</td>
+                                                <td>{{ number_format(528217, 2, ',', '.') }}</td>
+                                            </tr>
+                                        @endfor
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -294,7 +329,7 @@
             // 1. Check if there is a saved tab
             const activeTab = localStorage.getItem(storageKey);
             if (activeTab) {
-                    const tabToTrigger = document.querySelector(`button[data-bs-target="${activeTab}"]`);
+                const tabToTrigger = document.querySelector(`button[data-bs-target="${activeTab}"]`);
                 if (tabToTrigger) {
                     const tab = new bootstrap.Tab(tabToTrigger);
                     tab.show();

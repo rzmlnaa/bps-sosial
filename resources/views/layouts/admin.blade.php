@@ -147,10 +147,12 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
-        @yield('content')
+    <main class="main-content d-flex flex-column min-vh-100">
+        <div class="flex-grow-1">
+            @yield('content')
+        </div>
 
-        <footer class="mt-5 pt-4 border-top text-center text-muted pb-4">
+        <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
             <small>&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All rights reserved.</small>
         </footer>
     </main>
