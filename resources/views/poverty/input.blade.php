@@ -199,7 +199,14 @@
                                                 <td class="ps-4 text-muted">{{ $index + 1 }}</td>
                                                 <td class="fw-medium">{{ $v->nama_variabel }}</td>
                                                 <td>
-                                                    @if($v->bulan == 3) Maret @elseif($v->bulan == 9) September @else - @endif
+                                                    @php
+                                                        $bulanNama = [
+                                                            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                                            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                                            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                                                        ];
+                                                    @endphp
+                                                    {{ $bulanNama[$v->bulan] ?? '-' }}
                                                 </td>
                                                 <td><span class="badge bg-blue-faded text-blue">{{ $v->tahun }}</span></td>
                                                 <td>
@@ -256,7 +263,15 @@
                                         <select id="select_variabel_filter" name="variabel_id" class="form-select bg-light border-0" required>
                                             <option selected disabled value="">-- Pilih Variabel --</option>
                                             @foreach($variabels as $var)
-                                                <option value="{{ $var->id }}">{{ $var->nama_variabel }} {{ $var->tahun }}</option>
+                                                @php
+                                                    $bulanNama = [
+                                                        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+                                                        5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
+                                                        9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                                                    ];
+                                                    $bln = $var->bulan ? '('.$bulanNama[$var->bulan].')' : '';
+                                                @endphp
+                                                <option value="{{ $var->id }}">{{ $var->nama_variabel }} {{ $bln }} {{ $var->tahun }}</option>
                                             @endforeach
                                         </select>
                                     </div>

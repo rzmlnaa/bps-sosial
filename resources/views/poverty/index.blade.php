@@ -115,39 +115,76 @@
                     </thead>
                     <tbody class="border-top-0">
                         @php
-                            $regions = [
-                                ['name' => 'Kab. Sambas', 'percent' => 7.55, 'count' => 45.2, 'gk' => 550000],
-                                ['name' => 'Kab. Mempawah', 'percent' => 5.80, 'count' => 15.3, 'gk' => 560000],
-                                ['name' => 'Kab. Sanggau', 'percent' => 4.20, 'count' => 18.1, 'gk' => 570000],
-                                ['name' => 'Kab. Ketapang', 'percent' => 9.10, 'count' => 48.5, 'gk' => 540000],
-                                ['name' => 'Kab. Sintang', 'percent' => 8.80, 'count' => 38.2, 'gk' => 590000],
-                                ['name' => 'Kab. Kapuas Hulu', 'percent' => 6.20, 'count' => 16.5, 'gk' => 580000],
-                                ['name' => 'Kab. Bengkayang', 'percent' => 6.90, 'count' => 19.8, 'gk' => 530000],
-                                ['name' => 'Kab. Landak', 'percent' => 10.5, 'count' => 42.1, 'gk' => 520000],
-                                ['name' => 'Kab. Sekadau', 'percent' => 5.90, 'count' => 12.4, 'gk' => 550000],
-                                ['name' => 'Kab. Melawi', 'percent' => 11.2, 'count' => 25.6, 'gk' => 560000],
-                                ['name' => 'Kab. Kayong Utara', 'percent' => 9.50, 'count' => 11.2, 'gk' => 545000],
-                                ['name' => 'Kab. Kubu Raya', 'percent' => 4.50, 'count' => 28.5, 'gk' => 585000],
-                                ['name' => 'Kota Pontianak', 'percent' => 4.25, 'count' => 29.1, 'gk' => 650000],
-                                ['name' => 'Kota Singkawang', 'percent' => 4.80, 'count' => 11.5, 'gk' => 610000],
-                            ];
+                            $povertyTableData = $kabupatenData;
                         @endphp
-                        @foreach($regions as $region)
+                        @foreach($povertyTableData as $region)
                             <tr>
                                 <td class="ps-4 fw-medium">{{ $region['name'] }}</td>
                                 <td class="text-center">
                                     <span
                                         class="badge bg-green-faded text-green rounded-pill px-3">{{ $region['percent'] }}%</span>
                                 </td>
-                                <td class="text-center">{{ $region['count'] }}</td>
+                                <td class="text-center">{{ number_format($region['count'], 2, ',', '.') }}</td>
                                 <td class="text-center">Rp {{ number_format($region['gk'], 0, ',', '.') }}</td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-link text-muted"><i class="fas fa-eye"></i> Detail</button>
+                                    <button class="btn btn-sm btn-outline-primary border-0 btn-detail-region"
+                                        data-id="{{ $region['id'] }}" data-name="{{ $region['name'] }}">
+                                        <i class="fas fa-eye"></i> Detail
+                                    </button>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="modalDetailRegion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="fw-bold mb-0" id="detailModalTitle">Detail Kemiskinan</h4>
+                        <p class="text-muted small mb-0">Analisis data per persentil berdasarkan variabel yang tersedia</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-lg-7">
+                            <div class="card border-0 bg-light-faded h-100" style="border-radius: 12px;">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Grafik
+                                        Perbandingan</h6>
+                                    <div style="height: 350px;">
+                                        <canvas id="modalPovertyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="card border-0 bg-light-faded h-100" style="border-radius: 12px;">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold mb-3"><i class="fas fa-table me-2 text-primary"></i>Data Tabel</h6>
+                                    <div class="table-responsive" style="max-height: 350px;">
+                                        <table class="table table-sm table-hover text-center" id="modalDetailTable"
+                                            style="font-size: 0.8rem;">
+                                            <thead class="bg-white sticky-top">
+                                                <tr id="modalTableHeader">
+                                                    <th>P</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="modalTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -158,15 +195,17 @@
         // --- 1. Main Comparison Bar Chart ---
         const ctxBar = document.getElementById('povertyComparisonChart').getContext('2d');
 
-        // Data Setup
-        const regionLabels = ['Sambas', 'Mempawah', 'Sanggau', 'Ketapang', 'Sintang', 'Kapuas Hulu', 'Bengkayang', 'Landak', 'Sekadau', 'Melawi', 'Kayong Utara', 'Kubu Raya', 'Pontianak', 'Singkawang', 'PROVINSI'];
-        const povertyData = [7.55, 5.80, 4.20, 9.10, 8.80, 6.20, 6.90, 10.5, 5.90, 11.2, 9.50, 4.50, 4.25, 4.80, 6.71];
+        // Data Setup from PHP
+        const kabData = @json($kabupatenData);
+        const regionLabels = kabData.map(d => d.name);
+        if (regionLabels.length === 0) regionLabels.push('Belum ada data');
 
-        // Create colors array (Orange for higher poverty, Blue for lower/average, Green for Prov)
-        const barColors = povertyData.map((val, i) => {
-            if (i === 14) return '#7ab800'; // Green for Province
-            if (val > 8) return '#f58220'; // Orange for high poverty
-            return '#0093dd'; // Blue for others
+        const povertyData = kabData.map(d => d.percent);
+        if (povertyData.length === 0) povertyData.push(0);
+
+        const barColors = povertyData.map((val) => {
+            if (val > 8) return '#f58220';
+            return '#0093dd';
         });
 
         new Chart(ctxBar, {
@@ -174,7 +213,7 @@
             data: {
                 labels: regionLabels,
                 datasets: [{
-                    label: 'Persentase Penduduk Miskin (%)',
+                    label: '{{ $varPercentage->nama_variabel ?? "Persentase" }} (%)',
                     data: povertyData,
                     backgroundColor: barColors,
                     borderRadius: 4,
@@ -235,7 +274,7 @@
 
         document.getElementById('regencySelectorChart').addEventListener('change', function (e) {
             const kabId = e.target.value;
-            
+
             // UI State
             chartPlaceholder.classList.add('d-none');
             chartLoading.classList.remove('d-none');
@@ -245,12 +284,12 @@
                 .then(response => response.json())
                 .then(result => {
                     const { data, variabels } = result;
-                    
+
                     chartLoading.classList.add('d-none');
                     chartCanvas.style.display = 'block';
 
                     const persentils = Object.keys(data).sort((a, b) => a - b);
-                    
+
                     const datasets = variabels.map((v, index) => {
                         const lineData = persentils.map(p => {
                             const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
@@ -296,7 +335,7 @@
                                     mode: 'index',
                                     intersect: false,
                                     callbacks: {
-                                        label: function(context) {
+                                        label: function (context) {
                                             let label = context.dataset.label || '';
                                             if (label) { label += ': '; }
                                             if (context.parsed.y !== null) {
@@ -312,7 +351,7 @@
                                     beginAtZero: false,
                                     grid: { borderDash: [5, 5], color: 'rgba(0,0,0,0.05)' },
                                     ticks: {
-                                        callback: function(value) {
+                                        callback: function (value) {
                                             return 'Rp ' + value.toLocaleString('id-ID');
                                         }
                                     },
@@ -326,6 +365,88 @@
                         }
                     });
                 });
+        });
+
+        // --- 3. Detail Modal Functionality ---
+        const modalDetail = new bootstrap.Modal(document.getElementById('modalDetailRegion'));
+        const modalChartCtx = document.getElementById('modalPovertyChart').getContext('2d');
+        let modalChart;
+
+        document.querySelectorAll('.btn-detail-region').forEach(button => {
+            button.addEventListener('click', function () {
+                const kabId = this.dataset.id;
+                const kabName = this.dataset.name;
+
+                document.getElementById('detailModalTitle').innerText = `Detail Kemiskinan: ${kabName}`;
+
+                // Clear previous data
+                document.getElementById('modalTableBody').innerHTML = '<tr><td colspan="5" class="py-4">Loading...</td></tr>';
+                if (modalChart) modalChart.destroy();
+
+                modalDetail.show();
+
+                fetch(`/poverty-data/get-data/${kabId}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        const { data, variabels } = result;
+                        const persentils = Object.keys(data).sort((a, b) => a - b);
+
+                        // Update Table Header
+                        let header = '<th>P</th>';
+                        variabels.forEach(v => {
+                            header += `<th title="${v.nama_variabel} ${v.tahun}">${v.nama_variabel.substring(0, 3)} ${v.tahun.toString().substring(2)}</th>`;
+                        });
+                        document.getElementById('modalTableHeader').innerHTML = header;
+
+                        // Update Table Body
+                        let body = '';
+                        persentils.forEach(p => {
+                            body += `<tr><td class="fw-bold bg-light">${p}</td>`;
+                            variabels.forEach(v => {
+                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                body += `<td>${record ? record.nilai.toLocaleString('id-ID') : '-'}</td>`;
+                            });
+                            body += '</tr>';
+                        });
+                        document.getElementById('modalTableBody').innerHTML = body;
+
+                        // Update Chart
+                        const datasets = variabels.map((v, index) => {
+                            const lineData = persentils.map(p => {
+                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                return record ? record.nilai : null;
+                            });
+
+                            return {
+                                label: `${v.nama_variabel} ${v.tahun}`,
+                                data: lineData,
+                                borderColor: colorPalette[index % colorPalette.length],
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointRadius: 2
+                            };
+                        });
+
+                        modalChart = new Chart(modalChartCtx, {
+                            type: 'line',
+                            data: {
+                                labels: persentils.map(p => `P${p}`),
+                                datasets: datasets
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                                },
+                                scales: {
+                                    y: { ticks: { font: { size: 8 } } },
+                                    x: { ticks: { font: { size: 8 } } }
+                                }
+                            }
+                        });
+                    });
+            });
         });
     </script>
 @endpush
