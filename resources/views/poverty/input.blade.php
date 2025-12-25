@@ -50,13 +50,15 @@
                                 <h5 class="fw-bold mb-0">Tambah Wilayah</h5>
                             </div>
                             <div class="card-body">
-                                <form>
+                                <form action="{{ route('kabupaten.store') }}" method="POST">
+                                    @csrf
                                     <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold text-uppercase">Nama
                                             Kabupaten/Kota</label>
-                                        <input type="text" class="form-control" placeholder="Contoh: Kab. Sambas">
+                                        <input type="text" name="nama_kabupaten" class="form-control"
+                                            placeholder="Contoh: Kab. Sambas" required>
                                     </div>
-                                    <button type="button" class="btn text-white w-100 fw-medium"
+                                    <button type="submit" class="btn text-white w-100 fw-medium"
                                         style="background-color: var(--bps-blue);">
                                         <i class="fas fa-plus me-1"></i> Simpan
                                     </button>
@@ -76,31 +78,43 @@
                                             <th class="ps-4 border-0">No</th>
                                             <th class="border-0">Nama Kabupaten</th>
                                             <th class="border-0">Dibuat Oleh</th>
+                                            <th class="border-0">Di Update Oleh</th>
                                             <th class="text-center border-0">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody class="border-top-0">
-                                        @php
-                                            $kabupatens = [
-                                                ['name' => 'Kab. Sambas', 'admin' => 'Admin BPS'],
-                                                ['name' => 'Kab. Mempawah', 'admin' => 'Admin BPS'],
-                                                ['name' => 'Kab. Sanggau', 'admin' => 'Super Admin'],
-                                                ['name' => 'Kab. Ketapang', 'admin' => 'Admin BPS'],
-                                            ];
-                                        @endphp
-                                        @foreach($kabupatens as $index => $kab)
+                                        @forelse($kabupatens as $index => $kab)
                                             <tr>
                                                 <td class="ps-4 text-muted">{{ $index + 1 }}</td>
-                                                <td class="fw-medium">{{ $kab['name'] }}</td>
+                                                <td class="fw-medium">{{ $kab->nama_kabupaten }}</td>
                                                 <td>
-                                                    <span class="badge bg-light text-dark border">{{ $kab['admin'] }}</span>
+                                                    <span class="badge bg-light text-dark border">
+                                                        {{ $kab->userAdd->name ?? 'Admin' }} pada
+                                                        {{ $kab->created_at->format('d/m/Y H:i') }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($kab->userUpdate)
+                                                        <span class="badge bg-light text-dark border">
+                                                            {{ $kab->userUpdate->name }} pada
+                                                            {{ $kab->updated_at->format('d/m/Y H:i') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted small">-</span>
+                                                    @endif
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-warning border-0"><i
-                                                            class="fas fa-edit"></i></button>
+                                                    <button class="btn btn-sm btn-outline-warning border-0 btn-edit-kabupaten"
+                                                        data-id="{{ $kab->id }}" data-nama="{{ $kab->nama_kabupaten }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4 text-muted">Belum ada data wilayah.</td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -118,17 +132,36 @@
                                 <h5 class="fw-bold mb-0">Tambah Variabel</h5>
                             </div>
                             <div class="card-body">
-                                <form>
+                                <form action="{{ route('variabel.store') }}" method="POST">
+                                    @csrf
                                     <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold text-uppercase">Nama
                                             Variabel</label>
-                                        <input type="text" class="form-control" placeholder="Contoh: GKS">
+                                        <input type="text" name="nama_variabel" class="form-control" placeholder="Contoh: GKS" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Bulan (Opsional)</label>
+                                        <select name="bulan" class="form-select">
+                                            <option value="">-- Tanpa Bulan --</option>
+                                            <option value="1">Januari</option>
+                                            <option value="2">Februari</option>
+                                            <option value="3">Maret</option>
+                                            <option value="4">April</option>
+                                            <option value="5">Mei</option>
+                                            <option value="6">Juni</option>
+                                            <option value="7">Juli</option>
+                                            <option value="8">Agustus</option>
+                                            <option value="9">September</option>
+                                            <option value="10">Oktober</option>
+                                            <option value="11">November</option>
+                                            <option value="12">Desember</option>
+                                        </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold text-uppercase">Tahun</label>
-                                        <input type="number" class="form-control" placeholder="2024" min="2000" max="2099">
+                                        <input type="number" name="tahun" class="form-control" placeholder="2024" min="2000" max="2099" required>
                                     </div>
-                                    <button type="button" class="btn text-white w-100 fw-medium"
+                                    <button type="submit" class="btn text-white w-100 fw-medium"
                                         style="background-color: var(--bps-blue);">
                                         <i class="fas fa-plus me-1"></i> Simpan
                                     </button>
@@ -147,34 +180,41 @@
                                         <tr>
                                             <th class="ps-4 border-0">No</th>
                                             <th class="border-0">Nama Variabel</th>
+                                            <th class="border-0">Bulan</th>
                                             <th class="border-0">Tahun</th>
                                             <th class="border-0">Dibuat Oleh</th>
                                             <th class="text-center border-0">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody class="border-top-0">
-                                        @php
-                                            $vars = [
-                                                ['name' => 'GKS', 'year' => '2024', 'admin' => 'Admin BPS'],
-                                                ['name' => 'Asli', 'year' => '2024', 'admin' => 'Admin BPS'],
-                                                ['name' => 'Rilis', 'year' => '2024', 'admin' => 'Super Admin'],
-                                                ['name' => 'GK', 'year' => '2023', 'admin' => 'Admin BPS'],
-                                            ];
-                                        @endphp
-                                        @foreach($vars as $index => $v)
+                                        @forelse($variabels as $index => $v)
                                             <tr>
                                                 <td class="ps-4 text-muted">{{ $index + 1 }}</td>
-                                                <td class="fw-medium">{{ $v['name'] }}</td>
-                                                <td><span class="badge bg-blue-faded text-blue">{{ $v['year'] }}</span></td>
+                                                <td class="fw-medium">{{ $v->nama_variabel }}</td>
                                                 <td>
-                                                    <span class="badge bg-light text-dark border">{{ $v['admin'] }}</span>
+                                                    @if($v->bulan == 3) Maret @elseif($v->bulan == 9) September @else - @endif
+                                                </td>
+                                                <td><span class="badge bg-blue-faded text-blue">{{ $v->tahun }}</span></td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">
+                                                        {{ $v->userAdd->name ?? 'Admin' }} pada {{ $v->created_at->format('d/m/Y H:i') }}
+                                                    </span>
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-danger border-0"><i
-                                                            class="fas fa-trash-alt"></i></button>
+                                                    <form action="{{ route('variabel.destroy', $v->id) }}" method="POST" class="d-inline form-delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data variabel.</td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -198,7 +238,7 @@
                                     <select class="form-select bg-light border-0">
                                         <option selected disabled>-- Pilih Wilayah --</option>
                                         @foreach($kabupatens as $kab)
-                                            <option>{{ $kab['name'] }}</option>
+                                            <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -206,9 +246,9 @@
                                     <label class="form-label small fw-medium">Variabel</label>
                                     <select class="form-select bg-light border-0">
                                         <option selected disabled>-- Pilih Variabel --</option>
-                                        <option>GK 2024</option>
-                                        <option>GKS 2024</option>
-                                        <option>Rilis 2024</option>
+                                        @foreach($variabels as $var)
+                                            <option value="{{ $var->id }}">{{ $var->nama_variabel }} {{ $var->tahun }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -286,6 +326,34 @@
         </div>
     </div>
 
+    <!-- Modal Edit Kabupaten -->
+    <div class="modal fade" id="modalEditKabupaten" tabindex="-1" aria-labelledby="modalEditKabupatenLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="modalEditKabupatenLabel">Edit Nama Kabupaten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditKabupaten" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Nama Kabupaten/Kota</label>
+                            <input type="text" name="nama_kabupaten" id="edit_nama_kabupaten" class="form-control" placeholder="Contoh: Kab. Sambas" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <style>
         /* Custom Styles specific to this page */
         .nav-pills .nav-link {
@@ -342,6 +410,47 @@
                 tabLink.addEventListener('shown.bs.tab', function (event) {
                     const target = event.target.getAttribute("data-bs-target");
                     localStorage.setItem(storageKey, target);
+                });
+            });
+
+            // 3. Edit Kabupaten Modal Logic
+            const editButtons = document.querySelectorAll('.btn-edit-kabupaten');
+            const modalEdit = new bootstrap.Modal(document.getElementById('modalEditKabupaten'));
+            const formEdit = document.getElementById('formEditKabupaten');
+            const inputEditNama = document.getElementById('edit_nama_kabupaten');
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const nama = this.getAttribute('data-nama');
+                    
+                    inputEditNama.value = nama;
+                    formEdit.action = `/kabupaten/${id}`;
+                    
+                    modalEdit.show();
+                });
+            });
+
+            // 4. Delete Confirmation Logic
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const form = this.closest('.form-delete');
+                    
+                    Swal.fire({
+                        title: 'Apakah Anda yakin?',
+                        text: "Data yang dihapus tidak dapat dikembalikan!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Ya, hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
         });
