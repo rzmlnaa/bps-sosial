@@ -64,31 +64,33 @@
             </div>
 
             <!-- Trend Chart by Regency -->
-            <div class="col-lg-8">
+            <div class="col-lg-12">
                 <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                     <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">Tren Kemiskinan 5 Tahun Terakhir</h5>
-                            <select class="form-select form-select-sm w-auto" id="regencySelector">
-                                <option value="prov">Provinsi Kalimantan Barat</option>
-                                <option value="sambas">Kab. Sambas</option>
-                                <option value="mempawah">Kab. Mempawah</option>
-                                <option value="sanggau">Kab. Sanggau</option>
-                                <option value="ketapang">Kab. Ketapang</option>
-                                <option value="sintang">Kab. Sintang</option>
-                                <option value="kapuashulu">Kab. Kapuas Hulu</option>
-                                <option value="bengkayang">Kab. Bengkayang</option>
-                                <option value="landak">Kab. Landak</option>
-                                <option value="sekadau">Kab. Sekadau</option>
-                                <option value="melawi">Kab. Melawi</option>
-                                <option value="kayongutara">Kab. Kayong Utara</option>
-                                <option value="kuburaya">Kab. Kubu Raya</option>
-                                <option value="pontianak">Kota Pontianak</option>
-                                <option value="singkawang">Kota Singkawang</option>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="fw-bold mb-1">Grafik Nilai Kemiskinan per Persentil</h5>
+                                <p class="text-muted small mb-0">Sumbu Y: Rupiah | Sumbu X: Persentil | Garis: Variabel &
+                                    Tahun</p>
+                            </div>
+                            <select class="form-select w-auto border-0 bg-light fw-bold" id="regencySelectorChart"
+                                style="border-radius: 8px;">
+                                <option value="" disabled selected>-- Pilih Wilayah --</option>
+                                @foreach($kabupatens as $kab)
+                                    <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
+                                @endforeach
                             </select>
                         </div>
-                        <div style="height: 250px;">
-                            <canvas id="povertyTrendLine"></canvas>
+                        <div style="height: 450px; width: 100%;">
+                            <canvas id="povertyLineChart"></canvas>
+                        </div>
+                        <div id="chartLoading" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Memuat data grafik...</p>
+                        </div>
+                        <div id="chartPlaceholder" class="text-center py-5">
+                            <i class="fas fa-chart-line fa-4x text-light mb-3"></i>
+                            <h6 class="text-muted">Silakan pilih wilayah untuk menampilkan grafik perbandingan</h6>
                         </div>
                     </div>
                 </div>
@@ -209,50 +211,121 @@
             }
         });
 
-        // --- 2. Interactive Trend Line Chart ---
-        const ctxLine = document.getElementById('povertyTrendLine').getContext('2d');
+        // --- 2. Interactive Line Chart (Dynamic) ---
+        const ctxLine = document.getElementById('povertyLineChart').getContext('2d');
+        const chartCanvas = document.getElementById('povertyLineChart');
+        const chartPlaceholder = document.getElementById('chartPlaceholder');
+        const chartLoading = document.getElementById('chartLoading');
+        let povertyLineChart;
 
-        // Random data generator for demo
-        function generateRandomTrend() {
-            return Array.from({ length: 5 }, () => (Math.random() * 5 + 4).toFixed(2));
-        }
+        // Colors for line chart
+        const colorPalette = [
+            '#f58220', // Orange
+            '#0093dd', // Blue
+            '#7ab800', // Green
+            '#6366f1', // Indigo
+            '#ec4899', // Pink
+            '#f43f5e', // Rose
+            '#8b5cf6', // Violet
+            '#06b6d4', // Cyan
+        ];
 
-        const trendChart = new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: ['2020', '2021', '2022', '2023', '2024'],
-                datasets: [{
-                    label: 'Trend Kemiskinan',
-                    data: [7.2, 7.15, 7.3, 6.9, 6.71], // Default Province
-                    borderColor: '#f58220', // Orange as requested
-                    backgroundColor: 'rgba(245, 130, 32, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#f58220',
-                    pointRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
+        // Hide chart initially
+        chartCanvas.style.display = 'none';
 
-        // Update chart on selection
-        document.getElementById('regencySelector').addEventListener('change', function (e) {
-            // In a real app, fetch data here. We'll simulate change.
-            const newData = generateRandomTrend();
-            trendChart.data.datasets[0].data = newData;
-            trendChart.update();
+        document.getElementById('regencySelectorChart').addEventListener('change', function (e) {
+            const kabId = e.target.value;
+            
+            // UI State
+            chartPlaceholder.classList.add('d-none');
+            chartLoading.classList.remove('d-none');
+            chartCanvas.style.display = 'none';
+
+            fetch(`/poverty-data/get-data/${kabId}`)
+                .then(response => response.json())
+                .then(result => {
+                    const { data, variabels } = result;
+                    
+                    chartLoading.classList.add('d-none');
+                    chartCanvas.style.display = 'block';
+
+                    const persentils = Object.keys(data).sort((a, b) => a - b);
+                    
+                    const datasets = variabels.map((v, index) => {
+                        const lineData = persentils.map(p => {
+                            const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                            return record ? record.nilai : null;
+                        });
+
+                        return {
+                            label: `${v.nama_variabel} ${v.tahun}`,
+                            data: lineData,
+                            borderColor: colorPalette[index % colorPalette.length],
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            spanGaps: true // In case some percentiles are missing
+                        };
+                    });
+
+                    if (povertyLineChart) {
+                        povertyLineChart.destroy();
+                    }
+
+                    povertyLineChart = new Chart(ctxLine, {
+                        type: 'line',
+                        data: {
+                            labels: persentils.map(p => `P${p}`),
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: { size: 12, weight: 'bold' }
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) { label += ': '; }
+                                            if (context.parsed.y !== null) {
+                                                label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(context.parsed.y);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    grid: { borderDash: [5, 5], color: 'rgba(0,0,0,0.05)' },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + value.toLocaleString('id-ID');
+                                        }
+                                    },
+                                    title: { display: true, text: 'Nilai (Rupiah)', font: { weight: 'bold' } }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    title: { display: true, text: 'Persentil', font: { weight: 'bold' } }
+                                }
+                            }
+                        }
+                    });
+                });
         });
     </script>
 @endpush

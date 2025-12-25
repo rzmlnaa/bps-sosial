@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\KabupatenController;
+use App\Models\Kabupaten;
+use App\Models\VariabelKemiskinan;
+use App\Http\Controllers\VariabelController;
+use App\Http\Controllers\PovertyDataController;
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -18,21 +21,16 @@ Route::get('/layouts', function () {
 })->name('layouts');
 
 Route::get('/poverty', function () {
-    return view('poverty.index');
+    $kabupatens = Kabupaten::all();
+    $variabels = VariabelKemiskinan::all();
+    return view('poverty.index', compact('kabupatens', 'variabels'));
 })->name('poverty');
-
-use App\Models\Kabupaten;
-use App\Models\VariabelKemiskinan;
 
 Route::get('/poverty/input', function () {
     $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->get();
     $variabels = VariabelKemiskinan::with('userAdd')->get();
     return view('poverty.input', compact('kabupatens', 'variabels'));
 })->name('poverty.input');
-
-use App\Http\Controllers\VariabelController;
-
-use App\Http\Controllers\PovertyDataController;
 
 Route::post('/kabupaten', [KabupatenController::class, 'store'])->name('kabupaten.store');
 Route::put('/kabupaten/{id}', [KabupatenController::class, 'update'])->name('kabupaten.update');
