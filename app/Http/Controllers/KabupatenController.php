@@ -42,4 +42,17 @@ class KabupatenController extends Controller
 
         return redirect()->back()->with('success', 'Data Kabupaten berhasil diperbarui!');
     }
+
+    public function destroy($id)
+    {
+        $kabupaten = Kabupaten::withCount('nilaiKemiskinan')->findOrFail($id);
+
+        if ($kabupaten->nilai_kemiskinan_count > 0) {
+            return redirect()->back()->with('error', 'Kabupaten tidak dapat dihapus karena sudah memiliki data nilai kemiskinan!');
+        }
+
+        $kabupaten->delete();
+
+        return redirect()->back()->with('success', 'Data Kabupaten berhasil dihapus!');
+    }
 }

@@ -42,7 +42,13 @@ class VariabelController extends Controller
 
     public function destroy($id)
     {
-        $variabel = VariabelKemiskinan::findOrFail($id);
+
+        $variabel = VariabelKemiskinan::withCount('nilaiKemiskinan')->findOrFail($id);
+
+        if ($variabel->nilai_kemiskinan_count > 0) {
+            return redirect()->back()->with('error', 'Variabel tidak dapat dihapus karena sudah memiliki data nilai kemiskinan!');
+        }
+
         $variabel->delete();
 
         return redirect()->back()->with('success', 'Data Variabel berhasil dihapus!');

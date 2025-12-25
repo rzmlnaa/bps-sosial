@@ -108,6 +108,13 @@
                                                         data-id="{{ $kab->id }}" data-nama="{{ $kab->nama_kabupaten }}">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
+                                                    <form action="{{ route('kabupaten.destroy', $kab->id) }}" method="POST" class="d-inline form-delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         @empty
@@ -228,52 +235,55 @@
                 <div class="row g-4">
                     <!-- Left Column: Input Form -->
                     <div class="col-lg-4">
-                        <!-- Filters -->
-                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold mb-3 text-uppercase text-muted"
-                                    style="font-size: 0.8rem; letter-spacing: 0.5px;">1. Filter Data</h6>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-medium">Kabupaten/Kota</label>
-                                    <select class="form-select bg-light border-0">
-                                        <option selected disabled>-- Pilih Wilayah --</option>
-                                        @foreach($kabupatens as $kab)
-                                            <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-0">
-                                    <label class="form-label small fw-medium">Variabel</label>
-                                    <select class="form-select bg-light border-0">
-                                        <option selected disabled>-- Pilih Variabel --</option>
-                                        @foreach($variabels as $var)
-                                            <option value="{{ $var->id }}">{{ $var->nama_variabel }} {{ $var->tahun }}</option>
-                                        @endforeach
-                                    </select>
+                        <form action="{{ route('poverty-data.store') }}" method="POST">
+                            @csrf
+                            <!-- Filters -->
+                            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold mb-3 text-uppercase text-muted"
+                                        style="font-size: 0.8rem; letter-spacing: 0.5px;">1. Filter Data</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-medium">Kabupaten/Kota</label>
+                                        <select id="select_kabupaten_filter" name="kabupaten_id" class="form-select bg-light border-0" required>
+                                            <option selected disabled value="">-- Pilih Wilayah --</option>
+                                            @foreach($kabupatens as $kab)
+                                                <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label small fw-medium">Variabel</label>
+                                        <select id="select_variabel_filter" name="variabel_id" class="form-select bg-light border-0" required>
+                                            <option selected disabled value="">-- Pilih Variabel --</option>
+                                            @foreach($variabels as $var)
+                                                <option value="{{ $var->id }}">{{ $var->nama_variabel }} {{ $var->tahun }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Input Area -->
-                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom-0">
-                                <h6 class="fw-bold mb-0 text-uppercase text-muted"
-                                    style="font-size: 0.8rem; letter-spacing: 0.5px;">2. Paste Data</h6>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="p-3">
-                                    <textarea class="form-control fw-mono border-0 bg-light" rows="15"
-                                        placeholder="Paste data dari Excel/SPSS disini...&#10;Contoh:&#10;547005,00&#10;547005,00&#10;..."
-                                        style="font-family: 'Courier New', monospace; font-size: 1rem; resize: none;"></textarea>
+                            <!-- Input Area -->
+                            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                <div class="card-header bg-white py-3 border-bottom-0">
+                                    <h6 class="fw-bold mb-0 text-uppercase text-muted"
+                                        style="font-size: 0.8rem; letter-spacing: 0.5px;">2. Paste Data</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="p-3">
+                                        <textarea id="textarea_data_poverty" name="raw_data" class="form-control fw-mono border-0 bg-light" rows="15"
+                                            placeholder="Paste data dari Excel/SPSS disini...&#10;Contoh:&#10;547005,00&#10;547005,00&#10;..."
+                                            style="font-family: 'Courier New', monospace; font-size: 1rem; resize: none;" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 py-3">
+                                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
+                                        style="background-color: var(--bps-orange); border: none;">
+                                        <i class="fas fa-save me-2"></i>Simpan Data
+                                    </button>
                                 </div>
                             </div>
-                            <div class="card-footer bg-white border-top-0 py-3">
-                                <button class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
-                                    style="background-color: var(--bps-orange); border: none;">
-                                    <i class="fas fa-save me-2"></i>Simpan Data
-                                </button>
-                            </div>
-                        </div>
+                        </form>
                     </div>
 
                     <!-- Right Column: Data Table -->
@@ -281,41 +291,25 @@
                         <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                             <div
                                 class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0">Data Tersimpan - Kab. Sambas</h5>
-                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-download me-1"></i>
-                                    Export</button>
+                                <h5 class="fw-bold mb-0" id="table_title">Data Wilayah</h5>
+                                <a href="#" id="btn_export" class="btn btn-sm btn-outline-secondary" style="display: none;">
+                                    <i class="fas fa-download me-1"></i> Export
+                                </a>
                             </div>
                             <div class="table-responsive h-100">
-                                <table class="table table-hover table-striped mb-0 text-center" style="font-size: 0.85rem;">
+                                <table class="table table-hover table-striped mb-0 text-center" style="font-size: 0.85rem;" id="table_poverty_data">
                                     <thead class="bg-light sticky-top" style="z-index: 1;">
-                                        <tr class="fw-bold text-secondary">
+                                        <tr class="fw-bold text-secondary" id="table_header_data">
                                             <th class="py-3" style="width: 60px;">Persentil</th>
-                                            <th class="py-3">2022 Asli</th>
-                                            <th class="py-3">2022 Rilis</th>
-                                            <th class="py-3">GK 2022</th>
-                                            <th class="py-3">2023 Asli</th>
-                                            <th class="py-3">GKS 2023</th>
-                                            <th class="py-3">2024 Asli</th>
-                                            <th class="py-3">GKS 2024</th>
-                                            <th class="py-3">2025 Asli</th>
-                                            <th class="py-3">GKS 2025</th>
+                                            <th class="py-3">Pilih Wilayah Terlebih Dahulu</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="border-top-0">
-                                        @for ($i = 1; $i <= 20; $i++)
-                                            <tr>
-                                                <td class="fw-bold text-muted bg-light">{{ $i }}</td>
-                                                <td>{{ number_format(rand(400000, 900000), 2, ',', '.') }}</td>
-                                                <td>{{ number_format(rand(300000, 800000), 2, ',', '.') }}</td>
-                                                <td>{{ number_format(472079, 2, ',', '.') }}</td>
-                                                <td>{{ number_format(rand(400000, 900000), 2, ',', '.') }}</td>
-                                                <td>{{ number_format(497618, 2, ',', '.') }}</td>
-                                                <td>{{ number_format(rand(500000, 950000), 2, ',', '.') }}</td>
-                                                <td>{{ number_format(511611, 2, ',', '.') }}</td>
-                                                <td>{{ number_format(rand(600000, 990000), 2, ',', '.') }}</td>
-                                                <td>{{ number_format(528217, 2, ',', '.') }}</td>
-                                            </tr>
-                                        @endfor
+                                    <tbody class="border-top-0" id="table_body_data">
+                                        <tr>
+                                            <td colspan="2" class="text-center py-5 text-muted">
+                                                <i class="fas fa-info-circle me-1"></i> Silakan pilih wilayah pada filter untuk menampilkan data.
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -431,11 +425,11 @@
                 });
             });
 
-            // 4. Delete Confirmation Logic
-            const deleteButtons = document.querySelectorAll('.btn-delete');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const form = this.closest('.form-delete');
+            // 4. Delete Confirmation Logic (Event Delegation)
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.btn-delete')) {
+                    const button = event.target.closest('.btn-delete');
+                    const form = button.closest('.form-delete');
                     
                     Swal.fire({
                         title: 'Apakah Anda yakin?',
@@ -451,7 +445,101 @@
                             form.submit();
                         }
                     });
-                });
+                }
+            });
+
+            // 5. Dynamic Data Loading Logic
+            const selectKabupaten = document.getElementById('select_kabupaten_filter');
+            const selectVariabel = document.getElementById('select_variabel_filter');
+            const textareaData = document.getElementById('textarea_data_poverty');
+            const btnExport = document.getElementById('btn_export');
+            const tableTitle = document.getElementById('table_title');
+            const tableHeader = document.getElementById('table_header_data');
+            const tableBody = document.getElementById('table_body_data');
+
+            // Function to format number to IDR style
+            const formatIDR = (num) => {
+                return new Intl.NumberFormat('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(num);
+            };
+
+            // Loading state for table
+            const showLoading = () => {
+                tableBody.innerHTML = `<tr><td colspan="${tableHeader.children.length}" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat data...</p></td></tr>`;
+            };
+
+            // When Kabupaten is selected
+            selectKabupaten.addEventListener('change', function() {
+                const kabId = this.value;
+                const kabName = this.options[this.selectedIndex].text;
+                tableTitle.innerText = `Data Tersimpan - ${kabName}`;
+                
+                // Show and update export button
+                btnExport.style.display = 'inline-block';
+                btnExport.href = `/poverty-data/export/${kabId}`;
+                
+                showLoading();
+
+                fetch(`/poverty-data/get-data/${kabId}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        const { data, variabels } = result;
+                        
+                        // Update Header
+                        let headerHtml = `<th class="py-3" style="width: 60px;">Persentil</th>`;
+                        variabels.forEach(v => {
+                            headerHtml += `<th class="py-3">${v.nama_variabel} ${v.tahun}</th>`;
+                        });
+                        tableHeader.innerHTML = headerHtml;
+
+                        // Update Body
+                        let bodyHtml = '';
+                        const persentils = Object.keys(data).sort((a, b) => a - b);
+                        
+                        if (persentils.length === 0) {
+                            bodyHtml = `<tr><td colspan="${variabels.length + 1}" class="text-center py-5 text-muted">Belum ada data nilai untuk wilayah ini.</td></tr>`;
+                        } else {
+                            persentils.forEach(p => {
+                                bodyHtml += `<tr><td class="fw-bold text-muted bg-light">${p}</td>`;
+                                variabels.forEach(v => {
+                                    const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                    bodyHtml += `<td>${record ? formatIDR(record.nilai) : '-'}</td>`;
+                                });
+                                bodyHtml += `</tr>`;
+                            });
+                        }
+                        tableBody.innerHTML = bodyHtml;
+
+                        // If Variabel is already selected, refresh textarea too
+                        if (selectVariabel.value) {
+                            selectVariabel.dispatchEvent(new Event('change'));
+                        }
+                    });
+            });
+
+            // When Variabel is selected
+            selectVariabel.addEventListener('change', function() {
+                const kabId = selectKabupaten.value;
+                const varId = this.value;
+
+                if (!kabId) return;
+
+                textareaData.placeholder = "Memuat data...";
+                textareaData.value = "";
+
+                fetch(`/poverty-data/get-raw/${kabId}/${varId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            textareaData.value = data.join('\n');
+                            textareaData.placeholder = "Data ditemukan. Silakan edit dan simpan kembali.";
+                        } else {
+                            textareaData.value = "";
+                            textareaData.placeholder = "Belum ada data. Paste data dari Excel/SPSS disini...";
+                        }
+                    });
             });
         });
     </script>

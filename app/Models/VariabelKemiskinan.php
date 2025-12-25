@@ -19,4 +19,9 @@ class VariabelKemiskinan extends Model
     {
         return $this->belongsTo(User::class, 'user_id_add');
     }
+
+    public function nilaiKemiskinan()
+    {
+        return $this->hasMany(NilaiKemiskinan::class, 'variabel_kemiskinan_id');
+    }
 }

@@ -25,4 +25,9 @@ class Kabupaten extends Model
     {
         return $this->belongsTo(User::class, 'user_id_update');
     }
+
+    public function nilaiKemiskinan()
+    {
+        return $this->hasMany(NilaiKemiskinan::class, 'kabupaten_id');
+    }
 }
