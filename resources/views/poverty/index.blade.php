@@ -45,19 +45,22 @@
                 <div class="stats-card h-100 bg-orange-faded border-0">
                     <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
                     <div class="d-flex align-items-end mb-2">
-                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 3.5rem;">6.71%</h1>
-                        <span class="mb-2 ms-2 fw-medium text-muted">Maret 2024</span>
+                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 3.5rem;">
+                            {{ number_format($provPercent, 2, ',', '.') }}%
+                        </h1>
+                        <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
                     </div>
-                    <p class="text-muted small">Mengalami penurunan sebesar 0.25 persen poin dibandingkan Maret 2023.</p>
+                    <p class="text-muted small">Angka rata-rata gabungan dari seluruh Kabupaten/Kota di Kalimantan Barat.
+                    </p>
                     <hr style="border-color: rgba(0,0,0,0.1);">
                     <div class="d-flex justify-content-between">
                         <div>
                             <small class="text-muted d-block">Garis Kemiskinan</small>
-                            <span class="fw-bold">Rp 652.812</span>
+                            <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
                         </div>
                         <div>
                             <small class="text-muted d-block">Penduduk Miskin</small>
-                            <span class="fw-bold">354.21 Ribu</span>
+                            <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
                         </div>
                     </div>
                 </div>
@@ -76,6 +79,7 @@
                             <select class="form-select w-auto border-0 bg-light fw-bold" id="regencySelectorChart"
                                 style="border-radius: 8px;">
                                 <option value="" disabled selected>-- Pilih Wilayah --</option>
+                                <option value="all" class="text-primary font-bold">Semua Wilayah</option>
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
                                 @endforeach
@@ -283,31 +287,63 @@
             fetch(`/poverty-data/get-data/${kabId}`)
                 .then(response => response.json())
                 .then(result => {
-                    const { data, variabels } = result;
+                    const { data, variabels, kabupatens } = result;
 
                     chartLoading.classList.add('d-none');
                     chartCanvas.style.display = 'block';
 
                     const persentils = Object.keys(data).sort((a, b) => a - b);
+                    let datasets = [];
 
-                    const datasets = variabels.map((v, index) => {
-                        const lineData = persentils.map(p => {
-                            const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
-                            return record ? record.nilai : null;
+                    if (kabId === 'all') {
+                        // For All Regions, create a line for EACH (Kabupaten, Variabel) pair
+                        kabupatens.forEach((kab, kIndex) => {
+                            variabels.forEach((v, vIndex) => {
+                                const lineData = persentils.map(p => {
+                                    const record = data[p].find(r =>
+                                        r.variabel_kemiskinan_id == v.id &&
+                                        r.kabupaten_id == kab.id
+                                    );
+                                    return record ? record.nilai : null;
+                                });
+
+                                // Check if this line has any data points before adding
+                                if (lineData.some(val => val !== null)) {
+                                    datasets.push({
+                                        label: `${kab.nama_kabupaten} - ${v.nama_variabel} ${v.tahun}`,
+                                        data: lineData,
+                                        borderColor: colorPalette[datasets.length % colorPalette.length],
+                                        backgroundColor: 'transparent',
+                                        tension: 0.3,
+                                        borderWidth: 2,
+                                        pointRadius: 2,
+                                        pointHoverRadius: 4,
+                                        spanGaps: true
+                                    });
+                                }
+                            });
                         });
+                    } else {
+                        // Original logic for single region
+                        datasets = variabels.map((v, index) => {
+                            const lineData = persentils.map(p => {
+                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                return record ? record.nilai : null;
+                            });
 
-                        return {
-                            label: `${v.nama_variabel} ${v.tahun}`,
-                            data: lineData,
-                            borderColor: colorPalette[index % colorPalette.length],
-                            backgroundColor: 'transparent',
-                            tension: 0.3,
-                            borderWidth: 3,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            spanGaps: true // In case some percentiles are missing
-                        };
-                    });
+                            return {
+                                label: `${v.nama_variabel} ${v.tahun}`,
+                                data: lineData,
+                                borderColor: colorPalette[index % colorPalette.length],
+                                backgroundColor: 'transparent',
+                                tension: 0.3,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                spanGaps: true
+                            };
+                        });
+                    }
 
                     if (povertyLineChart) {
                         povertyLineChart.destroy();

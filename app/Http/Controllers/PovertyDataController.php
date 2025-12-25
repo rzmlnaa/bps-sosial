@@ -66,16 +66,24 @@ class PovertyDataController extends Controller
 
     public function getData($kabupaten_id)
     {
-        $data = NilaiKemiskinan::where('kabupaten_id', $kabupaten_id)
-            ->with('variabelKemiskinan')
-            ->get()
-            ->groupBy('persentil');
+        if ($kabupaten_id === 'all') {
+            $data = NilaiKemiskinan::with(['variabelKemiskinan', 'kabupaten'])
+                ->get()
+                ->groupBy('persentil');
+        } else {
+            $data = NilaiKemiskinan::where('kabupaten_id', $kabupaten_id)
+                ->with('variabelKemiskinan')
+                ->get()
+                ->groupBy('persentil');
+        }
 
         $variabels = \App\Models\VariabelKemiskinan::all();
+        $kabupatens = \App\Models\Kabupaten::all();
 
         return response()->json([
             'data' => $data,
-            'variabels' => $variabels
+            'variabels' => $variabels,
+            'kabupatens' => $kabupatens
         ]);
     }
 

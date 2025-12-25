@@ -55,7 +55,29 @@ Route::get('/poverty', function () {
         ];
     }
 
-    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'varPercentage'));
+    // Calculate Provincial Aggregates
+    $provPercent = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'percent')) / count($kabupatenData)) : 0;
+    $provCount = array_sum(array_column($kabupatenData, 'count'));
+    $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
+
+    // Determine Label for Latest Data
+    $bulanNama = [
+        1 => 'Januari',
+        2 => 'Februari',
+        3 => 'Maret',
+        4 => 'April',
+        5 => 'Mei',
+        6 => 'Juni',
+        7 => 'Juli',
+        8 => 'Agustus',
+        9 => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember'
+    ];
+    $latestLabel = ($varPercentage->bulan ? $bulanNama[$varPercentage->bulan] . ' ' : '') . ($varPercentage->tahun ?? '');
+
+    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'varPercentage', 'provPercent', 'provCount', 'provGK', 'latestLabel'));
 })->name('poverty');
 
 Route::get('/poverty/input', function () {
