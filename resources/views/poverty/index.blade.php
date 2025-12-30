@@ -10,22 +10,32 @@
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Data Kemiskinan Wilayah</h2>
                 <p class="text-muted mb-0">Perbandingan tingkat kemiskinan Kalimantan Barat Menurut Kabupaten/Kota</p>
             </div>
-            <div class="mt-3 mt-md-0 d-flex gap-2">
-                <select class="form-select border-0 shadow-sm" style="min-width: 150px;">
-                    <option value="2024" selected>Tahun 2024</option>
-                    <option value="2023">Tahun 2023</option>
-                    <option value="2022">Tahun 2022</option>
-                    <option value="2021">Tahun 2021</option>
-                    <option value="2020">Tahun 2020</option>
+            <form action="{{ route('poverty') }}" method="GET" class="mt-3 mt-md-0 d-flex gap-2">
+
+                <select name="tahun" class="form-select border-0 shadow-sm" style="min-width: 150px;">
+                    <option value="all" {{ request('tahun') == 'all' ? 'selected' : '' }}>
+                        Semua Tahun
+                    </option>
+
+                    @for ($year = 2022; $year <= now()->year; $year++)
+                        <option value="{{ $year }}" {{ request('tahun') == $year ? 'selected' : '' }}>
+                            Tahun {{ $year }}
+                        </option>
+                    @endfor
                 </select>
-                <button class="btn btn-primary text-white" style="background-color: var(--bps-blue); border: none;">
+
+                <button type="submit" class="btn btn-primary text-white"
+                    style="background-color: var(--bps-blue); border: none;">
                     <i class="fas fa-filter"></i> Filter
                 </button>
+
                 <a href="{{ route('poverty.input') }}" class="btn btn-success text-white"
                     style="background-color: var(--bps-green); border: none;">
                     <i class="fas fa-plus"></i> Input Data
                 </a>
-            </div>
+
+            </form>
+
         </div>
 
         <!-- Main Comparison Chart -->

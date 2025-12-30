@@ -6,6 +6,7 @@ use App\Models\Kabupaten;
 use App\Models\VariabelKemiskinan;
 use App\Http\Controllers\VariabelController;
 use App\Http\Controllers\PovertyDataController;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -20,9 +21,10 @@ Route::get('/layouts', function () {
     return view('layouts.admin');
 })->name('layouts');
 
-Route::get('/poverty', function () {
+Route::get('/poverty', function (Request $request) {
     $kabupatens = Kabupaten::all();
     $variabels = VariabelKemiskinan::all();
+    $selectedTahun = $request->get('tahun', 'all');
 
     // Attempt to find a representative variable (Rupiah/GK related)
     $mainVar = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')
@@ -35,6 +37,7 @@ Route::get('/poverty', function () {
         // Calculate average value across all percentiles for this kabupaten and variabel
         $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
             ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
+            ->where('tahun', $selectedTahun)
             ->avg('nilai') ?? 0;
 
         // Fetch specific variables for the table (optional display)
@@ -44,6 +47,7 @@ Route::get('/poverty', function () {
         $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
             ->where('variabel_kemiskinan_id', $varCount->id)
             ->where('persentil', 1)
+            ->where('tahun', $selectedTahun)
             ->value('nilai') : 0;
 
         $gk = $varGK ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
