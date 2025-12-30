@@ -20,8 +20,15 @@ class NilaiKemiskinan extends Model
         return $this->belongsTo(Kabupaten::class, 'kabupaten_id');
     }
 
+    // public function variabelKemiskinan()
+    // {
+    //     return $this->belongsTo(VariabelKemiskinan::class, 'variabel_kemiskinan_id');
+    // }
+
+    // // App\Models\NilaiKemiskinan.php
     public function variabelKemiskinan()
     {
-        return $this->belongsTo(VariabelKemiskinan::class, 'variabel_kemiskinan_id');
+        return $this->belongsTo(VariabelKemiskinan::class);
     }
+
 }

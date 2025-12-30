@@ -35,9 +35,21 @@ Route::get('/poverty', function (Request $request) {
     $kabupatenData = [];
     foreach ($kabupatens as $kab) {
         // Calculate average value across all percentiles for this kabupaten and variabel
+        // $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
+        //     ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
+        //     ->avg('nilai') ?? 0;
         $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
-            ->where('tahun', $selectedTahun)
+            ->whereHas('variabelKemiskinan', function ($q) use ($selectedTahun, $mainVar) {
+
+                if ($selectedTahun !== 'all') {
+                    $q->where('tahun', $selectedTahun);
+                }
+
+                if ($mainVar) {
+                    $q->where('id', $mainVar->id);
+                }
+
+            })
             ->avg('nilai') ?? 0;
 
         // Fetch specific variables for the table (optional display)
@@ -47,7 +59,7 @@ Route::get('/poverty', function (Request $request) {
         $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
             ->where('variabel_kemiskinan_id', $varCount->id)
             ->where('persentil', 1)
-            ->where('tahun', $selectedTahun)
+
             ->value('nilai') : 0;
 
         $gk = $varGK ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
@@ -62,7 +74,10 @@ Route::get('/poverty', function (Request $request) {
             'count' => floatval($count),
             'gk' => floatval($gk)
         ];
+
     }
+    //dd($kabupatenData);
+
 
     // Calculate Provincial Aggregates
     $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;

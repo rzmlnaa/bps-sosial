@@ -64,20 +64,29 @@ class PovertyDataController extends Controller
         }
     }
 
-    public function getData($kabupaten_id)
+    public function getData(Request $request, $kabupaten_id)
     {
-        if ($kabupaten_id === 'all') {
-            $data = NilaiKemiskinan::with(['variabelKemiskinan', 'kabupaten'])
-                ->get()
-                ->groupBy('persentil');
-        } else {
-            $data = NilaiKemiskinan::where('kabupaten_id', $kabupaten_id)
-                ->with('variabelKemiskinan')
-                ->get()
-                ->groupBy('persentil');
+        $tahun = $request->get('tahun', 'all');
+
+        $query = NilaiKemiskinan::with(['variabelKemiskinan', 'kabupaten']);
+
+        if ($kabupaten_id !== 'all') {
+            $query->where('kabupaten_id', $kabupaten_id);
         }
 
-        $variabels = \App\Models\VariabelKemiskinan::all();
+        if ($tahun !== 'all') {
+            $query->whereHas('variabelKemiskinan', function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            });
+        }
+
+        $data = $query->get()->groupBy('persentil');
+
+        $variabelsQuery = \App\Models\VariabelKemiskinan::query();
+        if ($tahun !== 'all') {
+            $variabelsQuery->where('tahun', $tahun);
+        }
+        $variabels = $variabelsQuery->get();
         $kabupatens = \App\Models\Kabupaten::all();
 
         return response()->json([

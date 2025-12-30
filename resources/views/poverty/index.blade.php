@@ -112,7 +112,8 @@
         <!-- Data Table -->
         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-header bg-white py-3 border-bottom-0">
-                <h5 class="fw-bold mb-0">Data Rinci Menurut Wilayah (2024)</h5>
+                <h5 class="fw-bold mb-0">Data Rinci Menurut Wilayah
+                    ({{ request('tahun', 'all') == 'all' ? 'Semua Tahun' : request('tahun') }})</h5>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -292,7 +293,7 @@
             chartLoading.classList.remove('d-none');
             chartCanvas.style.display = 'none';
 
-            fetch(`/poverty-data/get-data/${kabId}`)
+            fetch(`/poverty-data/get-data/${kabId}?tahun={{ request('tahun', 'all') }}`)
                 .then(response => response.json())
                 .then(result => {
                     const { data, variabels, kabupatens } = result;
@@ -437,7 +438,7 @@
 
                 modalDetail.show();
 
-                fetch(`/poverty-data/get-data/${kabId}`)
+                fetch(`/poverty-data/get-data/${kabId}?tahun={{ request('tahun', 'all') }}`)
                     .then(response => response.json())
                     .then(result => {
                         const { data, variabels } = result;
