@@ -116,6 +116,7 @@ Route::post('/variabel', [VariabelController::class, 'store'])->name('variabel.s
 Route::delete('/variabel/{id}', [VariabelController::class, 'destroy'])->name('variabel.destroy');
 
 Route::post('/poverty-data', [PovertyDataController::class, 'store'])->name('poverty-data.store');
+Route::delete('/poverty-data/clear', [PovertyDataController::class, 'clearData'])->name('poverty-data.clear');
 Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
 Route::get('/poverty-data/get-raw/{kabupaten_id}/{variabel_id}', [PovertyDataController::class, 'getRawData']);
 Route::get('/poverty-data/export/{kabupaten_id}', [PovertyDataController::class, 'exportToCSV'])->name('poverty-data.export');

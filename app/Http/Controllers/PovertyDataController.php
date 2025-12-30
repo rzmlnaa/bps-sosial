@@ -57,7 +57,11 @@ class PovertyDataController extends Controller
             }
             DB::commit();
 
-            return redirect()->back()->with('success', count($values) . ' data berhasil disimpan!');
+            return redirect()->back()->with([
+                'success' => count($values) . ' data berhasil disimpan!',
+                'last_kabupaten_id' => $request->kabupaten_id,
+                'last_variabel_id' => $request->variabel_id,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
@@ -146,5 +150,26 @@ class PovertyDataController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+    public function clearData(Request $request)
+    {
+        $request->validate([
+            'kabupaten_id' => 'required|exists:tb_kabupaten,id',
+            'variabel_id' => 'required|exists:tb_variabel_kemiskinan,id',
+        ]);
+
+        try {
+            NilaiKemiskinan::where('kabupaten_id', $request->kabupaten_id)
+                ->where('variabel_kemiskinan_id', $request->variabel_id)
+                ->delete();
+
+            return redirect()->back()->with([
+                'success' => 'Data untuk wilayah dan variabel terpilih berhasil dikosongkan.',
+                'last_kabupaten_id' => $request->kabupaten_id,
+                'last_variabel_id' => $request->variabel_id,
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengosongkan data: ' . $e->getMessage());
+        }
     }
 }
