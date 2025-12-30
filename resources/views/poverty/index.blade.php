@@ -31,7 +31,7 @@
         <!-- Main Comparison Chart -->
         <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4">Persentase Penduduk Miskin menurut Kabupaten/Kota</h5>
+                <h5 class="fw-bold mb-4">Rata-rata Nilai (Rp) menurut Kabupaten/Kota</h5>
                 <div style="height: 400px; position: relative;">
                     <canvas id="povertyComparisonChart"></canvas>
                 </div>
@@ -45,13 +45,12 @@
                 <div class="stats-card h-100 bg-orange-faded border-0">
                     <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
                     <div class="d-flex align-items-end mb-2">
-                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 3.5rem;">
-                            {{ number_format($provPercent, 2, ',', '.') }}%
+                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                            Rp {{ number_format($provAvg, 0, ',', '.') }}
                         </h1>
                         <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
                     </div>
-                    <p class="text-muted small">Angka rata-rata gabungan dari seluruh Kabupaten/Kota di Kalimantan Barat.
-                    </p>
+                    <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
                     <hr style="border-color: rgba(0,0,0,0.1);">
                     <div class="d-flex justify-content-between">
                         <div>
@@ -78,8 +77,7 @@
                             </div>
                             <select class="form-select w-auto border-0 bg-light fw-bold" id="regencySelectorChart"
                                 style="border-radius: 8px;">
-                                <option value="" disabled selected>-- Pilih Wilayah --</option>
-                                <option value="all" class="text-primary font-bold">Semua Wilayah</option>
+                                <option value="all" class="text-primary font-bold" selected>Semua Wilayah</option>
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
                                 @endforeach
@@ -111,9 +109,7 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4 border-0">Wilayah</th>
-                            <th class="text-center border-0">Persentase (%)</th>
-                            <th class="text-center border-0">Jumlah (Ribu Jiwa)</th>
-                            <th class="text-center border-0">Garis Kemiskinan (Rp)</th>
+                            <th class="text-center border-0">Rata-rata (Rp)</th>
                             <th class="text-center border-0">Aksi</th>
                         </tr>
                     </thead>
@@ -125,11 +121,9 @@
                             <tr>
                                 <td class="ps-4 fw-medium">{{ $region['name'] }}</td>
                                 <td class="text-center">
-                                    <span
-                                        class="badge bg-green-faded text-green rounded-pill px-3">{{ $region['percent'] }}%</span>
+                                    <span class="badge bg-green-faded text-green rounded-pill px-3">Rp
+                                        {{ number_format($region['avg_nilai'], 0, ',', '.') }}</span>
                                 </td>
-                                <td class="text-center">{{ number_format($region['count'], 2, ',', '.') }}</td>
-                                <td class="text-center">Rp {{ number_format($region['gk'], 0, ',', '.') }}</td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary border-0 btn-detail-region"
                                         data-id="{{ $region['id'] }}" data-name="{{ $region['name'] }}">
@@ -204,21 +198,18 @@
         const regionLabels = kabData.map(d => d.name);
         if (regionLabels.length === 0) regionLabels.push('Belum ada data');
 
-        const povertyData = kabData.map(d => d.percent);
-        if (povertyData.length === 0) povertyData.push(0);
+        const mainDataValues = kabData.map(d => d.avg_nilai);
+        if (mainDataValues.length === 0) mainDataValues.push(0);
 
-        const barColors = povertyData.map((val) => {
-            if (val > 8) return '#f58220';
-            return '#0093dd';
-        });
+        const barColors = mainDataValues.map((val) => '#0093dd');
 
         new Chart(ctxBar, {
             type: 'bar',
             data: {
                 labels: regionLabels,
                 datasets: [{
-                    label: '{{ $varPercentage->nama_variabel ?? "Persentase" }} (%)',
-                    data: povertyData,
+                    label: '{{ $mainVar->nama_variabel ?? "Rata-rata" }} (Rp)',
+                    data: mainDataValues,
                     backgroundColor: barColors,
                     borderRadius: 4,
                     barThickness: 'flex',
@@ -237,14 +228,21 @@
                         borderColor: '#e2e8f0',
                         borderWidth: 1,
                         callbacks: {
-                            label: function (context) { return context.parsed.y + '%'; }
+                            label: function (context) {
+                                return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                            }
                         }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(0,0,0,0.05)' }
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: {
+                            callback: function (value) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            }
+                        }
                     },
                     x: {
                         grid: { display: false },
@@ -401,6 +399,14 @@
                         }
                     });
                 });
+        });
+
+        // Trigger chart load for "Semua Wilayah" on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const selector = document.getElementById('regencySelectorChart');
+            if (selector) {
+                selector.dispatchEvent(new Event('change'));
+            }
         });
 
         // --- 3. Detail Modal Functionality ---

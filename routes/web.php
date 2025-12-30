@@ -24,17 +24,22 @@ Route::get('/poverty', function () {
     $kabupatens = Kabupaten::all();
     $variabels = VariabelKemiskinan::all();
 
-    // Attempt to find specific types of variables for the dashboard
-    $varPercentage = VariabelKemiskinan::where('nama_variabel', 'like', '%Persentase%')->latest()->first() ?? $variabels->first();
-    $varCount = VariabelKemiskinan::where('nama_variabel', 'like', '%Jumlah%')->latest()->first();
-    $varGK = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')->orWhere('nama_variabel', 'like', '%Garis%')->latest()->first();
+    // Attempt to find a representative variable (Rupiah/GK related)
+    $mainVar = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')
+        ->orWhere('nama_variabel', 'like', '%Garis%')
+        ->orWhere('nama_variabel', 'like', '%Rupiah%')
+        ->latest()->first() ?? $variabels->first();
 
     $kabupatenData = [];
     foreach ($kabupatens as $kab) {
-        $percent = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->where('variabel_kemiskinan_id', $varPercentage->id ?? 0)
-            ->where('persentil', 1) // Just take first percentile as a representative value for now
-            ->value('nilai') ?? 0;
+        // Calculate average value across all percentiles for this kabupaten and variabel
+        $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
+            ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
+            ->avg('nilai') ?? 0;
+
+        // Fetch specific variables for the table (optional display)
+        $varCount = VariabelKemiskinan::where('nama_variabel', 'like', '%Jumlah%')->latest()->first();
+        $varGK = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')->orWhere('nama_variabel', 'like', '%Garis%')->latest()->first();
 
         $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
             ->where('variabel_kemiskinan_id', $varCount->id)
@@ -49,14 +54,14 @@ Route::get('/poverty', function () {
         $kabupatenData[] = [
             'id' => $kab->id,
             'name' => $kab->nama_kabupaten,
-            'percent' => $percent,
-            'count' => $count,
-            'gk' => $gk
+            'avg_nilai' => floatval($avgValue),
+            'count' => floatval($count),
+            'gk' => floatval($gk)
         ];
     }
 
     // Calculate Provincial Aggregates
-    $provPercent = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'percent')) / count($kabupatenData)) : 0;
+    $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
     $provCount = array_sum(array_column($kabupatenData, 'count'));
     $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
 
@@ -75,9 +80,9 @@ Route::get('/poverty', function () {
         11 => 'November',
         12 => 'Desember'
     ];
-    $latestLabel = ($varPercentage->bulan ? $bulanNama[$varPercentage->bulan] . ' ' : '') . ($varPercentage->tahun ?? '');
+    $latestLabel = $mainVar ? (($mainVar->bulan ? $bulanNama[$mainVar->bulan] . ' ' : '') . ($mainVar->tahun ?? '')) : '';
 
-    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'varPercentage', 'provPercent', 'provCount', 'provGK', 'latestLabel'));
+    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel'));
 })->name('poverty');
 
 Route::get('/poverty/input', function () {
