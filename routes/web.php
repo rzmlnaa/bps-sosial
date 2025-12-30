@@ -7,6 +7,7 @@ use App\Models\VariabelKemiskinan;
 use App\Http\Controllers\VariabelController;
 use App\Http\Controllers\PovertyDataController;
 use Illuminate\Http\Request;
+use App\Models\NilaiKemiskinan;
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -27,35 +28,30 @@ Route::get('/poverty', function (Request $request) {
     $selectedTahun = $request->get('tahun', 'all');
 
     // Attempt to find a representative variable (Rupiah/GK related)
-    $mainVar = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')
-        ->orWhere('nama_variabel', 'like', '%Garis%')
-        ->orWhere('nama_variabel', 'like', '%Rupiah%')
-        ->latest()->first() ?? $variabels->first();
+    if ($selectedTahun == 'all') {
+        $mainVar = $variabels->first();
+    } else {
+        $mainVar = VariabelKemiskinan::
+            where('tahun', $selectedTahun)
+
+            // ->orWhere('nama_variabel', 'like', '%Garis%')
+            // ->orWhere('nama_variabel', 'like', '%Rupiah%')
+            ->latest()->first()
+            //?? $variabels->first()
+        ;
+    }
 
     $kabupatenData = [];
     foreach ($kabupatens as $kab) {
         // Calculate average value across all percentiles for this kabupaten and variabel
-        // $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-        //     ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
-        //     ->avg('nilai') ?? 0;
         $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->whereHas('variabelKemiskinan', function ($q) use ($selectedTahun, $mainVar) {
-
-                if ($selectedTahun !== 'all') {
-                    $q->where('tahun', $selectedTahun);
-                }
-
-                if ($mainVar) {
-                    $q->where('id', $mainVar->id);
-                }
-
-            })
+            ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
             ->avg('nilai') ?? 0;
+
 
         // Fetch specific variables for the table (optional display)
         $varCount = VariabelKemiskinan::where('nama_variabel', 'like', '%Jumlah%')->latest()->first();
         $varGK = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')->orWhere('nama_variabel', 'like', '%Garis%')->latest()->first();
-
         $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
             ->where('variabel_kemiskinan_id', $varCount->id)
             ->where('persentil', 1)
@@ -67,16 +63,18 @@ Route::get('/poverty', function (Request $request) {
             ->where('persentil', 1)
             ->value('nilai') : 0;
 
-        $kabupatenData[] = [
-            'id' => $kab->id,
-            'name' => $kab->nama_kabupaten,
-            'avg_nilai' => floatval($avgValue),
-            'count' => floatval($count),
-            'gk' => floatval($gk)
-        ];
-
+        if ($avgValue > 0) {
+            $kabupatenData[] = [
+                'id' => $kab->id,
+                'name' => $kab->nama_kabupaten,
+                'avg_nilai' => floatval($avgValue),
+                'count' => floatval($count),
+                'gk' => floatval($gk)
+            ];
+        }
     }
     //dd($kabupatenData);
+
 
 
     // Calculate Provincial Aggregates

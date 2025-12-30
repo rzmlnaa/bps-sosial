@@ -38,42 +38,34 @@
 
         </div>
 
-        <!-- Main Comparison Chart -->
-        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-4">Rata-rata Nilai (Rp) menurut Kabupaten/Kota</h5>
-                <div style="height: 400px; position: relative;">
-                    <canvas id="povertyComparisonChart"></canvas>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Interactive Map/Detailed Stats Grid -->
         <div class="row g-4 mb-4">
             <!-- Highlights -->
-            <div class="col-lg-4">
-                <div class="stats-card h-100 bg-orange-faded border-0">
-                    <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                    <div class="d-flex align-items-end mb-2">
-                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                            Rp {{ number_format($provAvg, 0, ',', '.') }}
-                        </h1>
-                        <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                    </div>
-                    <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                    <hr style="border-color: rgba(0,0,0,0.1);">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <small class="text-muted d-block">Garis Kemiskinan</small>
-                            <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+            <!-- <div class="col-lg-4">
+                        <div class="stats-card h-100 bg-orange-faded border-0">
+                            <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                            <div class="d-flex align-items-end mb-2">
+                                <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                    Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                </h1>
+                                <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                            </div>
+                            <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                            <hr style="border-color: rgba(0,0,0,0.1);">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <small class="text-muted d-block">Garis Kemiskinan</small>
+                                    <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Penduduk Miskin</small>
+                                    <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <small class="text-muted d-block">Penduduk Miskin</small>
-                            <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -120,21 +112,14 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4 border-0">Wilayah</th>
-                            <th class="text-center border-0">Rata-rata (Rp)</th>
+                            <!-- <th class="text-center border-0">Rata-rata (Rp)</th> -->
                             <th class="text-center border-0">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
-                        @php
-                            $povertyTableData = $kabupatenData;
-                        @endphp
-                        @foreach($povertyTableData as $region)
+                        @forelse($kabupatenData as $region)
                             <tr>
                                 <td class="ps-4 fw-medium">{{ $region['name'] }}</td>
-                                <td class="text-center">
-                                    <span class="badge bg-green-faded text-green rounded-pill px-3">Rp
-                                        {{ number_format($region['avg_nilai'], 0, ',', '.') }}</span>
-                                </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary border-0 btn-detail-region"
                                         data-id="{{ $region['id'] }}" data-name="{{ $region['name'] }}">
@@ -142,8 +127,19 @@
                                     </button>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-4">
+                                    <i class="fas fa-database me-2"></i>
+                                    Belum ada data pada tahun
+                                    <strong>
+                                        {{ request('tahun', 'all') == 'all' ? 'Semua Tahun' : request('tahun') }}
+                                    </strong>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
+
                 </table>
             </div>
         </div>
@@ -201,67 +197,7 @@
 
 @push('scripts')
     <script>
-        // --- 1. Main Comparison Bar Chart ---
-        const ctxBar = document.getElementById('povertyComparisonChart').getContext('2d');
 
-        // Data Setup from PHP
-        const kabData = @json($kabupatenData);
-        const regionLabels = kabData.map(d => d.name);
-        if (regionLabels.length === 0) regionLabels.push('Belum ada data');
-
-        const mainDataValues = kabData.map(d => d.avg_nilai);
-        if (mainDataValues.length === 0) mainDataValues.push(0);
-
-        const barColors = mainDataValues.map((val) => '#0093dd');
-
-        new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: regionLabels,
-                datasets: [{
-                    label: '{{ $mainVar->nama_variabel ?? "Rata-rata" }} (Rp)',
-                    data: mainDataValues,
-                    backgroundColor: barColors,
-                    borderRadius: 4,
-                    barThickness: 'flex',
-                    maxBarThickness: 35
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#1e293b',
-                        bodyColor: '#1e293b',
-                        borderColor: '#e2e8f0',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function (context) {
-                                return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(0,0,0,0.05)' },
-                        ticks: {
-                            callback: function (value) {
-                                return 'Rp ' + value.toLocaleString('id-ID');
-                            }
-                        }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
-                    }
-                }
-            }
-        });
 
         // --- 2. Interactive Line Chart (Dynamic) ---
         const ctxLine = document.getElementById('povertyLineChart').getContext('2d');
