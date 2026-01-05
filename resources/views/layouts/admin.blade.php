@@ -121,7 +121,8 @@
                 <span>Komoditas</span>
             </a>
 
-            <a href="#" class="nav-link">
+            <a href="{{ route('price-range.index') }}"
+                class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
                 <i class="fas fa-tags"></i>
                 <span>Rentang Harga</span>
             </a>

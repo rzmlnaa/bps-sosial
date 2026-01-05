@@ -8,6 +8,9 @@ use App\Http\Controllers\VariabelController;
 use App\Http\Controllers\PovertyDataController;
 use Illuminate\Http\Request;
 use App\Models\NilaiKemiskinan;
+use App\Http\Controllers\KategoriKomoditasController;
+use App\Http\Controllers\KomoditasController;
+use App\Models\KategoriKomoditas;
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -129,6 +132,24 @@ Route::delete('/poverty-data/clear', [PovertyDataController::class, 'clearData']
 Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
 Route::get('/poverty-data/get-raw/{kabupaten_id}/{variabel_id}', [PovertyDataController::class, 'getRawData']);
 Route::get('/poverty-data/export/{kabupaten_id}', [PovertyDataController::class, 'exportToCSV'])->name('poverty-data.export');
+
+Route::get('/price-range', function () {
+    return view('price-range.index');
+})->name('price-range.index');
+
+Route::get('/price-range/input', function () {
+    $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->get();
+    return view('price-range.input', compact('kategori'));
+})->name('price-range.input');
+
+Route::post('/kategori-komoditas', [KategoriKomoditasController::class, 'store'])->name('kategori-komoditas.store');
+Route::put('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'update'])->name('kategori-komoditas.update');
+Route::delete('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'destroy'])->name('kategori-komoditas.destroy');
+
+Route::post('/komoditas', [KomoditasController::class, 'store'])->name('komoditas.store');
+Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
+Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
+Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);
 
 Route::post('/logout', function () {
     Auth::logout();
