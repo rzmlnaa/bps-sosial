@@ -133,15 +133,23 @@
         </div>
 
         <div class="mt-auto p-4 border-top">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-gray-200 rounded-circle d-flex align-items-center justify-content-center"
-                    style="width: 36px; height: 36px; background: #e2e8f0;">
-                    <i class="fas fa-user text-muted"></i>
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-gray-200 rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 36px; height: 36px; background: #e2e8f0;">
+                        <i class="fas fa-user text-muted"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 fw-medium text-sm">Admin BPS</p>
+                        <small class="text-muted" style="font-size: 0.75rem;">Administrator</small>
+                    </div>
                 </div>
-                <div>
-                    <p class="mb-0 fw-medium text-sm">Admin BPS</p>
-                    <small class="text-muted" style="font-size: 0.75rem;">Administrator</small>
-                </div>
+                <form action="{{ route('logout') }}" method="POST" id="logout-form">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Log Out">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </nav>

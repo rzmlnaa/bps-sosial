@@ -28,7 +28,7 @@ Route::get('/poverty', function (Request $request) {
     $selectedTahun = $request->get('tahun', 'all');
 
     // Attempt to find a representative variable (Rupiah/GK related)
-    if ($selectedTahun == 'all') {
+    if ($selectedTahun == 'all' || $selectedTahun == null) {
         $mainVar = $variabels->first();
     } else {
         $mainVar = VariabelKemiskinan::
@@ -44,35 +44,44 @@ Route::get('/poverty', function (Request $request) {
     $kabupatenData = [];
     foreach ($kabupatens as $kab) {
         // Calculate average value across all percentiles for this kabupaten and variabel
-        $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
-            ->avg('nilai') ?? 0;
-
+        // $avgValue = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
+        //     ->where('variabel_kemiskinan_id', $mainVar->id ?? 0)
+        //     ->avg('nilai') ?? 0;
+        $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
 
         // Fetch specific variables for the table (optional display)
-        $varCount = VariabelKemiskinan::where('nama_variabel', 'like', '%Jumlah%')->latest()->first();
-        $varGK = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')->orWhere('nama_variabel', 'like', '%Garis%')->latest()->first();
-        $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->where('variabel_kemiskinan_id', $varCount->id)
-            ->where('persentil', 1)
+        // $varCount = VariabelKemiskinan::where('nama_variabel', 'like', '%Jumlah%')->latest()->first();
+        // $varGK = VariabelKemiskinan::where('nama_variabel', 'like', '%GK%')->orWhere('nama_variabel', 'like', '%Garis%')->latest()->first();
+        // $count = $varCount ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
+        //     ->where('variabel_kemiskinan_id', $varCount->id)
+        //     ->where('persentil', 1)
 
-            ->value('nilai') : 0;
+        //     ->value('nilai') : 0;
 
-        $gk = $varGK ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
-            ->where('variabel_kemiskinan_id', $varGK->id)
-            ->where('persentil', 1)
-            ->value('nilai') : 0;
+        // $gk = $varGK ? \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)
+        //     ->where('variabel_kemiskinan_id', $varGK->id)
+        //     ->where('persentil', 1)
+        //     ->value('nilai') : 0;
 
-        if ($avgValue > 0) {
-            $kabupatenData[] = [
-                'id' => $kab->id,
-                'name' => $kab->nama_kabupaten,
-                'avg_nilai' => floatval($avgValue),
-                'count' => floatval($count),
-                'gk' => floatval($gk)
-            ];
-        }
+        // if ($avgValue > 0) {
+        $kabupatenData[] = [
+            'id' => $kab->id,
+            'name' => $kab->nama_kabupaten,
+            'nilai' => $ceknilai
+            // 'avg_nilai' => floatval($avgValue),
+            // 'count' => floatval($count),
+            // 'nilai'=>
+            // 'gk' => floatval($gk)
+        ];
+        //}
+
     }
+    // $kabupatenData = array_filter($kabupatenData, function ($item) {
+    //     return $item['avg_nilai'] != 0;
+    // });
+    $kabupatenData = array_filter($kabupatenData, function ($item) {
+        return !is_null($item['nilai']);
+    });
     //dd($kabupatenData);
 
 
@@ -120,3 +129,8 @@ Route::delete('/poverty-data/clear', [PovertyDataController::class, 'clearData']
 Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
 Route::get('/poverty-data/get-raw/{kabupaten_id}/{variabel_id}', [PovertyDataController::class, 'getRawData']);
 Route::get('/poverty-data/export/{kabupaten_id}', [PovertyDataController::class, 'exportToCSV'])->name('poverty-data.export');
+
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/dashboard');
+})->name('logout');
