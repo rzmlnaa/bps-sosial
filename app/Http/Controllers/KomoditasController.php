@@ -59,13 +59,29 @@ class KomoditasController extends Controller
                 ->delete();
         }
 
+        // Save state to session
+        session([
+            'last_kategori_id' => $kategori_id,
+            'active_tab' => $request->active_tab ?? 'pills-input-tab',
+            'input_mode' => $request->input_mode ?? 'mode-paste'
+        ]);
+
         return redirect()->back()->with('success', $count . ' Komoditas berhasil disimpan.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $komoditas = Komoditas::findOrFail($id);
+        $kategori_id = $komoditas->kategori_id;
         $komoditas->delete();
+
+        // Save state to session
+        session([
+            'last_kategori_id' => $kategori_id,
+            'active_tab' => $request->active_tab ?? 'pills-input-tab',
+            'input_mode' => $request->input_mode ?? 'mode-paste'
+        ]);
+
         return redirect()->back()->with('success', 'Komoditas berhasil dihapus.');
     }
 
@@ -85,6 +101,13 @@ class KomoditasController extends Controller
         ]);
 
         Komoditas::where('kategori_id', $request->kategori_id)->delete();
+
+        // Save state to session
+        session([
+            'last_kategori_id' => $request->kategori_id,
+            'active_tab' => $request->active_tab ?? 'pills-input-tab',
+            'input_mode' => $request->input_mode ?? 'mode-paste'
+        ]);
 
         return redirect()->back()->with('success', 'Data komoditas untuk kategori tersebut telah dikosongkan.');
     }

@@ -25,6 +25,8 @@ class KategoriKomoditasController extends Controller
             'user_id_add' => Auth::id() ?? 1,
         ]);
 
+        session(['active_tab' => 'pills-kategori-tab']);
+
         return redirect()->back()->with('success', 'Kategori Berhasil Ditambahkan');
     }
 
@@ -40,6 +42,8 @@ class KategoriKomoditasController extends Controller
             'user_id_update' => Auth::id() ?? 1,
         ]);
 
+        session(['active_tab' => 'pills-kategori-tab']);
+
         return redirect()->back()->with('success', 'Kategori Berhasil Diperbarui');
     }
 
@@ -49,10 +53,13 @@ class KategoriKomoditasController extends Controller
 
         // Check if category has commodities
         if ($kategori->komoditas()->count() > 0) {
+            session(['active_tab' => 'pills-kategori-tab']);
             return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki data komoditas. Silakan hapus semua komoditas dalam kategori ini terlebih dahulu.');
         }
 
         $kategori->delete();
+
+        session(['active_tab' => 'pills-kategori-tab']);
 
         return redirect()->back()->with('success', 'Kategori Berhasil Dihapus');
     }

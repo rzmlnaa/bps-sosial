@@ -154,6 +154,8 @@
                     <div class="col-lg-4">
                         <form action="{{ route('komoditas.store') }}" method="POST">
                             @csrf
+                            <input type="hidden" name="active_tab" id="active_tab_input" value="pills-input">
+                            <input type="hidden" name="input_mode" id="input_mode_input" value="mode-paste">
                             <!-- Filters -->
                             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                                 <div class="card-body p-4">
@@ -461,15 +463,39 @@
             }
 
             // Tab Switching Logic
+            document.querySelectorAll('#pills-tab button').forEach(button => {
+                button.addEventListener('shown.bs.tab', function (event) {
+                    document.getElementById('active_tab_input').value = event.target.id;
+                });
+            });
+
             document.querySelectorAll('#inputModeTab button').forEach(button => {
                 button.addEventListener('shown.bs.tab', function (event) {
-                    if (event.target.id === 'mode-manual-tab') {
+                    const modeId = event.target.id.replace('-tab', '');
+                    document.getElementById('input_mode_input').value = modeId;
+                    if (modeId === 'mode-manual') {
                         syncTextareaToManual();
                     } else {
                         syncManualToTextarea();
                     }
                 });
             });
+
+            // Restore State from Session
+            @if(session('active_tab'))
+                const activeTab = document.getElementById('{{ session('active_tab') }}');
+                if (activeTab) {
+                    bootstrap.Tab.getInstance(activeTab)?.show() || new bootstrap.Tab(activeTab).show();
+                }
+            @endif
+
+            @if(session('input_mode'))
+                const inputModeTab = document.getElementById('{{ session('input_mode') }}-tab');
+                if (inputModeTab) {
+                    bootstrap.Tab.getInstance(inputModeTab)?.show() || new bootstrap.Tab(inputModeTab).show();
+                    document.getElementById('input_mode_input').value = '{{ session('input_mode') }}';
+                }
+            @endif
 
             // Global click handler for remove row
             document.addEventListener('click', function (e) {
@@ -542,6 +568,8 @@
                                                         <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
                                                             @csrf
                                                             @method('DELETE')
+                                                            <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                            <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
                                                             <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
@@ -599,9 +627,21 @@
                             katId.name = 'kategori_id';
                             katId.value = selectKategori.value;
 
+                            const activeTab = document.createElement('input');
+                            activeTab.type = 'hidden';
+                            activeTab.name = 'active_tab';
+                            activeTab.value = 'pills-input-tab';
+
+                            const inputMode = document.createElement('input');
+                            inputMode.type = 'hidden';
+                            inputMode.name = 'input_mode';
+                            inputMode.value = document.getElementById('input_mode_input').value;
+
                             form.appendChild(csrf);
                             form.appendChild(method);
                             form.appendChild(katId);
+                            form.appendChild(activeTab);
+                            form.appendChild(inputMode);
                             document.body.appendChild(form);
                             form.submit();
                         }
