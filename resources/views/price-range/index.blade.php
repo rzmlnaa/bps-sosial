@@ -12,7 +12,7 @@
             <div class="mt-3 mt-md-0">
                 <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
                     style="background-color: var(--bps-blue);">
-                    <i class="fas fa-plus-circle me-1"></i> Input Komoditas
+                    <i class="fas fa-plus-circle me-1"></i> Input Nama Komoditas
                 </a>
             </div>
         </div>

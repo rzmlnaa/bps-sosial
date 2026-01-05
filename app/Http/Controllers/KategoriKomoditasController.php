@@ -46,6 +46,12 @@ class KategoriKomoditasController extends Controller
     public function destroy($id)
     {
         $kategori = KategoriKomoditas::findOrFail($id);
+
+        // Check if category has commodities
+        if ($kategori->komoditas()->count() > 0) {
+            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki data komoditas. Silakan hapus semua komoditas dalam kategori ini terlebih dahulu.');
+        }
+
         $kategori->delete();
 
         return redirect()->back()->with('success', 'Kategori Berhasil Dihapus');

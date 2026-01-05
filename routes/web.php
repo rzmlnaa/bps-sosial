@@ -138,7 +138,7 @@ Route::get('/price-range', function () {
 })->name('price-range.index');
 
 Route::get('/price-range/input', function () {
-    $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->get();
+    $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
     return view('price-range.input', compact('kategori'));
 })->name('price-range.input');
 

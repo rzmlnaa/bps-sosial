@@ -20,28 +20,43 @@ class KomoditasController extends Controller
         $lines = explode("\n", str_replace("\r", "", $request->raw_data));
 
         $count = 0;
+        $processedNames = [];
         foreach ($lines as $line) {
-            // Check if tab separated or just comma/space? Usually Excel is Tab.
-            // Let's support both tab and just single column.
             $parts = explode("\t", trim($line));
 
             $name = trim($parts[0] ?? '');
-            $satuan = trim($parts[1] ?? 'Kg'); // Default to Kg if not specified, based on the image
+            $satuan = trim($parts[1] ?? 'Kg');
 
             if (!empty($name)) {
-                Komoditas::updateOrCreate(
-                    [
+                $komoditas = Komoditas::where('kategori_id', $kategori_id)
+                    ->where('nama_komoditas', $name)
+                    ->first();
+
+                if ($komoditas) {
+                    $komoditas->update([
+                        'satuan' => $satuan,
+                        'user_id_update' => Auth::id() ?? 1,
+                    ]);
+                } else {
+                    Komoditas::create([
                         'kategori_id' => $kategori_id,
-                        'nama_komoditas' => $name
-                    ],
-                    [
+                        'nama_komoditas' => $name,
                         'satuan' => $satuan,
                         'user_id_add' => Auth::id() ?? 1,
                         'user_id_update' => Auth::id() ?? 1,
-                    ]
-                );
+                    ]);
+                }
+
+                $processedNames[] = $name;
                 $count++;
             }
+        }
+
+        // Delete commodities that were in this category but are no longer in the provided list
+        if (!empty($processedNames)) {
+            Komoditas::where('kategori_id', $kategori_id)
+                ->whereNotIn('nama_komoditas', $processedNames)
+                ->delete();
         }
 
         return redirect()->back()->with('success', $count . ' Komoditas berhasil disimpan.');
