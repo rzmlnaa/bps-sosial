@@ -162,7 +162,11 @@
         </div>
 
         <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
-            <small>&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All rights reserved.</small>
+            <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
+                rights reserved.</small>
+            <small>Jika terdapat pertanyaan atau error - bug pada sistem, harap hubungi Developer dengan <a
+                    href="https://wa.me/6289529406362" target="_blank" class="text-decoration-none fw-bold"
+                    style="color: var(--bps-orange);">klik disini</a></small>
         </footer>
     </main>
 
