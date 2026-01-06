@@ -24,7 +24,7 @@ class RhNilaiController extends Controller
         $kabupatens = Kabupaten::all();
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
 
-        $revisions = RhPerubahanHeader::where('rh_tahun_id', $activeYear->id)->orderBy('tanggal_perubahan', 'desc')->get();
+        $revisions = RhPerubahanHeader::where('rh_tahun_id', $activeYear->id)->orderBy('tanggal_perubahan', 'asc')->get();
         $selectedRevisionId = $request->revision_id;
 
         $categories = KategoriKomoditas::with(['komoditas'])->get();
@@ -35,9 +35,21 @@ class RhNilaiController extends Controller
             ->get()
             ->keyBy('komoditas_id');
 
-        // Fetch existing revision values if revision selected
-        $revisionNilai = collect();
-        if ($selectedRevisionId) {
+        // Fetch revision values
+        $revisionNilai = collect(); // For single revision selection
+        $allRevisionNilai = collect(); // For 'all' revisions selection
+
+        if ($selectedRevisionId === 'all') {
+            $allRevisionNilai = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
+                ->where('kabupaten_id', $selectedKabupatenId)
+                ->get()
+                ->groupBy('rh_perubahan_header_id');
+
+            // Map each revision to its komoditas_id for easy access
+            $allRevisionNilai = $allRevisionNilai->map(function ($items) {
+                return $items->keyBy('komoditas_id');
+            });
+        } elseif ($selectedRevisionId) {
             $revisionNilai = RhPerubahanDetail::where('rh_perubahan_header_id', $selectedRevisionId)
                 ->where('kabupaten_id', $selectedKabupatenId)
                 ->get()
@@ -52,7 +64,8 @@ class RhNilaiController extends Controller
             'selectedRevisionId',
             'categories',
             'masterNilai',
-            'revisionNilai'
+            'revisionNilai',
+            'allRevisionNilai'
         ));
     }
 
@@ -71,8 +84,6 @@ class RhNilaiController extends Controller
         // Save Master Values
         if ($request->has('master')) {
             foreach ($request->master as $komoditasId => $vals) {
-                // Only save if at least one value is filled OR if it already exists (to update to null)
-                // Actually updateOrCreate handles nulls fine.
                 RhMasterNilai::updateOrCreate(
                     [
                         'rh_tahun_id' => $tahunId,
@@ -88,21 +99,42 @@ class RhNilaiController extends Controller
             }
         }
 
-        // Save Revision Values if revision header is selected
-        if ($revisionId && $request->has('revision')) {
-            foreach ($request->revision as $komoditasId => $vals) {
-                RhPerubahanDetail::updateOrCreate(
-                    [
-                        'rh_perubahan_header_id' => $revisionId,
-                        'kabupaten_id' => $kabupatenId,
-                        'komoditas_id' => $komoditasId,
-                    ],
-                    [
-                        'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
-                        'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
-                        'user_id_add' => $userId,
-                    ]
-                );
+        // Save Revision Values
+        if ($revisionId === 'all') {
+            if ($request->has('revision')) {
+                foreach ($request->revision as $revHeaderId => $komoditasData) {
+                    foreach ($komoditasData as $komoditasId => $vals) {
+                        RhPerubahanDetail::updateOrCreate(
+                            [
+                                'rh_perubahan_header_id' => $revHeaderId,
+                                'kabupaten_id' => $kabupatenId,
+                                'komoditas_id' => $komoditasId,
+                            ],
+                            [
+                                'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
+                                'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                                'user_id_add' => $userId,
+                            ]
+                        );
+                    }
+                }
+            }
+        } elseif ($revisionId) {
+            if ($request->has('revision')) {
+                foreach ($request->revision as $komoditasId => $vals) {
+                    RhPerubahanDetail::updateOrCreate(
+                        [
+                            'rh_perubahan_header_id' => $revisionId,
+                            'kabupaten_id' => $kabupatenId,
+                            'komoditas_id' => $komoditasId,
+                        ],
+                        [
+                            'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
+                            'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                            'user_id_add' => $userId,
+                        ]
+                    );
+                }
             }
         }
 

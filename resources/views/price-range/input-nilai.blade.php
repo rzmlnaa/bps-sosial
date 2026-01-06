@@ -65,6 +65,10 @@
                         <select name="revision_id" class="form-select border-0 bg-light shadow-none"
                             onchange="this.form.submit()">
                             <option value="">-- Master Nilai (Input Utama) --</option>
+                            @if($revisions->count() > 0)
+                                <option value="all" {{ $selectedRevisionId == 'all' ? 'selected' : '' }}>-- Semua Perubahan --
+                                </option>
+                            @endif
                             @foreach($revisions as $rev)
                                 <option value="{{ $rev->id }}" {{ $selectedRevisionId == $rev->id ? 'selected' : '' }}>
                                     {{ $rev->label }}
@@ -92,7 +96,12 @@
                                 <th rowspan="2" style="width: 100px;">SATUAN</th>
                                 <th colspan="2" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
-                                @if($selectedRevisionId)
+
+                                @if($selectedRevisionId === 'all')
+                                    @foreach($revisions as $rev)
+                                        <th colspan="2" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
+                                    @endforeach
+                                @elseif($selectedRevisionId)
                                     @php
                                         $revHeader = $revisions->find($selectedRevisionId);
                                     @endphp
@@ -104,7 +113,13 @@
                                     MIN_{{ substr($activeYear->tahun, -2) }}</th>
                                 <th style="width: 150px;" class="bg-blue-light text-blue small">
                                     MAX_{{ substr($activeYear->tahun, -2) }}</th>
-                                @if($selectedRevisionId)
+
+                                @if($selectedRevisionId === 'all')
+                                    @foreach($revisions as $rev)
+                                        <th style="width: 150px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
+                                        <th style="width: 150px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
+                                    @endforeach
+                                @elseif($selectedRevisionId)
                                     <th style="width: 150px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
                                     <th style="width: 150px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
                                 @endif
@@ -113,15 +128,21 @@
                         <tbody>
                             @foreach($categories as $category)
                                 <tr class="bg-light">
-                                    <td colspan="{{ $selectedRevisionId ? 6 : 4 }}"
-                                        class="ps-4 fw-bold text-muted small text-uppercase py-2">
+                                    @php
+                                        $colspan = 4;
+                                        if ($selectedRevisionId === 'all') {
+                                            $colspan = 4 + ($revisions->count() * 2);
+                                        } elseif ($selectedRevisionId) {
+                                            $colspan = 6;
+                                        }
+                                    @endphp
+                                    <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
                                     </td>
                                 </tr>
                                 @foreach($category->komoditas as $komo)
                                     @php
                                         $master = $masterNilai->get($komo->id);
-                                        $revision = $revisionNilai->get($komo->id);
                                     @endphp
                                     <tr>
                                         <td class="ps-4">{{ $komo->nama_komoditas }}</td>
@@ -142,16 +163,35 @@
                                         </td>
 
                                         <!-- Revision Inputs -->
-                                        @if($selectedRevisionId)
+                                        @if($selectedRevisionId === 'all')
+                                            @foreach($revisions as $rev)
+                                                @php
+                                                    $revData = $allRevisionNilai->get($rev->id)?->get($komo->id);
+                                                @endphp
+                                                <td class="p-1">
+                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
+                                                        placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
+                                                </td>
+                                                <td class="p-1">
+                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
+                                                        placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
+                                                </td>
+                                            @endforeach
+                                        @elseif($selectedRevisionId)
+                                            @php
+                                                $revData = $revisionNilai->get($komo->id);
+                                            @endphp
                                             <td class="p-1">
                                                 <input type="number" name="revision[{{ $komo->id }}][min]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Min" value="{{ $revision->min_edit ?? '' }}" step="0.01">
+                                                    placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
                                                 <input type="number" name="revision[{{ $komo->id }}][max]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Max" value="{{ $revision->max_edit ?? '' }}" step="0.01">
+                                                    placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
                                             </td>
                                         @endif
                                     </tr>
