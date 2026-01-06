@@ -11,6 +11,7 @@ use App\Models\NilaiKemiskinan;
 use App\Http\Controllers\KategoriKomoditasController;
 use App\Http\Controllers\KomoditasController;
 use App\Models\KategoriKomoditas;
+use App\Http\Controllers\RhTahunController;
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -139,7 +140,8 @@ Route::get('/price-range', function () {
 
 Route::get('/price-range/input', function () {
     $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
-    return view('price-range.input', compact('kategori'));
+    $rhTahun = \App\Models\RhTahun::with(['perubahanHeaders.userAdd', 'userAdd'])->orderBy('tahun', 'desc')->get();
+    return view('price-range/input', compact('kategori', 'rhTahun'));
 })->name('price-range.input');
 
 Route::post('/kategori-komoditas', [KategoriKomoditasController::class, 'store'])->name('kategori-komoditas.store');
@@ -150,6 +152,15 @@ Route::post('/komoditas', [KomoditasController::class, 'store'])->name('komodita
 Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
 Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
 Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);
+
+// RH Year & Revision Management
+Route::post('/rh-tahun', [RhTahunController::class, 'storeTahun'])->name('rh-tahun.store');
+Route::patch('/rh-tahun/{id}/toggle-active', [RhTahunController::class, 'toggleActive'])->name('rh-tahun.toggle-active');
+Route::put('/rh-tahun/{id}', [RhTahunController::class, 'updateTahun'])->name('rh-tahun.update');
+Route::delete('/rh-tahun/{id}', [RhTahunController::class, 'destroyTahun'])->name('rh-tahun.destroy');
+Route::post('/rh-perubahan', [RhTahunController::class, 'storePerubahan'])->name('rh-perubahan.store');
+Route::put('/rh-perubahan/{id}', [RhTahunController::class, 'updatePerubahan'])->name('rh-perubahan.update');
+Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan'])->name('rh-perubahan.destroy');
 
 Route::post('/logout', function () {
     Auth::logout();

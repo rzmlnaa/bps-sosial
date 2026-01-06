@@ -30,6 +30,12 @@
                     <i class="fas fa-edit me-2"></i>Input Nama Komoditas
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4" id="pills-rh-settings-tab" data-bs-toggle="pill"
+                    data-bs-target="#pills-rh-settings" type="button" role="tab">
+                    <i class="fas fa-calendar-alt me-2"></i>Pengaturan RH
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="pills-tabContent">
@@ -81,7 +87,8 @@
                                                 <td class="fw-medium text-uppercase">
                                                     {{ $item->nama_kategori }}
                                                     @if($item->komoditas_count > 0)
-                                                        <span class="badge rounded-pill bg-blue-faded text-blue border ms-1" style="font-size: 0.65rem;">
+                                                        <span class="badge rounded-pill bg-blue-faded text-blue border ms-1"
+                                                            style="font-size: 0.65rem;">
                                                             {{ $item->komoditas_count }} Komoditas
                                                         </span>
                                                     @endif
@@ -112,6 +119,7 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-warning border-0 btn-edit-kategori"
+                                                        data-bs-toggle="modal" data-bs-target="#modalEditKategori"
                                                         data-id="{{ $item->id }}" data-nama="{{ $item->nama_kategori }}">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
@@ -126,8 +134,10 @@
                                                             </button>
                                                         </form>
                                                     @else
-                                                        <button type="button" class="btn btn-sm btn-link text-muted border-0 opacity-50" 
-                                                            title="Kategori tidak dapat dihapus karena masih memiliki data komoditas" disabled>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-link text-muted border-0 opacity-50"
+                                                            title="Kategori tidak dapat dihapus karena masih memiliki data komoditas"
+                                                            disabled>
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     @endif
@@ -159,8 +169,18 @@
                             <!-- Filters -->
                             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                                 <div class="card-body p-4">
-                                    <h6 class="fw-bold mb-3 text-uppercase text-muted"
-                                        style="font-size: 0.8rem; letter-spacing: 0.5px;">1. Pilih Kategori</h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-uppercase text-muted"
+                                            style="font-size: 0.8rem; letter-spacing: 0.5px;">1. Pilih Kategori</h6>
+                                        @php
+                                            $activeRh = $rhTahun->where('is_active', true)->first();
+                                        @endphp
+                                        @if($activeRh)
+                                            <span class="badge bg-success-faded text-success border small">
+                                                <i class="fas fa-calendar-check me-1"></i> Tahun Aktif: {{ $activeRh->tahun }}
+                                            </span>
+                                        @endif
+                                    </div>
                                     <div class="mb-0">
                                         <label class="form-label small fw-medium">Kategori Utama</label>
                                         <select id="select_kategori_filter" name="kategori_id"
@@ -290,12 +310,205 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Tab 3: Pengaturan RH (Admin Utama) -->
+            <div class="tab-pane fade" id="pills-rh-settings" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Left Column: Settings Form -->
+                    <div class="col-lg-4">
+                        <!-- Add Year -->
+                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                            <div class="card-header bg-white py-3 border-bottom-0">
+                                <h6 class="fw-bold mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">Tambah Tahun
+                                    RH</h6>
+                            </div>
+                            <div class="card-body pt-0">
+                                <form action="{{ route('rh-tahun.store') }}" method="POST">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-medium">Tahun</label>
+                                        <input type="number" name="tahun" class="form-control" placeholder="Contoh: 2025"
+                                            required min="2000" max="2099">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-medium">Batas Selisih Harga</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted small">Rp</span>
+                                            <input type="number" name="batas_selisih_harga" class="form-control"
+                                                placeholder="Contoh: 5000" required min="0">
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Batas toleransi perbedaan harga
+                                            (Rupiah) untuk validasi.</small>
+                                    </div>
+                                    <button type="submit" class="btn text-white w-100 fw-medium"
+                                        style="background-color: var(--bps-blue);">
+                                        <i class="fas fa-plus me-1"></i> Tambah Tahun
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Add Revision Header -->
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                            <div class="card-header bg-white py-3 border-bottom-0">
+                                <h6 class="fw-bold mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">Tambah Header
+                                    Perubahan</h6>
+                            </div>
+                            <div class="card-body pt-0">
+                                <form action="{{ route('rh-perubahan.store') }}" method="POST">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-medium">Pilih Tahun RH</label>
+                                        <select name="rh_tahun_id" id="select_rh_tahun_perubahan" class="form-select"
+                                            required>
+                                            <option value="" selected disabled>-- Pilih Tahun --</option>
+                                            @foreach($rhTahun as $t)
+                                                <option value="{{ $t->id }}" data-tahun="{{ $t->tahun }}">{{ $t->tahun }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-medium">Tanggal Perubahan</label>
+                                        <input type="date" name="tanggal_perubahan" id="input_tanggal_perubahan"
+                                            class="form-control" required disabled>
+                                        <small class="text-muted" style="font-size: 0.7rem;" id="date_hint">Pilih tahun
+                                            terlebih dahulu.</small>
+                                    </div>
+                                    <button type="submit" class="btn text-white w-100 fw-medium"
+                                        style="background-color: var(--bps-orange);">
+                                        <i class="fas fa-save me-1"></i> Simpan Header
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Settings Data -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                            <div class="card-header bg-white py-3 border-bottom-0">
+                                <h5 class="fw-bold mb-0">Daftar Tahun & Perubahan</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="ps-4 border-0" style="width: 120px;">Tahun</th>
+                                            <th class="border-0">Batas Selisih</th>
+                                            <th class="border-0">Status</th>
+                                            <th class="border-0">Daftar Perubahan (Header)</th>
+                                            <th class="text-center border-0">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="border-top-0">
+                                        @forelse($rhTahun as $tahun)
+                                            <tr>
+                                                <td class="ps-4">
+                                                    <span class="fs-5 fw-bold text-dark">{{ $tahun->tahun }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">Rp
+                                                        {{ number_format($tahun->batas_selisih_harga, 0, ',', '.') }}</span>
+                                                </td>
+                                                <td>
+                                                    <form action="{{ route('rh-tahun.toggle-active', $tahun->id) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        @if($tahun->is_active)
+                                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                                                <i class="fas fa-check-circle me-1"></i> Aktif
+                                                            </button>
+                                                        @else
+                                                            <button type="submit"
+                                                                class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                                                Set Aktif
+                                                            </button>
+                                                        @endif
+                                                    </form>
+                                                </td>
+                                                <td>
+                                                    @if($tahun->perubahanHeaders->count() > 0)
+                                                        <ul class="list-unstyled mb-0 small">
+                                                            @foreach($tahun->perubahanHeaders as $rev)
+                                                                <li
+                                                                    class="mb-2 d-flex justify-content-between align-items-center bg-light p-2 rounded border-start border-4 border-orange">
+                                                                    <div>
+                                                                        @php
+                                                                            $revDate = \Carbon\Carbon::parse($rev->tanggal_perubahan);
+                                                                        @endphp
+                                                                        <span class="fw-bold text-dark">Perubahan RH
+                                                                            {{ $revDate->translatedFormat('j F Y') }}</span>
+                                                                    </div>
+                                                                    <div class="d-flex gap-1">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm text-warning border-0 btn-edit-rh-perubahan"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#modalEditRhPerubahan"
+                                                                            data-id="{{ $rev->id }}"
+                                                                            data-tanggal="{{ $rev->tanggal_perubahan }}"
+                                                                            data-tahun="{{ $tahun->tahun }}">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+                                                                        <form action="{{ route('rh-perubahan.destroy', $rev->id) }}"
+                                                                            method="POST" class="form-delete">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button type="button"
+                                                                                class="btn btn-sm text-danger border-0 btn-delete">
+                                                                                <i class="fas fa-times"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <span class="text-muted italic small">Belum ada header perubahan</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center gap-1">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-warning border-0 btn-edit-rh-tahun"
+                                                            data-bs-toggle="modal" data-bs-target="#modalEditRhTahun"
+                                                            data-id="{{ $tahun->id }}" data-tahun="{{ $tahun->tahun }}"
+                                                            data-selisih="{{ (int) $tahun->batas_selisih_harga }}">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <form action="{{ route('rh-tahun.destroy', $tahun->id) }}" method="POST"
+                                                            class="form-delete">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-danger border-0 btn-delete" {{ $tahun->perubahanHeaders->count() > 0 ? 'disabled' : '' }}
+                                                                title="{{ $tahun->perubahanHeaders->count() > 0 ? 'Hapus semua header perubahan dulu' : 'Hapus Tahun' }}">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center py-5 text-muted">Belum ada data tahun RH.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+
     <!-- Modal Edit Kategori -->
-    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0">
@@ -308,8 +521,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold text-uppercase">Nama Kategori</label>
-                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control"
-                                placeholder="Contoh: PADI-PADIAN" required>
+                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control" placeholder="Contoh: PADI-PADIAN" required>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -323,6 +535,69 @@
         </div>
     </div>
 
+    <!-- Modal Edit Rh Tahun -->
+    <div class="modal fade" id="modalEditRhTahun" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Edit Batas Selisih & Tahun</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditRhTahun" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Tahun</label>
+                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000" max="2099">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Batas Selisih Harga</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted small">Rp</span>
+                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control" required min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Rh Perubahan -->
+    <div class="modal fade" id="modalEditRhPerubahan" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Edit Tanggal Perubahan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditRhPerubahan" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Tanggal Perubahan</label>
+                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control" required>
+                            <small class="text-primary small" id="edit_rh_perubahan_hint"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <style>
         .nav-pills .nav-link {
             color: #64748b;
@@ -344,6 +619,10 @@
 
         .bg-blue-faded {
             background-color: rgba(0, 147, 221, 0.1);
+        }
+
+        .bg-success-faded {
+            background-color: rgba(40, 167, 69, 0.1);
         }
 
         .text-blue {
@@ -370,28 +649,115 @@
             transition: opacity 0.2s;
         }
     </style>
+
+    <!-- Modal Edit Kategori -->
+    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="modalEditKategoriLabel">Edit Nama Kategori</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditKategori" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Nama Kategori</label>
+                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control" placeholder="Contoh: PADI-PADIAN" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Rh Tahun -->
+    <div class="modal fade" id="modalEditRhTahun" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Edit Batas Selisih & Tahun</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditRhTahun" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Tahun</label>
+                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000" max="2099">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Batas Selisih Harga</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted small">Rp</span>
+                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control" required min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Rh Perubahan -->
+    <div class="modal fade" id="modalEditRhPerubahan" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Edit Tanggal Perubahan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditRhPerubahan" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Tanggal Perubahan</label>
+                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control" required>
+                            <small class="text-primary small" id="edit_rh_perubahan_hint"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Edit Kategori Modal Logic
-            const editButtons = document.querySelectorAll('.btn-edit-kategori');
-            const modalEdit = new bootstrap.Modal(document.getElementById('modalEditKategori'));
-            const formEdit = document.getElementById('formEditKategori');
-            const inputEditNama = document.getElementById('edit_nama_kategori');
+            // Edit Kategori Modal Populating
+            const modalEditKategoriEl = document.getElementById('modalEditKategori');
+            if (modalEditKategoriEl) {
+                modalEditKategoriEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const nama = button.getAttribute('data-nama');
 
-            editButtons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const id = this.getAttribute('data-id');
-                    const nama = this.getAttribute('data-nama');
-
-                    inputEditNama.value = nama;
-                    formEdit.action = `/kategori-komoditas/${id}`;
-
-                    modalEdit.show();
+                    this.querySelector('#edit_nama_kategori').value = nama;
+                    this.querySelector('#formEditKategori').action = `/kategori-komoditas/${id}`;
                 });
-            });
+            }
 
             // Delete Confirmation Logic
             document.addEventListener('click', function (event) {
@@ -430,10 +796,10 @@
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
-                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
-                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
-                            <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
-                        `;
+                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
+                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
+                            `;
                 manualInputBody.appendChild(tr);
             }
 
@@ -489,13 +855,13 @@
                 }
             @endif
 
-            @if(session('input_mode'))
-                const inputModeTab = document.getElementById('{{ session('input_mode') }}-tab');
-                if (inputModeTab) {
-                    bootstrap.Tab.getInstance(inputModeTab)?.show() || new bootstrap.Tab(inputModeTab).show();
-                    document.getElementById('input_mode_input').value = '{{ session('input_mode') }}';
-                }
-            @endif
+                @if(session('input_mode'))
+                    const inputModeTab = document.getElementById('{{ session('input_mode') }}-tab');
+                    if (inputModeTab) {
+                        bootstrap.Tab.getInstance(inputModeTab)?.show() || new bootstrap.Tab(inputModeTab).show();
+                        document.getElementById('input_mode_input').value = '{{ session('input_mode') }}';
+                    }
+                @endif
 
             // Global click handler for remove row
             document.addEventListener('click', function (e) {
@@ -556,27 +922,27 @@
                                 data.forEach((item, index) => {
                                     // Add to table
                                     html += `
-                                                <tr>
-                                                    <td class="ps-4 text-muted">${index + 1}</td>
-                                                    <td class="fw-medium">${item.nama_komoditas}</td>
-                                                    <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
-                                                    <td>
-                                                        <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
-                                                        <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <input type="hidden" name="active_tab" value="pills-input-tab">
-                                                            <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                                <i class="fas fa-trash-alt"></i>
-                                                            </button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            `;
+                                                    <tr>
+                                                        <td class="ps-4 text-muted">${index + 1}</td>
+                                                        <td class="fw-medium">${item.nama_komoditas}</td>
+                                                        <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                        <td>
+                                                            <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
+                                                            <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                                <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                `;
 
                                     // Add to manual input
                                     addManualRow(item.nama_komoditas, item.satuan || 'Kg');
@@ -646,6 +1012,62 @@
                             form.submit();
                         }
                     });
+                });
+            }
+
+            // JS Logic for RH Year and Date restriction
+            const selectRhTahun = document.getElementById('select_rh_tahun_perubahan');
+            const inputDate = document.getElementById('input_tanggal_perubahan');
+            const dateHint = document.getElementById('date_hint');
+
+            if (selectRhTahun && inputDate) {
+                selectRhTahun.addEventListener('change', function () {
+                    const selectedYear = this.options[this.selectedIndex].getAttribute('data-tahun');
+                    if (selectedYear) {
+                        inputDate.disabled = false;
+                        inputDate.min = `${selectedYear}-01-01`;
+                        inputDate.max = `${selectedYear}-12-31`;
+                        inputDate.value = `${selectedYear}-01-01`;
+                        dateHint.innerText = `Pilih tanggal di tahun ${selectedYear}`;
+                        dateHint.classList.remove('text-muted');
+                        dateHint.classList.add('text-primary');
+                    }
+                });
+            }
+
+            // Edit Rh Tahun Modal Populating
+            const modalEditRhTahunEl = document.getElementById('modalEditRhTahun');
+            if (modalEditRhTahunEl) {
+                modalEditRhTahunEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const tahun = button.getAttribute('data-tahun');
+                    const selisih = button.getAttribute('data-selisih');
+
+                    this.querySelector('#edit_rh_tahun').value = tahun;
+                    this.querySelector('#edit_rh_selisih').value = selisih;
+
+                    let url = "{{ route('rh-tahun.update', ':id') }}";
+                    this.querySelector('#formEditRhTahun').action = url.replace(':id', id);
+                });
+            }
+
+            // Edit Rh Perubahan Modal Populating
+            const modalEditRhPerubahanEl = document.getElementById('modalEditRhPerubahan');
+            if (modalEditRhPerubahanEl) {
+                modalEditRhPerubahanEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const tanggal = button.getAttribute('data-tanggal');
+                    const tahun = button.getAttribute('data-tahun');
+
+                    this.querySelector('#edit_rh_perubahan_tanggal').value = tanggal;
+                    this.querySelector('#edit_rh_perubahan_tanggal').min = `${tahun}-01-01`;
+                    this.querySelector('#edit_rh_perubahan_tanggal').max = `${tahun}-12-31`;
+                    this.querySelector('#edit_rh_perubahan_hint').innerText = `Pilih tanggal di tahun ${tahun}`;
+
+                    let url = "{{ route('rh-perubahan.update', ':id') }}";
+                    this.querySelector('#formEditRhPerubahan').action = url.replace(':id', id);
                 });
             }
         });
