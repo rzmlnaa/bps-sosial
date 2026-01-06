@@ -81,12 +81,20 @@ class RhNilaiController extends Controller
         $revisionId = $request->revision_id;
         $userId = Auth::id() ?? 1;
 
-        // Validation: Check if Max < Min
+        $activeYear = RhTahun::find($tahunId);
+        $batasSelisih = $activeYear->batas_selisih_harga ?? 0;
+
+        // Validation: Check if Max < Min and Alasan if Selisih > Batas
         if ($request->has('master')) {
             foreach ($request->master as $komoditasId => $vals) {
                 if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
-                    if ((float) $vals['max'] < (float) $vals['min']) {
+                    $min = (float) $vals['min'];
+                    $max = (float) $vals['max'];
+                    if ($max < $min) {
                         return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada Master Nilai.')->withInput();
+                    }
+                    if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
+                        return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada Master Nilai.')->withInput();
                     }
                 }
             }
@@ -97,8 +105,13 @@ class RhNilaiController extends Controller
                 foreach ($request->revision as $revHeaderId => $komoditasData) {
                     foreach ($komoditasData as $komoditasId => $vals) {
                         if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
-                            if ((float) $vals['max'] < (float) $vals['min']) {
+                            $min = (float) $vals['min'];
+                            $max = (float) $vals['max'];
+                            if ($max < $min) {
                                 return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
+                            }
+                            if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
+                                return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada data perubahan.')->withInput();
                             }
                         }
                     }
@@ -106,8 +119,13 @@ class RhNilaiController extends Controller
             } else {
                 foreach ($request->revision as $komoditasId => $vals) {
                     if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
-                        if ((float) $vals['max'] < (float) $vals['min']) {
+                        $min = (float) $vals['min'];
+                        $max = (float) $vals['max'];
+                        if ($max < $min) {
                             return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
+                        }
+                        if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
+                            return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada data perubahan.')->withInput();
                         }
                     }
                 }
@@ -126,6 +144,7 @@ class RhNilaiController extends Controller
                     [
                         'min_nilai' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
                         'max_nilai' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                        'alasan' => $vals['alasan'] ?? null,
                         'user_id_add' => $userId,
                     ]
                 );
@@ -146,6 +165,7 @@ class RhNilaiController extends Controller
                             [
                                 'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
                                 'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                                'alasan' => $vals['alasan'] ?? null,
                                 'user_id_add' => $userId,
                             ]
                         );
@@ -164,6 +184,7 @@ class RhNilaiController extends Controller
                         [
                             'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
                             'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                            'alasan' => $vals['alasan'] ?? null,
                             'user_id_add' => $userId,
                         ]
                     );
