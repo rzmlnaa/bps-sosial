@@ -13,6 +13,7 @@ class RhMasterNilai extends Model
         'komoditas_id',
         'min_nilai',
         'max_nilai',
+        'alasan',
         'user_id_add'
     ];
 

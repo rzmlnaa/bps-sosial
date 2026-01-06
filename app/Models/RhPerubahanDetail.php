@@ -13,6 +13,7 @@ class RhPerubahanDetail extends Model
         'komoditas_id',
         'min_edit',
         'max_edit',
+        'alasan',
         'user_id_add'
     ];
 

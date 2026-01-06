@@ -185,7 +185,7 @@
                                         </td>
                                         <td class="p-1">
                                             <input type="text" name="master[{{ $komo->id }}][alasan]"
-                                                class="form-control form-control-sm border-0 bg-blue-faded"
+                                                class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
                                                 placeholder="Berikan alasan" value="{{ $master->alasan ?? '' }}">
                                         </td>
 
@@ -207,8 +207,8 @@
                                                 </td>
                                                 <td class="p-1">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded"
-                                                        placeholder="Alasan perubahan" value="{{ $revData->alasan ?? '' }}">
+                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                        placeholder="Berikan alasan" value="{{ $revData->alasan ?? '' }}">
                                                 </td>
                                             @endforeach
                                         @elseif($selectedRevisionId)
@@ -216,19 +216,19 @@
                                                 $revData = $revisionNilai->get($komo->id);
                                             @endphp
                                             <td class="p-1">
-                                                <input type="number" name="revision[{{ $komoditasId ?? $komo->id }}][min]"
+                                                <input type="number" name="revision[{{ $komo->id }}][min]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
                                                     placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
-                                                <input type="number" name="revision[{{ $komoditasId ?? $komo->id }}][max]"
+                                                <input type="number" name="revision[{{ $komo->id }}][max]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
                                                     placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
-                                                <input type="text" name="revision[{{ $komoditasId ?? $komo->id }}][alasan]"
-                                                    class="form-control form-control-sm border-0 bg-orange-faded"
-                                                    placeholder="Alasan perubahan" value="{{ $revData->alasan ?? '' }}">
+                                                <input type="text" name="revision[{{ $komo->id }}][alasan]"
+                                                    class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                    placeholder="Berikan alasan" value="{{ $revData->alasan ?? '' }}">
                                             </td>
                                         @endif
                                     </tr>
@@ -301,7 +301,7 @@
             const form = document.getElementById('form-save-nilai');
             const batasSelisih = parseFloat(document.getElementById('batas-selisih-val').value) || 0;
 
-            // Function to validate a trio of min/max/alasan inputs
+            // Function to validate a trio of min/max/alasan inputs and toggle visibility
             function validateTrio(input) {
                 const name = input.getAttribute('name');
                 let minName, maxName, alasanName;
@@ -346,12 +346,15 @@
                     hasError = true;
                 }
 
-                // Check Batas Selisih
+                // Toggle visibility and check Batas Selisih
                 if (minVal !== null && maxVal !== null && (maxVal - minVal) > batasSelisih) {
+                    alasanInput.classList.remove('d-none');
                     if (alasanVal === '') {
                         alasanInput.classList.add('is-invalid-custom');
                         hasError = true;
                     }
+                } else {
+                    alasanInput.classList.add('d-none');
                 }
 
                 return !hasError;
@@ -366,10 +369,10 @@
 
             // Validation on form submission
             form.addEventListener('submit', function(e) {
-                const allInputs = form.querySelectorAll('input[name*="[min]"], input[name*="[max]"], input[name*="[alasan]"]');
+                const allMinInputs = form.querySelectorAll('input[name*="[min]"]');
                 let hasError = false;
 
-                allInputs.forEach(input => {
+                allMinInputs.forEach(input => {
                     if (!validateTrio(input)) {
                         hasError = true;
                     }
