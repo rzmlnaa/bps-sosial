@@ -13,6 +13,8 @@ use App\Http\Controllers\KomoditasController;
 use App\Models\KategoriKomoditas;
 use App\Http\Controllers\RhNilaiController;
 use App\Http\Controllers\RhTahunController;
+use App\Http\Controllers\PriceRangeController;
+
 
 Route::get('/', function () {
     return redirect('/dashboard');
@@ -135,9 +137,9 @@ Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::clas
 Route::get('/poverty-data/get-raw/{kabupaten_id}/{variabel_id}', [PovertyDataController::class, 'getRawData']);
 Route::get('/poverty-data/export/{kabupaten_id}', [PovertyDataController::class, 'exportToCSV'])->name('poverty-data.export');
 
-Route::get('/price-range', function () {
-    return view('price-range.index');
-})->name('price-range.index');
+Route::get('/price-range', [PriceRangeController::class, 'index'])->name('price-range.index');
+Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name('price-range.export');
+
 
 Route::get('/price-range/input', function () {
     $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
