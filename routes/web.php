@@ -11,6 +11,7 @@ use App\Models\NilaiKemiskinan;
 use App\Http\Controllers\KategoriKomoditasController;
 use App\Http\Controllers\KomoditasController;
 use App\Models\KategoriKomoditas;
+use App\Http\Controllers\RhNilaiController;
 use App\Http\Controllers\RhTahunController;
 
 Route::get('/', function () {
@@ -161,6 +162,10 @@ Route::delete('/rh-tahun/{id}', [RhTahunController::class, 'destroyTahun'])->nam
 Route::post('/rh-perubahan', [RhTahunController::class, 'storePerubahan'])->name('rh-perubahan.store');
 Route::put('/rh-perubahan/{id}', [RhTahunController::class, 'updatePerubahan'])->name('rh-perubahan.update');
 Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan'])->name('rh-perubahan.destroy');
+
+// RH Price Range Values
+Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
+Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
 
 Route::post('/logout', function () {
     Auth::logout();

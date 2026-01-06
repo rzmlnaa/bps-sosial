@@ -6,7 +6,7 @@
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Input Nama Komoditas</h2>
+                <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Input Komoditas</h2>
                 <p class="text-muted mb-0">Kelola master kategori dan data rentang harga komoditas</p>
             </div>
             <div class="mt-3 mt-md-0">
@@ -408,7 +408,7 @@
                                                     <span class="fs-5 fw-bold text-dark">{{ $tahun->tahun }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-light text-dark border">Rp
+                                                    <span class="badge bg-light text-dark border">Rp 1 - Rp
                                                         {{ number_format($tahun->batas_selisih_harga, 0, ',', '.') }}</span>
                                                 </td>
                                                 <td>

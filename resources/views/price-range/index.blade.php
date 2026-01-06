@@ -9,10 +9,14 @@
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Rentang Harga</h2>
                 <p class="text-muted mb-0">Visualisasi data rentang harga komoditas di Kalimantan Barat</p>
             </div>
-            <div class="mt-3 mt-md-0">
+            <div class="mt-3 mt-md-0 d-flex gap-2">
+                <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
+                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                </a>
                 <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
                     style="background-color: var(--bps-blue);">
-                    <i class="fas fa-plus-circle me-1"></i> Input Nama Komoditas
+                    <i class="fas fa-plus-circle me-1"></i> Input Komoditas
                 </a>
             </div>
         </div>
