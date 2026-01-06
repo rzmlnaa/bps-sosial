@@ -81,6 +81,39 @@ class RhNilaiController extends Controller
         $revisionId = $request->revision_id;
         $userId = Auth::id() ?? 1;
 
+        // Validation: Check if Max < Min
+        if ($request->has('master')) {
+            foreach ($request->master as $komoditasId => $vals) {
+                if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
+                    if ((float) $vals['max'] < (float) $vals['min']) {
+                        return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada Master Nilai.')->withInput();
+                    }
+                }
+            }
+        }
+
+        if ($request->has('revision')) {
+            if ($revisionId === 'all') {
+                foreach ($request->revision as $revHeaderId => $komoditasData) {
+                    foreach ($komoditasData as $komoditasId => $vals) {
+                        if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
+                            if ((float) $vals['max'] < (float) $vals['min']) {
+                                return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
+                            }
+                        }
+                    }
+                }
+            } else {
+                foreach ($request->revision as $komoditasId => $vals) {
+                    if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
+                        if ((float) $vals['max'] < (float) $vals['min']) {
+                            return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
+                        }
+                    }
+                }
+            }
+        }
+
         // Save Master Values
         if ($request->has('master')) {
             foreach ($request->master as $komoditasId => $vals) {

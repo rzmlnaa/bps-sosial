@@ -250,5 +250,92 @@
             border-width: 1px;
             border-color: #f1f5f9;
         }
+
+        .is-invalid-custom {
+            border: 2px solid #dc3545 !important;
+            background-color: #fff5f5 !important;
+        }
     </style>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('form-save-nilai');
+
+            // Function to validate a pair of min/max inputs
+            function validatePair(input) {
+                const name = input.getAttribute('name');
+                let otherName;
+                let isMin = false;
+
+                if (name.includes('[min]')) {
+                    otherName = name.replace('[min]', '[max]');
+                    isMin = true;
+                } else if (name.includes('[max]')) {
+                    otherName = name.replace('[max]', '[min]');
+                } else {
+                    return;
+                }
+
+                const otherInput = form.querySelector(`input[name="${CSS.escape(otherName)}"]`);
+                if (!otherInput) return;
+
+                const minInput = isMin ? input : otherInput;
+                const maxInput = isMin ? otherInput : input;
+
+                const minVal = minInput.value !== '' ? parseFloat(minInput.value) : null;
+                const maxVal = maxInput.value !== '' ? parseFloat(maxInput.value) : null;
+
+                if (minVal !== null && maxVal !== null && maxVal < minVal) {
+                    minInput.classList.add('is-invalid-custom');
+                    maxInput.classList.add('is-invalid-custom');
+                    return false;
+                } else {
+                    minInput.classList.remove('is-invalid-custom');
+                    maxInput.classList.remove('is-invalid-custom');
+                    return true;
+                }
+            }
+
+            // Real-time validation on input
+            form.addEventListener('input', function (e) {
+                if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+                    validatePair(e.target);
+                }
+            });
+
+            // Validation on form submission
+            form.addEventListener('submit', function (e) {
+                const allInputs = form.querySelectorAll('input[type="number"]');
+                let hasError = false;
+
+                allInputs.forEach(input => {
+                    if (!validatePair(input)) {
+                        hasError = true;
+                    }
+                });
+
+                if (hasError) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Nilai Tidak Valid',
+                        text: 'Terdapat nilai MAX yang lebih kecil dari nilai MIN. Silakan periksa kembali inputan Anda.',
+                        confirmButtonColor: '#0093dd'
+                    });
+
+                    // Scroll to first error
+                    const firstError = form.querySelector('.is-invalid-custom');
+                    if (firstError) {
+                        firstError.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                        firstError.focus();
+                    }
+                }
+            });
+        });
+    </script>
+@endpush
