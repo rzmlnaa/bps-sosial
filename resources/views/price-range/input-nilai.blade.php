@@ -39,7 +39,8 @@
             <div class="col-lg-8">
                 <div class="card border-0 shadow-sm" style="border-radius: 12px;">
                     <div class="card-body p-4">
-                        <form action="{{ route('rh-nilai.index') }}" method="GET" class="row g-3 align-items-end" id="filter-form">
+                        <form action="{{ route('rh-nilai.index') }}" method="GET" class="row g-3 align-items-end"
+                            id="filter-form">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Tahun RH Aktif</label>
                                 <div class="input-group">
@@ -68,7 +69,8 @@
                                     onchange="this.form.submit()">
                                     <option value="">-- Master Nilai (Input Utama) --</option>
                                     @if($revisions->count() > 0)
-                                        <option value="all" {{ $selectedRevisionId == 'all' ? 'selected' : '' }}>-- Semua Perubahan --
+                                        <option value="all" {{ $selectedRevisionId == 'all' ? 'selected' : '' }}>-- Semua
+                                            Perubahan --
                                         </option>
                                     @endif
                                     @foreach($revisions as $rev)
@@ -83,7 +85,8 @@
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, var(--bps-blue), #007bbd);">
+                <div class="card border-0 shadow-sm h-100"
+                    style="border-radius: 12px; background: linear-gradient(135deg, var(--bps-blue), #007bbd);">
                     <div class="card-body p-4 text-white d-flex flex-column justify-content-center">
                         <div class="d-flex align-items-center mb-2">
                             <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
@@ -91,8 +94,10 @@
                             </div>
                             <h6 class="mb-0 fw-bold">Konfigurasi Batas Selisih</h6>
                         </div>
-                        <h3 class="fw-bold mb-1">Rp {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}</h3>
-                        <p class="small mb-0 opacity-75">Jika selisih MAX - MIN melebihi batas ini, maka <b>Alasan</b> wajib diisi.</p>
+                        <h3 class="fw-bold mb-1">Rp {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}
+                        </h3>
+                        <p class="small mb-0 opacity-75">Jika selisih MAX - MIN melebihi batas ini, maka <b>Alasan</b> wajib
+                            diisi.</p>
                         <input type="hidden" id="batas-selisih-val" value="{{ $activeYear->batas_selisih_harga ?? 0 }}">
                     </div>
                 </div>
@@ -297,7 +302,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('form-save-nilai');
             const batasSelisih = parseFloat(document.getElementById('batas-selisih-val').value) || 0;
 
@@ -361,14 +366,14 @@
             }
 
             // Real-time validation on input
-            form.addEventListener('input', function(e) {
+            form.addEventListener('input', function (e) {
                 if (e.target.tagName === 'INPUT') {
                     validateTrio(e.target);
                 }
             });
 
             // Validation on form submission
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 const allMinInputs = form.querySelectorAll('input[name*="[min]"]');
                 let hasError = false;
 
