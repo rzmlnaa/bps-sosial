@@ -76,7 +76,7 @@
                                     <span class="fs-4 fw-bold me-2" style="line-height: 1;">Rp {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}</span>
                                 </div>
                                 <p class="mb-0 small" style="opacity: 0.85;">
-                                    Jika selisih harga (MAX - MIN) melebihi batas ini, maka kolom <b>Alasan</b> terisi.
+                                    Jika selisih harga (MAX - MIN) melebihi batas ini, maka kolom <b>Alasan</b> wajib diisi.
                                 </p>
                             </div>
                             <div class="col-md-6 position-relative">
@@ -101,6 +101,94 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Analisis Insight Section -->
+            @if(!empty($outliers))
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten</h5>
+                        <small class="text-muted">Menampilkan kabupaten dengan harga yang menyimpang jauh (>25%) dari rata-rata kabupaten.</small>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs nav-fill mb-3" id="insightTabs" role="tablist">
+                            @foreach($outliers as $periodName => $data)
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold" 
+                                            id="tab-{{ Str::slug($periodName) }}" data-bs-toggle="tab" 
+                                            data-bs-target="#content-{{ Str::slug($periodName) }}" type="button" role="tab">
+                                        {{ $periodName }}
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <div class="tab-content" id="insightTabsContent">
+                            @foreach($outliers as $periodName => $commodities)
+                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" 
+                                     id="content-{{ Str::slug($periodName) }}" role="tabpanel">
+                                    
+                                    @if(empty($commodities))
+                                        <div class="text-center py-4">
+                                            <p class="text-muted mb-0">Tidak ditemukan anomali harga signifikan pada periode ini.</p>
+                                        </div>
+                                    @else
+                                        <div class="row g-3">
+                                            @foreach($commodities as $komoditasName => $details)
+                                                @if($komoditasName !== 'unit')
+                                                <div class="col-md-6">
+                                                    <div class="card h-100 border bg-light">
+                                                        <div class="card-body py-2 px-3">
+                                                            <strong class="d-block mb-1 text-primary">
+                                                                {{ $komoditasName }} <span class="badge bg-secondary ms-1 fw-normal">{{ $details['unit'] ?? '' }}</span>
+                                                            </strong>
+                                                            <div class="d-flex justify-content-between small text-muted border-bottom pb-2 mb-2">
+                                                                <span>Avg Min: <b>{{ number_format($details['avg_min'] ?? 0, 0, ',', '.') }}</b></span>
+                                                                <span>Avg Max: <b>{{ number_format($details['avg_max'] ?? 0, 0, ',', '.') }}</b></span>
+                                                            </div>
+                                                            
+                                                            <div class="row small">
+                                                                <!-- Below Average -->
+                                                                <div class="col-6 border-end">
+                                                                    <span class="text-success fw-bold d-block mb-1"><i class="fas fa-arrow-down me-1"></i>Jauh Di Bawah Rata2</span>
+                                                                    @forelse($details['below'] as $item)
+                                                                        <div class="mb-1">
+                                                                            <span class="fw-bold">{{ $item['kab'] }}</span>
+                                                                            <br>
+                                                                            <span class="text-muted">Rp {{ number_format($item['val'], 0, ',', '.') }}</span>
+                                                                            <span class="badge bg-success bg-opacity-10 text-success ms-1">-{{ $item['diff'] }}</span>
+                                                                        </div>
+                                                                    @empty
+                                                                        <span class="text-muted fst-italic">-</span>
+                                                                    @endforelse
+                                                                </div>
+                                                                
+                                                                <!-- Above Average -->
+                                                                <div class="col-6 ps-3">
+                                                                    <span class="text-danger fw-bold d-block mb-1"><i class="fas fa-arrow-up me-1"></i>Jauh Di Atas Rata2</span>
+                                                                    @forelse($details['above'] as $item)
+                                                                        <div class="mb-1">
+                                                                            <span class="fw-bold">{{ $item['kab'] }}</span>
+                                                                            <br>
+                                                                            <span class="text-muted">Rp {{ number_format($item['val'], 0, ',', '.') }}</span>
+                                                                            <span class="badge bg-danger bg-opacity-10 text-danger ms-1">+{{ $item['diff'] }}</span>
+                                                                        </div>
+                                                                    @empty
+                                                                        <span class="text-muted fst-italic">-</span>
+                                                                    @endforelse
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Data Table -->
             <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
