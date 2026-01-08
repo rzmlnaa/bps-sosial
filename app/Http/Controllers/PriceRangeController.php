@@ -113,6 +113,9 @@ class PriceRangeController extends Controller
             foreach ($categories as $category) {
                 foreach ($category->komoditas as $komo) {
                     $master = $masterNilai->get($komo->id);
+                    $currentMin = $master ? $master->min_nilai : null;
+                    $currentMax = $master ? $master->max_nilai : null;
+
                     $row = [
                         $category->nama_kategori,
                         $komo->nama_komoditas,
@@ -124,8 +127,17 @@ class PriceRangeController extends Controller
 
                     foreach ($revisions as $rev) {
                         $revData = isset($revisionDetails[$rev->id]) ? $revisionDetails[$rev->id]->get($komo->id) : null;
-                        $row[] = $revData ? $revData->min_edit : '-';
-                        $row[] = $revData ? $revData->max_edit : '-';
+
+                        // Carry forward logic
+                        if ($revData && $revData->min_edit !== null) {
+                            $currentMin = $revData->min_edit;
+                        }
+                        if ($revData && $revData->max_edit !== null) {
+                            $currentMax = $revData->max_edit;
+                        }
+
+                        $row[] = $currentMin !== null ? $currentMin : '-';
+                        $row[] = $currentMax !== null ? $currentMax : '-';
                         $row[] = $revData ? $revData->alasan : '-';
                     }
                     fputcsv($handle, $row);

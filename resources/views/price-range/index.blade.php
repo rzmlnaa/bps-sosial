@@ -119,16 +119,32 @@
                                             {{ $master->alasan ?? '-' }}
                                         </td>
 
+                                        @php
+                                            // Initialize tracking for carry-forward logic
+                                            $currentMin = $master ? $master->min_nilai : null;
+                                            $currentMax = $master ? $master->max_nilai : null;
+                                        @endphp
+
                                         <!-- Revision Data -->
                                         @foreach($revisions as $rev)
                                             @php
                                                 $revData = isset($revisionDetails[$rev->id]) ? $revisionDetails[$rev->id]->get($komo->id) : null;
+                                                
+                                                // Min Carry Forward
+                                                if ($revData && $revData->min_edit !== null) {
+                                                    $currentMin = $revData->min_edit;
+                                                }
+                                                
+                                                // Max Carry Forward
+                                                if ($revData && $revData->max_edit !== null) {
+                                                    $currentMax = $revData->max_edit;
+                                                }
                                             @endphp
                                             <td class="text-center bg-orange-faded">
-                                                {{ $revData && $revData->min_edit !== null ? number_format($revData->min_edit, 0, ',', '.') : '-' }}
+                                                {{ $currentMin !== null ? number_format($currentMin, 0, ',', '.') : '-' }}
                                             </td>
                                             <td class="text-center bg-orange-faded">
-                                                {{ $revData && $revData->max_edit !== null ? number_format($revData->max_edit, 0, ',', '.') : '-' }}
+                                                {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
                                             </td>
                                             <td class="small bg-orange-faded text-muted">
                                                 {{ $revData->alasan ?? '-' }}
