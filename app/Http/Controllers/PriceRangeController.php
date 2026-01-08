@@ -115,6 +115,7 @@ class PriceRangeController extends Controller
                     $master = $masterNilai->get($komo->id);
                     $currentMin = $master ? $master->min_nilai : null;
                     $currentMax = $master ? $master->max_nilai : null;
+                    $currentAlasan = $master ? $master->alasan : null;
 
                     $row = [
                         $category->nama_kategori,
@@ -135,10 +136,13 @@ class PriceRangeController extends Controller
                         if ($revData && $revData->max_edit !== null) {
                             $currentMax = $revData->max_edit;
                         }
+                        if ($revData && $revData->alasan !== null) {
+                            $currentAlasan = $revData->alasan;
+                        }
 
                         $row[] = $currentMin !== null ? $currentMin : '-';
                         $row[] = $currentMax !== null ? $currentMax : '-';
-                        $row[] = $revData ? $revData->alasan : '-';
+                        $row[] = $currentAlasan ?? '-';
                     }
                     fputcsv($handle, $row);
                 }

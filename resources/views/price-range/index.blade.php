@@ -61,6 +61,47 @@
         </div>
 
         @if($activeYear && $selectedKabupatenId)
+            <!-- Info Batas Selisih & Legend -->
+            <div class="alert alert-info border-0 shadow-sm mb-4" role="alert" style="background-color: rgba(13, 202, 240, 0.1); color: #055160;">
+                <div class="d-flex align-items-start">
+                    <div class="me-3 mt-1">
+                        <i class="fas fa-info-circle fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading fw-bold mb-3" style="font-size: 1rem;">Informasi & Keterangan</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <strong class="d-block mb-2 text-uppercase small opacity-75">Batas Selisih Harga</strong>
+                                <div class="d-flex align-items-end mb-1">
+                                    <span class="fs-4 fw-bold me-2" style="line-height: 1;">Rp {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}</span>
+                                </div>
+                                <p class="mb-0 small" style="opacity: 0.85;">
+                                    Jika selisih harga (MAX - MIN) melebihi batas ini, maka kolom <b>Alasan</b> terisi.
+                                </p>
+                            </div>
+                            <div class="col-md-6 position-relative">
+                                <div class="d-none d-md-block position-absolute start-0 top-0 bottom-0 border-start border-info opacity-25" style="width: 1px;"></div>
+                                <div class="ps-md-4">
+                                    <strong class="d-block mb-2 text-uppercase small opacity-75">Legenda Warna</strong>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded me-2 bg-warning-light border border-warning" style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Kuning:</b> Ada perubahan data (Input/Edit) dari periode sebelumnya.
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-danger-light border border-danger" style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Merah:</b> Selisih harga melebihi batas wajar (Perlu Perhatian).
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Data Table -->
             <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
                 <div class="table-responsive">
@@ -109,13 +150,20 @@
                                         </td>
                                         
                                         <!-- Master Data -->
+                                        @php
+                                            $masterDiff = ($master && $master->max_nilai !== null && $master->min_nilai !== null) 
+                                                ? ($master->max_nilai - $master->min_nilai) 
+                                                : 0;
+                                            $isMasterExceeded = $masterDiff > ($activeYear->batas_selisih_harga ?? 0);
+                                        @endphp
                                         <td class="text-center bg-blue-faded">
                                             {{ $master && $master->min_nilai !== null ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
                                         </td>
                                         <td class="text-center bg-blue-faded">
                                             {{ $master && $master->max_nilai !== null ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
                                         </td>
-                                        <td class="small bg-blue-faded text-muted">
+                                        <td class="small {{ $isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted' }}"
+                                            title="{{ $isMasterExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($masterDiff, 0, ',', '.') . ')' : '' }}">
                                             {{ $master->alasan ?? '-' }}
                                         </td>
 
@@ -123,6 +171,7 @@
                                             // Initialize tracking for carry-forward logic
                                             $currentMin = $master ? $master->min_nilai : null;
                                             $currentMax = $master ? $master->max_nilai : null;
+                                            $currentAlasan = $master ? $master->alasan : null;
                                         @endphp
 
                                         <!-- Revision Data -->
@@ -130,24 +179,41 @@
                                             @php
                                                 $revData = isset($revisionDetails[$rev->id]) ? $revisionDetails[$rev->id]->get($komo->id) : null;
                                                 
+                                                $isMinEdit = false;
+                                                $isMaxEdit = false;
+                                                $isAlasanEdit = false;
+
                                                 // Min Carry Forward
                                                 if ($revData && $revData->min_edit !== null) {
                                                     $currentMin = $revData->min_edit;
+                                                    $isMinEdit = true;
                                                 }
                                                 
                                                 // Max Carry Forward
                                                 if ($revData && $revData->max_edit !== null) {
                                                     $currentMax = $revData->max_edit;
+                                                    $isMaxEdit = true;
                                                 }
+
+                                                // Alasan Carry Forward
+                                                if ($revData && $revData->alasan !== null) {
+                                                    $currentAlasan = $revData->alasan;
+                                                    $isAlasanEdit = true;
+                                                }
+
+                                                // Check Difference Limit
+                                                $currentDiff = ($currentMax !== null && $currentMin !== null) ? ($currentMax - $currentMin) : 0;
+                                                $isExceeded = $currentDiff > ($activeYear->batas_selisih_harga ?? 0);
                                             @endphp
-                                            <td class="text-center bg-orange-faded">
+                                            <td class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
                                                 {{ $currentMin !== null ? number_format($currentMin, 0, ',', '.') : '-' }}
                                             </td>
-                                            <td class="text-center bg-orange-faded">
+                                            <td class="text-center {{ $isMaxEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
                                                 {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
                                             </td>
-                                            <td class="small bg-orange-faded text-muted">
-                                                {{ $revData->alasan ?? '-' }}
+                                            <td class="small {{ $isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted') }}"
+                                                title="{{ $isExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($currentDiff, 0, ',', '.') . ')' : '' }}">
+                                                {{ $currentAlasan ?? '-' }}
                                             </td>
                                         @endforeach
                                     </tr>
@@ -173,6 +239,8 @@
         
         .bg-orange-light { background-color: rgba(255, 140, 0, 0.05); }
         .bg-orange-faded { background-color: rgba(255, 140, 0, 0.02); }
+        .bg-warning-light { background-color: rgba(255, 193, 7, 0.15) !important; }
+        .bg-danger-light { background-color: rgba(220, 53, 69, 0.15) !important; }
         .text-orange { color: var(--bps-orange); }
 
         table th {
