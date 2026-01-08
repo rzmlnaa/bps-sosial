@@ -35,12 +35,33 @@ class RhNilaiController extends Controller
             ->get()
             ->keyBy('komoditas_id');
 
-        // Fetch revision values
-        $revisionNilai = collect(); // For single revision selection
-        $allRevisionNilai = collect(); // For 'all' revisions selection
+        // Determine revisions to display
+        $displayRevisions = collect();
 
         if ($selectedRevisionId === 'all') {
-            $allRevisionNilai = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
+            $displayRevisions = $revisions;
+        } elseif ($selectedRevisionId) {
+            // Find current selection index
+            $currentIndex = $revisions->search(function ($item) use ($selectedRevisionId) {
+                return $item->id == $selectedRevisionId;
+            });
+
+            if ($currentIndex !== false) {
+                // If there is a previous revision, add it
+                if ($currentIndex > 0) {
+                    $displayRevisions->push($revisions[$currentIndex - 1]);
+                }
+                // Add the currently selected revision
+                $displayRevisions->push($revisions[$currentIndex]);
+            }
+        }
+
+        // Fetch revision values for displayed revisions
+        $revisionNilai = collect(); // Unused but kept for safety if view references it anywhere else
+        $allRevisionNilai = collect();
+
+        if ($displayRevisions->isNotEmpty()) {
+            $allRevisionNilai = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $displayRevisions->pluck('id'))
                 ->where('kabupaten_id', $selectedKabupatenId)
                 ->get()
                 ->groupBy('rh_perubahan_header_id');
@@ -49,18 +70,14 @@ class RhNilaiController extends Controller
             $allRevisionNilai = $allRevisionNilai->map(function ($items) {
                 return $items->keyBy('komoditas_id');
             });
-        } elseif ($selectedRevisionId) {
-            $revisionNilai = RhPerubahanDetail::where('rh_perubahan_header_id', $selectedRevisionId)
-                ->where('kabupaten_id', $selectedKabupatenId)
-                ->get()
-                ->keyBy('komoditas_id');
         }
 
         return view('price-range.input-nilai', compact(
             'activeYear',
             'kabupatens',
             'selectedKabupatenId',
-            'revisions',
+            'revisions', // Keep full list for filter dropdown
+            'displayRevisions', // New list for table columns
             'selectedRevisionId',
             'categories',
             'masterNilai',
@@ -101,23 +118,10 @@ class RhNilaiController extends Controller
         }
 
         if ($request->has('revision')) {
-            if ($revisionId === 'all') {
-                foreach ($request->revision as $revHeaderId => $komoditasData) {
-                    foreach ($komoditasData as $komoditasId => $vals) {
-                        if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
-                            $min = (float) $vals['min'];
-                            $max = (float) $vals['max'];
-                            if ($max < $min) {
-                                return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
-                            }
-                            if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
-                                return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada data perubahan.')->withInput();
-                            }
-                        }
-                    }
-                }
-            } else {
-                foreach ($request->revision as $komoditasId => $vals) {
+            // New standardized input structure: revision[header_id][komoditas_id][field]
+            // This applies whether we view 'all', specific, or 'previous+current'
+            foreach ($request->revision as $revHeaderId => $komoditasData) {
+                foreach ($komoditasData as $komoditasId => $vals) {
                     if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
                         $min = (float) $vals['min'];
                         $max = (float) $vals['max'];
@@ -152,32 +156,12 @@ class RhNilaiController extends Controller
         }
 
         // Save Revision Values
-        if ($revisionId === 'all') {
-            if ($request->has('revision')) {
-                foreach ($request->revision as $revHeaderId => $komoditasData) {
-                    foreach ($komoditasData as $komoditasId => $vals) {
-                        RhPerubahanDetail::updateOrCreate(
-                            [
-                                'rh_perubahan_header_id' => $revHeaderId,
-                                'kabupaten_id' => $kabupatenId,
-                                'komoditas_id' => $komoditasId,
-                            ],
-                            [
-                                'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
-                                'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
-                                'alasan' => $vals['alasan'] ?? null,
-                                'user_id_add' => $userId,
-                            ]
-                        );
-                    }
-                }
-            }
-        } elseif ($revisionId) {
-            if ($request->has('revision')) {
-                foreach ($request->revision as $komoditasId => $vals) {
+        if ($request->has('revision')) {
+            foreach ($request->revision as $revHeaderId => $komoditasData) {
+                foreach ($komoditasData as $komoditasId => $vals) {
                     RhPerubahanDetail::updateOrCreate(
                         [
-                            'rh_perubahan_header_id' => $revisionId,
+                            'rh_perubahan_header_id' => $revHeaderId,
                             'kabupaten_id' => $kabupatenId,
                             'komoditas_id' => $komoditasId,
                         ],

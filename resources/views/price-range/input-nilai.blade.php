@@ -122,16 +122,9 @@
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
 
-                                @if($selectedRevisionId === 'all')
-                                    @foreach($revisions as $rev)
-                                        <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
-                                    @endforeach
-                                @elseif($selectedRevisionId)
-                                    @php
-                                        $revHeader = $revisions->find($selectedRevisionId);
-                                    @endphp
-                                    <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($revHeader->label) }}</th>
-                                @endif
+                                @foreach($displayRevisions as $rev)
+                                    <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
+                                @endforeach
                             </tr>
                             <tr>
                                 <th style="width: 120px;" class="bg-blue-light text-blue small">
@@ -140,29 +133,18 @@
                                     MAX_{{ substr($activeYear->tahun, -2) }}</th>
                                 <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
 
-                                @if($selectedRevisionId === 'all')
-                                    @foreach($revisions as $rev)
-                                        <th style="width: 120px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
-                                        <th style="width: 120px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
-                                        <th style="width: 200px;" class="bg-orange-light text-orange small">ALASAN</th>
-                                    @endforeach
-                                @elseif($selectedRevisionId)
+                                @foreach($displayRevisions as $rev)
                                     <th style="width: 120px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
                                     <th style="width: 120px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
                                     <th style="width: 200px;" class="bg-orange-light text-orange small">ALASAN</th>
-                                @endif
+                                @endforeach
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($categories as $category)
                                 <tr class="bg-light">
                                     @php
-                                        $colspan = 5;
-                                        if ($selectedRevisionId === 'all') {
-                                            $colspan = 5 + ($revisions->count() * 3);
-                                        } elseif ($selectedRevisionId) {
-                                            $colspan = 8;
-                                        }
+                                        $colspan = 5 + ($displayRevisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
@@ -196,47 +178,26 @@
                                         </td>
 
                                         <!-- Revision Inputs -->
-                                        @if($selectedRevisionId === 'all')
-                                            @foreach($revisions as $rev)
-                                                @php
-                                                    $revData = $allRevisionNilai->get($rev->id)?->get($komo->id);
-                                                @endphp
-                                                <td class="p-1">
-                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                        placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
-                                                </td>
-                                                <td class="p-1">
-                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                        placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
-                                                </td>
-                                                <td class="p-1">
-                                                    <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                        placeholder="Berikan alasan" value="{{ $revData->alasan ?? '' }}">
-                                                </td>
-                                            @endforeach
-                                        @elseif($selectedRevisionId)
+                                        @foreach($displayRevisions as $rev)
                                             @php
-                                                $revData = $revisionNilai->get($komo->id);
+                                                $revData = $allRevisionNilai->get($rev->id)?->get($komo->id);
                                             @endphp
                                             <td class="p-1">
-                                                <input type="number" name="revision[{{ $komo->id }}][min]"
+                                                <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
                                                     placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
-                                                <input type="number" name="revision[{{ $komo->id }}][max]"
+                                                <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
                                                     placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
-                                                <input type="text" name="revision[{{ $komo->id }}][alasan]"
+                                                <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
                                                     placeholder="Berikan alasan" value="{{ $revData->alasan ?? '' }}">
                                             </td>
-                                        @endif
+                                        @endforeach
                                     </tr>
                                 @endforeach
                             @endforeach
