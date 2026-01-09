@@ -141,8 +141,8 @@
                         <i class="fas fa-user text-muted"></i>
                     </div>
                     <div>
-                        <p class="mb-0 fw-medium text-sm">Admin BPS</p>
-                        <small class="text-muted" style="font-size: 0.75rem;">Administrator</small>
+                        <p class="mb-0 fw-medium text-sm">Rezza Maulana</p>
+                        <small class="text-muted" style="font-size: 0.75rem;">Tim Sosial</small>
                     </div>
                 </div>
                 <form action="{{ route('logout') }}" method="POST" id="logout-form">
