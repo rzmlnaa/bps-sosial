@@ -72,12 +72,25 @@
                     alt="Logo BPS">
             </div>
             <div>
-                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">BPS Kalbar</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">Tim Sosial</small>
+                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">Badan Pusat Statistik</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">Provinsi Kalbar</small>
             </div>
         </div>
-
+         @php
+                $h = \Carbon\Carbon::now('Asia/Jakarta')->hour;
+                $greeting = 'Selamat Pagi';
+                if ($h >= 11 && $h < 15) $greeting = 'Selamat Siang';
+                elseif ($h >= 15 && $h < 19) $greeting = 'Selamat Sore';
+                elseif ($h >= 19) $greeting = 'Selamat Malam';
+            @endphp
+            <div class="px-4 mb-3">
+                <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
+                    {{ $greeting }}, Rezza 👋
+                </span>
+            </div>
         <div class="py-3">
+           
+
             <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                 style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
 
