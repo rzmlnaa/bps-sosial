@@ -172,9 +172,9 @@
                                                 placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01">
                                         </td>
                                         <td class="p-1">
-                                            <input type="text" name="master[{{ $komo->id }}][alasan]"
+                                            <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
                                                 class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                placeholder="Berikan alasan" value="{{ $master->alasan ?? '' }}">
+                                                placeholder="Berikan alasan">{{ $master->alasan ?? '' }}</textarea>
                                         </td>
 
                                         <!-- Revision Inputs -->
@@ -193,9 +193,9 @@
                                                     placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
                                             </td>
                                             <td class="p-1">
-                                                <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]"
+                                                <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
                                                     class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                    placeholder="Berikan alasan" value="{{ $revData->alasan ?? '' }}">
+                                                    placeholder="Berikan alasan">{{ $revData->alasan ?? '' }}</textarea>
                                             </td>
                                         @endforeach
                                     </tr>
@@ -291,7 +291,7 @@
 
                 const minInput = form.querySelector(`input[name="${CSS.escape(minName)}"]`);
                 const maxInput = form.querySelector(`input[name="${CSS.escape(maxName)}"]`);
-                const alasanInput = form.querySelector(`input[name="${CSS.escape(alasanName)}"]`);
+                const alasanInput = form.querySelector(`input[name="${CSS.escape(alasanName)}"], textarea[name="${CSS.escape(alasanName)}"]`);
 
                 if (!minInput || !maxInput || !alasanInput) return;
 
@@ -305,6 +305,15 @@
                 minInput.classList.remove('is-invalid-custom');
                 maxInput.classList.remove('is-invalid-custom');
                 alasanInput.classList.remove('is-invalid-custom');
+
+                // Check completeness
+                if (minVal !== null && maxVal === null) {
+                    maxInput.classList.add('is-invalid-custom');
+                    hasError = true;
+                } else if (maxVal !== null && minVal === null) {
+                    minInput.classList.add('is-invalid-custom');
+                    hasError = true;
+                }
 
                 // Check Max < Min
                 if (minVal !== null && maxVal !== null && maxVal < minVal) {
@@ -329,7 +338,7 @@
 
             // Real-time validation on input
             form.addEventListener('input', function (e) {
-                if (e.target.tagName === 'INPUT') {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                     validateTrio(e.target);
                 }
             });
@@ -337,8 +346,10 @@
             // Validation on form submission
             form.addEventListener('submit', function (e) {
                 const allMinInputs = form.querySelectorAll('input[name*="[min]"]');
+                const allMaxInputs = form.querySelectorAll('input[name*="[max]"]'); // Get max inputs too in case only max is filled
                 let hasError = false;
 
+                // Validate based on min inputs
                 allMinInputs.forEach(input => {
                     if (!validateTrio(input)) {
                         hasError = true;
@@ -350,7 +361,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Input Tidak Valid',
-                        text: 'Terdapat kesalahan: Nilai MAX < MIN atau Alasan belum diisi untuk selisih yang melebihi batas.',
+                        text: 'Terdapat kesalahan: Nilai Min/Max tidak lengkap, MAX < MIN, atau Alasan belum diisi.',
                         confirmButtonColor: '#0093dd'
                     });
 
