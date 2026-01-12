@@ -113,23 +113,34 @@
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle mb-0">
                         <thead class="bg-light text-center align-middle">
+                            @php
+                                // Show Master if:
+                                // 1. "All" is selected.
+                                // 2. No specific revision is selected (Default view, or Revision ID empty).
+                                // 3. A specific revision is selected BUT it is the first one (count < 2, so comparisons need Master).
+                                $showMaster = ($selectedRevisionId === 'all' || !$selectedRevisionId || $displayRevisions->count() < 2);
+                            @endphp
                             <tr>
                                 <th rowspan="2" class="ps-4" style="min-width: 250px;">NAMA</th>
                                 <th rowspan="2" style="width: 100px;">SATUAN</th>
                                 <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
+                                @if($showMaster)
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
+                                @endif
 
                                 @foreach($displayRevisions as $rev)
                                     <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
                                 @endforeach
                             </tr>
                             <tr>
+                                @if($showMaster)
                                 <th style="width: 120px;" class="bg-blue-light text-blue small">
                                     MIN_{{ substr($activeYear->tahun, -2) }}</th>
                                 <th style="width: 120px;" class="bg-blue-light text-blue small">
                                     MAX_{{ substr($activeYear->tahun, -2) }}</th>
                                 <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
+                                @endif
 
                                 @foreach($displayRevisions as $rev)
                                     <th style="width: 120px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
@@ -142,7 +153,8 @@
                             @foreach($categories as $category)
                                 <tr class="bg-light">
                                     @php
-                                        $colspan = 6 + ($displayRevisions->count() * 3);
+                                        // 3 Fixed columns + (3 if Master shown) + (3 per Revision)
+                                        $colspan = 3 + ($showMaster ? 3 : 0) + ($displayRevisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
@@ -166,35 +178,37 @@
                                         </td>
 
                                         <!-- Master Inputs -->
-                                        @if($isMasterEditable)
-                                            <td class="p-1">
-                                                <input type="number" name="master[{{ $komo->id }}][min]"
-                                                    class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                    placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                            </td>
-                                            <td class="p-1">
-                                                <input type="number" name="master[{{ $komo->id }}][max]"
-                                                    class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                    placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                            </td>
-                                            <td class="p-1">
-                                                <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
-                                                    class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                    placeholder="Berikan alasan"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
-                                            </td>
-                                        @else
-                                            <td class="p-1 text-center align-middle bg-light text-muted">
-                                                {{ $master->min_nilai ?? '-' }}
-                                            </td>
-                                            <td class="p-1 text-center align-middle bg-light text-muted">
-                                                {{ $master->max_nilai ?? '-' }}
-                                            </td>
-                                            <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
-                                                {{ $master->alasan ?? '-' }}
-                                            </td>
+                                        @if($showMaster)
+                                            @if($isMasterEditable)
+                                                <td class="p-1">
+                                                    <input type="number" name="master[{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center"
+                                                        placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1">
+                                                    <input type="number" name="master[{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center"
+                                                        placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1">
+                                                    <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                        placeholder="Berikan alasan"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
+                                                </td>
+                                            @else
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ $master->min_nilai ?? '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ $master->max_nilai ?? '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
+                                                    {{ $master->alasan ?? '-' }}
+                                                </td>
+                                            @endif
                                         @endif
 
                                         <!-- Revision Inputs -->
