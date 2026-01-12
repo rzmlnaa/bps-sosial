@@ -20,97 +20,8 @@
                 </a>
             </div>
         </div>
-
-        <!-- Filters & Export -->
-        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-            <div class="card-body p-4">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
-                    <form action="{{ route('price-range.index') }}" method="GET" class="row g-3 flex-grow-1 align-items-end"
-                        id="filter-form">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Pilih Tahun</label>
-                            <select name="year_id" class="form-select border-0 bg-light shadow-none"
-                                onchange="this.form.submit()">
-                                @foreach($years as $yr)
-                                    <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
-                                        {{ $yr->tahun }} {{ $yr->is_active ? '(Aktif)' : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Pilih Kabupaten</label>
-                            <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
-                                onchange="this.form.submit()">
-                                @foreach($kabupatens as $kab)
-                                    <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                        {{ $kab->nama_kabupaten }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </form>
-
-                    @if($selectedYearId && $selectedKabupatenId)
-                        <div class="ms-md-auto">
-                            <a href="{{ route('price-range.export', ['year_id' => $selectedYearId, 'kabupaten_id' => $selectedKabupatenId]) }}"
-                                class="btn btn-success fw-bold px-4 shadow-sm h-100 d-flex align-items-center">
-                                <i class="fas fa-file-excel me-2"></i> Export Excel
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        @if($activeYear && $selectedKabupatenId)
-            <!-- Info Batas Selisih & Legend -->
-            <div class="alert alert-info border-0 shadow-sm mb-4" role="alert"
-                style="background-color: rgba(13, 202, 240, 0.1); color: #055160;">
-                <div class="d-flex align-items-start">
-                    <div class="me-3 mt-1">
-                        <i class="fas fa-info-circle fs-4"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h5 class="alert-heading fw-bold mb-3" style="font-size: 1rem;">Informasi & Keterangan</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <strong class="d-block mb-2 text-uppercase small opacity-75">Batas Selisih Harga</strong>
-                                <div class="d-flex align-items-end mb-1">
-                                    <span class="fs-4 fw-bold me-2" style="line-height: 1;">Rp
-                                        {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}</span>
-                                </div>
-                                <p class="mb-0 small" style="opacity: 0.85;">
-                                    Jika selisih harga (MAX - MIN) melebihi batas ini, maka kolom <b>Alasan</b> wajib diisi.
-                                </p>
-                            </div>
-                            <div class="col-md-6 position-relative">
-                                <div class="d-none d-md-block position-absolute start-0 top-0 bottom-0 border-start border-info opacity-25"
-                                    style="width: 1px;"></div>
-                                <div class="ps-md-4">
-                                    <strong class="d-block mb-2 text-uppercase small opacity-75">Legenda Warna</strong>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="rounded me-2 bg-warning-light border border-warning"
-                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
-                                        <span class="small" style="line-height: 1.2;">
-                                            <b>Kuning:</b> Ada perubahan data (Input/Edit) dari periode sebelumnya.
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded me-2 bg-danger-light border border-danger"
-                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
-                                        <span class="small" style="line-height: 1.2;">
-                                            <b>Merah:</b> Selisih harga melebihi batas wajar (Perlu Perhatian).
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Analisis Insight Section -->
+        @if ($selectedYearId && $selectedKabupatenId)
+             <!-- Analisis Insight Section -->
             @if(!empty($outliers))
                 <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                     <div class="card-header bg-white py-3">
@@ -209,9 +120,93 @@
                     </div>
                 </div>
             @endif
+            <!-- Info Batas Selisih & Legend -->
+            <div class="alert alert-info border-0 shadow-sm mb-4" role="alert"
+                style="background-color: rgba(13, 202, 240, 0.1); color: #055160;">
+                <div class="d-flex align-items-start">
+                    <div class="me-3 mt-1">
+                        <i class="fas fa-info-circle fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading fw-bold mb-3" style="font-size: 1rem;">Informasi & Keterangan</h5>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <strong class="d-block mb-2 text-uppercase small opacity-75">Legenda Warna</strong>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-warning-light border border-warning"
+                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Kuning:</b> Ada perubahan data (Input/Edit) dari periode sebelumnya.
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-danger-light border border-danger"
+                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Merah:</b> Selisih harga melebihi batas wajar (Perlu Perhatian).
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-white border"
+                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Putih:</b> Tidak ada perubahan sama dengan periode sebelumnya atau tidak melebihi batas selisih.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+        <!-- Filters & Export -->
+        <div class="card border-0 shadow-sm mb-1" style="border-radius: 12px;">
+            <div class="card-body p-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+                    <form action="{{ route('price-range.index') }}" method="GET" class="row g-3 flex-grow-1 align-items-end"
+                        id="filter-form">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Pilih Tahun</label>
+                            <select name="year_id" class="form-select border-0 bg-light shadow-none"
+                                onchange="this.form.submit()">
+                                @foreach($years as $yr)
+                                    <option value="{{ $yr->id }}" {{ $selectedYearId == $yr->id ? 'selected' : '' }}>
+                                        {{ $yr->tahun }} {{ $yr->is_active ? '(Aktif)' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Pilih Kabupaten</label>
+                            <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
+                                onchange="this.form.submit()">
+                                @foreach($kabupatens as $kab)
+                                    <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                        {{ $kab->nama_kabupaten }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
 
+                    @if($selectedYearId && $selectedKabupatenId)
+                        <div class="ms-md-auto">
+                            <a href="{{ route('price-range.export', ['year_id' => $selectedYearId, 'kabupaten_id' => $selectedKabupatenId]) }}"
+                                class="btn btn-success fw-bold px-4 shadow-sm h-100 d-flex align-items-center">
+                                <i class="fas fa-file-excel me-2"></i> Export Excel
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        @if($activeYear && $selectedKabupatenId)
+            
             <!-- Data Table -->
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+            <div id="commodity-table" class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle mb-0">
                         <thead class="bg-light text-center align-middle">
@@ -406,6 +401,17 @@
         .table-bordered> :not(caption)>*>* {
             border-width: 1px;
             border-color: #f1f5f9;
-        }
     </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var tableElement = document.getElementById('commodity-table');
+            if (tableElement) {
+                // Add a small delay to ensure rendering is complete and to make the transition noticeable
+                setTimeout(function() {
+                    tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 500);
+            }
+        });
+    </script>
 @endsection
