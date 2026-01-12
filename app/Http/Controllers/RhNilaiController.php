@@ -95,11 +95,23 @@ class RhNilaiController extends Controller
 
         $kabupatenId = $request->kabupaten_id;
         $tahunId = $request->rh_tahun_id;
-        $revisionId = $request->revision_id;
         $userId = Auth::id() ?? 1;
 
-        $activeYear = RhTahun::find($tahunId);
-        $batasSelisih = $activeYear->batas_selisih_harga ?? 0;
+        // Collect all Komoditas IDs to fetch their specific limits
+        $komoditasIds = [];
+        if ($request->has('master')) {
+            $komoditasIds = array_keys($request->master);
+        }
+        if ($request->has('revision')) {
+            foreach ($request->revision as $revData) {
+                $komoditasIds = array_merge($komoditasIds, array_keys($revData));
+            }
+        }
+        $komoditasIds = array_unique($komoditasIds);
+
+        // Map Komoditas ID -> Batas Selisih Harga
+        $komoditasLimits = \App\Models\Komoditas::whereIn('id', $komoditasIds)
+            ->pluck('batas_selisih_harga', 'id');
 
         // Validation: Check if Max < Min and Alasan if Selisih > Batas
         if ($request->has('master')) {
@@ -107,29 +119,31 @@ class RhNilaiController extends Controller
                 if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
                     $min = (float) $vals['min'];
                     $max = (float) $vals['max'];
+                    $batas = $komoditasLimits[$komoditasId] ?? 0; // Default to 0 if not set
+
                     if ($max < $min) {
                         return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada Master Nilai.')->withInput();
                     }
-                    if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
-                        return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada Master Nilai.')->withInput();
+                    if (($max - $min) > $batas && empty($vals['alasan'])) {
+                        return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada Master Nilai.')->withInput();
                     }
                 }
             }
         }
 
         if ($request->has('revision')) {
-            // New standardized input structure: revision[header_id][komoditas_id][field]
-            // This applies whether we view 'all', specific, or 'previous+current'
             foreach ($request->revision as $revHeaderId => $komoditasData) {
                 foreach ($komoditasData as $komoditasId => $vals) {
                     if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
                         $min = (float) $vals['min'];
                         $max = (float) $vals['max'];
+                        $batas = $komoditasLimits[$komoditasId] ?? 0;
+
                         if ($max < $min) {
                             return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
                         }
-                        if ($max - $min > $batasSelisih && empty($vals['alasan'])) {
-                            return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batasSelisih, 0, ',', '.') . ') pada data perubahan.')->withInput();
+                        if (($max - $min) > $batas && empty($vals['alasan'])) {
+                            return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada data perubahan.')->withInput();
                         }
                     }
                 }

@@ -95,11 +95,8 @@
                             </div>
                             <h6 class="mb-0 fw-bold">Konfigurasi Batas Selisih</h6>
                         </div>
-                        <h3 class="fw-bold mb-1">Rp {{ number_format($activeYear->batas_selisih_harga ?? 0, 0, ',', '.') }}
-                        </h3>
-                        <p class="small mb-0 opacity-75">Jika selisih MAX - MIN melebihi batas ini, maka <b>Alasan</b> wajib
-                            diisi.</p>
-                        <input type="hidden" id="batas-selisih-val" value="{{ $activeYear->batas_selisih_harga ?? 0 }}">
+                        <p class="small mb-0 opacity-75">Batas selisih harga kini diatur per komoditas. Lihat kolom <b>Batas
+                                Selisih</b> untuk detail setiap komoditas.</p>
                     </div>
                 </div>
             </div>
@@ -119,6 +116,7 @@
                             <tr>
                                 <th rowspan="2" class="ps-4" style="min-width: 250px;">NAMA</th>
                                 <th rowspan="2" style="width: 100px;">SATUAN</th>
+                                <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
 
@@ -144,7 +142,7 @@
                             @foreach($categories as $category)
                                 <tr class="bg-light">
                                     @php
-                                        $colspan = 5 + ($displayRevisions->count() * 3);
+                                        $colspan = 6 + ($displayRevisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
@@ -159,22 +157,30 @@
                                         <td class="text-center"><span
                                                 class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
                                         </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border fw-normal">
+                                                {{ $komo->batas_selisih_harga ? number_format($komo->batas_selisih_harga, 0, ',', '.') : '-' }}
+                                            </span>
+                                        </td>
 
                                         <!-- Master Inputs -->
                                         <td class="p-1">
                                             <input type="number" name="master[{{ $komo->id }}][min]"
                                                 class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01">
+                                                placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
+                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                         </td>
                                         <td class="p-1">
                                             <input type="number" name="master[{{ $komo->id }}][max]"
                                                 class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01">
+                                                placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
+                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                         </td>
                                         <td class="p-1">
                                             <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
-                                                class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                placeholder="Berikan alasan">{{ $master->alasan ?? '' }}</textarea>
+                                                class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                placeholder="Berikan alasan"
+                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
                                         </td>
 
                                         <!-- Revision Inputs -->
@@ -185,17 +191,20 @@
                                             <td class="p-1">
                                                 <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01">
+                                                    placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                             </td>
                                             <td class="p-1">
                                                 <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
                                                     class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01">
+                                                    placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                             </td>
                                             <td class="p-1">
                                                 <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
-                                                    class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($activeYear->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                    placeholder="Berikan alasan">{{ $revData->alasan ?? '' }}</textarea>
+                                                    class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                    placeholder="Berikan alasan"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $revData->alasan ?? '' }}</textarea>
                                             </td>
                                         @endforeach
                                     </tr>
@@ -266,7 +275,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('form-save-nilai');
-            const batasSelisih = parseFloat(document.getElementById('batas-selisih-val').value) || 0;
+            // Batas selisih is handled per-input via data-batas attribute now
 
             // Function to validate a trio of min/max/alasan inputs and toggle visibility
             function validateTrio(input) {
@@ -323,7 +332,10 @@
                 }
 
                 // Toggle visibility and check Batas Selisih
-                if (minVal !== null && maxVal !== null && (maxVal - minVal) > batasSelisih) {
+                // Get specific limit from data-batas attribute (fallback to 0)
+                const specificBatas = parseFloat(alasanInput.getAttribute('data-batas')) || 0;
+
+                if (minVal !== null && maxVal !== null && (maxVal - minVal) > specificBatas) {
                     alasanInput.classList.remove('d-none');
                     if (alasanVal === '') {
                         alasanInput.classList.add('is-invalid-custom');
