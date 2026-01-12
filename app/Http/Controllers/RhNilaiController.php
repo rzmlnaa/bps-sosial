@@ -71,6 +71,8 @@ class RhNilaiController extends Controller
                     }
                     if ($dt->alasan !== null) {
                         $currentState[$dt->komoditas_id]['alasan'] = $dt->alasan;
+                    } elseif ($dt->min_edit !== null || $dt->max_edit !== null) {
+                        $currentState[$dt->komoditas_id]['alasan'] = null;
                     }
                 }
             }

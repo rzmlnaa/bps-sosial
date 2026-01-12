@@ -218,6 +218,7 @@
                             <tr>
                                 <th rowspan="2" class="ps-4" style="min-width: 200px;">KOMODITAS</th>
                                 <th rowspan="2" style="width: 80px;">SATUAN</th>
+                                <th rowspan="2" style="width: 100px;">BATAS HARGA</th>
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
 
@@ -241,7 +242,7 @@
                             @foreach($categories as $category)
                                 <tr class="bg-light">
                                     @php
-                                        $colspan = 5 + ($revisions->count() * 3);
+                                        $colspan = 6 + ($revisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
@@ -257,13 +258,17 @@
                                         <td class="text-center">
                                             <span class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
                                         </td>
+                                        <td class="text-center">
+                                            {{ number_format($komo->batas_selisih_harga ?? 0, 0, ',', '.') }}
+                                        </td>
 
                                         <!-- Master Data -->
                                         @php
                                             $masterDiff = ($master && $master->max_nilai !== null && $master->min_nilai !== null)
                                                 ? ($master->max_nilai - $master->min_nilai)
                                                 : 0;
-                                            $isMasterExceeded = $masterDiff > ($activeYear->batas_selisih_harga ?? 0);
+                                            $limit = $komo->batas_selisih_harga ?? 0;
+                                            $isMasterExceeded = $masterDiff > $limit;
                                         @endphp
                                         <td class="text-center bg-blue-faded">
                                             {{ $master && $master->min_nilai !== null ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
@@ -308,15 +313,27 @@
                                                     $currentMax = $revData->max_edit;
                                                 }
 
-                                                // Alasan Carry Forward
-                                                if ($revData && $revData->alasan !== null) {
-                                                    $currentAlasan = $revData->alasan;
-                                                    $isAlasanEdit = true;
+                                                // Alasan Carry Forward & Reset Logic
+                                                if ($revData) {
+                                                    if ($revData->alasan !== null) {
+                                                        $currentAlasan = $revData->alasan;
+                                                        $isAlasanEdit = true;
+                                                    } elseif ($revData->min_edit !== null || $revData->max_edit !== null) {
+                                                        // If value updated but reason not provided => reset reason
+                                                        $currentAlasan = null;
+                                                    }
                                                 }
 
                                                 // Check Difference Limit
                                                 $currentDiff = ($currentMax !== null && $currentMin !== null) ? ($currentMax - $currentMin) : 0;
-                                                $isExceeded = $currentDiff > ($activeYear->batas_selisih_harga ?? 0);
+                                                $limit = $komo->batas_selisih_harga ?? 0;
+                                                $isDiffExceeded = $currentDiff > $limit;
+
+                                                // Check if there was an edit in this revision
+                                                $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));
+
+                                                // Red only if exceeded AND edited in this period
+                                                $isExceeded = $isDiffExceeded && $hasEdit;
                                             @endphp
                                             <td
                                                 class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
