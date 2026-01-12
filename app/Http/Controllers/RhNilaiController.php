@@ -140,6 +140,37 @@ class RhNilaiController extends Controller
         $tahunId = $request->rh_tahun_id;
         $userId = Auth::id() ?? 1;
 
+        // Function to remove thousands separators
+        $cleanNumber = function ($val) {
+            return str_replace('.', '', $val);
+        };
+
+        // Clean Master Input
+        if ($request->has('master')) {
+            $master = $request->master;
+            foreach ($master as $key => $vals) {
+                if (isset($vals['min']))
+                    $master[$key]['min'] = $cleanNumber($vals['min']);
+                if (isset($vals['max']))
+                    $master[$key]['max'] = $cleanNumber($vals['max']);
+            }
+            $request->merge(['master' => $master]);
+        }
+
+        // Clean Revision Input
+        if ($request->has('revision')) {
+            $revision = $request->revision;
+            foreach ($revision as $revId => $items) {
+                foreach ($items as $komId => $vals) {
+                    if (isset($vals['min']))
+                        $revision[$revId][$komId]['min'] = $cleanNumber($vals['min']);
+                    if (isset($vals['max']))
+                        $revision[$revId][$komId]['max'] = $cleanNumber($vals['max']);
+                }
+            }
+            $request->merge(['revision' => $revision]);
+        }
+
         // Collect all Komoditas IDs to fetch their specific limits
         $komoditasIds = [];
         if ($request->has('master')) {

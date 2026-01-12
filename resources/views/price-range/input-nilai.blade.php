@@ -181,15 +181,15 @@
                                         @if($showMaster)
                                             @if($isMasterEditable)
                                                 <td class="p-1">
-                                                    <input type="number" name="master[{{ $komo->id }}][min]"
-                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                        placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
+                                                    <input type="text" name="master[{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
+                                                        placeholder="Min" value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
-                                                    <input type="number" name="master[{{ $komo->id }}][max]"
-                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                        placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
+                                                    <input type="text" name="master[{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
+                                                        placeholder="Max" value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
@@ -200,10 +200,10 @@
                                                 </td>
                                             @else
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ $master->min_nilai ?? '-' }}
+                                                    {{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ $master->max_nilai ?? '-' }}
+                                                    {{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
                                                     {{ $master->alasan ?? '-' }}
@@ -237,15 +237,15 @@
                                             
                                             @if($isRevEditable)
                                                 <td class="p-1">
-                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                        placeholder="Edit Min" value="{{ $valMin }}" step="0.01"
+                                                    <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
+                                                        placeholder="Edit Min" value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
-                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                        placeholder="Edit Max" value="{{ $valMax }}" step="0.01"
+                                                    <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
+                                                        placeholder="Edit Max" value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
@@ -256,10 +256,10 @@
                                                 </td>
                                             @else
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ $valMin }}
+                                                    {{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ $valMax }}
+                                                    {{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light">
                                                     <!-- Placeholder for reason in read-only view, currently empty/dash -->
@@ -335,7 +335,32 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('form-save-nilai');
-            // Batas selisih is handled per-input via data-batas attribute now
+
+            // Format Ribuan Function
+            function formatRibuan(input) {
+                let value = input.value.replace(/[^0-9]/g, '');
+                if (value) {
+                    value = parseInt(value, 10).toLocaleString('id-ID');
+                }
+                input.value = value;
+            }
+
+            // Apply formatter listener
+            form.addEventListener('input', function (e) {
+                if (e.target.classList.contains('format-ribuan')) {
+                    formatRibuan(e.target);
+                    validateTrio(e.target);
+                } else if (e.target.tagName === 'TEXTAREA') {
+                    validateTrio(e.target);
+                }
+            });
+
+            // Helper to get raw number value
+            function getRawValue(input) {
+                if (!input) return null;
+                const val = input.value.replace(/\./g, ''); // Remove dots
+                return val !== '' ? parseFloat(val) : null;
+            }
 
             // Function to validate a trio of min/max/alasan inputs and toggle visibility
             function validateTrio(input) {
@@ -364,8 +389,8 @@
 
                 if (!minInput || !maxInput || !alasanInput) return;
 
-                const minVal = minInput.value !== '' ? parseFloat(minInput.value) : null;
-                const maxVal = maxInput.value !== '' ? parseFloat(maxInput.value) : null;
+                const minVal = getRawValue(minInput);
+                const maxVal = getRawValue(maxInput);
                 const alasanVal = alasanInput.value.trim();
 
                 let hasError = false;
@@ -408,12 +433,7 @@
                 return !hasError;
             }
 
-            // Real-time validation on input
-            form.addEventListener('input', function (e) {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                    validateTrio(e.target);
-                }
-            });
+            // Real-time validation on input - handled in 'input' listener above
 
             // Validation on form submission
             form.addEventListener('submit', function (e) {
