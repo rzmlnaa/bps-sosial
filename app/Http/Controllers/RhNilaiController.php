@@ -24,65 +24,108 @@ class RhNilaiController extends Controller
         $kabupatens = Kabupaten::all();
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
 
-        $revisions = RhPerubahanHeader::where('rh_tahun_id', $activeYear->id)->orderBy('tanggal_perubahan', 'asc')->get();
-        $selectedRevisionId = $request->revision_id;
+        // 1. Fetch ALL Revisions for Calculation (Ascending)
+        $allRevisions = RhPerubahanHeader::where('rh_tahun_id', $activeYear->id)
+            ->orderBy('tanggal_perubahan', 'asc')
+            ->get();
+        // Latest revision ID is the last one in the time series
+        $latestRevisionId = $allRevisions->last()->id ?? null;
 
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
-
-        // Fetch existing master values
+        // 2. Fetch Master Values
         $masterNilai = RhMasterNilai::where('rh_tahun_id', $activeYear->id)
             ->where('kabupaten_id', $selectedKabupatenId)
             ->get()
             ->keyBy('komoditas_id');
 
-        // Determine revisions to display
+        // 3. Fetch ALL Revision Details for this Year/Kabupaten to compute state
+        $allDetailsRaw = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $allRevisions->pluck('id'))
+            ->where('kabupaten_id', $selectedKabupatenId)
+            ->get()
+            ->groupBy('rh_perubahan_header_id');
+
+        // 4. Compute Effective State for EACH revision in order
+        $effectiveValues = collect(); // [rev_id => [kom_id => ['min' => val, 'max' => val]]]
+        $currentState = [];
+
+        // Initialize state with Master
+        foreach ($masterNilai as $komId => $val) {
+            $currentState[$komId] = [
+                'min' => $val->min_nilai,
+                'max' => $val->max_nilai
+            ];
+        }
+
+        foreach ($allRevisions as $rev) {
+            $details = $allDetailsRaw->get($rev->id);
+            if ($details) {
+                foreach ($details as $dt) {
+                    // Update state if value is explicitly set (edit)
+                    // If null, it means no change -> keep previous state
+                    // Logic: The DB stores raw edit. 
+                    if ($dt->min_edit !== null) {
+                        $currentState[$dt->komoditas_id]['min'] = $dt->min_edit;
+                    }
+                    if ($dt->max_edit !== null) {
+                        $currentState[$dt->komoditas_id]['max'] = $dt->max_edit;
+                    }
+                }
+            }
+            // Snapshot state for this revision
+            $effectiveValues->put($rev->id, $currentState);
+        }
+
+        // 5. Determine Revisions to Display (View Logic)
         $displayRevisions = collect();
+        $selectedRevisionId = $request->revision_id;
 
         if ($selectedRevisionId === 'all') {
-            $displayRevisions = $revisions;
+            $displayRevisions = $allRevisions;
         } elseif ($selectedRevisionId) {
-            // Find current selection index
-            $currentIndex = $revisions->search(function ($item) use ($selectedRevisionId) {
+            $currentIndex = $allRevisions->search(function ($item) use ($selectedRevisionId) {
                 return $item->id == $selectedRevisionId;
             });
 
             if ($currentIndex !== false) {
-                // If there is a previous revision, add it
                 if ($currentIndex > 0) {
-                    $displayRevisions->push($revisions[$currentIndex - 1]);
+                    $displayRevisions->push($allRevisions[$currentIndex - 1]);
                 }
-                // Add the currently selected revision
-                $displayRevisions->push($revisions[$currentIndex]);
+                $displayRevisions->push($allRevisions[$currentIndex]);
+            }
+        } else {
+            // Default: Show latest if exists (optional, or show none/master only)
+            // Existing logic seemed to default to none if no ID provided?
+            // Let's keep existing behavior: if no params, revisions empty. 
+            // Wait, existing behavior showed empty revisions if none selected.
+        }
+
+        // 6. Map Raw Input Values (for Edit Fields) - Only needed for Displayed Revisions
+        $allRevisionNilai = collect();
+        if ($displayRevisions->isNotEmpty()) {
+            foreach ($displayRevisions as $rev) {
+                // We use the raw details fetched earlier
+                $raw = $allDetailsRaw->get($rev->id);
+                if ($raw) {
+                    $allRevisionNilai->put($rev->id, $raw->keyBy('komoditas_id'));
+                }
             }
         }
 
-        // Fetch revision values for displayed revisions
-        $revisionNilai = collect(); // Unused but kept for safety if view references it anywhere else
-        $allRevisionNilai = collect();
-
-        if ($displayRevisions->isNotEmpty()) {
-            $allRevisionNilai = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $displayRevisions->pluck('id'))
-                ->where('kabupaten_id', $selectedKabupatenId)
-                ->get()
-                ->groupBy('rh_perubahan_header_id');
-
-            // Map each revision to its komoditas_id for easy access
-            $allRevisionNilai = $allRevisionNilai->map(function ($items) {
-                return $items->keyBy('komoditas_id');
-            });
-        }
+        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        // Rename $allRevisions to $revisions to match view variable expectation
+        $revisions = $allRevisions;
 
         return view('price-range.input-nilai', compact(
             'activeYear',
             'kabupatens',
             'selectedKabupatenId',
-            'revisions', // Keep full list for filter dropdown
-            'displayRevisions', // New list for table columns
+            'revisions', // Keep original list for dropdown (which is $allRevisions basically)
+            'displayRevisions',
             'selectedRevisionId',
             'categories',
             'masterNilai',
-            'revisionNilai',
-            'allRevisionNilai'
+            'effectiveValues', // Calculated State
+            'allRevisionNilai', // Raw Values for inputs
+            'latestRevisionId' // To determine readonly status
         ));
     }
 

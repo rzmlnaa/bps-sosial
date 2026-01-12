@@ -151,6 +151,8 @@
                                 @foreach($category->komoditas as $komo)
                                     @php
                                         $master = $masterNilai->get($komo->id);
+                                        // Master is editable ONLY if there are NO revisions
+                                        $isMasterEditable = empty($latestRevisionId);
                                     @endphp
                                     <tr>
                                         <td class="ps-4">{{ $komo->nama_komoditas }}</td>
@@ -164,48 +166,92 @@
                                         </td>
 
                                         <!-- Master Inputs -->
-                                        <td class="p-1">
-                                            <input type="number" name="master[{{ $komo->id }}][min]"
-                                                class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
-                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                        </td>
-                                        <td class="p-1">
-                                            <input type="number" name="master[{{ $komo->id }}][max]"
-                                                class="form-control form-control-sm border-0 bg-blue-faded text-center"
-                                                placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
-                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                        </td>
-                                        <td class="p-1">
-                                            <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
-                                                class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                placeholder="Berikan alasan"
-                                                data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
-                                        </td>
+                                        @if($isMasterEditable)
+                                            <td class="p-1">
+                                                <input type="number" name="master[{{ $komo->id }}][min]"
+                                                    class="form-control form-control-sm border-0 bg-blue-faded text-center"
+                                                    placeholder="Min" value="{{ $master->min_nilai ?? '' }}" step="0.01"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                            </td>
+                                            <td class="p-1">
+                                                <input type="number" name="master[{{ $komo->id }}][max]"
+                                                    class="form-control form-control-sm border-0 bg-blue-faded text-center"
+                                                    placeholder="Max" value="{{ $master->max_nilai ?? '' }}" step="0.01"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                            </td>
+                                            <td class="p-1">
+                                                <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
+                                                    class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                    placeholder="Berikan alasan"
+                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
+                                            </td>
+                                        @else
+                                            <td class="p-1 text-center align-middle bg-light text-muted">
+                                                {{ $master->min_nilai ?? '-' }}
+                                            </td>
+                                            <td class="p-1 text-center align-middle bg-light text-muted">
+                                                {{ $master->max_nilai ?? '-' }}
+                                            </td>
+                                            <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
+                                                {{ $master->alasan ?? '-' }}
+                                            </td>
+                                        @endif
 
                                         <!-- Revision Inputs -->
                                         @foreach($displayRevisions as $rev)
                                             @php
-                                                $revData = $allRevisionNilai->get($rev->id)?->get($komo->id);
+                                                // Check if this is the Latest Revision
+                                                $isRevEditable = ($rev->id == $latestRevisionId);
+                                                
+                                                // For Editable: Use RAW values (from allRevisionNilai)
+                                                // For Read-Only: Use EFFECTIVE values (from effectiveValues)
+                                                
+                                                if ($isRevEditable) {
+                                                    $rawRevData = $allRevisionNilai->get($rev->id)?->get($komo->id);
+                                                    $valMin = $rawRevData->min_edit ?? '';
+                                                    $valMax = $rawRevData->max_edit ?? '';
+                                                    $valAlasan = $rawRevData->alasan ?? '';
+                                                } else {
+                                                    $effData = $effectiveValues->get($rev->id)[$komo->id] ?? null;
+                                                    $valMin = $effData['min'] ?? '-';
+                                                    $valMax = $effData['max'] ?? '-';
+                                                    $valAlasan = '-'; // We don't track historical reasons strictly in effective array, usually shown if relevant or just skip for readonly summary.
+                                                    // Note: You might want to fetch reason if needed, but for "Price Range" view style, usually just numbers.
+                                                    // Let's stick to numbers for Read-Only as per request "view readonly but values same as Price Range".
+                                                }
                                             @endphp
-                                            <td class="p-1">
-                                                <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
-                                                    class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Min" value="{{ $revData->min_edit ?? '' }}" step="0.01"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                            </td>
-                                            <td class="p-1">
-                                                <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
-                                                    class="form-control form-control-sm border-0 bg-orange-faded text-center"
-                                                    placeholder="Edit Max" value="{{ $revData->max_edit ?? '' }}" step="0.01"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                            </td>
-                                            <td class="p-1">
-                                                <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
-                                                    class="form-control form-control-sm border-0 bg-orange-faded {{ ($revData->max_edit ?? 0) - ($revData->min_edit ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                    placeholder="Berikan alasan"
-                                                    data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $revData->alasan ?? '' }}</textarea>
-                                            </td>
+                                            
+                                            @if($isRevEditable)
+                                                <td class="p-1">
+                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
+                                                        placeholder="Edit Min" value="{{ $valMin }}" step="0.01"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1">
+                                                    <input type="number" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center"
+                                                        placeholder="Edit Max" value="{{ $valMax }}" step="0.01"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1">
+                                                    <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ((float)$valMax - (float)$valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
+                                                        placeholder="Berikan alasan"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
+                                                </td>
+                                            @else
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ $valMin }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ $valMax }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light">
+                                                    <!-- Placeholder for reason in read-only view, currently empty/dash -->
+                                                    -
+                                                </td>
+                                            @endif
                                         @endforeach
                                     </tr>
                                 @endforeach
