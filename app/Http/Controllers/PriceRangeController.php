@@ -204,7 +204,7 @@ class PriceRangeController extends Controller
         $yearId = $request->year_id;
         $year = RhTahun::findOrFail($yearId);
 
-        $fileName = "Rentang_Harga_{$year->tahun}.xlsx";
+        $fileName = "RH_{$year->tahun}.xlsx";
 
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PriceRangeExport($yearId), $fileName);
     }
