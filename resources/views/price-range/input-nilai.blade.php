@@ -125,8 +125,8 @@
                                 <th rowspan="2" style="width: 100px;">SATUAN</th>
                                 <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
                                 @if($showMaster)
-                                <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
-                                    ({{ substr($activeYear->tahun, -2) }})</th>
+                                    <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
+                                        ({{ substr($activeYear->tahun, -2) }})</th>
                                 @endif
 
                                 @foreach($displayRevisions as $rev)
@@ -135,11 +135,11 @@
                             </tr>
                             <tr>
                                 @if($showMaster)
-                                <th style="width: 120px;" class="bg-blue-light text-blue small">
-                                    MIN_{{ substr($activeYear->tahun, -2) }}</th>
-                                <th style="width: 120px;" class="bg-blue-light text-blue small">
-                                    MAX_{{ substr($activeYear->tahun, -2) }}</th>
-                                <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
+                                    <th style="width: 120px;" class="bg-blue-light text-blue small">
+                                        MIN_{{ substr($activeYear->tahun, -2) }}</th>
+                                    <th style="width: 120px;" class="bg-blue-light text-blue small">
+                                        MAX_{{ substr($activeYear->tahun, -2) }}</th>
+                                    <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
                                 @endif
 
                                 @foreach($displayRevisions as $rev)
@@ -183,13 +183,15 @@
                                                 <td class="p-1">
                                                     <input type="text" name="master[{{ $komo->id }}][min]"
                                                         class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
-                                                        placeholder="Min" value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
+                                                        placeholder="Min"
+                                                        value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
                                                     <input type="text" name="master[{{ $komo->id }}][max]"
                                                         class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
-                                                        placeholder="Max" value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
+                                                        placeholder="Max"
+                                                        value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
@@ -216,10 +218,10 @@
                                             @php
                                                 // Check if this is the Latest Revision
                                                 $isRevEditable = ($rev->id == $latestRevisionId);
-                                                
+
                                                 // For Editable: Use RAW values (from allRevisionNilai)
                                                 // For Read-Only: Use EFFECTIVE values (from effectiveValues)
-                                                
+
                                                 if ($isRevEditable) {
                                                     $rawRevData = $allRevisionNilai->get($rev->id)?->get($komo->id);
                                                     $valMin = $rawRevData->min_edit ?? '';
@@ -234,23 +236,25 @@
                                                     // Let's stick to numbers for Read-Only as per request "view readonly but values same as Price Range".
                                                 }
                                             @endphp
-                                            
+
                                             @if($isRevEditable)
                                                 <td class="p-1">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
                                                         class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
-                                                        placeholder="Edit Min" value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
+                                                        placeholder="Edit Min"
+                                                        value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
                                                         class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
-                                                        placeholder="Edit Max" value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
+                                                        placeholder="Edit Max"
+                                                        value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1">
                                                     <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ((float)$valMax - (float)$valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
                                                         placeholder="Berikan alasan"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
                                                 </td>
@@ -261,9 +265,8 @@
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
                                                     {{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : '-' }}
                                                 </td>
-                                                <td class="p-1 text-center align-middle bg-light">
-                                                    <!-- Placeholder for reason in read-only view, currently empty/dash -->
-                                                    -
+                                                <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
+                                                    {{ $effData['alasan'] ?? '-' }}
                                                 </td>
                                             @endif
                                         @endforeach

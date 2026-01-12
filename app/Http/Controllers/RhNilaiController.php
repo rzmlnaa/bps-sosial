@@ -51,7 +51,8 @@ class RhNilaiController extends Controller
         foreach ($masterNilai as $komId => $val) {
             $currentState[$komId] = [
                 'min' => $val->min_nilai,
-                'max' => $val->max_nilai
+                'max' => $val->max_nilai,
+                'alasan' => $val->alasan
             ];
         }
 
@@ -67,6 +68,9 @@ class RhNilaiController extends Controller
                     }
                     if ($dt->max_edit !== null) {
                         $currentState[$dt->komoditas_id]['max'] = $dt->max_edit;
+                    }
+                    if ($dt->alasan !== null) {
+                        $currentState[$dt->komoditas_id]['alasan'] = $dt->alasan;
                     }
                 }
             }
