@@ -152,6 +152,7 @@ Route::put('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'upd
 Route::delete('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'destroy'])->name('kategori-komoditas.destroy');
 
 Route::post('/komoditas', [KomoditasController::class, 'store'])->name('komoditas.store');
+Route::put('/komoditas/{id}', [KomoditasController::class, 'update'])->name('komoditas.update');
 Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
 Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
 Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);

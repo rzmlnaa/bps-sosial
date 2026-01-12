@@ -221,7 +221,7 @@
                                             <div class="p-3">
                                                 <textarea id="textarea_komoditas" name="raw_data"
                                                     class="form-control fw-mono border-0 bg-light" rows="15"
-                                                    placeholder="Paste dari Excel (Nama [tab] Satuan)...&#10;Contoh:&#10;Beras lokal	Kg&#10;Jagung basah	Kg&#10;Tepung terigu	Kg"
+                                                    placeholder="Paste dari Excel (Nama [tab] Satuan [tab] Batas Selisih)...&#10;Contoh:&#10;Beras lokal	Kg	5000&#10;Jagung basah	Kg	2000"
                                                     style="font-family: 'Inter', sans-serif; font-size: 0.85rem; resize: none;"></textarea>
                                             </div>
                                         </div>
@@ -232,9 +232,10 @@
                                                     <table class="table table-sm table-borderless align-middle mb-0">
                                                         <thead>
                                                             <tr class="text-muted small">
-                                                                <th style="width: 50%;">Nama</th>
-                                                                <th style="width: 35%;">Satuan</th>
-                                                                <th style="width: 15%;" class="text-center"></th>
+                                                                <th style="width: 45%;">Nama</th>
+                                                                <th style="width: 25%;">Satuan</th>
+                                                                <th style="width: 25%;">Batas Selisih</th>
+                                                                <th style="width: 5%;" class="text-center"></th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="manual_input_body">
@@ -246,6 +247,9 @@
                                                                 <td><input type="text"
                                                                         class="form-control form-control-sm bg-light border-0 manual-unit"
                                                                         placeholder="Satuan (e.g. Kg)"></td>
+                                                                <td><input type="number"
+                                                                        class="form-control form-control-sm bg-light border-0 manual-batas"
+                                                                        placeholder="Batas Selisih (Rp)"></td>
                                                                 <td class="text-center"><button type="button"
                                                                         class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i
                                                                             class="fas fa-times"></i></button></td>
@@ -292,6 +296,7 @@
                                             <th class="ps-4 border-0" style="width: 60px;">No</th>
                                             <th class="border-0">Nama Komoditas</th>
                                             <th class="border-0 text-center">Satuan</th>
+                                            <th class="border-0 text-center">Batas Selisih</th>
                                             <th class="border-0">Admin</th>
                                             <th class="text-center border-0">Aksi</th>
                                         </tr>
@@ -741,6 +746,43 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Edit Komoditas -->
+    <div class="modal fade" id="modalEditKomoditas" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Edit Komoditas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditKomoditas" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Nama Komoditas</label>
+                            <input type="text" name="nama_komoditas" id="edit_komoditas_nama" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Satuan</label>
+                            <input type="text" name="satuan" id="edit_komoditas_satuan" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Batas Selisih Harga (Rp)</label>
+                            <input type="number" name="batas_selisih_harga" id="edit_komoditas_batas" class="form-control">
+                            <small class="text-muted" style="font-size: 0.7rem;">Kosongkan jika ingin mengikuti default Kategori/Tahun (Jika ada).</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn text-white fw-medium" style="background-color: var(--bps-orange);">
+                            <i class="fas fa-save me-1"></i> Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -792,12 +834,14 @@
             const btnAddManualRow = document.getElementById('btn_add_manual_row');
 
             // Function to add a manual row
-            function addManualRow(name = '', unit = '') {
+            // Function to add a manual row
+            function addManualRow(name = '', unit = '', batas = '') {
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
                                 <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
                                 <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
                                 <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
                             `;
                 manualInputBody.appendChild(tr);
@@ -809,7 +853,9 @@
                 const data = Array.from(rows).map(row => {
                     const name = row.querySelector('.manual-name').value.trim();
                     const unit = row.querySelector('.manual-unit').value.trim();
-                    return name ? `${name}\t${unit || 'Kg'}` : null;
+                    const batas = row.querySelector('.manual-batas').value.trim();
+                    // Join with tabs: Name \t Unit \t Batas
+                    return name ? `${name}\t${unit || 'Kg'}\t${batas}` : null;
                 }).filter(Boolean);
                 textareaKomoditas.value = data.join('\n');
             }
@@ -824,7 +870,7 @@
                 }
                 lines.forEach(line => {
                     const parts = line.split('\t');
-                    addManualRow(parts[0]?.trim() || '', parts[1]?.trim() || 'Kg');
+                    addManualRow(parts[0]?.trim() || '', parts[1]?.trim() || 'Kg', parts[2]?.trim() || '');
                 });
             }
 
@@ -901,14 +947,14 @@
                     komoditasTableTitle.innerText = `Daftar Komoditas - ${kategoriName}`;
 
                     // Show Loading
-                    tableBodyKomoditas.innerHTML = `<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
+                    tableBodyKomoditas.innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
 
                     fetch(`/komoditas/get-by-category/${kategoriId}`)
                         .then(response => response.json())
                         .then(data => {
                             let html = '';
                             if (data.length === 0) {
-                                html = `<tr><td colspan="5" class="text-center py-5 text-muted">Belum ada data komoditas untuk kategori ini.</td></tr>`;
+                                html = `<tr><td colspan="6" class="text-center py-5 text-muted">Belum ada data komoditas untuk kategori ini.</td></tr>`;
                                 btnClearKomoditas.style.display = 'none';
                                 textareaKomoditas.value = '';
 
@@ -926,11 +972,20 @@
                                                         <td class="ps-4 text-muted">${index + 1}</td>
                                                         <td class="fw-medium">${item.nama_komoditas}</td>
                                                         <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                        <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
                                                         <td>
                                                             <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
                                                             <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
                                                         </td>
                                                         <td class="text-center">
+                                                            <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
+                                                                data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
+                                                                data-id="${item.id}"
+                                                                data-nama="${item.nama_komoditas}"
+                                                                data-satuan="${item.satuan}"
+                                                                data-batas="${item.batas_selisih_harga || ''}">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
                                                             <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
                                                                 @csrf
                                                                 @method('DELETE')
@@ -945,11 +1000,11 @@
                                                 `;
 
                                     // Add to manual input
-                                    addManualRow(item.nama_komoditas, item.satuan || 'Kg');
+                                    addManualRow(item.nama_komoditas, item.satuan || 'Kg', item.batas_selisih_harga || '');
                                 });
                                 btnClearKomoditas.style.display = 'block';
                                 // Also fill textarea
-                                textareaKomoditas.value = data.map(i => `${i.nama_komoditas}\t${i.satuan || 'Kg'}`).join('\n');
+                                textareaKomoditas.value = data.map(i => `${i.nama_komoditas}\t${i.satuan || 'Kg'}\t${i.batas_selisih_harga || ''}`).join('\n');
                             }
                             tableBodyKomoditas.innerHTML = html;
                         });
@@ -1068,6 +1123,25 @@
 
                     let url = "{{ route('rh-perubahan.update', ':id') }}";
                     this.querySelector('#formEditRhPerubahan').action = url.replace(':id', id);
+                });
+            }
+
+            // Edit Komoditas Modal Populating
+            const modalEditKomoditasEl = document.getElementById('modalEditKomoditas');
+            if (modalEditKomoditasEl) {
+                modalEditKomoditasEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const nama = button.getAttribute('data-nama');
+                    const satuan = button.getAttribute('data-satuan');
+                    const batas = button.getAttribute('data-batas');
+
+                    this.querySelector('#edit_komoditas_nama').value = nama;
+                    this.querySelector('#edit_komoditas_satuan').value = satuan;
+                    this.querySelector('#edit_komoditas_batas').value = batas;
+
+                    let url = "{{ route('komoditas.update', ':id') }}";
+                    this.querySelector('#formEditKomoditas').action = url.replace(':id', id);
                 });
             }
         });

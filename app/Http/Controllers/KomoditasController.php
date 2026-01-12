@@ -26,6 +26,8 @@ class KomoditasController extends Controller
 
             $name = trim($parts[0] ?? '');
             $satuan = trim($parts[1] ?? 'Kg');
+            // Check for 3rd column (Batas Selisih Harga) if exists
+            $batas = isset($parts[2]) && is_numeric(trim($parts[2])) ? (float) trim($parts[2]) : null;
 
             if (!empty($name)) {
                 $komoditas = Komoditas::where('kategori_id', $kategori_id)
@@ -35,6 +37,7 @@ class KomoditasController extends Controller
                 if ($komoditas) {
                     $komoditas->update([
                         'satuan' => $satuan,
+                        'batas_selisih_harga' => $batas,
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
                 } else {
@@ -42,6 +45,7 @@ class KomoditasController extends Controller
                         'kategori_id' => $kategori_id,
                         'nama_komoditas' => $name,
                         'satuan' => $satuan,
+                        'batas_selisih_harga' => $batas,
                         'user_id_add' => Auth::id() ?? 1,
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
@@ -67,6 +71,33 @@ class KomoditasController extends Controller
         ]);
 
         return redirect()->back()->with('success', $count . ' Komoditas berhasil disimpan.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nama_komoditas' => 'required|string',
+            'satuan' => 'nullable|string',
+            'batas_selisih_harga' => 'nullable|numeric|min:0',
+        ]);
+
+        $komoditas = Komoditas::findOrFail($id);
+
+        $komoditas->update([
+            'nama_komoditas' => $request->nama_komoditas,
+            'satuan' => $request->satuan,
+            'batas_selisih_harga' => $request->batas_selisih_harga,
+            'user_id_update' => Auth::id() ?? 1,
+        ]);
+
+        // Save state to session to keep tab open
+        session([
+            'last_kategori_id' => $komoditas->kategori_id,
+            'active_tab' => 'pills-input-tab',
+            'input_mode' => 'mode-paste' // or whatever default
+        ]);
+
+        return redirect()->back()->with('success', 'Komoditas berhasil diperbarui.');
     }
 
     public function destroy(Request $request, $id)
