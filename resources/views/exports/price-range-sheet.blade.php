@@ -2,6 +2,7 @@
     <thead>
         <tr>
             <!-- Row 1: Top Headers -->
+            <th style="font-weight: bold; text-align: center;"></th> <!-- URUT_BAR -->
             <th style="font-weight: bold; text-align: left;"></th> <!-- NAMA -->
             <th style="font-weight: bold; text-align: center;"></th> <!-- SATUAN -->
             <th style="font-weight: bold; text-align: center;"></th> <!-- MIN MASTER -->
@@ -16,6 +17,7 @@
         </tr>
         <tr>
             <!-- Row 2: Sub Headers -->
+            <th style="font-weight: bold; border: 1px solid #000000;">URUT_BAR</th>
             <th style="font-weight: bold; border: 1px solid #000000;">NAMA</th>
             <th style="font-weight: bold; border: 1px solid #000000;">SATUAN</th>
             <th style="font-weight: bold; border: 1px solid #000000;">MIN_{{ substr($year->tahun, -2) }}</th>
@@ -30,10 +32,13 @@
         </tr>
     </thead>
     <tbody>
+        @php $no = 1; @endphp
         @foreach($categories as $category)
             <tr>
+                <td style="border: 1px solid #000000; text-align: center; background-color: #f2f2f2;">{{ $no++ }}</td>
                 <td style="font-weight: bold; border: 1px solid #000000; background-color: #f2f2f2;">
-                    {{ $category->nama_kategori }}</td>
+                    {{ $category->nama_kategori }}
+                </td>
                 <td style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
                 <td style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
                 <td style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
@@ -53,6 +58,7 @@
                     $currentAlasan = $master ? $master->alasan : null;
                 @endphp
                 <tr>
+                    <td style="border: 1px solid #000000; text-align: center;">{{ $no++ }}</td>
                     <td style="border: 1px solid #000000;">{{ $komo->nama_komoditas }}</td>
                     <td style="border: 1px solid #000000;">{{ $komo->satuan ?? 'Kg' }}</td>
 
