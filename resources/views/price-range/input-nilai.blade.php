@@ -430,6 +430,10 @@
                         hasError = true;
                     }
                 } else {
+                    // Jika ada tulisan di alasan, lalu nilai min max nya tidak melewai batas selisih, kosongkan isian alasan nya
+                    if (alasanInput.value !== '') {
+                        alasanInput.value = '';
+                    }
                     alasanInput.classList.add('d-none');
                 }
 

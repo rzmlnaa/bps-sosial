@@ -31,9 +31,9 @@
                             kabupaten.</small>
                     </div>
                     <div class="card-body">
-                        <ul class="nav nav-tabs nav-fill mb-3" id="insightTabs" role="tablist">
+                        <ul class="nav nav-tabs flex-nowrap overflow-auto mb-3 pb-1" id="insightTabs" role="tablist" style="white-space: nowrap;">
                             @foreach($outliers as $periodName => $data)
-                                <li class="nav-item" role="presentation">
+                                <li class="nav-item flex-shrink-0" role="presentation">
                                     <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold"
                                         id="tab-{{ Str::slug($periodName) }}" data-bs-toggle="tab"
                                         data-bs-target="#content-{{ Str::slug($periodName) }}" type="button" role="tab">
