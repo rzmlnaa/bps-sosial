@@ -72,13 +72,20 @@ class RhTahunController extends Controller
 
         $rhTahun = RhTahun::findOrFail($request->rh_tahun_id);
 
-        // Prevent duplicate date in the same year
-        $exists = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
-            ->where('tanggal_perubahan', $request->tanggal_perubahan)
-            ->exists();
+        // Ensure date is in the same year
+        $year = \Carbon\Carbon::parse($request->tanggal_perubahan)->year;
+        if ($year != $rhTahun->tahun) {
+            return back()->with('error', "Tanggal harus berada pada tahun {$rhTahun->tahun}.")->with('active_tab', 'pills-rh-settings-tab');
+        }
 
-        if ($exists) {
-            return back()->with('error', 'Tanggal perubahan sudah ada untuk tahun ini.')->with('active_tab', 'pills-rh-settings-tab');
+        // Prevent duplicate or earlier date
+        $latestRevision = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
+            ->orderBy('tanggal_perubahan', 'desc')
+            ->first();
+
+        if ($latestRevision && $request->tanggal_perubahan <= $latestRevision->tanggal_perubahan) {
+            $formattedDate = \Carbon\Carbon::parse($latestRevision->tanggal_perubahan)->translatedFormat('j F Y');
+            return back()->with('error', "Tanggal perubahan harus setelah tanggal terakhir ({$formattedDate}).")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Auto generate label: Perubahan RH 3 Maret 2025

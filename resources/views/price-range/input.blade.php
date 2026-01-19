@@ -806,6 +806,13 @@
 
 @push('scripts')
     <script>
+        // Store latest dates for each RH year to restrict new header dates
+        window.latestRhDates = {
+            @foreach($rhTahun as $t)
+                "{{ $t->id }}": "{{ $t->perubahanHeaders->last()->tanggal_perubahan ?? '' }}",
+            @endforeach
+                };
+
         document.addEventListener("DOMContentLoaded", function () {
             // Edit Kategori Modal Populating
             const modalEditKategoriEl = document.getElementById('modalEditKategori');
@@ -858,11 +865,11 @@
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
-                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
-                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
-                                                                                        <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
-                                                                                        <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
-                                                                                    `;
+                                                                                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
+                                                                                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                                                                                <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
+                                                                                                <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
+                                                                                            `;
                 manualInputBody.appendChild(tr);
             }
 
@@ -987,36 +994,36 @@
                                 data.forEach((item, index) => {
                                     // Add to table
                                     html += `
-                                                                                                            <tr>
-                                                                                                                <td class="ps-4 text-muted">${index + 1}</td>
-                                                                                                                <td class="fw-medium">${item.nama_komoditas}</td>
-                                                                                                                <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
-                                                                                                                <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
-                                                                                                                <td>
-                                                                                                                    <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
-                                                                                                                    <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
-                                                                                                                </td>
-                                                                                                                <td class="text-center">
-                                                                                                                    <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
-                                                                                                                        data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
-                                                                                                                        data-id="${item.id}"
-                                                                                                                        data-nama="${item.nama_komoditas}"
-                                                                                                                        data-satuan="${item.satuan}"
-                                                                                                                        data-batas="${item.batas_selisih_harga || ''}">
-                                                                                                                        <i class="fas fa-edit"></i>
-                                                                                                                    </button>
-                                                                                                                    <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
-                                                                                                                        @csrf
-                                                                                                                        @method('DELETE')
-                                                                                                                        <input type="hidden" name="active_tab" value="pills-input-tab">
-                                                                                                                        <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
-                                                                                                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                                                                                            <i class="fas fa-trash-alt"></i>
-                                                                                                                        </button>
-                                                                                                                    </form>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                        `;
+                                                                                                                    <tr>
+                                                                                                                        <td class="ps-4 text-muted">${index + 1}</td>
+                                                                                                                        <td class="fw-medium">${item.nama_komoditas}</td>
+                                                                                                                        <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                                                                                        <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
+                                                                                                                        <td>
+                                                                                                                            <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
+                                                                                                                            <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
+                                                                                                                        </td>
+                                                                                                                        <td class="text-center">
+                                                                                                                            <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
+                                                                                                                                data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
+                                                                                                                                data-id="${item.id}"
+                                                                                                                                data-nama="${item.nama_komoditas}"
+                                                                                                                                data-satuan="${item.satuan}"
+                                                                                                                                data-batas="${item.batas_selisih_harga || ''}">
+                                                                                                                                <i class="fas fa-edit"></i>
+                                                                                                                            </button>
+                                                                                                                            <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
+                                                                                                                                @csrf
+                                                                                                                                @method('DELETE')
+                                                                                                                                <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                                                                                                <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
+                                                                                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                                                                                                    <i class="fas fa-trash-alt"></i>
+                                                                                                                                </button>
+                                                                                                                            </form>
+                                                                                                                        </td>
+                                                                                                                    </tr>
+                                                                                                                `;
 
                                     // Add to manual input
                                     addManualRow(item.nama_komoditas, item.satuan || 'Kg', item.batas_selisih_harga || '');
@@ -1195,16 +1202,22 @@
                         dateInput.style.pointerEvents = 'auto';
                         dateInput.style.backgroundColor = 'white';
 
-                        dateInput.min = `${year}-01-01`;
                         dateInput.max = `${year}-12-31`;
 
-                        // Set default date to Jan 1st of selected year if not already in range
-                        const currentVal = dateInput.value;
-                        if (!currentVal || !currentVal.startsWith(year)) {
+                        const latestDate = window.latestRhDates[value];
+                        if (latestDate) {
+                            // Date restriction: must be AFTER the latest existing date
+                            const d = new Date(latestDate);
+                            d.setDate(d.getDate() + 1);
+                            const minDate = d.toISOString().split('T')[0];
+                            dateInput.min = minDate;
+                            dateInput.value = minDate;
+                            dateHint.innerHTML = `Pilih tanggal <b>setelah ${new Date(latestDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b>`;
+                        } else {
+                            dateInput.min = `${year}-01-01`;
                             dateInput.value = `${year}-01-01`;
+                            dateHint.innerText = `Pilih tanggal di tahun ${year}`;
                         }
-
-                        dateHint.innerText = `Pilih tanggal di tahun ${year}`;
                         dateHint.classList.remove('text-muted');
                         dateHint.classList.add('text-primary', 'fw-bold');
                     } else {
