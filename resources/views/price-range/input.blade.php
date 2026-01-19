@@ -402,7 +402,14 @@
                                             <th class="ps-4 border-0" style="width: 120px;">Tahun</th>
                                             <th class="border-0">Batas Selisih</th>
                                             <th class="border-0">Status</th>
-                                            <th class="border-0">Daftar Perubahan (Header)</th>
+                                            <th class="border-0">
+                                                Daftar Perubahan (Header)
+                                                <button type="button"
+                                                    class="btn btn-xs btn-link p-0 ms-1 text-muted btn-sort-perubahan"
+                                                    title="Urutkan Tanggal">
+                                                    <i class="fas fa-sort"></i>
+                                                </button>
+                                            </th>
                                             <th class="text-center border-0">Aksi</th>
                                         </tr>
                                     </thead>
@@ -411,6 +418,11 @@
                                             <tr>
                                                 <td class="ps-4">
                                                     <span class="fs-5 fw-bold text-dark">{{ $tahun->tahun }}</span>
+                                                    <br>
+                                                    <span class="text-muted" style="font-size: 0.7rem;">
+                                                        <i class="fas fa-user-edit me-1"></i>
+                                                        {{ $tahun->userAdd->name ?? 'Admin' }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-light text-dark border">Rp 1 - Rp
@@ -435,16 +447,21 @@
                                                 </td>
                                                 <td>
                                                     @if($tahun->perubahanHeaders->count() > 0)
-                                                        <ul class="list-unstyled mb-0 small">
+                                                        <ul class="list-unstyled mb-0 small perubahan-list">
                                                             @foreach($tahun->perubahanHeaders as $rev)
-                                                                <li
-                                                                    class="mb-2 d-flex justify-content-between align-items-center bg-light p-2 rounded border-start border-4 border-orange">
+                                                                <li class="mb-2 d-flex justify-content-between align-items-center bg-light p-2 rounded border-start border-4 border-orange perubahan-item"
+                                                                    data-date="{{ $rev->tanggal_perubahan }}">
                                                                     <div>
                                                                         @php
                                                                             $revDate = \Carbon\Carbon::parse($rev->tanggal_perubahan);
                                                                         @endphp
                                                                         <span class="fw-bold text-dark">Perubahan RH
                                                                             {{ $revDate->translatedFormat('j F Y') }}</span>
+                                                                        <br>
+                                                                        <span class="text-muted" style="font-size: 0.75rem;">
+                                                                            <i class="fas fa-user-edit me-1"></i>
+                                                                            {{ $rev->userAdd->name ?? 'Admin' }}
+                                                                        </span>
                                                                     </div>
                                                                     <div class="d-flex gap-1">
                                                                         <button type="button"
@@ -513,7 +530,8 @@
 
 
     <!-- Modal Edit Kategori -->
-    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel" aria-hidden="true">
+    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0">
@@ -526,7 +544,8 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold text-uppercase">Nama Kategori</label>
-                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control" placeholder="Contoh: PADI-PADIAN" required>
+                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control"
+                                placeholder="Contoh: PADI-PADIAN" required>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -554,13 +573,15 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Tahun</label>
-                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000" max="2099">
+                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000"
+                                max="2099">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Batas Selisih Harga</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted small">Rp</span>
-                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control" required min="0">
+                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control"
+                                    required min="0">
                             </div>
                         </div>
                     </div>
@@ -589,7 +610,8 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Tanggal Perubahan</label>
-                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control" required>
+                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control"
+                                required>
                             <small class="text-primary small" id="edit_rh_perubahan_hint"></small>
                         </div>
                     </div>
@@ -656,7 +678,8 @@
     </style>
 
     <!-- Modal Edit Kategori -->
-    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel" aria-hidden="true">
+    <div class="modal fade" id="modalEditKategori" tabindex="-1" aria-labelledby="modalEditKategoriLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0">
@@ -669,7 +692,8 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold text-uppercase">Nama Kategori</label>
-                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control" placeholder="Contoh: PADI-PADIAN" required>
+                            <input type="text" name="nama_kategori" id="edit_nama_kategori" class="form-control"
+                                placeholder="Contoh: PADI-PADIAN" required>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -697,13 +721,15 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Tahun</label>
-                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000" max="2099">
+                            <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000"
+                                max="2099">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Batas Selisih Harga</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted small">Rp</span>
-                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control" required min="0">
+                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control"
+                                    required min="0">
                             </div>
                         </div>
                     </div>
@@ -732,7 +758,8 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Tanggal Perubahan</label>
-                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control" required>
+                            <input type="date" name="tanggal_perubahan" id="edit_rh_perubahan_tanggal" class="form-control"
+                                required>
                             <small class="text-primary small" id="edit_rh_perubahan_hint"></small>
                         </div>
                     </div>
@@ -770,7 +797,8 @@
                         <div class="mb-3">
                             <label class="form-label small fw-medium">Batas Selisih Harga (Rp)</label>
                             <input type="number" name="batas_selisih_harga" id="edit_komoditas_batas" class="form-control">
-                            <small class="text-muted" style="font-size: 0.7rem;">Kosongkan jika ingin mengikuti default Kategori/Tahun (Jika ada).</small>
+                            <small class="text-muted" style="font-size: 0.7rem;">Kosongkan jika ingin mengikuti default
+                                Kategori/Tahun (Jika ada).</small>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -839,11 +867,11 @@
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
-                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
-                                <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
-                                <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
-                                <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
-                            `;
+                                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
+                                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                            <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
+                                            <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
+                                        `;
                 manualInputBody.appendChild(tr);
             }
 
@@ -968,36 +996,36 @@
                                 data.forEach((item, index) => {
                                     // Add to table
                                     html += `
-                                                    <tr>
-                                                        <td class="ps-4 text-muted">${index + 1}</td>
-                                                        <td class="fw-medium">${item.nama_komoditas}</td>
-                                                        <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
-                                                        <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
-                                                        <td>
-                                                            <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
-                                                            <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
-                                                        </td>
-                                                        <td class="text-center">
-                                                            <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
-                                                                data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
-                                                                data-id="${item.id}"
-                                                                data-nama="${item.nama_komoditas}"
-                                                                data-satuan="${item.satuan}"
-                                                                data-batas="${item.batas_selisih_harga || ''}">
-                                                                <i class="fas fa-edit"></i>
-                                                            </button>
-                                                            <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <input type="hidden" name="active_tab" value="pills-input-tab">
-                                                                <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
-                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                                    <i class="fas fa-trash-alt"></i>
-                                                                </button>
-                                                            </form>
-                                                        </td>
-                                                    </tr>
-                                                `;
+                                                                <tr>
+                                                                    <td class="ps-4 text-muted">${index + 1}</td>
+                                                                    <td class="fw-medium">${item.nama_komoditas}</td>
+                                                                    <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                                    <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
+                                                                    <td>
+                                                                        <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
+                                                                        <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
+                                                                            data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
+                                                                            data-id="${item.id}"
+                                                                            data-nama="${item.nama_komoditas}"
+                                                                            data-satuan="${item.satuan}"
+                                                                            data-batas="${item.batas_selisih_harga || ''}">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+                                                                        <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                                            <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
+                                                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                                                <i class="fas fa-trash-alt"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                    </td>
+                                                                </tr>
+                                                            `;
 
                                     // Add to manual input
                                     addManualRow(item.nama_komoditas, item.satuan || 'Kg', item.batas_selisih_harga || '');
@@ -1142,6 +1170,33 @@
 
                     let url = "{{ route('komoditas.update', ':id') }}";
                     this.querySelector('#formEditKomoditas').action = url.replace(':id', id);
+                });
+            }
+
+            // --- Fitur Sort Perubahan ---
+            const btnSortPerubahan = document.querySelector('.btn-sort-perubahan');
+            if (btnSortPerubahan) {
+                let sortDesc = true; // Default DESC from backend
+                btnSortPerubahan.addEventListener('click', function () {
+                    sortDesc = !sortDesc;
+                    const icon = this.querySelector('i');
+                    icon.className = sortDesc ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up';
+
+                    document.querySelectorAll('.perubahan-list').forEach(list => {
+                        const items = Array.from(list.querySelectorAll('.perubahan-item'));
+                        items.sort((a, b) => {
+                            const dateA = new Date(a.getAttribute('data-date'));
+                            const dateB = new Date(b.getAttribute('data-date'));
+                            return sortDesc ? dateB - dateA : dateA - dateB;
+                        });
+
+                        // Clear and Re-append
+                        list.innerHTML = '';
+                        items.forEach(item => list.appendChild(item));
+                    });
+
+                    // Show a small toast or notification if needed (optional)
+                    console.log('Sorted revisions:', sortDesc ? 'Descending' : 'Ascending');
                 });
             }
         });

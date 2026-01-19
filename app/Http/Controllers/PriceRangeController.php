@@ -39,7 +39,7 @@ class PriceRangeController extends Controller
         $revisionDetails = collect();
         if ($selectedYearId) {
             $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)
-                ->orderBy('tanggal_perubahan', 'asc')
+                ->orderBy('tanggal_perubahan', 'desc')
                 ->get();
 
             if ($selectedKabupatenId) {

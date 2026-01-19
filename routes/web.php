@@ -143,7 +143,13 @@ Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name
 
 Route::get('/price-range/input', function () {
     $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
-    $rhTahun = \App\Models\RhTahun::with(['perubahanHeaders.userAdd', 'userAdd'])->orderBy('tahun', 'desc')->get();
+    $rhTahun = \App\Models\RhTahun::with([
+        'perubahanHeaders' => function ($query) {
+            $query->orderBy('tanggal_perubahan', 'desc');
+        },
+        'perubahanHeaders.userAdd',
+        'userAdd'
+    ])->orderBy('tahun', 'desc')->get();
     return view('price-range/input', compact('kategori', 'rhTahun'));
 })->name('price-range.input');
 
