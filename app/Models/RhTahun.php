@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class RhTahun extends Model
 {
     protected $table = 'tb_rh_tahun';
-    protected $fillable = ['tahun', 'is_active', 'batas_selisih_harga', 'user_id_add'];
+    protected $fillable = ['tahun', 'is_active', 'user_id_add'];
 
     public function userAdd()
     {

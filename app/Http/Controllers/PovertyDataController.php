@@ -91,7 +91,7 @@ class PovertyDataController extends Controller
             $variabelsQuery->where('tahun', $tahun);
         }
         $variabels = $variabelsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::all();
+        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
 
         return response()->json([
             'data' => $data,

@@ -2,6 +2,22 @@
 
 @section('title', 'Input Rentang Harga - BPS Kalbar')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .ts-control {
+            border: none !important;
+            background-color: #f8f9fa !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 8px !important;
+        }
+
+        .ts-wrapper.single .ts-control {
+            background-image: none !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
@@ -321,11 +337,13 @@
                 <div class="row g-4">
                     <!-- Left Column: Settings Form -->
                     <div class="col-lg-4">
+
+
                         <!-- Add Year -->
                         <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                             <div class="card-header bg-white py-3 border-bottom-0">
                                 <h6 class="fw-bold mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">Tambah Tahun
-                                    RH</h6>
+                                    RH (MASTER)</h6>
                             </div>
                             <div class="card-body pt-0">
                                 <form action="{{ route('rh-tahun.store') }}" method="POST">
@@ -334,16 +352,6 @@
                                         <label class="form-label small fw-medium">Tahun</label>
                                         <input type="number" name="tahun" class="form-control" placeholder="Contoh: 2025"
                                             required min="2000" max="2099">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-medium">Batas Selisih Harga</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light text-muted small">Rp</span>
-                                            <input type="number" name="batas_selisih_harga" class="form-control"
-                                                placeholder="Contoh: 5000" required min="0">
-                                        </div>
-                                        <small class="text-muted" style="font-size: 0.7rem;">Batas toleransi perbedaan harga
-                                            (Rupiah) untuk validasi.</small>
                                     </div>
                                     <button type="submit" class="btn text-white w-100 fw-medium"
                                         style="background-color: var(--bps-blue);">
@@ -365,8 +373,8 @@
                                     <div class="mb-3">
                                         <label class="form-label small fw-medium">Pilih Tahun RH</label>
                                         <select name="rh_tahun_id" id="select_rh_tahun_perubahan" class="form-select"
-                                            required>
-                                            <option value="" selected disabled>-- Pilih Tahun --</option>
+                                            placeholder="Cari atau pilih tahun..." required>
+                                            <option value="">-- Pilih Tahun --</option>
                                             @foreach($rhTahun as $t)
                                                 <option value="{{ $t->id }}" data-tahun="{{ $t->tahun }}">{{ $t->tahun }}
                                                 </option>
@@ -375,9 +383,11 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small fw-medium">Tanggal Perubahan</label>
-                                        <input type="date" name="tanggal_perubahan" id="input_tanggal_perubahan"
-                                            class="form-control" required disabled>
-                                        <small class="text-muted" style="font-size: 0.7rem;" id="date_hint">Pilih tahun
+                                        <input type="date" name="tanggal_perubahan" id="input-tanggal-header"
+                                            class="form-control" required readonly
+                                            style="background-color: #f8f9fa; pointer-events: none;">
+                                        <small class="text-muted" style="font-size: 0.7rem;" id="date_hint_header">Pilih
+                                            tahun
                                             terlebih dahulu.</small>
                                     </div>
                                     <button type="submit" class="btn text-white w-100 fw-medium"
@@ -400,7 +410,7 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th class="ps-4 border-0" style="width: 120px;">Tahun</th>
-                                            <th class="border-0">Batas Selisih</th>
+
                                             <th class="border-0">Status</th>
                                             <th class="border-0">
                                                 Daftar Perubahan (Header)
@@ -424,10 +434,7 @@
                                                         {{ $tahun->userAdd->name ?? 'Admin' }}
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <span class="badge bg-light text-dark border">Rp 1 - Rp
-                                                        {{ number_format($tahun->batas_selisih_harga, 0, ',', '.') }}</span>
-                                                </td>
+
                                                 <td>
                                                     <form action="{{ route('rh-tahun.toggle-active', $tahun->id) }}"
                                                         method="POST" class="d-inline">
@@ -564,7 +571,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title fw-bold">Edit Batas Selisih & Tahun</h5>
+                    <h5 class="modal-title fw-bold">Edit Tahun</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="formEditRhTahun" method="POST">
@@ -575,14 +582,6 @@
                             <label class="form-label small fw-medium">Tahun</label>
                             <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000"
                                 max="2099">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-medium">Batas Selisih Harga</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted small">Rp</span>
-                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control"
-                                    required min="0">
-                            </div>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -712,7 +711,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title fw-bold">Edit Batas Selisih & Tahun</h5>
+                    <h5 class="modal-title fw-bold">Edit Tahun</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="formEditRhTahun" method="POST">
@@ -723,14 +722,6 @@
                             <label class="form-label small fw-medium">Tahun</label>
                             <input type="number" name="tahun" id="edit_rh_tahun" class="form-control" required min="2000"
                                 max="2099">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-medium">Batas Selisih Harga</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted small">Rp</span>
-                                <input type="number" name="batas_selisih_harga" id="edit_rh_selisih" class="form-control"
-                                    required min="0">
-                            </div>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0">
@@ -867,11 +858,11 @@
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
-                                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
-                                            <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
-                                            <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
-                                            <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
-                                        `;
+                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
+                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                                                                        <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
+                                                                                        <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
+                                                                                    `;
                 manualInputBody.appendChild(tr);
             }
 
@@ -996,36 +987,36 @@
                                 data.forEach((item, index) => {
                                     // Add to table
                                     html += `
-                                                                <tr>
-                                                                    <td class="ps-4 text-muted">${index + 1}</td>
-                                                                    <td class="fw-medium">${item.nama_komoditas}</td>
-                                                                    <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
-                                                                    <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
-                                                                    <td>
-                                                                        <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
-                                                                        <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
-                                                                    </td>
-                                                                    <td class="text-center">
-                                                                        <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
-                                                                            data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
-                                                                            data-id="${item.id}"
-                                                                            data-nama="${item.nama_komoditas}"
-                                                                            data-satuan="${item.satuan}"
-                                                                            data-batas="${item.batas_selisih_harga || ''}">
-                                                                            <i class="fas fa-edit"></i>
-                                                                        </button>
-                                                                        <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
-                                                                            @csrf
-                                                                            @method('DELETE')
-                                                                            <input type="hidden" name="active_tab" value="pills-input-tab">
-                                                                            <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
-                                                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                                                <i class="fas fa-trash-alt"></i>
-                                                                            </button>
-                                                                        </form>
-                                                                    </td>
-                                                                </tr>
-                                                            `;
+                                                                                                            <tr>
+                                                                                                                <td class="ps-4 text-muted">${index + 1}</td>
+                                                                                                                <td class="fw-medium">${item.nama_komoditas}</td>
+                                                                                                                <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                                                                                <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
+                                                                                                                <td>
+                                                                                                                    <small class="text-muted d-block">${item.user_add?.name || 'Admin'}</small>
+                                                                                                                    <small class="text-xs text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleString('id-ID')}</small>
+                                                                                                                </td>
+                                                                                                                <td class="text-center">
+                                                                                                                    <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
+                                                                                                                        data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
+                                                                                                                        data-id="${item.id}"
+                                                                                                                        data-nama="${item.nama_komoditas}"
+                                                                                                                        data-satuan="${item.satuan}"
+                                                                                                                        data-batas="${item.batas_selisih_harga || ''}">
+                                                                                                                        <i class="fas fa-edit"></i>
+                                                                                                                    </button>
+                                                                                                                    <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
+                                                                                                                        @csrf
+                                                                                                                        @method('DELETE')
+                                                                                                                        <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                                                                                        <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
+                                                                                                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                                                                                            <i class="fas fa-trash-alt"></i>
+                                                                                                                        </button>
+                                                                                                                    </form>
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        `;
 
                                     // Add to manual input
                                     addManualRow(item.nama_komoditas, item.satuan || 'Kg', item.batas_selisih_harga || '');
@@ -1098,25 +1089,7 @@
                 });
             }
 
-            // JS Logic for RH Year and Date restriction
-            const selectRhTahun = document.getElementById('select_rh_tahun_perubahan');
-            const inputDate = document.getElementById('input_tanggal_perubahan');
-            const dateHint = document.getElementById('date_hint');
 
-            if (selectRhTahun && inputDate) {
-                selectRhTahun.addEventListener('change', function () {
-                    const selectedYear = this.options[this.selectedIndex].getAttribute('data-tahun');
-                    if (selectedYear) {
-                        inputDate.disabled = false;
-                        inputDate.min = `${selectedYear}-01-01`;
-                        inputDate.max = `${selectedYear}-12-31`;
-                        inputDate.value = `${selectedYear}-01-01`;
-                        dateHint.innerText = `Pilih tanggal di tahun ${selectedYear}`;
-                        dateHint.classList.remove('text-muted');
-                        dateHint.classList.add('text-primary');
-                    }
-                });
-            }
 
             // Edit Rh Tahun Modal Populating
             const modalEditRhTahunEl = document.getElementById('modalEditRhTahun');
@@ -1128,7 +1101,7 @@
                     const selisih = button.getAttribute('data-selisih');
 
                     this.querySelector('#edit_rh_tahun').value = tahun;
-                    this.querySelector('#edit_rh_selisih').value = selisih;
+
 
                     let url = "{{ route('rh-tahun.update', ':id') }}";
                     this.querySelector('#formEditRhTahun').action = url.replace(':id', id);
@@ -1198,6 +1171,60 @@
                     // Show a small toast or notification if needed (optional)
                     console.log('Sorted revisions:', sortDesc ? 'Descending' : 'Ascending');
                 });
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dateInput = document.getElementById('input-tanggal-header');
+            const dateHint = document.getElementById('date_hint_header');
+
+            const tsRhTahun = new TomSelect("#select_rh_tahun_perubahan", {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "desc"
+                },
+                onChange: function (value) {
+                    if (value) {
+                        const optionHeader = this.options[value];
+                        const year = optionHeader.tahun || optionHeader['data-tahun'] || (this.getItem(value) ? this.getItem(value).innerHTML.trim() : '');
+
+                        dateInput.readOnly = false;
+                        dateInput.style.pointerEvents = 'auto';
+                        dateInput.style.backgroundColor = 'white';
+
+                        dateInput.min = `${year}-01-01`;
+                        dateInput.max = `${year}-12-31`;
+
+                        // Set default date to Jan 1st of selected year if not already in range
+                        const currentVal = dateInput.value;
+                        if (!currentVal || !currentVal.startsWith(year)) {
+                            dateInput.value = `${year}-01-01`;
+                        }
+
+                        dateHint.innerText = `Pilih tanggal di tahun ${year}`;
+                        dateHint.classList.remove('text-muted');
+                        dateHint.classList.add('text-primary', 'fw-bold');
+                    } else {
+                        dateInput.value = '';
+                        dateInput.min = '';
+                        dateInput.max = '';
+                        dateInput.readOnly = true;
+                        dateInput.style.pointerEvents = 'none';
+                        dateInput.style.backgroundColor = '#f8f9fa';
+
+                        dateHint.innerText = 'Pilih tahun terlebih dahulu.';
+                        dateHint.classList.remove('text-primary', 'fw-bold');
+                        dateHint.classList.add('text-muted');
+                    }
+                }
+            });
+
+            // Initial trigger
+            if (tsRhTahun.getValue()) {
+                tsRhTahun.settings.onChange.call(tsRhTahun, tsRhTahun.getValue());
             }
         });
     </script>

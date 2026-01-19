@@ -30,7 +30,7 @@ Route::get('/layouts', function () {
 })->name('layouts');
 
 Route::get('/poverty', function (Request $request) {
-    $kabupatens = Kabupaten::all();
+    $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
     $variabels = VariabelKemiskinan::all();
     $selectedTahun = $request->get('tahun', 'all');
 
@@ -73,6 +73,7 @@ Route::get('/poverty', function (Request $request) {
         // if ($avgValue > 0) {
         $kabupatenData[] = [
             'id' => $kab->id,
+            'kode_kab' => $kab->kode_kab,
             'name' => $kab->nama_kabupaten,
             'nilai' => $ceknilai
             // 'avg_nilai' => floatval($avgValue),
@@ -119,7 +120,7 @@ Route::get('/poverty', function (Request $request) {
 })->name('poverty');
 
 Route::get('/poverty/input', function () {
-    $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->get();
+    $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
     $variabels = VariabelKemiskinan::with('userAdd')->get();
     return view('poverty.input', compact('kabupatens', 'variabels'));
 })->name('poverty.input');

@@ -13,13 +13,11 @@ class RhTahunController extends Controller
     {
         $request->validate([
             'tahun' => 'required|numeric|unique:tb_rh_tahun,tahun',
-            'batas_selisih_harga' => 'required|numeric|min:0',
         ]);
 
         RhTahun::create([
             'tahun' => $request->tahun,
             'is_active' => false,
-            'batas_selisih_harga' => $request->batas_selisih_harga,
             'user_id_add' => Auth::id() ?? 1,
         ]);
 
@@ -55,13 +53,11 @@ class RhTahunController extends Controller
     {
         $request->validate([
             'tahun' => 'required|numeric|unique:tb_rh_tahun,tahun,' . $id,
-            'batas_selisih_harga' => 'required|numeric|min:0',
         ]);
 
         $tahun = RhTahun::findOrFail($id);
         $tahun->update([
             'tahun' => $request->tahun,
-            'batas_selisih_harga' => $request->batas_selisih_harga,
         ]);
 
         return back()->with('success', 'Tahun RH berhasil diperbarui.')->with('active_tab', 'pills-rh-settings-tab');
@@ -74,12 +70,23 @@ class RhTahunController extends Controller
             'tanggal_perubahan' => 'required|date',
         ]);
 
+        $rhTahun = RhTahun::findOrFail($request->rh_tahun_id);
+
+        // Prevent duplicate date in the same year
+        $exists = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
+            ->where('tanggal_perubahan', $request->tanggal_perubahan)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Tanggal perubahan sudah ada untuk tahun ini.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         // Auto generate label: Perubahan RH 3 Maret 2025
         $date = \Carbon\Carbon::parse($request->tanggal_perubahan);
         $label = 'Perubahan RH ' . $date->translatedFormat('j F Y');
 
         RhPerubahanHeader::create([
-            'rh_tahun_id' => $request->rh_tahun_id,
+            'rh_tahun_id' => $rhTahun->id,
             'tanggal_perubahan' => $request->tanggal_perubahan,
             'label' => $label,
             'user_id_add' => Auth::id() ?? 1,
@@ -95,6 +102,16 @@ class RhTahunController extends Controller
         ]);
 
         $perubahan = RhPerubahanHeader::findOrFail($id);
+
+        // Prevent duplicate date in the same year
+        $exists = RhPerubahanHeader::where('rh_tahun_id', $perubahan->rh_tahun_id)
+            ->where('tanggal_perubahan', $request->tanggal_perubahan)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Tanggal perubahan sudah ada untuk tahun ini.')->with('active_tab', 'pills-rh-settings-tab');
+        }
 
         // Auto generate label: Perubahan RH 3 Maret 2025
         $date = \Carbon\Carbon::parse($request->tanggal_perubahan);

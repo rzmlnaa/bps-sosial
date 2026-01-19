@@ -16,7 +16,7 @@ class PriceRangeController extends Controller
     public function index(Request $request)
     {
         $years = RhTahun::orderBy('tahun', 'desc')->get();
-        $kabupatens = Kabupaten::all();
+        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
         $allKomoditas = \App\Models\Komoditas::all(); // Needed for full mapping
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);

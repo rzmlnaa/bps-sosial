@@ -53,6 +53,12 @@
                                 <form action="{{ route('kabupaten.store') }}" method="POST">
                                     @csrf
                                     <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Kode
+                                            Kabupaten</label>
+                                        <input type="text" name="kode_kab" class="form-control" placeholder="Contoh: 6101"
+                                            required>
+                                    </div>
+                                    <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold text-uppercase">Nama
                                             Kabupaten/Kota</label>
                                         <input type="text" name="nama_kabupaten" class="form-control"
@@ -76,6 +82,7 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th class="ps-4 border-0">No</th>
+                                            <th class="border-0">Kode Kabupaten</th>
                                             <th class="border-0">Nama Kabupaten</th>
                                             <th class="border-0">Dibuat Oleh</th>
                                             <th class="border-0">Di Update Oleh</th>
@@ -86,6 +93,7 @@
                                         @forelse($kabupatens as $index => $kab)
                                             <tr>
                                                 <td class="ps-4 text-muted">{{ $index + 1 }}</td>
+                                                <td class="fw-bold">{{ $kab->kode_kab }}</td>
                                                 <td class="fw-medium">{{ $kab->nama_kabupaten }}</td>
                                                 <td>
                                                     <span class="badge bg-light text-dark border">
@@ -105,7 +113,8 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-warning border-0 btn-edit-kabupaten"
-                                                        data-id="{{ $kab->id }}" data-nama="{{ $kab->nama_kabupaten }}">
+                                                        data-id="{{ $kab->id }}" data-nama="{{ $kab->nama_kabupaten }}"
+                                                        data-kode="{{ $kab->kode_kab }}">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <form action="{{ route('kabupaten.destroy', $kab->id) }}" method="POST"
@@ -121,7 +130,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5" class="text-center py-4 text-muted">Belum ada data wilayah.</td>
+                                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data wilayah.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -273,7 +282,8 @@
                                             class="form-select bg-light border-0" required>
                                             <option selected disabled value="">-- Pilih Wilayah --</option>
                                             @foreach($kabupatens as $kab)
-                                                <option value="{{ $kab->id }}" {{ session('last_kabupaten_id') == $kab->id ? 'selected' : '' }}>{{ $kab->nama_kabupaten }}</option>
+                                                <option value="{{ $kab->id }}" {{ session('last_kabupaten_id') == $kab->id ? 'selected' : '' }}>[{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -389,6 +399,11 @@
                     @method('PUT')
                     <div class="modal-body">
                         <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Kode Kabupaten</label>
+                            <input type="text" name="kode_kab" id="edit_kode_kab" class="form-control"
+                                placeholder="Contoh: 6101" required>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label text-muted small fw-bold text-uppercase">Nama Kabupaten/Kota</label>
                             <input type="text" name="nama_kabupaten" id="edit_nama_kabupaten" class="form-control"
                                 placeholder="Contoh: Kab. Sambas" required>
@@ -474,8 +489,8 @@
                 }
             @endif
 
-                    // 3. Edit Kabupaten Modal Logic
-                    const editButtons = document.querySelectorAll('.btn-edit-kabupaten');
+                            // 3. Edit Kabupaten Modal Logic
+                            const editButtons = document.querySelectorAll('.btn-edit-kabupaten');
             const modalEdit = new bootstrap.Modal(document.getElementById('modalEditKabupaten'));
             const formEdit = document.getElementById('formEditKabupaten');
             const inputEditNama = document.getElementById('edit_nama_kabupaten');
@@ -484,8 +499,10 @@
                 button.addEventListener('click', function () {
                     const id = this.getAttribute('data-id');
                     const nama = this.getAttribute('data-nama');
+                    const kode = this.getAttribute('data-kode');
 
-                    inputEditNama.value = nama;
+                    document.getElementById('edit_nama_kabupaten').value = nama;
+                    document.getElementById('edit_kode_kab').value = kode;
                     formEdit.action = `/kabupaten/${id}`;
 
                     modalEdit.show();

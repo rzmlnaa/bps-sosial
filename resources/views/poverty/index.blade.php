@@ -44,28 +44,28 @@
         <div class="row g-4 mb-4">
             <!-- Highlights -->
             <!-- <div class="col-lg-4">
-                                                <div class="stats-card h-100 bg-orange-faded border-0">
-                                                    <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                                                    <div class="d-flex align-items-end mb-2">
-                                                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                                                            Rp {{ number_format($provAvg, 0, ',', '.') }}
-                                                        </h1>
-                                                        <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                                                    </div>
-                                                    <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                                                    <hr style="border-color: rgba(0,0,0,0.1);">
-                                                    <div class="d-flex justify-content-between">
-                                                        <div>
-                                                            <small class="text-muted d-block">Garis Kemiskinan</small>
-                                                            <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
-                                                        </div>
-                                                        <div>
-                                                            <small class="text-muted d-block">Penduduk Miskin</small>
-                                                            <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> -->
+                                                                                    <div class="stats-card h-100 bg-orange-faded border-0">
+                                                                                        <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                                                                                        <div class="d-flex align-items-end mb-2">
+                                                                                            <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                                                                                Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                                                                            </h1>
+                                                                                            <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                                                                                        </div>
+                                                                                        <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                                                                                        <hr style="border-color: rgba(0,0,0,0.1);">
+                                                                                        <div class="d-flex justify-content-between">
+                                                                                            <div>
+                                                                                                <small class="text-muted d-block">Garis Kemiskinan</small>
+                                                                                                <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <small class="text-muted d-block">Penduduk Miskin</small>
+                                                                                                <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -92,7 +92,8 @@
                                     style="border-radius: 8px;">
                                     <option value="all" class="text-primary font-bold" selected>Semua Wilayah</option>
                                     @foreach($kabupatens as $kab)
-                                        <option value="{{ $kab->id }}">{{ $kab->nama_kabupaten }}</option>
+                                        <option value="{{ $kab->id }}">[{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -132,10 +133,11 @@
 
                         @forelse($kabupatenData as $region)
                             <tr>
-                                <td class="ps-4 fw-medium">{{ $region['name'] }}</td>
+                                <td class="ps-4 fw-medium">[{{ $region['kode_kab'] }}] {{ $region['name'] }}</td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary border-0 btn-detail-region"
-                                        data-id="{{ $region['id'] }}" data-name="{{ $region['name'] }}">
+                                        data-id="{{ $region['id'] }}" data-kode_kab="{{ $region['kode_kab'] }}"
+                                        data-name="{{ $region['name'] }}">
                                         <i class="fas fa-eye"></i> Detail
                                     </button>
                                 </td>
@@ -401,8 +403,9 @@
             button.addEventListener('click', function () {
                 const kabId = this.dataset.id;
                 const kabName = this.dataset.name;
+                const kodeKab = this.dataset.kode_kab;
 
-                document.getElementById('detailModalTitle').innerText = `Detail Kemiskinan: ${kabName}`;
+                document.getElementById('detailModalTitle').innerText = `Detail Kemiskinan: [${kodeKab}] ${kabName}`;
 
                 // Clear previous data
                 document.getElementById('modalTableBody').innerHTML = '<tr><td colspan="5" class="py-4">Loading...</td></tr>';

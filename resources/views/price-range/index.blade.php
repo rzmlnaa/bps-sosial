@@ -21,7 +21,7 @@
             </div>
         </div>
         @if ($selectedYearId && $selectedKabupatenId)
-             <!-- Analisis Insight Section -->
+            <!-- Analisis Insight Section -->
             @if(!empty($outliers))
                 <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                     <div class="card-header bg-white py-3">
@@ -31,7 +31,8 @@
                             kabupaten.</small>
                     </div>
                     <div class="card-body">
-                        <ul class="nav nav-tabs flex-nowrap overflow-auto mb-3 pb-1" id="insightTabs" role="tablist" style="white-space: nowrap;">
+                        <ul class="nav nav-tabs flex-nowrap overflow-auto mb-3 pb-1" id="insightTabs" role="tablist"
+                            style="white-space: nowrap;">
                             @foreach($outliers as $periodName => $data)
                                 <li class="nav-item flex-shrink-0" role="presentation">
                                     <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold"
@@ -151,7 +152,8 @@
                                         <div class="rounded me-2 bg-white border"
                                             style="width: 18px; height: 18px; flex-shrink: 0;"></div>
                                         <span class="small" style="line-height: 1.2;">
-                                            <b>Putih:</b> Tidak ada perubahan sama dengan periode sebelumnya atau tidak melebihi batas selisih.
+                                            <b>Putih:</b> Tidak ada perubahan sama dengan periode sebelumnya atau tidak melebihi
+                                            batas selisih.
                                         </span>
                                     </div>
                                 </div>
@@ -182,9 +184,10 @@
                             <label class="form-label small fw-bold text-muted text-uppercase">Pilih Kabupaten</label>
                             <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
                                 onchange="this.form.submit()">
+
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                        {{ $kab->nama_kabupaten }}
+                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                     </option>
                                 @endforeach
                             </select>
@@ -204,7 +207,7 @@
         </div>
 
         @if($activeYear && $selectedKabupatenId)
-            
+
             <!-- Data Table -->
             <div id="commodity-table" class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
                 <div class="table-responsive">
@@ -404,11 +407,11 @@
     </style>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             var tableElement = document.getElementById('commodity-table');
             if (tableElement) {
                 // Add a small delay to ensure rendering is complete and to make the transition noticeable
-                setTimeout(function() {
+                setTimeout(function () {
                     tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 500);
             }

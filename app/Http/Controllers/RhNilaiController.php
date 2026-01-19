@@ -21,7 +21,7 @@ class RhNilaiController extends Controller
             return redirect()->route('price-range.input')->with('error', 'Silakan aktifkan salah satu tahun RH terlebih dahulu.');
         }
 
-        $kabupatens = Kabupaten::all();
+        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
 
         // 1. Fetch ALL Revisions for Calculation (Ascending)

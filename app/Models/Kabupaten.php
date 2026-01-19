@@ -9,6 +9,7 @@ class Kabupaten extends Model
     protected $table = 'tb_kabupaten';
 
     protected $fillable = [
+        'kode_kab',
         'nama_kabupaten',
         'user_id_add',
         'user_id_update',
