@@ -18,22 +18,22 @@ use App\Models\RhPerubahanDetail;
 class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithStyles
 {
     protected $yearId;
-    protected $kabupatenId;
+    protected $kabupaten;
 
-    public function __construct($yearId, $kabupatenId)
+    public function __construct($yearId, $kabupaten)
     {
         $this->yearId = $yearId;
-        $this->kabupatenId = $kabupatenId;
+        $this->kabupaten = $kabupaten;
     }
 
     public function view(): View
     {
         $year = RhTahun::findOrFail($this->yearId);
-        $kabupaten = Kabupaten::findOrFail($this->kabupatenId);
+        $kabupaten = $this->kabupaten;
 
         $categories = KategoriKomoditas::with(['komoditas'])->get();
         $masterNilai = RhMasterNilai::where('rh_tahun_id', $this->yearId)
-            ->where('kabupaten_id', $this->kabupatenId)
+            ->where('kabupaten_id', $kabupaten->id)
             ->get()
             ->keyBy('komoditas_id');
 
@@ -42,7 +42,7 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
             ->get();
 
         $revisionDetails = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
-            ->where('kabupaten_id', $this->kabupatenId)
+            ->where('kabupaten_id', $kabupaten->id)
             ->get()
             ->groupBy('rh_perubahan_header_id');
 
@@ -62,8 +62,8 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
 
     public function title(): string
     {
-        $kab = Kabupaten::find($this->kabupatenId);
-        return substr($kab->nama_kabupaten, 0, 30); // Excel sheet limit
+        $title = "{$this->kabupaten->kode_kab} - {$this->kabupaten->nama_kabupaten}";
+        return substr($title, 0, 31); // Excel sheet limit is 31 characters
     }
 
     public function styles(Worksheet $sheet)
