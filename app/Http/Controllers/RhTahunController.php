@@ -56,6 +56,11 @@ class RhTahunController extends Controller
         ]);
 
         $tahun = RhTahun::findOrFail($id);
+
+
+        if ($tahun->perubahanHeaders()->count() > 0) {
+            return back()->with('error', 'Tahun tidak bisa diedit karena memiliki data perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        }
         $tahun->update([
             'tahun' => $request->tahun,
         ]);
