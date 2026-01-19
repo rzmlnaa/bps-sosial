@@ -146,7 +146,7 @@ Route::get('/price-range/input', function () {
     $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
     $rhTahun = \App\Models\RhTahun::with([
         'perubahanHeaders' => function ($query) {
-            $query->orderBy('tanggal_perubahan', 'desc');
+            $query->orderBy('tanggal_perubahan', 'asc');
         },
         'perubahanHeaders.userAdd',
         'userAdd'

@@ -39,7 +39,7 @@ class PriceRangeController extends Controller
         $revisionDetails = collect();
         if ($selectedYearId) {
             $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)
-                ->orderBy('tanggal_perubahan', 'desc')
+                ->orderBy('tanggal_perubahan', 'asc')
                 ->get();
 
             if ($selectedKabupatenId) {
@@ -161,6 +161,7 @@ class PriceRangeController extends Controller
                 foreach ($pricesMin as $kid => $p) {
                     if ($p < $avgMin * (1 - $threshold)) {
                         $itemOutliers['below'][] = [
+                            'kode_kab' => $kabupatens->find($kid)->kode_kab,
                             'kab' => $kabupatens->find($kid)->nama_kabupaten,
                             'type' => 'MIN',
                             'val' => $p,
@@ -177,6 +178,7 @@ class PriceRangeController extends Controller
                 foreach ($pricesMax as $kid => $p) {
                     if ($p > $avgMax * (1 + $threshold)) {
                         $itemOutliers['above'][] = [
+                            'kode_kab' => $kabupatens->find($kid)->kode_kab,
                             'kab' => $kabupatens->find($kid)->nama_kabupaten,
                             'type' => 'MAX',
                             'val' => $p,

@@ -45,6 +45,7 @@
                         </ul>
                         <div class="tab-content" id="insightTabsContent">
                             @foreach($outliers as $periodName => $commodities)
+                                
                                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
                                     id="content-{{ Str::slug($periodName) }}" role="tabpanel">
 
@@ -70,7 +71,7 @@
                                                                     <span>Avg Max:
                                                                         <b>{{ number_format($details['avg_max'] ?? 0, 0, ',', '.') }}</b></span>
                                                                 </div>
-
+                
                                                                 <div class="row small">
                                                                     <!-- Below Average -->
                                                                     <div class="col-6 border-end">
@@ -78,7 +79,7 @@
                                                                                 class="fas fa-arrow-down me-1"></i>Jauh Di Bawah Rata2</span>
                                                                         @forelse($details['below'] as $item)
                                                                             <div class="mb-1">
-                                                                                <span class="fw-bold">{{ $item['kab'] }}</span>
+                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}] {{ $item['kab'] }}</span>
                                                                                 <br>
                                                                                 <span class="text-muted">Rp
                                                                                     {{ number_format($item['val'], 0, ',', '.') }}</span>
@@ -96,7 +97,7 @@
                                                                                 class="fas fa-arrow-up me-1"></i>Jauh Di Atas Rata2</span>
                                                                         @forelse($details['above'] as $item)
                                                                             <div class="mb-1">
-                                                                                <span class="fw-bold">{{ $item['kab'] }}</span>
+                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}] {{ $item['kab'] }}</span>
                                                                                 <br>
                                                                                 <span class="text-muted">Rp
                                                                                     {{ number_format($item['val'], 0, ',', '.') }}</span>
