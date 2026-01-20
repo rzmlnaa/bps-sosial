@@ -32,29 +32,68 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
         $kabupaten = $this->kabupaten;
 
         $categories = KategoriKomoditas::with(['komoditas'])->get();
-        $masterNilai = RhMasterNilai::where('rh_tahun_id', $this->yearId)
+
+        // --- 1. Calculate Effective Master State (Recursive) ---
+        // A. Get Final State of PREVIOUS Year
+        $prevYearNum = $year->tahun - 1;
+        $baseState = $this->getFinalStateForYear($prevYearNum, $kabupaten->id);
+        $prevYearValues = $baseState; // Baseline for highlighting
+
+        // B. Fetch Actual Master Records for Current Year
+        $actualMaster = RhMasterNilai::where('rh_tahun_id', $this->yearId)
             ->where('kabupaten_id', $kabupaten->id)
             ->get()
             ->keyBy('komoditas_id');
 
+        // C. Merge (Effective Master = Explicit Master OR Previous Final)
+        $finalMasterData = [];
+        $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
+
+        foreach ($allKomoditasIds as $komId) {
+            $m = $actualMaster->get($komId);
+            $b = $baseState[$komId] ?? null;
+
+            $val = new \stdClass();
+            $val->min_nilai = null;
+            $val->max_nilai = null;
+            $val->alasan = null;
+
+            if ($m && ($m->min_nilai !== null || $m->max_nilai !== null)) {
+                $val->min_nilai = $m->min_nilai;
+                $val->max_nilai = $m->max_nilai;
+                $val->alasan = $m->alasan;
+            } elseif ($b) {
+                $val->min_nilai = $b['min'];
+                $val->max_nilai = $b['max'];
+                $val->alasan = $b['alasan'];
+            }
+            $finalMasterData[$komId] = $val;
+        }
+        $masterNilai = collect($finalMasterData);
+
+        // --- 2. Fetch Revisions ---
         $revisions = RhPerubahanHeader::where('rh_tahun_id', $this->yearId)
             ->orderBy('tanggal_perubahan', 'asc')
             ->get();
 
-        $revisionDetails = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
-            ->where('kabupaten_id', $kabupaten->id)
-            ->get()
-            ->groupBy('rh_perubahan_header_id');
+        $revisionDetails = collect();
+        if ($revisions->isNotEmpty()) {
+            $revisionDetails = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
+                ->where('kabupaten_id', $kabupaten->id)
+                ->get()
+                ->groupBy('rh_perubahan_header_id');
 
-        $revisionDetails = $revisionDetails->map(function ($items) {
-            return $items->keyBy('komoditas_id');
-        });
+            $revisionDetails = $revisionDetails->map(function ($items) {
+                return $items->keyBy('komoditas_id');
+            });
+        }
 
         return view('exports.price-range-sheet', [
             'year' => $year,
             'kabupaten' => $kabupaten,
             'categories' => $categories,
             'masterNilai' => $masterNilai,
+            'prevYearValues' => $prevYearValues,
             'revisions' => $revisions,
             'revisionDetails' => $revisionDetails
         ]);
@@ -63,14 +102,72 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
     public function title(): string
     {
         $title = "{$this->kabupaten->kode_kab} - {$this->kabupaten->nama_kabupaten}";
-        return substr($title, 0, 31); // Excel sheet limit is 31 characters
+        return substr($title, 0, 31);
     }
 
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true]], // Row 1 bold
-            2 => ['font' => ['bold' => true]], // Row 2 bold
+            1 => ['font' => ['bold' => true]],
+            2 => ['font' => ['bold' => true]],
         ];
+    }
+
+    private function getFinalStateForYear($year, $kabupatenId)
+    {
+        if ($year < 2020)
+            return [];
+
+        $baseState = $this->getFinalStateForYear($year - 1, $kabupatenId);
+
+        $rhTahun = RhTahun::where('tahun', $year)->first();
+        if (!$rhTahun)
+            return $baseState;
+
+        $masterNilai = RhMasterNilai::where('rh_tahun_id', $rhTahun->id)
+            ->where('kabupaten_id', $kabupatenId)
+            ->get();
+
+        foreach ($masterNilai as $m) {
+            if ($m->min_nilai !== null || $m->max_nilai !== null) {
+                $baseState[$m->komoditas_id] = [
+                    'min' => $m->min_nilai,
+                    'max' => $m->max_nilai,
+                    'alasan' => $m->alasan,
+                ];
+            }
+        }
+
+        $revisions = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
+            ->orderBy('tanggal_perubahan', 'asc')
+            ->get();
+
+        if ($revisions->isNotEmpty()) {
+            $details = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
+                ->where('kabupaten_id', $kabupatenId)
+                ->get()
+                ->groupBy('rh_perubahan_header_id');
+
+            foreach ($revisions as $rev) {
+                if (isset($details[$rev->id])) {
+                    foreach ($details[$rev->id] as $det) {
+                        $komId = $det->komoditas_id;
+                        if (!isset($baseState[$komId])) {
+                            $baseState[$komId] = ['min' => null, 'max' => null, 'alasan' => null];
+                        }
+                        if ($det->min_edit !== null)
+                            $baseState[$komId]['min'] = $det->min_edit;
+                        if ($det->max_edit !== null)
+                            $baseState[$komId]['max'] = $det->max_edit;
+                        if ($det->alasan !== null)
+                            $baseState[$komId]['alasan'] = $det->alasan;
+                        elseif ($det->min_edit !== null || $det->max_edit !== null) {
+                            $baseState[$komId]['alasan'] = null;
+                        }
+                    }
+                }
+            }
+        }
+        return $baseState;
     }
 }

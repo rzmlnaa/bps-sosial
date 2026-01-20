@@ -56,6 +56,21 @@
                     $currentMin = $master ? $master->min_nilai : null;
                     $currentMax = $master ? $master->max_nilai : null;
                     $currentAlasan = $master ? $master->alasan : null;
+
+                    // Comparison Logic for Master
+                    $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
+                    $prevMin = $prevData['min'] ?? null;
+                    $prevMax = $prevData['max'] ?? null;
+
+                    $styleMinMaster = "";
+                    $styleMaxMaster = "";
+
+                    if ($master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin) {
+                        $styleMinMaster = "background-color: #FFFF00;";
+                    }
+                    if ($master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax) {
+                        $styleMaxMaster = "background-color: #FFFF00;";
+                    }
                 @endphp
                 <tr>
                     <td style="border: 1px solid #000000; text-align: center;">{{ $no++ }}</td>
@@ -63,8 +78,8 @@
                     <td style="border: 1px solid #000000;">{{ $komo->satuan ?? 'Kg' }}</td>
 
                     <!-- Master Data -->
-                    <td style="border: 1px solid #000000;">{{ $master ? $master->min_nilai : '-' }}</td>
-                    <td style="border: 1px solid #000000;">{{ $master ? $master->max_nilai : '-' }}</td>
+                    <td style="border: 1px solid #000000; {{ $styleMinMaster }}">{{ $master ? $master->min_nilai : '-' }}</td>
+                    <td style="border: 1px solid #000000; {{ $styleMaxMaster }}">{{ $master ? $master->max_nilai : '-' }}</td>
                     <td style="border: 1px solid #000000;">{{ $master ? $master->alasan : '-' }}</td>
 
                     <!-- Revisions -->

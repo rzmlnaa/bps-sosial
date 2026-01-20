@@ -32,7 +32,12 @@ Route::get('/layouts', function () {
 Route::get('/poverty', function (Request $request) {
     $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
     $variabels = VariabelKemiskinan::all();
-    $selectedTahun = $request->get('tahun', 'all');
+    $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
+    $latestYear = VariabelKemiskinan::max('tahun') ?? date('Y');
+    if (!$request->has('tahun')) {
+        $request->merge(['tahun' => $latestYear]);
+    }
+    $selectedTahun = $request->get('tahun');
 
     // Attempt to find a representative variable (Rupiah/GK related)
     if ($selectedTahun == 'all' || $selectedTahun == null) {
@@ -116,7 +121,7 @@ Route::get('/poverty', function (Request $request) {
     ];
     $latestLabel = $mainVar ? (($mainVar->bulan ? $bulanNama[$mainVar->bulan] . ' ' : '') . ($mainVar->tahun ?? '')) : '';
 
-    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel'));
+    return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears'));
 })->name('poverty');
 
 Route::get('/poverty/input', function () {

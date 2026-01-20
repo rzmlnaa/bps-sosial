@@ -13,15 +13,15 @@
             <form action="{{ route('poverty') }}" method="GET" class="mt-3 mt-md-0 d-flex gap-2">
 
                 <select name="tahun" class="form-select border-0 shadow-sm" style="min-width: 150px;">
-                    <option value="all" {{ request('tahun') == 'all' ? 'selected' : '' }}>
+                    <option value="all" {{ $selectedTahun == 'all' ? 'selected' : '' }}>
                         Semua Tahun
                     </option>
 
-                    @for ($year = 2022; $year <= now()->year; $year++)
-                        <option value="{{ $year }}" {{ request('tahun') == $year ? 'selected' : '' }}>
+                    @foreach ($availableYears as $year)
+                        <option value="{{ $year }}" {{ $selectedTahun == $year ? 'selected' : '' }}>
                             Tahun {{ $year }}
                         </option>
-                    @endfor
+                    @endforeach
                 </select>
 
                 <button type="submit" class="btn btn-primary text-white"
@@ -44,28 +44,28 @@
         <div class="row g-4 mb-4">
             <!-- Highlights -->
             <!-- <div class="col-lg-4">
-                                                                                    <div class="stats-card h-100 bg-orange-faded border-0">
-                                                                                        <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                                                                                        <div class="d-flex align-items-end mb-2">
-                                                                                            <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                                                                                                Rp {{ number_format($provAvg, 0, ',', '.') }}
-                                                                                            </h1>
-                                                                                            <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                                                                                        </div>
-                                                                                        <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                                                                                        <hr style="border-color: rgba(0,0,0,0.1);">
-                                                                                        <div class="d-flex justify-content-between">
-                                                                                            <div>
-                                                                                                <small class="text-muted d-block">Garis Kemiskinan</small>
-                                                                                                <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                <small class="text-muted d-block">Penduduk Miskin</small>
-                                                                                                <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div> -->
+                                                                                                <div class="stats-card h-100 bg-orange-faded border-0">
+                                                                                                    <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                                                                                                    <div class="d-flex align-items-end mb-2">
+                                                                                                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                                                                                            Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                                                                                        </h1>
+                                                                                                        <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                                                                                                    </div>
+                                                                                                    <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                                                                                                    <hr style="border-color: rgba(0,0,0,0.1);">
+                                                                                                    <div class="d-flex justify-content-between">
+                                                                                                        <div>
+                                                                                                            <small class="text-muted d-block">Garis Kemiskinan</small>
+                                                                                                            <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                                                                                        </div>
+                                                                                                        <div>
+                                                                                                            <small class="text-muted d-block">Penduduk Miskin</small>
+                                                                                                            <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -90,9 +90,10 @@
                                 </div>
                                 <select class="form-select w-auto border-0 bg-light fw-bold" id="regencySelectorChart"
                                     style="border-radius: 8px;">
-                                    <option value="all" class="text-primary font-bold" selected>Semua Wilayah</option>
+                                    <option value="all" class="text-primary font-bold">Semua Wilayah</option>
                                     @foreach($kabupatens as $kab)
-                                        <option value="{{ $kab->id }}">[{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                        <option value="{{ $kab->id }}" {{ $kab->kode_kab == '6100' ? 'selected' : '' }}>
+                                            [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -118,7 +119,7 @@
         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-header bg-white py-3 border-bottom-0">
                 <h5 class="fw-bold mb-0">Data Rinci Menurut Wilayah
-                    ({{ request('tahun', 'all') == 'all' ? 'Semua Tahun' : request('tahun') }})</h5>
+                    ({{ $selectedTahun == 'all' ? 'Semua Tahun' : $selectedTahun }})</h5>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -148,7 +149,7 @@
                                     <i class="fas fa-database me-2"></i>
                                     Belum ada data pada tahun
                                     <strong>
-                                        {{ request('tahun', 'all') == 'all' ? 'Semua Tahun' : request('tahun') }}
+                                        {{ $selectedTahun == 'all' ? 'Semua Tahun' : $selectedTahun }}
                                     </strong>
                                 </td>
                             </tr>

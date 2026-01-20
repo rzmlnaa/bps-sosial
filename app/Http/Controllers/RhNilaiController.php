@@ -18,7 +18,7 @@ class RhNilaiController extends Controller
         $activeYear = RhTahun::where('is_active', true)->first();
 
         if (!$activeYear) {
-            return redirect()->route('price-range.input')->with('error', 'Silakan aktifkan salah satu tahun RH terlebih dahulu.');
+            return back()->with('error', 'Tidak dapat input nilai RH Kabupaten, karena Admin Provinsi belum mengaktifkan tahun RH.');
         }
 
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();

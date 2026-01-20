@@ -15,6 +15,12 @@ class RhTahunController extends Controller
             'tahun' => 'required|numeric|unique:tb_rh_tahun,tahun',
         ]);
 
+        // Prevent adding year smaller than existing minimum year
+        $minExistingYear = RhTahun::min('tahun');
+        if ($minExistingYear && $request->tahun < $minExistingYear) {
+            return back()->with('error', "Gagal menambah tahun. Tahun tidak boleh lebih kecil dari tahun paling awal yang sudah ada ($minExistingYear).")->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         RhTahun::create([
             'tahun' => $request->tahun,
             'is_active' => false,
