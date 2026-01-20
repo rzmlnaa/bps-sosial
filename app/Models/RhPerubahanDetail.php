@@ -8,14 +8,24 @@ class RhPerubahanDetail extends Model
 {
     protected $table = 'tb_rh_perubahan_detail';
     protected $fillable = [
+        'rh_tahun_id',
         'rh_perubahan_header_id',
         'kabupaten_id',
         'komoditas_id',
         'min_edit',
         'max_edit',
         'alasan',
+        'verification_status',
+        'rejection_reason',
+        'verified_at',
+        'verified_by',
         'user_id_add'
     ];
+
+    public function rhTahun()
+    {
+        return $this->belongsTo(RhTahun::class, 'rh_tahun_id');
+    }
 
     public function revisionHeader()
     {
@@ -35,5 +45,10 @@ class RhPerubahanDetail extends Model
     public function userAdd()
     {
         return $this->belongsTo(User::class, 'user_id_add');
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

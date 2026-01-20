@@ -76,20 +76,23 @@
                 <small class="text-muted" style="font-size: 0.7rem;">Provinsi Kalbar</small>
             </div>
         </div>
-         @php
-                $h = \Carbon\Carbon::now('Asia/Jakarta')->hour;
-                $greeting = 'Selamat Pagi';
-                if ($h >= 11 && $h < 15) $greeting = 'Selamat Siang';
-                elseif ($h >= 15 && $h < 19) $greeting = 'Selamat Sore';
-                elseif ($h >= 19) $greeting = 'Selamat Malam';
-            @endphp
-            <div class="px-4 mb-3">
-                <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
-                    {{ $greeting }}, Rezza 👋
-                </span>
-            </div>
+        @php
+            $h = \Carbon\Carbon::now('Asia/Jakarta')->hour;
+            $greeting = 'Selamat Pagi';
+            if ($h >= 11 && $h < 15)
+                $greeting = 'Selamat Siang';
+            elseif ($h >= 15 && $h < 19)
+                $greeting = 'Selamat Sore';
+            elseif ($h >= 19)
+                $greeting = 'Selamat Malam';
+        @endphp
+        <div class="px-4 mb-3">
+            <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
+                {{ $greeting }}, Rezza 👋
+            </span>
+        </div>
         <div class="py-3">
-           
+
 
             <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                 style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
@@ -138,6 +141,12 @@
                 class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
                 <i class="fas fa-tags"></i>
                 <span>Rentang Harga</span>
+            </a>
+
+            <a href="{{ route('verification.index') }}"
+                class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Verifikasi Harga</span>
             </a>
 
             <a href="#" class="nav-link">

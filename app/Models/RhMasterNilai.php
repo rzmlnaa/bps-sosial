@@ -14,6 +14,10 @@ class RhMasterNilai extends Model
         'min_nilai',
         'max_nilai',
         'alasan',
+        'verification_status',
+        'rejection_reason',
+        'verified_at',
+        'verified_by',
         'user_id_add'
     ];
 
@@ -35,5 +39,10 @@ class RhMasterNilai extends Model
     public function userAdd()
     {
         return $this->belongsTo(User::class, 'user_id_add');
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

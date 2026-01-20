@@ -11,7 +11,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use App\Models\RhTahun;
 use App\Models\Kabupaten;
 use App\Models\KategoriKomoditas;
-use App\Models\RhMasterNilai;
+
 use App\Models\RhPerubahanHeader;
 use App\Models\RhPerubahanDetail;
 
@@ -40,8 +40,10 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
         $prevYearValues = $baseState; // Baseline for highlighting
 
         // B. Fetch Actual Master Records for Current Year
-        $actualMaster = RhMasterNilai::where('rh_tahun_id', $this->yearId)
+        $actualMaster = RhPerubahanDetail::where('rh_tahun_id', $this->yearId)
             ->where('kabupaten_id', $kabupaten->id)
+            ->whereNull('rh_perubahan_header_id')
+            ->select('*', 'min_edit as min_nilai', 'max_edit as max_nilai')
             ->get()
             ->keyBy('komoditas_id');
 
@@ -49,6 +51,7 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
         $finalMasterData = [];
         $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
 
+        // Helper to check if master has data
         foreach ($allKomoditasIds as $komId) {
             $m = $actualMaster->get($komId);
             $b = $baseState[$komId] ?? null;
@@ -124,15 +127,17 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
         if (!$rhTahun)
             return $baseState;
 
-        $masterNilai = RhMasterNilai::where('rh_tahun_id', $rhTahun->id)
+        $masterNilai = RhPerubahanDetail::where('rh_tahun_id', $rhTahun->id)
+            ->whereNull('rh_perubahan_header_id')
             ->where('kabupaten_id', $kabupatenId)
             ->get();
 
         foreach ($masterNilai as $m) {
-            if ($m->min_nilai !== null || $m->max_nilai !== null) {
+            // RhPerubahanDetail uses min_edit/max_edit
+            if ($m->min_edit !== null || $m->max_edit !== null) {
                 $baseState[$m->komoditas_id] = [
-                    'min' => $m->min_nilai,
-                    'max' => $m->max_nilai,
+                    'min' => $m->min_edit,
+                    'max' => $m->max_edit,
                     'alasan' => $m->alasan,
                 ];
             }

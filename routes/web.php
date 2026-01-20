@@ -14,6 +14,7 @@ use App\Models\KategoriKomoditas;
 use App\Http\Controllers\RhNilaiController;
 use App\Http\Controllers\RhTahunController;
 use App\Http\Controllers\PriceRangeController;
+use App\Http\Controllers\VerificationController;
 
 
 Route::get('/', function () {
@@ -181,6 +182,11 @@ Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan
 // RH Price Range Values
 Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
 Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
+
+// RH Verification
+Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
+Route::get('/verification/{kabupatenId}', [VerificationController::class, 'show'])->name('verification.show');
+Route::post('/verification/{kabupatenId}', [VerificationController::class, 'store'])->name('verification.store');
 
 Route::post('/logout', function () {
     Auth::logout();

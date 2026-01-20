@@ -31,33 +31,33 @@ class RhNilaiController extends Controller
         // Latest revision ID is the last one in the time series
         $latestRevisionId = $allRevisions->last()->id ?? null;
 
-        // 2. Fetch Master Values
-        $masterNilai = RhMasterNilai::where('rh_tahun_id', $activeYear->id)
+        // 2. Fetch Master Values (Now from PerubahanDetail where header is null)
+        // We select min_edit as min_nilai to keep compatibility with view or we just update view?
+        // Let's select aliases to make it compatible with existing View logic for Master
+        $masterNilai = RhPerubahanDetail::where('rh_tahun_id', $activeYear->id)
             ->where('kabupaten_id', $selectedKabupatenId)
+            ->whereNull('rh_perubahan_header_id')
+            ->select('*', 'min_edit as min_nilai', 'max_edit as max_nilai')
             ->get()
             ->keyBy('komoditas_id');
 
-        // 3. Fetch ALL Revision Details for this Year/Kabupaten to compute state
+        // 3. Fetch ALL Revision Details for this Year/Kabupaten (where header is NOT null)
         $allDetailsRaw = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $allRevisions->pluck('id'))
             ->where('kabupaten_id', $selectedKabupatenId)
             ->get()
             ->groupBy('rh_perubahan_header_id');
 
-        // 4. Compute Effective State for EACH revision in order
-        $effectiveValues = collect(); // [rev_id => [kom_id => ['min' => val, 'max' => val]]]
+        // 4. Compute Effective State 
+        $effectiveValues = collect();
         $currentState = [];
 
-        // --- NEW LOGIC: Fetch Previous Year's Final State via Recursive Helper ---
+        // --- Fetch Previous Year's Final State ---
         $prevYear = RhTahun::where('tahun', $activeYear->tahun - 1)->first();
         $prevYearFinal = [];
         $prevYearLabel = null;
 
         if ($prevYear) {
-            // Use recursive helper to get the TRUE final state (handling carry-over chains)
             $prevYearFinal = $this->getFinalStateForYear($prevYear->tahun, $selectedKabupatenId);
-
-            // Determine Label (Label logic based on existence of Revisions or just Master)
-            // Note: Even if Master is empty/recursive, if there are revisions in Prev Year, we label it "Akhir ...", else "Master ..."
             $prevRevisionsCount = RhPerubahanHeader::where('rh_tahun_id', $prevYear->id)->count();
 
             if ($prevRevisionsCount > 0) {
@@ -69,16 +69,14 @@ class RhNilaiController extends Controller
         }
         // ----------------------------------------------------
 
-        // Initialize state with Master, fallback to Prev Year if Master is empty
-        // We iterate through ALL commodities to ensure we capture state for everything
-        // (fetching simple IDs from Komoditas table is safer/more complete than relying just on existing value keys)
         $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
 
         foreach ($allKomoditasIds as $komId) {
             $mVal = $masterNilai->get($komId);
             $pVal = $prevYearFinal[$komId] ?? null;
 
-            // Check if Master has explicit minimal valid data (at least one value set)
+            // Check if Master has explicit minimal valid data
+            // Note: mVal is now RhPerubahanDetail, so we check min_edit/max_edit (aliased as min_nilai/max_nilai)
             $hasMasterData = $mVal && ($mVal->min_nilai !== null || $mVal->max_nilai !== null);
 
             if ($hasMasterData) {
@@ -114,13 +112,17 @@ class RhNilaiController extends Controller
                     } elseif ($dt->min_edit !== null || $dt->max_edit !== null) {
                         $currentState[$dt->komoditas_id]['alasan'] = null;
                     }
+
+                    // Add verification details
+                    $currentState[$dt->komoditas_id]['verification_status'] = $dt->verification_status;
+                    $currentState[$dt->komoditas_id]['rejection_reason'] = $dt->rejection_reason;
                 }
             }
             // Snapshot state for this revision
             $effectiveValues->put($rev->id, $currentState);
         }
 
-        // 5. Determine Revisions to Display (View Logic)
+        // 5. Viewing Logic
         $displayRevisions = collect();
         $selectedRevisionId = $request->revision_id;
 
@@ -137,14 +139,8 @@ class RhNilaiController extends Controller
                 }
                 $displayRevisions->push($allRevisions[$currentIndex]);
             }
-        } else {
-            // Default: Show latest if exists (optional, or show none/master only)
-            // Existing logic seemed to default to none if no ID provided?
-            // Let's keep existing behavior: if no params, revisions empty. 
-            // Wait, existing behavior showed empty revisions if none selected.
         }
 
-        // 6. Map Raw Input Values (for Edit Fields) - Only needed for Displayed Revisions
         $allRevisionNilai = collect();
         if ($displayRevisions->isNotEmpty()) {
             foreach ($displayRevisions as $rev) {
@@ -181,9 +177,8 @@ class RhNilaiController extends Controller
     {
 
         $activeYear = RhTahun::where('id', $request->input('rh_tahun_id'))->first();
-
         if ($activeYear->is_active == false) {
-            return back()->with('error', 'Admin telah menonaktifkan tahun RH ' . $activeYear->tahun . '. Silakan gunakan tahun yang aktif.');
+            return redirect('/price-range')->with('error', 'Admin telah menonaktifkan tahun RH ' . $activeYear->tahun . '. Silakan gunakan tahun yang aktif.');
         }
 
         $request->validate([
@@ -195,12 +190,11 @@ class RhNilaiController extends Controller
         $tahunId = $request->rh_tahun_id;
         $userId = Auth::id() ?? 1;
 
-        // Function to remove thousands separators
         $cleanNumber = function ($val) {
             return str_replace('.', '', $val);
         };
 
-        // Clean Master Input
+        // Clean Inputs
         if ($request->has('master')) {
             $master = $request->master;
             foreach ($master as $key => $vals) {
@@ -212,7 +206,6 @@ class RhNilaiController extends Controller
             $request->merge(['master' => $master]);
         }
 
-        // Clean Revision Input
         if ($request->has('revision')) {
             $revision = $request->revision;
             foreach ($revision as $revId => $items) {
@@ -226,40 +219,31 @@ class RhNilaiController extends Controller
             $request->merge(['revision' => $revision]);
         }
 
-        // Collect all Komoditas IDs to fetch their specific limits
         $komoditasIds = [];
-        if ($request->has('master')) {
+        if ($request->has('master'))
             $komoditasIds = array_keys($request->master);
-        }
         if ($request->has('revision')) {
             foreach ($request->revision as $revData) {
                 $komoditasIds = array_merge($komoditasIds, array_keys($revData));
             }
         }
         $komoditasIds = array_unique($komoditasIds);
+        $komoditasLimits = \App\Models\Komoditas::whereIn('id', $komoditasIds)->pluck('batas_selisih_harga', 'id');
 
-        // Map Komoditas ID -> Batas Selisih Harga
-        $komoditasLimits = \App\Models\Komoditas::whereIn('id', $komoditasIds)
-            ->pluck('batas_selisih_harga', 'id');
-
-        // Validation: Check if Max < Min and Alasan if Selisih > Batas
+        // Validation
         if ($request->has('master')) {
             foreach ($request->master as $komoditasId => $vals) {
                 if ($vals['min'] !== null && $vals['max'] !== null && $vals['min'] !== '' && $vals['max'] !== '') {
                     $min = (float) $vals['min'];
                     $max = (float) $vals['max'];
-                    $batas = $komoditasLimits[$komoditasId] ?? 0; // Default to 0 if not set
-
-                    if ($max <= $min) {
-                        return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil atau sama dengan nilai MIN pada Master Nilai.')->withInput();
-                    }
-                    if (($max - $min) > $batas && empty($vals['alasan'])) {
-                        return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada Master Nilai.')->withInput();
-                    }
+                    $batas = $komoditasLimits[$komoditasId] ?? 0;
+                    if ($max <= $min)
+                        return back()->with('error', 'Master Nilai: Max <= Min')->withInput();
+                    if (($max - $min) > $batas && empty($vals['alasan']))
+                        return back()->with('error', 'Master Nilai: Alasan wajib (Batas: ' . number_format($batas, 0, ',', '.') . ')')->withInput();
                 }
             }
         }
-
         if ($request->has('revision')) {
             foreach ($request->revision as $revHeaderId => $komoditasData) {
                 foreach ($komoditasData as $komoditasId => $vals) {
@@ -267,41 +251,66 @@ class RhNilaiController extends Controller
                         $min = (float) $vals['min'];
                         $max = (float) $vals['max'];
                         $batas = $komoditasLimits[$komoditasId] ?? 0;
-
-                        if ($max <= $min) {
-                            return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil atau sama dengan nilai MIN pada data perubahan.')->withInput();
-                        }
-                        if (($max - $min) > $batas && empty($vals['alasan'])) {
-                            return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada data perubahan.')->withInput();
-                        }
+                        if ($max <= $min)
+                            return back()->with('error', 'Perubahan: Max <= Min')->withInput();
+                        if (($max - $min) > $batas && empty($vals['alasan']))
+                            return back()->with('error', 'Perubahan: Alasan wajib (Batas: ' . number_format($batas, 0, ',', '.') . ')')->withInput();
                     }
                 }
             }
         }
 
-        // Save Master Values
+        // Save Master (Header = NULL)
         if ($request->has('master')) {
             foreach ($request->master as $komoditasId => $vals) {
-                RhMasterNilai::updateOrCreate(
+                $min = isset($vals['min']) && $vals['min'] !== '' ? (float) $vals['min'] : null;
+                $max = isset($vals['max']) && $vals['max'] !== '' ? (float) $vals['max'] : null;
+                $batas = $komoditasLimits[$komoditasId] ?? 0;
+
+                $status = 'approved';
+                // Trigger verification only if 'alasan' is provided
+                if (!empty($vals['alasan'])) {
+                    $status = 'pending';
+                }
+
+                RhPerubahanDetail::updateOrCreate(
                     [
                         'rh_tahun_id' => $tahunId,
+                        'rh_perubahan_header_id' => null, // MASTER
                         'kabupaten_id' => $kabupatenId,
                         'komoditas_id' => $komoditasId,
                     ],
                     [
-                        'min_nilai' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
-                        'max_nilai' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                        'min_edit' => $min,
+                        'max_edit' => $max,
                         'alasan' => $vals['alasan'] ?? null,
                         'user_id_add' => $userId,
+                        'verification_status' => $status,
                     ]
                 );
             }
         }
 
-        // Save Revision Values
+        // Save Revision (Header != NULL)
         if ($request->has('revision')) {
             foreach ($request->revision as $revHeaderId => $komoditasData) {
                 foreach ($komoditasData as $komoditasId => $vals) {
+                    $min = isset($vals['min']) && $vals['min'] !== '' ? (float) $vals['min'] : null;
+                    $max = isset($vals['max']) && $vals['max'] !== '' ? (float) $vals['max'] : null;
+                    $batas = $komoditasLimits[$komoditasId] ?? 0;
+
+                    $status = 'approved';
+                    // Trigger verification only if 'alasan' is provided
+                    if (!empty($vals['alasan'])) {
+                        $status = 'pending';
+                    }
+
+                    // For revisions, rh_tahun_id is derived, but we should store it too as per new schema
+                    $revHeaderExists = RhPerubahanHeader::where('id', $revHeaderId)->exists();
+                    if (!$revHeaderExists) {
+                        return back()->with('error', 'Data Header Perubahan (ID: ' . $revHeaderId . ') tidak ditemukan. Mohon refresh halaman dan coba lagi.')->withInput();
+                    }
+
                     RhPerubahanDetail::updateOrCreate(
                         [
                             'rh_perubahan_header_id' => $revHeaderId,
@@ -309,10 +318,12 @@ class RhNilaiController extends Controller
                             'komoditas_id' => $komoditasId,
                         ],
                         [
-                            'min_edit' => $vals['min'] !== null && $vals['min'] !== '' ? $vals['min'] : null,
-                            'max_edit' => $vals['max'] !== null && $vals['max'] !== '' ? $vals['max'] : null,
+                            'rh_tahun_id' => $tahunId, // ADDED
+                            'min_edit' => $min,
+                            'max_edit' => $max,
                             'alasan' => $vals['alasan'] ?? null,
                             'user_id_add' => $userId,
+                            'verification_status' => $status,
                         ]
                     );
                 }
@@ -326,37 +337,32 @@ class RhNilaiController extends Controller
     private function getFinalStateForYear($year, $kabupatenId)
     {
         if ($year < 2020)
-            return []; // Safety break
+            return [];
 
-        // Always start with previous year's state (Recursive)
         $baseState = $this->getFinalStateForYear($year - 1, $kabupatenId);
-
         $rhTahun = RhTahun::where('tahun', $year)->first();
 
-        // If current year not defined in DB, return previous data
         if (!$rhTahun)
             return $baseState;
 
-        // 1. Overlay Master Values
-        // (Only strictly overwrite if Master has explicit values. If Master is empty, keep Prev Year value)
-        $masterNilai = RhMasterNilai::where('rh_tahun_id', $rhTahun->id)
+        // 1. Overlay Master Values (Header IS NULL)
+        $masterNilai = RhPerubahanDetail::where('rh_tahun_id', $rhTahun->id)
+            ->whereNull('rh_perubahan_header_id')
             ->where('kabupaten_id', $kabupatenId)
             ->get();
 
         foreach ($masterNilai as $m) {
-            if ($m->min_nilai !== null || $m->max_nilai !== null) {
-                // Determine if we are updating existing or adding new
-                // If it existed in prev year, this overwrites it. 
-                // If not, it creates it.
+            // Note: master use min_edit/max_edit columns in DB now
+            if ($m->min_edit !== null || $m->max_edit !== null) {
                 $baseState[$m->komoditas_id] = [
-                    'min' => $m->min_nilai,
-                    'max' => $m->max_nilai,
+                    'min' => $m->min_edit,
+                    'max' => $m->max_edit,
                     'alasan' => $m->alasan,
                 ];
             }
         }
 
-        // 2. Apply Revisions for this year
+        // 2. Apply Revisions
         $revisions = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
             ->orderBy('tanggal_perubahan', 'asc')
             ->get();
@@ -371,29 +377,25 @@ class RhNilaiController extends Controller
                 if (isset($details[$rev->id])) {
                     foreach ($details[$rev->id] as $det) {
                         $komId = $det->komoditas_id;
-
-                        // Ensure sub-array exists
-                        if (!isset($baseState[$komId])) {
+                        if (!isset($baseState[$komId]))
                             $baseState[$komId] = ['min' => null, 'max' => null, 'alasan' => null];
-                        }
 
-                        if ($det->min_edit !== null) {
+                        if ($det->min_edit !== null)
                             $baseState[$komId]['min'] = $det->min_edit;
-                        }
-                        if ($det->max_edit !== null) {
+                        if ($det->max_edit !== null)
                             $baseState[$komId]['max'] = $det->max_edit;
-                        }
 
                         if ($det->alasan !== null) {
                             $baseState[$komId]['alasan'] = $det->alasan;
                         } elseif ($det->min_edit !== null || $det->max_edit !== null) {
+                            // If value changed but reason not provided (and not required/set), we clear reason? 
+                            // Or keep old? existing logic was clearing it if values set.
                             $baseState[$komId]['alasan'] = null;
                         }
                     }
                 }
             }
         }
-
         return $baseState;
     }
 }

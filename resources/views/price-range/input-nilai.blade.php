@@ -242,21 +242,31 @@
                                         <!-- Master Inputs -->
                                         @if($showMaster)
                                             @if($isMasterEditable)
-                                                <td class="p-1">
+                                                @php
+                                                    $mStatus = $master->verification_status ?? 'pending';
+                                                    $mIsRejected = $mStatus === 'rejected';
+                                                    $mReason = $master->rejection_reason ?? '';
+                                                @endphp
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="master[{{ $komo->id }}][min]"
-                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
                                                         placeholder="Min"
                                                         value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
-                                                <td class="p-1">
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="master[{{ $komo->id }}][max]"
-                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
                                                         placeholder="Max"
                                                         value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
-                                                <td class="p-1">
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @if($mIsRejected)
+                                                        <div class="text-danger x-small fw-bold mb-1" style="font-size: 0.7rem; line-height: 1.1;">
+                                                            <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $mReason }}
+                                                        </div>
+                                                    @endif
                                                     <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
                                                         class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
                                                         placeholder="Berikan alasan"
@@ -300,21 +310,31 @@
                                             @endphp
 
                                             @if($isRevEditable)
-                                                <td class="p-1">
+                                                @php
+                                                    $revStatus = $rawRevData->verification_status ?? 'pending';
+                                                    $revIsRejected = $revStatus === 'rejected';
+                                                    $revReason = $rawRevData->rejection_reason ?? '';
+                                                @endphp
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
                                                         placeholder="Edit Min"
                                                         value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
-                                                <td class="p-1">
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
                                                         placeholder="Edit Max"
                                                         value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
-                                                <td class="p-1">
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @if($revIsRejected)
+                                                        <div class="text-danger x-small fw-bold mb-1" style="font-size: 0.7rem; line-height: 1.1;">
+                                                            <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $revReason }}
+                                                        </div>
+                                                    @endif
                                                     <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
                                                         class="form-control form-control-sm border-0 bg-orange-faded {{ ((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
                                                         placeholder="Berikan alasan"
@@ -365,6 +385,14 @@
 
         .text-orange {
             color: var(--bps-orange);
+        }
+
+        .bg-danger-faded {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .border-danger-custom {
+            border: 1px solid #dc3545 !important;
         }
 
         .form-control:focus {

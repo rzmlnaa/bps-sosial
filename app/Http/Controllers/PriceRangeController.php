@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\RhTahun;
 use App\Models\Kabupaten;
 use App\Models\KategoriKomoditas;
-use App\Models\RhMasterNilai;
+
 use App\Models\RhPerubahanHeader;
 use App\Models\RhPerubahanDetail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -52,8 +52,11 @@ class PriceRangeController extends Controller
             $prevYearValues = $baseState;
 
             // 3. Fetch Actual Master Records for Current Year
-            $actualMaster = RhMasterNilai::where('rh_tahun_id', $selectedYearId)
+            // Using PerubahanDetail with header_id NULL
+            $actualMaster = RhPerubahanDetail::where('rh_tahun_id', $selectedYearId)
                 ->where('kabupaten_id', $selectedKabupatenId)
+                ->whereNull('rh_perubahan_header_id')
+                ->select('*', 'min_edit as min_nilai', 'max_edit as max_nilai')
                 ->get()
                 ->keyBy('komoditas_id');
 
@@ -139,12 +142,14 @@ class PriceRangeController extends Controller
         // Initial State: Load all Master Data
         $dataState = []; // [kab_id][kom_id] => ['min' => val, 'max' => val]
 
-        $masterData = RhMasterNilai::where('rh_tahun_id', $yearId)->get();
+        $masterData = RhPerubahanDetail::where('rh_tahun_id', $yearId)
+            ->whereNull('rh_perubahan_header_id')
+            ->get();
 
         foreach ($masterData as $md) {
             $dataState[$md->kabupaten_id][$md->komoditas_id] = [
-                'min' => $md->min_nilai,
-                'max' => $md->max_nilai
+                'min' => $md->min_edit,
+                'max' => $md->max_edit
             ];
         }
 
@@ -283,15 +288,16 @@ class PriceRangeController extends Controller
             return $baseState;
 
         // 1. Overlay Master Values
-        $masterNilai = RhMasterNilai::where('rh_tahun_id', $rhTahun->id)
+        $masterNilai = RhPerubahanDetail::where('rh_tahun_id', $rhTahun->id)
+            ->whereNull('rh_perubahan_header_id')
             ->where('kabupaten_id', $kabupatenId)
             ->get();
 
         foreach ($masterNilai as $m) {
-            if ($m->min_nilai !== null || $m->max_nilai !== null) {
+            if ($m->min_edit !== null || $m->max_edit !== null) {
                 $baseState[$m->komoditas_id] = [
-                    'min' => $m->min_nilai,
-                    'max' => $m->max_nilai,
+                    'min' => $m->min_edit,
+                    'max' => $m->max_edit,
                     'alasan' => $m->alasan,
                 ];
             }
