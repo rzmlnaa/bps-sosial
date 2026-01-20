@@ -185,7 +185,7 @@ class RhNilaiController extends Controller
         if ($activeYear->is_active == false) {
             return back()->with('error', 'Admin telah menonaktifkan tahun RH ' . $activeYear->tahun . '. Silakan gunakan tahun yang aktif.');
         }
-        dd('masuk');
+
         $request->validate([
             'rh_tahun_id' => 'required|exists:tb_rh_tahun,id',
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
