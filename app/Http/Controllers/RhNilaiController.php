@@ -47,13 +47,53 @@ class RhNilaiController extends Controller
         $effectiveValues = collect(); // [rev_id => [kom_id => ['min' => val, 'max' => val]]]
         $currentState = [];
 
-        // Initialize state with Master
-        foreach ($masterNilai as $komId => $val) {
-            $currentState[$komId] = [
-                'min' => $val->min_nilai,
-                'max' => $val->max_nilai,
-                'alasan' => $val->alasan
-            ];
+        // --- NEW LOGIC: Fetch Previous Year's Final State via Recursive Helper ---
+        $prevYear = RhTahun::where('tahun', $activeYear->tahun - 1)->first();
+        $prevYearFinal = [];
+        $prevYearLabel = null;
+
+        if ($prevYear) {
+            // Use recursive helper to get the TRUE final state (handling carry-over chains)
+            $prevYearFinal = $this->getFinalStateForYear($prevYear->tahun, $selectedKabupatenId);
+
+            // Determine Label (Label logic based on existence of Revisions or just Master)
+            // Note: Even if Master is empty/recursive, if there are revisions in Prev Year, we label it "Akhir ...", else "Master ..."
+            $prevRevisionsCount = RhPerubahanHeader::where('rh_tahun_id', $prevYear->id)->count();
+
+            if ($prevRevisionsCount > 0) {
+                $lastRev = RhPerubahanHeader::where('rh_tahun_id', $prevYear->id)->orderBy('tanggal_perubahan', 'desc')->first();
+                $prevYearLabel = "Akhir " . $prevYear->tahun . " (" . \Carbon\Carbon::parse($lastRev->tanggal_perubahan)->translatedFormat('d M') . ")";
+            } else {
+                $prevYearLabel = "Master " . $prevYear->tahun;
+            }
+        }
+        // ----------------------------------------------------
+
+        // Initialize state with Master, fallback to Prev Year if Master is empty
+        // We iterate through ALL commodities to ensure we capture state for everything
+        // (fetching simple IDs from Komoditas table is safer/more complete than relying just on existing value keys)
+        $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
+
+        foreach ($allKomoditasIds as $komId) {
+            $mVal = $masterNilai->get($komId);
+            $pVal = $prevYearFinal[$komId] ?? null;
+
+            // Check if Master has explicit minimal valid data (at least one value set)
+            $hasMasterData = $mVal && ($mVal->min_nilai !== null || $mVal->max_nilai !== null);
+
+            if ($hasMasterData) {
+                $currentState[$komId] = [
+                    'min' => $mVal->min_nilai,
+                    'max' => $mVal->max_nilai,
+                    'alasan' => $mVal->alasan
+                ];
+            } elseif ($pVal) {
+                $currentState[$komId] = [
+                    'min' => $pVal['min'],
+                    'max' => $pVal['max'],
+                    'alasan' => $pVal['alasan']
+                ];
+            }
         }
 
         foreach ($allRevisions as $rev) {
@@ -131,12 +171,21 @@ class RhNilaiController extends Controller
             'masterNilai',
             'effectiveValues', // Calculated State
             'allRevisionNilai', // Raw Values for inputs
-            'latestRevisionId' // To determine readonly status
+            'latestRevisionId', // To determine readonly status
+            'prevYearFinal',
+            'prevYearLabel'
         ));
     }
 
     public function save(Request $request)
     {
+
+        $activeYear = RhTahun::where('id', $request->input('rh_tahun_id'))->first();
+
+        if ($activeYear->is_active == false) {
+            return back()->with('error', 'Admin telah menonaktifkan tahun RH ' . $activeYear->tahun . '. Silakan gunakan tahun yang aktif.');
+        }
+        dd('masuk');
         $request->validate([
             'rh_tahun_id' => 'required|exists:tb_rh_tahun,id',
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
@@ -201,8 +250,8 @@ class RhNilaiController extends Controller
                     $max = (float) $vals['max'];
                     $batas = $komoditasLimits[$komoditasId] ?? 0; // Default to 0 if not set
 
-                    if ($max < $min) {
-                        return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada Master Nilai.')->withInput();
+                    if ($max <= $min) {
+                        return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil atau sama dengan nilai MIN pada Master Nilai.')->withInput();
                     }
                     if (($max - $min) > $batas && empty($vals['alasan'])) {
                         return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada Master Nilai.')->withInput();
@@ -219,8 +268,8 @@ class RhNilaiController extends Controller
                         $max = (float) $vals['max'];
                         $batas = $komoditasLimits[$komoditasId] ?? 0;
 
-                        if ($max < $min) {
-                            return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil dari nilai MIN pada data perubahan.')->withInput();
+                        if ($max <= $min) {
+                            return back()->with('error', 'Gagal menyimpan: Nilai MAX tidak boleh lebih kecil atau sama dengan nilai MIN pada data perubahan.')->withInput();
                         }
                         if (($max - $min) > $batas && empty($vals['alasan'])) {
                             return back()->with('error', 'Gagal menyimpan: Alasan wajib diisi jika selisih harga melebihi batas (' . number_format($batas, 0, ',', '.') . ') pada data perubahan.')->withInput();
@@ -271,5 +320,80 @@ class RhNilaiController extends Controller
         }
 
         return back()->with('success', 'Data rentang harga berhasil disimpan.');
+    }
+
+
+    private function getFinalStateForYear($year, $kabupatenId)
+    {
+        if ($year < 2020)
+            return []; // Safety break
+
+        // Always start with previous year's state (Recursive)
+        $baseState = $this->getFinalStateForYear($year - 1, $kabupatenId);
+
+        $rhTahun = RhTahun::where('tahun', $year)->first();
+
+        // If current year not defined in DB, return previous data
+        if (!$rhTahun)
+            return $baseState;
+
+        // 1. Overlay Master Values
+        // (Only strictly overwrite if Master has explicit values. If Master is empty, keep Prev Year value)
+        $masterNilai = RhMasterNilai::where('rh_tahun_id', $rhTahun->id)
+            ->where('kabupaten_id', $kabupatenId)
+            ->get();
+
+        foreach ($masterNilai as $m) {
+            if ($m->min_nilai !== null || $m->max_nilai !== null) {
+                // Determine if we are updating existing or adding new
+                // If it existed in prev year, this overwrites it. 
+                // If not, it creates it.
+                $baseState[$m->komoditas_id] = [
+                    'min' => $m->min_nilai,
+                    'max' => $m->max_nilai,
+                    'alasan' => $m->alasan,
+                ];
+            }
+        }
+
+        // 2. Apply Revisions for this year
+        $revisions = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
+            ->orderBy('tanggal_perubahan', 'asc')
+            ->get();
+
+        if ($revisions->isNotEmpty()) {
+            $details = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
+                ->where('kabupaten_id', $kabupatenId)
+                ->get()
+                ->groupBy('rh_perubahan_header_id');
+
+            foreach ($revisions as $rev) {
+                if (isset($details[$rev->id])) {
+                    foreach ($details[$rev->id] as $det) {
+                        $komId = $det->komoditas_id;
+
+                        // Ensure sub-array exists
+                        if (!isset($baseState[$komId])) {
+                            $baseState[$komId] = ['min' => null, 'max' => null, 'alasan' => null];
+                        }
+
+                        if ($det->min_edit !== null) {
+                            $baseState[$komId]['min'] = $det->min_edit;
+                        }
+                        if ($det->max_edit !== null) {
+                            $baseState[$komId]['max'] = $det->max_edit;
+                        }
+
+                        if ($det->alasan !== null) {
+                            $baseState[$komId]['alasan'] = $det->alasan;
+                        } elseif ($det->min_edit !== null || $det->max_edit !== null) {
+                            $baseState[$komId]['alasan'] = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $baseState;
     }
 }

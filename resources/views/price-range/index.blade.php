@@ -45,7 +45,7 @@
                         </ul>
                         <div class="tab-content" id="insightTabsContent">
                             @foreach($outliers as $periodName => $commodities)
-                                
+
                                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
                                     id="content-{{ Str::slug($periodName) }}" role="tabpanel">
 
@@ -71,7 +71,7 @@
                                                                     <span>Avg Max:
                                                                         <b>{{ number_format($details['avg_max'] ?? 0, 0, ',', '.') }}</b></span>
                                                                 </div>
-                
+
                                                                 <div class="row small">
                                                                     <!-- Below Average -->
                                                                     <div class="col-6 border-end">
@@ -79,7 +79,8 @@
                                                                                 class="fas fa-arrow-down me-1"></i>Jauh Di Bawah Rata2</span>
                                                                         @forelse($details['below'] as $item)
                                                                             <div class="mb-1">
-                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}] {{ $item['kab'] }}</span>
+                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}]
+                                                                                    {{ $item['kab'] }}</span>
                                                                                 <br>
                                                                                 <span class="text-muted">Rp
                                                                                     {{ number_format($item['val'], 0, ',', '.') }}</span>
@@ -97,7 +98,8 @@
                                                                                 class="fas fa-arrow-up me-1"></i>Jauh Di Atas Rata2</span>
                                                                         @forelse($details['above'] as $item)
                                                                             <div class="mb-1">
-                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}] {{ $item['kab'] }}</span>
+                                                                                <span class="fw-bold">[{{ $item['kode_kab'] }}]
+                                                                                    {{ $item['kab'] }}</span>
                                                                                 <br>
                                                                                 <span class="text-muted">Rp
                                                                                     {{ number_format($item['val'], 0, ',', '.') }}</span>
@@ -193,6 +195,17 @@
                                 @endforeach
                             </select>
                         </div>
+                        @if(isset($activeYear) && $years->contains('tahun', $activeYear->tahun - 1))
+                            <div class="col-md-4 d-flex align-items-center mb-1">
+                                <div class="form-check form-switch cursor-pointer">
+                                    <input class="form-check-input my-cursor-pointer" type="checkbox" role="switch"
+                                        id="togglePrevYear">
+                                    <label class="form-check-label small fw-bold text-muted text-uppercase cursor-pointer"
+                                        for="togglePrevYear">TAMPILKAN
+                                        {{ isset($activeYear) ? 'akhir ' . ($activeYear->tahun - 1) : 'TAHUN SEBELUMNYA' }}</label>
+                                </div>
+                            </div>
+                        @endif
                     </form>
 
                     @if($selectedYearId && $selectedKabupatenId)
@@ -218,6 +231,8 @@
                                 <th rowspan="2" class="ps-4" style="min-width: 200px;">KOMODITAS</th>
                                 <th rowspan="2" style="width: 80px;">SATUAN</th>
                                 <th rowspan="2" style="width: 100px;">BATAS HARGA</th>
+                                <th colspan="3" class="bg-light text-muted prev-year-col d-none">AKHIR
+                                    {{ $activeYear->tahun - 1 }}</th>
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
 
@@ -226,6 +241,9 @@
                                 @endforeach
                             </tr>
                             <tr>
+                                <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MIN</th>
+                                <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MAX</th>
+                                <th style="width: 180px;" class="bg-light text-muted small prev-year-col d-none">ALASAN</th>
                                 <th style="width: 100px;" class="bg-blue-light text-blue small">MIN</th>
                                 <th style="width: 100px;" class="bg-blue-light text-blue small">MAX</th>
                                 <th style="width: 180px;" class="bg-blue-light text-blue small">ALASAN</th>
@@ -243,7 +261,8 @@
                                     @php
                                         $colspan = 6 + ($revisions->count() * 3);
                                     @endphp
-                                    <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
+                                    <td colspan="{{ $colspan }}"
+                                        class="ps-4 fw-bold text-muted small text-uppercase py-2category-header-cell">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
                                     </td>
                                 </tr>
@@ -268,11 +287,36 @@
                                                 : 0;
                                             $limit = $komo->batas_selisih_harga ?? 0;
                                             $isMasterExceeded = $masterDiff > $limit;
+
+                                            // Previous Year Data extraction
+                                            $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
+                                            $prevMin = $prevData['min'] ?? null;
+                                            $prevMax = $prevData['max'] ?? null;
+                                            $prevAlasan = $prevData['alasan'] ?? '-';
+
+                                            // Highlight Logic: If Master differs from Prev Year
+                                            $isMinChanged = $master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin;
+                                            $isMaxChanged = $master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax;
                                         @endphp
-                                        <td class="text-center bg-blue-faded">
+
+                                        <!-- Previous Year Columns (Hidden by Default) -->
+                                        <td class="text-center bg-light text-muted prev-year-col d-none">
+                                            {{ $prevMin !== null ? number_format($prevMin, 0, ',', '.') : '-' }}
+                                        </td>
+                                        <td class="text-center bg-light text-muted prev-year-col d-none">
+                                            {{ $prevMax !== null ? number_format($prevMax, 0, ',', '.') : '-' }}
+                                        </td>
+                                        <td class="small bg-light text-muted prev-year-col d-none">
+                                            {{ $prevAlasan }}
+                                        </td>
+
+                                        <!-- Actual Master Columns -->
+                                        <td
+                                            class="text-center {{ $isMinChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
                                             {{ $master && $master->min_nilai !== null ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
                                         </td>
-                                        <td class="text-center bg-blue-faded">
+                                        <td
+                                            class="text-center {{ $isMaxChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
                                             {{ $master && $master->max_nilai !== null ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
                                         </td>
                                         <td class="small {{ $isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted' }}"
@@ -415,6 +459,40 @@
                 setTimeout(function () {
                     tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 500);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Toggle Previous Year Columns
+            const togglePrev = document.getElementById('togglePrevYear');
+            if (togglePrev) {
+                togglePrev.addEventListener('change', function () {
+                    const cols = document.querySelectorAll('.prev-year-col');
+                    cols.forEach(col => {
+                        if (this.checked) {
+                            col.classList.remove('d-none');
+                        } else {
+                            col.classList.add('d-none');
+                        }
+                    });
+
+                    // Update table header colspan if dynamic
+                    // Actually we added absolute TH, so we just toggle them.
+                    // But maybe we need to update the main category colspan?
+                    // Category row colspan: <td colspan="{{ $colspan }}"
+                    // $colspan = 6 + ($revisions->count() * 3);
+                    // If we show 3 more cols, we should update this.
+
+                    const catRows = document.querySelectorAll('.category-header-cell');
+                    catRows.forEach(td => {
+                        let current = parseInt(td.getAttribute('colspan'));
+                        if (this.checked) {
+                            td.setAttribute('colspan', current + 3);
+                        } else {
+                            td.setAttribute('colspan', current - 3);
+                        }
+                    });
+                });
             }
         });
     </script>

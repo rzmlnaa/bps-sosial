@@ -118,12 +118,28 @@
                                 // 1. "All" is selected.
                                 // 2. No specific revision is selected (Default view, or Revision ID empty).
                                 // 3. A specific revision is selected BUT it is the first one (count < 2, so comparisons need Master).
+                                $latestRevisionId = $latestRevisionId ?? null; // Ensure variable exists
+                                $isMasterEditable = empty($latestRevisionId);
+
                                 $showMaster = ($selectedRevisionId === 'all' || !$selectedRevisionId || $displayRevisions->count() < 2);
+                                // Only show Prev Year if:
+                                // 1. Master is selected (Input Utama) OR
+                                // 2. All Revisions are selected.
+                                // (If a specific revision is selected, we hide Prev Year to save space/reduce redundancy as per Step 23).
+                                $showPrev = !empty($prevYearFinal) && (
+                                    $selectedRevisionId === 'all' ||
+                                    !$selectedRevisionId
+                                );
                             @endphp
                             <tr>
                                 <th rowspan="2" class="ps-4" style="min-width: 250px;">NAMA</th>
                                 <th rowspan="2" style="width: 100px;">SATUAN</th>
                                 <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
+                                @if($showPrev)
+                                    <th colspan="3" class="bg-secondary bg-opacity-10 text-secondary border-secondary">
+                                        {{ strtoupper($prevYearLabel) }}
+                                    </th>
+                                @endif
                                 @if($showMaster)
                                     <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                         ({{ substr($activeYear->tahun, -2) }})</th>
@@ -134,6 +150,14 @@
                                 @endforeach
                             </tr>
                             <tr>
+                                @if($showPrev)
+                                    <th style="width: 120px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MIN</th>
+                                    <th style="width: 120px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MAX</th>
+                                    <th style="width: 200px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">ALASAN</th>
+                                @endif
                                 @if($showMaster)
                                     <th style="width: 120px;" class="bg-blue-light text-blue small">
                                         MIN_{{ substr($activeYear->tahun, -2) }}</th>
@@ -153,8 +177,8 @@
                             @foreach($categories as $category)
                                 <tr class="bg-light">
                                     @php
-                                        // 3 Fixed columns + (3 if Master shown) + (3 per Revision)
-                                        $colspan = 3 + ($showMaster ? 3 : 0) + ($displayRevisions->count() * 3);
+                                        // 3 Fixed columns + (3 if Prev Shown) + (3 if Master shown) + (3 per Revision)
+                                        $colspan = 3 + ($showPrev ? 3 : 0) + ($showMaster ? 3 : 0) + ($displayRevisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
                                         <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
@@ -163,8 +187,29 @@
                                 @foreach($category->komoditas as $komo)
                                     @php
                                         $master = $masterNilai->get($komo->id);
-                                        // Master is editable ONLY if there are NO revisions
-                                        $isMasterEditable = empty($latestRevisionId);
+
+                                        // Check if Master has explicit values (Min OR Max is set)
+                                        $hasMasterData = $master && (($master->min_nilai ?? null) !== null || ($master->max_nilai ?? null) !== null);
+
+                                        if ($hasMasterData) {
+                                            // Use explicit Master values (even if reason is null, do NOT fallback)
+                                            $mMin = $master->min_nilai;
+                                            $mMax = $master->max_nilai;
+                                            $mAlasan = $master->alasan;
+                                        } else {
+                                            // Master is empty
+                                            $mMin = null;
+                                            $mMax = null;
+                                            $mAlasan = null;
+
+                                            // If Read-Only mode (Revisions exist), Fallback to Prev Year used as Baseline
+                                            if (!$isMasterEditable) {
+                                                $prevData = $prevYearFinal[$komo->id] ?? [];
+                                                $mMin = $prevData['min'] ?? null;
+                                                $mMax = $prevData['max'] ?? null;
+                                                $mAlasan = $prevData['alasan'] ?? null;
+                                            }
+                                        }
                                     @endphp
                                     <tr>
                                         <td class="ps-4">{{ $komo->nama_komoditas }}</td>
@@ -176,6 +221,23 @@
                                                 {{ $komo->batas_selisih_harga ? number_format($komo->batas_selisih_harga, 0, ',', '.') : '-' }}
                                             </span>
                                         </td>
+
+                                        <!-- Prev Year Values -->
+                                        @if($showPrev)
+                                            @php
+                                                $prevData = $prevYearFinal[$komo->id] ?? [];
+                                            @endphp
+                                            <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
+                                                {{ isset($prevData['min']) ? number_format($prevData['min'], 0, ',', '.') : '-' }}
+                                            </td>
+                                            <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
+                                                {{ isset($prevData['max']) ? number_format($prevData['max'], 0, ',', '.') : '-' }}
+                                            </td>
+                                            <td
+                                                class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary small fst-italic">
+                                                {{ $prevData['alasan'] ?? '-' }}
+                                            </td>
+                                        @endif
 
                                         <!-- Master Inputs -->
                                         @if($showMaster)
@@ -202,13 +264,13 @@
                                                 </td>
                                             @else
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
+                                                    {{ isset($mMin) ? number_format($mMin, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
-                                                    {{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
+                                                    {{ isset($mMax) ? number_format($mMax, 0, ',', '.') : '-' }}
                                                 </td>
                                                 <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
-                                                    {{ $master->alasan ?? '-' }}
+                                                    {{ $mAlasan ?? '-' }}
                                                 </td>
                                             @endif
                                         @endif
@@ -412,8 +474,8 @@
                     hasError = true;
                 }
 
-                // Check Max < Min
-                if (minVal !== null && maxVal !== null && maxVal < minVal) {
+                // Check Max <= Min
+                if (minVal !== null && maxVal !== null && maxVal <= minVal) {
                     minInput.classList.add('is-invalid-custom');
                     maxInput.classList.add('is-invalid-custom');
                     hasError = true;
@@ -460,7 +522,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Input Tidak Valid',
-                        text: 'Terdapat kesalahan: Nilai Min/Max tidak lengkap, MAX < MIN, atau Alasan belum diisi.',
+                        text: 'Terdapat kesalahan: Nilai Min/Max tidak lengkap, MAX <= MIN (tidak boleh sama), atau Alasan belum diisi.',
                         confirmButtonColor: '#0093dd'
                     });
 
