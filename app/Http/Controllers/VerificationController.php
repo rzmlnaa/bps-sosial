@@ -101,10 +101,15 @@ class VerificationController extends Controller
 
     public function store(Request $request, $kabupatenId)
     {
+
         $data = $request->input('verifications', []);
 
         DB::transaction(function () use ($data) {
             foreach ($data as $id => $item) {
+                $cekstatus = RhPerubahanDetail::where('id', $id)->where('verification_status', 'pending')->lockForUpdate()->first();
+                if (!$cekstatus) {
+                    continue;
+                }
                 $status = $item['status'] ?? 'pending';
                 $reason = $item['reason'] ?? null;
                 // Type is less relevant now for table selection but might be useful for logic if needed.
@@ -113,15 +118,15 @@ class VerificationController extends Controller
                 if ($status === 'pending') {
                     continue;
                 }
-
-                $updateData = [
+                if ($status === 'rejected' && empty($reason)) {
+                    continue;
+                }
+                $cekstatus->update([
                     'verification_status' => $status,
                     'rejection_reason' => ($status === 'rejected') ? $reason : null,
                     'verified_at' => now(),
                     'verified_by' => Auth::id(),
-                ];
-
-                RhPerubahanDetail::where('id', $id)->update($updateData);
+                ]);
             }
         });
 

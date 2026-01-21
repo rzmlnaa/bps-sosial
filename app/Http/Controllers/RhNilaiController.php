@@ -156,6 +156,46 @@ class RhNilaiController extends Controller
         // Rename $allRevisions to $revisions to match view variable expectation
         $revisions = $allRevisions;
 
+        // 6. Gather Rejected Items for Summary Alert
+        $rejectedSummary = collect();
+
+        // Master Rejections
+        foreach ($masterNilai as $item) {
+            if ($item->verification_status === 'rejected') {
+                $rejectedSummary->push((object) [
+                    'id' => $item->id,
+                    'source' => 'Master Nilai',
+                    'komoditas_id' => $item->komoditas_id,
+                    'komoditas_nama' => $item->komoditas->nama_komoditas ?? '-',
+                    'min' => $item->min_edit,
+                    'max' => $item->max_edit,
+                    'reason' => $item->rejection_reason,
+                    'verified_at' => $item->verified_at
+                ]);
+            }
+        }
+
+        // Revision Rejections
+        foreach ($allDetailsRaw as $headerId => $details) {
+            $header = $allRevisions->where('id', $headerId)->first();
+            $label = $header ? $header->label : 'Perubahan';
+
+            foreach ($details as $item) {
+                if ($item->verification_status === 'rejected') {
+                    $rejectedSummary->push((object) [
+                        'id' => $item->id,
+                        'source' => $label,
+                        'komoditas_id' => $item->komoditas_id,
+                        'komoditas_nama' => $item->komoditas->nama_komoditas ?? '-',
+                        'min' => $item->min_edit,
+                        'max' => $item->max_edit,
+                        'reason' => $item->rejection_reason,
+                        'verified_at' => $item->verified_at
+                    ]);
+                }
+            }
+        }
+
         return view('price-range.input-nilai', compact(
             'activeYear',
             'kabupatens',
@@ -169,7 +209,8 @@ class RhNilaiController extends Controller
             'allRevisionNilai', // Raw Values for inputs
             'latestRevisionId', // To determine readonly status
             'prevYearFinal',
-            'prevYearLabel'
+            'prevYearLabel',
+            'rejectedSummary'
         ));
     }
 

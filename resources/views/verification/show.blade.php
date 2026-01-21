@@ -28,7 +28,7 @@
                         <table class="table align-middle mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="ps-4">Komoditas</th>
+                                    <th class="ps-4">Komoditas</th> 
                                     <th>Tahun</th>
                                     <th>Nilai Diajukan</th>
                                     <th>Alasan Inputter</th>
