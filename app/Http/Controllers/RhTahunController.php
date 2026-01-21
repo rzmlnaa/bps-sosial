@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\RhTahun;
 use App\Models\RhPerubahanHeader;
+use App\Models\RhPerubahanDetail;
 use Illuminate\Support\Facades\Auth;
 
 class RhTahunController extends Controller
@@ -19,6 +20,13 @@ class RhTahunController extends Controller
         $minExistingYear = RhTahun::min('tahun');
         if ($minExistingYear && $request->tahun < $minExistingYear) {
             return back()->with('error', "Gagal menambah tahun. Tahun tidak boleh lebih kecil dari tahun paling awal yang sudah ada ($minExistingYear).")->with('active_tab', 'pills-rh-settings-tab');
+        }
+
+        // Prevent adding year if there are pending or rejected verifications in ANY year
+        // Use global check because new year usually carries over from previous, which must be stable.
+        $hasPending = RhPerubahanDetail::whereIn('verification_status', ['pending', 'rejected'])->exists();
+        if ($hasPending) {
+            return back()->with('error', "Gagal menambah tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         RhTahun::create([
@@ -47,8 +55,8 @@ class RhTahunController extends Controller
     {
         $tahun = RhTahun::findOrFail($id);
 
-        if ($tahun->perubahanHeaders()->count() > 0) {
-            return back()->with('error', 'Tahun tidak bisa dihapus karena memiliki data perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+            return back()->with('error', 'Tahun tidak bisa dihapus karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
 
         $tahun->delete();
@@ -64,8 +72,8 @@ class RhTahunController extends Controller
         $tahun = RhTahun::findOrFail($id);
 
 
-        if ($tahun->perubahanHeaders()->count() > 0) {
-            return back()->with('error', 'Tahun tidak bisa diedit karena memiliki data perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+            return back()->with('error', 'Tahun tidak bisa diedit karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
         $tahun->update([
             'tahun' => $request->tahun,
@@ -87,6 +95,15 @@ class RhTahunController extends Controller
         $year = \Carbon\Carbon::parse($request->tanggal_perubahan)->year;
         if ($year != $rhTahun->tahun) {
             return back()->with('error', "Tanggal harus berada pada tahun {$rhTahun->tahun}.")->with('active_tab', 'pills-rh-settings-tab');
+        }
+
+        // Prevent adding revision header if there are pending or rejected verifications in THIS year
+        $hasPending = RhPerubahanDetail::where('rh_tahun_id', $rhTahun->id)
+            ->whereIn('verification_status', ['pending', 'rejected'])
+            ->exists();
+
+        if ($hasPending) {
+            return back()->with('error', "Gagal menambah header perubahan. Masih ada data perubahan di tahun ini dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Prevent duplicate or earlier date
@@ -121,6 +138,10 @@ class RhTahunController extends Controller
 
         $perubahan = RhPerubahanHeader::findOrFail($id);
 
+        if ($perubahan->details()->exists()) {
+            return back()->with('error', 'Header perubahan tidak bisa diedit karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         // Prevent duplicate date in the same year
         $exists = RhPerubahanHeader::where('rh_tahun_id', $perubahan->rh_tahun_id)
             ->where('tanggal_perubahan', $request->tanggal_perubahan)
@@ -146,6 +167,11 @@ class RhTahunController extends Controller
     public function destroyPerubahan($id)
     {
         $perubahan = RhPerubahanHeader::findOrFail($id);
+
+        // if ($perubahan->details()->exists()) {
+        //     return back()->with('error', 'Header perubahan tidak bisa dihapus karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
+        // }
+
         $perubahan->delete();
 
         return back()->with('success', 'Header perubahan berhasil dihapus.')->with('active_tab', 'pills-rh-settings-tab');

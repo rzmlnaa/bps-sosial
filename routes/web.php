@@ -152,11 +152,13 @@ Route::get('/price-range/input', function () {
     $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
     $rhTahun = \App\Models\RhTahun::with([
         'perubahanHeaders' => function ($query) {
-            $query->orderBy('tanggal_perubahan', 'asc');
+            $query->orderBy('tanggal_perubahan', 'asc')->withCount('details');
         },
         'perubahanHeaders.userAdd',
         'userAdd'
-    ])->orderBy('tahun', 'desc')->get();
+    ])
+        ->withCount('perubahanDetails')
+        ->orderBy('tahun', 'desc')->get();
     return view('price-range/input', compact('kategori', 'rhTahun'));
 })->name('price-range.input');
 

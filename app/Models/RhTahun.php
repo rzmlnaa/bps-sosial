@@ -18,4 +18,9 @@ class RhTahun extends Model
     {
         return $this->hasMany(RhPerubahanHeader::class, 'rh_tahun_id');
     }
+
+    public function perubahanDetails()
+    {
+        return $this->hasMany(RhPerubahanDetail::class, 'rh_tahun_id');
+    }
 }

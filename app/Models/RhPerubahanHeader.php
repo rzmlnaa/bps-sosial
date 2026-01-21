@@ -18,4 +18,9 @@ class RhPerubahanHeader extends Model
     {
         return $this->belongsTo(User::class, 'user_id_add');
     }
+
+    public function details()
+    {
+        return $this->hasMany(RhPerubahanDetail::class, 'rh_perubahan_header_id');
+    }
 }
