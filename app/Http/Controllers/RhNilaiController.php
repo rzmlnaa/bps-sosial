@@ -314,6 +314,14 @@ class RhNilaiController extends Controller
                     $status = 'pending';
                 }
 
+                $cekPerubahanDetail = RhPerubahanDetail::whereNotNull('alasan')->whereIn('verification_status', ['approved', 'rejected'])->where('kabupaten_id', $kabupatenId)->where('komoditas_id', $komoditasId)->where('rh_tahun_id', $tahunId)->first();
+
+                if ($cekPerubahanDetail != null) {
+                    if ($cekPerubahanDetail->min_edit == $min && $cekPerubahanDetail->max_edit == $max && $cekPerubahanDetail->alasan === $vals['alasan']) {
+                        continue;
+                    }
+                }
+
                 RhPerubahanDetail::updateOrCreate(
                     [
                         'rh_tahun_id' => $tahunId,
@@ -350,6 +358,14 @@ class RhNilaiController extends Controller
                     $revHeaderExists = RhPerubahanHeader::where('id', $revHeaderId)->exists();
                     if (!$revHeaderExists) {
                         return back()->with('error', 'Data Header Perubahan (ID: ' . $revHeaderId . ') tidak ditemukan. Mohon refresh halaman dan coba lagi.')->withInput();
+                    }
+
+                    $cekPerubahanDetail = RhPerubahanDetail::whereNotNull('alasan')->whereIn('verification_status', ['approved', 'rejected'])->where('rh_perubahan_header_id', $revHeaderId)->where('kabupaten_id', $kabupatenId)->where('komoditas_id', $komoditasId)->where('rh_tahun_id', $tahunId)->first();
+
+                    if ($cekPerubahanDetail != null) {
+                        if ($cekPerubahanDetail->min_edit == $min && $cekPerubahanDetail->max_edit == $max && $cekPerubahanDetail->alasan === $vals['alasan']) {
+                            continue;
+                        }
                     }
 
                     RhPerubahanDetail::updateOrCreate(

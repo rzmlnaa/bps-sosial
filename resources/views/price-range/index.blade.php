@@ -160,6 +160,13 @@
                                         </span>
                                     </div>
                                     <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-secondary-light border border-secondary"
+                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Abu-abu:</b> Data dalam status pending (Menunggu verifikasi).
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
                                         <div class="rounded me-2 bg-white border"
                                             style="width: 18px; height: 18px; flex-shrink: 0;"></div>
                                         <span class="small" style="line-height: 1.2;">
@@ -175,6 +182,32 @@
             </div>
         @endif
         <!-- Filters & Export -->
+        <!-- Rejected Summary Alert -->
+        @if(!empty($rejectedSummary))
+            <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert" style="background-color: #fff5f5;">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-exclamation-triangle text-danger fs-4 me-2"></i>
+                    <div>
+                        <h5 class="alert-heading fw-bold mb-0 text-danger">Perhatian: Terdapat Data Ditolak</h5>
+                        <p class="mb-0 small text-muted">Berikut adalah daftar kabupaten/kota yang memiliki data ditolak dan
+                            perlu perbaikan:</p>
+                    </div>
+                </div>
+                <hr class="text-danger opacity-25 my-2">
+                <div class="row g-2">
+                    @foreach($rejectedSummary as $summary)
+                        <div class="col-md-4 col-sm-6">
+                            <div
+                                class="d-flex justify-content-between align-items-center bg-white p-2 rounded border border-danger border-opacity-25">
+                                <span class="fw-bold text-dark small">[{{ $summary['kode_kab'] }}] {{ $summary['nama_kab'] }}</span>
+                                <span class="badge bg-danger rounded-pill">{{ $summary['total'] }} Item</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="card border-0 shadow-sm mb-1" style="border-radius: 12px;">
             <div class="card-body p-4">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
@@ -333,8 +366,13 @@
                                                 && ($master->min_nilai ?? null) !== null
                                                 && ($master->max_nilai ?? null) !== null
                                                 && !empty($master->alasan);
+
+                                            $mIsPending = ($master->verification_status ?? '') === 'pending'
+                                                && ($master->min_nilai ?? null) !== null
+                                                && ($master->max_nilai ?? null) !== null
+                                                && !empty($master->alasan);
                                         @endphp
-                                        <td class="small {{ $mIsApproved ? 'bg-success-light fw-bold text-dark' : ($isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted') }}"
+                                        <td class="small {{ $mIsApproved ? 'bg-success-light fw-bold text-dark' : ($mIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted')) }}"
                                             title="{{ $isMasterExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($masterDiff, 0, ',', '.') . ')' : '' }}">
                                             {{ $master->alasan ?? '-' }}
                                         </td>
@@ -398,6 +436,12 @@
                                                     && ($revData->min_edit ?? null) !== null
                                                     && ($revData->max_edit ?? null) !== null
                                                     && !empty($revData->alasan);
+
+                                                // Pending Logic: Must be pending AND have Min, Max, Alasan in THIS revision
+                                                $revIsPending = ($revData->verification_status ?? '') === 'pending'
+                                                    && ($revData->min_edit ?? null) !== null
+                                                    && ($revData->max_edit ?? null) !== null
+                                                    && !empty($revData->alasan);
                                             @endphp
                                             <td
                                                 class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
@@ -407,7 +451,7 @@
                                                 class="text-center {{ $isMaxEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
                                                 {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
                                             </td>
-                                            <td class="small {{ $revIsApproved ? 'bg-success-light fw-bold text-dark' : ($isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted')) }}"
+                                            <td class="small {{ $revIsApproved ? 'bg-success-light fw-bold text-dark' : ($revIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted'))) }}"
                                                 title="{{ $isExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($currentDiff, 0, ',', '.') . ')' : '' }}">
                                                 {{ $currentAlasan ?? '-' }}
                                             </td>
@@ -459,6 +503,10 @@
 
         .bg-danger-light {
             background-color: rgba(220, 53, 69, 0.15) !important;
+        }
+
+        .bg-secondary-light {
+            background-color: rgba(108, 117, 125, 0.15) !important;
         }
 
         .text-orange {

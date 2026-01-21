@@ -114,6 +114,27 @@ class PriceRangeController extends Controller
             }
         }
 
+        // 3. Rejected Summary (For Alert Box)
+        $rejectedSummary = [];
+        if ($selectedYearId) {
+            $rejectedRaw = RhPerubahanDetail::where('rh_tahun_id', $selectedYearId)
+                ->where('verification_status', 'rejected')
+                ->select(\Illuminate\Support\Facades\DB::raw('count(*) as total'), 'kabupaten_id')
+                ->groupBy('kabupaten_id')
+                ->get();
+
+            foreach ($rejectedRaw as $item) {
+                $kab = $kabupatens->firstWhere('id', $item->kabupaten_id);
+                if ($kab) {
+                    $rejectedSummary[] = [
+                        'kode_kab' => $kab->kode_kab,
+                        'nama_kab' => $kab->nama_kabupaten,
+                        'total' => $item->total
+                    ];
+                }
+            }
+        }
+
         // 2. Outlier Analysis (Global Context for Selected Year)
         $outliers = [];
         if ($activeYear) {
@@ -131,7 +152,8 @@ class PriceRangeController extends Controller
             'prevYearValues',
             'revisions',
             'revisionDetails',
-            'outliers'
+            'outliers',
+            'rejectedSummary'
         ));
     }
 
