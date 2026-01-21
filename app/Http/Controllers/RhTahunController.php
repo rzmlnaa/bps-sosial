@@ -55,10 +55,19 @@ class RhTahunController extends Controller
     {
         $tahun = RhTahun::findOrFail($id);
 
-        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+        $hasValues = $tahun->perubahanDetails()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
+
+        if ($tahun->perubahanHeaders()->count() > 0 || $hasValues) {
             return back()->with('error', 'Tahun tidak bisa dihapus karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
 
+        // Delete associated details (empty ones) before deleting year
+        $tahun->perubahanDetails()->delete();
         $tahun->delete();
         return back()->with('success', 'Tahun RH berhasil dihapus.')->with('active_tab', 'pills-rh-settings-tab');
     }
@@ -71,8 +80,14 @@ class RhTahunController extends Controller
 
         $tahun = RhTahun::findOrFail($id);
 
+        $hasValues = $tahun->perubahanDetails()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
 
-        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+        if ($tahun->perubahanHeaders()->count() > 0 || $hasValues) {
             return back()->with('error', 'Tahun tidak bisa diedit karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
         $tahun->update([
@@ -138,8 +153,15 @@ class RhTahunController extends Controller
 
         $perubahan = RhPerubahanHeader::findOrFail($id);
 
-        if ($perubahan->details()->exists()) {
-            return back()->with('error', 'Header perubahan tidak bisa diedit karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
+        $hasValues = $perubahan->details()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
+
+        if ($hasValues) {
+            return back()->with('error', 'Header perubahan tidak bisa diedit karena sudah memiliki rincian nilai (min/max).')->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Prevent duplicate date in the same year
@@ -168,10 +190,19 @@ class RhTahunController extends Controller
     {
         $perubahan = RhPerubahanHeader::findOrFail($id);
 
-        // if ($perubahan->details()->exists()) {
-        //     return back()->with('error', 'Header perubahan tidak bisa dihapus karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
-        // }
+        $hasValues = $perubahan->details()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
 
+        if ($hasValues) {
+            return back()->with('error', 'Header perubahan tidak bisa dihapus karena sudah memiliki rincian nilai (min/max).')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
+        // Delete associated details (which are all nulls/empty at this point)
+        $perubahan->details()->delete();
         $perubahan->delete();
 
         return back()->with('success', 'Header perubahan berhasil dihapus.')->with('active_tab', 'pills-rh-settings-tab');

@@ -328,7 +328,7 @@
                                                 ? ($master->max_nilai - $master->min_nilai)
                                                 : 0;
                                             $limit = $komo->batas_selisih_harga ?? 0;
-                                            $isMasterExceeded = $masterDiff > $limit;
+                                            // $isMasterExceeded moved below to check inheritance
 
                                             // Previous Year Data extraction
                                             $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
@@ -339,6 +339,12 @@
                                             // Highlight Logic: If Master differs from Prev Year
                                             $isMinChanged = $master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin;
                                             $isMaxChanged = $master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax;
+
+                                            // Fix: If values are inherited (same as prev), do not flag as exceeded (Red)
+                                            $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
+                                                && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
+
+                                            $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
                                         @endphp
 
                                         <!-- Previous Year Columns (Hidden by Default) -->

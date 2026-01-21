@@ -321,9 +321,10 @@ class RhNilaiController extends Controller
                         continue;
                     }
                 }
-                if ($min == null && $max == null) {
-                    continue;
-                }
+                // if ($min == null && $max == null) {
+                //     continue;
+                // }
+
                 RhPerubahanDetail::updateOrCreate(
                     [
                         'rh_tahun_id' => $tahunId,
@@ -369,9 +370,11 @@ class RhNilaiController extends Controller
                             continue;
                         }
                     }
-                    if ($min == null && $max == null) {
-                        continue;
-                    }
+                    // dd($request);
+                    // if ($min == null && $max == null) {
+                    //     continue;
+                    // }
+
                     RhPerubahanDetail::updateOrCreate(
                         [
                             'rh_perubahan_header_id' => $revHeaderId,
