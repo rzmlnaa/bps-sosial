@@ -20,6 +20,7 @@
                                 <th class="px-4 py-3 border-0">Kode</th>
                                 <th class="px-4 py-3 border-0">Kabupaten/Kota</th>
                                 <th class="px-4 py-3 border-0 text-center">Jumlah Pending</th>
+                                <th class="px-4 py-3 border-0 text-center">Jumlah Rejected</th>
                                 <th class="px-4 py-3 border-0 text-end">Aksi</th>
                             </tr>
                         </thead>
@@ -29,9 +30,22 @@
                                     <td class="px-4 fw-medium text-muted">{{ $kab->kode_kab }}</td>
                                     <td class="px-4 fw-bold text-dark">{{ $kab->nama_kabupaten }}</td>
                                     <td class="px-4 text-center">
-                                        <span class="badge bg-warning text-dark rounded-pill px-3">
-                                            {{ $kab->pending_count }} Item
-                                        </span>
+                                        @if($kab->pending_count > 0)
+                                            <span class="badge bg-warning text-dark rounded-pill px-3">
+                                                {{ $kab->pending_count }} Item
+                                            </span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 text-center">
+                                        @if($kab->rejected_count > 0)
+                                            <span class="badge bg-danger text-white rounded-pill px-3">
+                                                {{ $kab->rejected_count }} Item
+                                            </span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
                                     </td>
                                     <td class="px-4 text-end">
                                         <a href="{{ route('verification.show', $kab->id) }}"
@@ -42,7 +56,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-5 text-muted">
+                                    <td colspan="5" class="text-center py-5 text-muted">
                                         <div class="d-flex flex-column align-items-center">
                                             <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
                                             <h5 class="fw-medium">Semua Bersih!</h5>

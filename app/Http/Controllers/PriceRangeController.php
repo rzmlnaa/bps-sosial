@@ -80,6 +80,7 @@ class PriceRangeController extends Controller
                     $val->min_nilai = $m->min_nilai;
                     $val->max_nilai = $m->max_nilai;
                     $val->alasan = $m->alasan;
+                    $val->verification_status = $m->verification_status;
                 }
                 // Else use base (prev year final)
                 elseif ($b) {

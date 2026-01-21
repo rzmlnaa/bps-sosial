@@ -145,10 +145,18 @@
                                         </span>
                                     </div>
                                     <div class="d-flex align-items-center">
+                                        <div class="rounded me-2 bg-success-light border border-success"
+                                            style="width: 18px; height: 18px; flex-shrink: 0;"></div>
+                                        <span class="small" style="line-height: 1.2;">
+                                            <b>Hijau:</b> Selisih harga telah disetujui (Verified).
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
                                         <div class="rounded me-2 bg-danger-light border border-danger"
                                             style="width: 18px; height: 18px; flex-shrink: 0;"></div>
                                         <span class="small" style="line-height: 1.2;">
-                                            <b>Merah:</b> Selisih harga melebihi batas wajar (Perlu Perhatian).
+                                            <b>Merah:</b> Selisih harga melebihi batas wajar, telah diverifikasi namun ditolak
+                                            dan menunggu perbaikan dari admin kabupaten/kota.
                                         </span>
                                     </div>
                                     <div class="d-flex align-items-center">
@@ -232,7 +240,8 @@
                                 <th rowspan="2" style="width: 80px;">SATUAN</th>
                                 <th rowspan="2" style="width: 100px;">BATAS HARGA</th>
                                 <th colspan="3" class="bg-light text-muted prev-year-col d-none">AKHIR
-                                    {{ $activeYear->tahun - 1 }}</th>
+                                    {{ $activeYear->tahun - 1 }}
+                                </th>
                                 <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
                                     ({{ substr($activeYear->tahun, -2) }})</th>
 
@@ -319,7 +328,13 @@
                                             class="text-center {{ $isMaxChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
                                             {{ $master && $master->max_nilai !== null ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
                                         </td>
-                                        <td class="small {{ $isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted' }}"
+                                        @php
+                                            $mIsApproved = ($master->verification_status ?? '') === 'approved'
+                                                && ($master->min_nilai ?? null) !== null
+                                                && ($master->max_nilai ?? null) !== null
+                                                && !empty($master->alasan);
+                                        @endphp
+                                        <td class="small {{ $mIsApproved ? 'bg-success-light fw-bold text-dark' : ($isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted') }}"
                                             title="{{ $isMasterExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($masterDiff, 0, ',', '.') . ')' : '' }}">
                                             {{ $master->alasan ?? '-' }}
                                         </td>
@@ -377,6 +392,12 @@
 
                                                 // Red only if exceeded AND edited in this period
                                                 $isExceeded = $isDiffExceeded && $hasEdit;
+
+                                                // Approved Logic: Must be approved AND have Min, Max, Alasan in THIS revision
+                                                $revIsApproved = ($revData->verification_status ?? '') === 'approved'
+                                                    && ($revData->min_edit ?? null) !== null
+                                                    && ($revData->max_edit ?? null) !== null
+                                                    && !empty($revData->alasan);
                                             @endphp
                                             <td
                                                 class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
@@ -386,7 +407,7 @@
                                                 class="text-center {{ $isMaxEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
                                                 {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
                                             </td>
-                                            <td class="small {{ $isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted') }}"
+                                            <td class="small {{ $revIsApproved ? 'bg-success-light fw-bold text-dark' : ($isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted')) }}"
                                                 title="{{ $isExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($currentDiff, 0, ',', '.') . ')' : '' }}">
                                                 {{ $currentAlasan ?? '-' }}
                                             </td>
@@ -430,6 +451,10 @@
 
         .bg-warning-light {
             background-color: rgba(255, 193, 7, 0.15) !important;
+        }
+
+        .bg-success-light {
+            background-color: rgba(25, 135, 84, 0.15) !important;
         }
 
         .bg-danger-light {

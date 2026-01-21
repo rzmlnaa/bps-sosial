@@ -171,6 +171,7 @@
     </form>
     
     <!-- Rejected Items History -->
+    
     @if($rejectedMaster->count() > 0 || $rejectedDetail->count() > 0)
         <div class="mt-5">
             <h5 class="fw-bold mb-3 text-secondary"><i class="fas fa-history me-2"></i>Riwayat Penolakan (Perlu Revisi Kabkot)</h5>
@@ -259,7 +260,7 @@
                                                 <div class="text-danger fw-bold small">{{ $item->rejection_reason }}</div>
                                             </td>
                                             <td class="small text-muted">
-                                                {{ \Carbon\Carbon::parse($item->verified_at)->format('d M H:i') }}
+                                                {{ \App\Models\User::find($item->verified_by)->name ?? '-' }} - {{ \Carbon\Carbon::parse($item->verified_at)->format('d M H:i') }}
                                             </td>
                                         </tr>
                                     @endforeach

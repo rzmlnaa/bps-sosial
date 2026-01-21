@@ -13,16 +13,29 @@ class VerificationController extends Controller
 {
     public function index()
     {
-        // Get Kabupaten IDs that have pending verifications
-        // Master: data where rh_perubahan_header_id IS NULL
+        // Get Kabupaten IDs that have pending/rejected verifications
+
+        // Pending
         $pendingMaster = RhPerubahanDetail::where('verification_status', 'pending')
             ->whereNull('rh_perubahan_header_id')
             ->select('kabupaten_id', DB::raw('count(*) as count'))
             ->groupBy('kabupaten_id')
             ->get();
 
-        // Detail: data where rh_perubahan_header_id IS NOT NULL
         $pendingDetail = RhPerubahanDetail::where('verification_status', 'pending')
+            ->whereNotNull('rh_perubahan_header_id')
+            ->select('kabupaten_id', DB::raw('count(*) as count'))
+            ->groupBy('kabupaten_id')
+            ->get();
+
+        // Rejected
+        $rejectedMaster = RhPerubahanDetail::where('verification_status', 'rejected')
+            ->whereNull('rh_perubahan_header_id')
+            ->select('kabupaten_id', DB::raw('count(*) as count'))
+            ->groupBy('kabupaten_id')
+            ->get();
+
+        $rejectedDetail = RhPerubahanDetail::where('verification_status', 'rejected')
             ->whereNotNull('rh_perubahan_header_id')
             ->select('kabupaten_id', DB::raw('count(*) as count'))
             ->groupBy('kabupaten_id')
@@ -30,24 +43,38 @@ class VerificationController extends Controller
 
         $kabupatenStats = [];
 
-        foreach ($pendingMaster as $item) {
-            if (!isset($kabupatenStats[$item->kabupaten_id])) {
-                $kabupatenStats[$item->kabupaten_id] = 0;
+        // Helper to init stat array
+        $initStat = function ($id) use (&$kabupatenStats) {
+            if (!isset($kabupatenStats[$id])) {
+                $kabupatenStats[$id] = ['pending' => 0, 'rejected' => 0];
             }
-            $kabupatenStats[$item->kabupaten_id] += $item->count;
+        };
+
+        foreach ($pendingMaster as $item) {
+            $initStat($item->kabupaten_id);
+            $kabupatenStats[$item->kabupaten_id]['pending'] += $item->count;
         }
 
         foreach ($pendingDetail as $item) {
-            if (!isset($kabupatenStats[$item->kabupaten_id])) {
-                $kabupatenStats[$item->kabupaten_id] = 0;
-            }
-            $kabupatenStats[$item->kabupaten_id] += $item->count;
+            $initStat($item->kabupaten_id);
+            $kabupatenStats[$item->kabupaten_id]['pending'] += $item->count;
+        }
+
+        foreach ($rejectedMaster as $item) {
+            $initStat($item->kabupaten_id);
+            $kabupatenStats[$item->kabupaten_id]['rejected'] += $item->count;
+        }
+
+        foreach ($rejectedDetail as $item) {
+            $initStat($item->kabupaten_id);
+            $kabupatenStats[$item->kabupaten_id]['rejected'] += $item->count;
         }
 
         $kabupatens = Kabupaten::whereIn('id', array_keys($kabupatenStats))->get();
 
         foreach ($kabupatens as $kab) {
-            $kab->pending_count = $kabupatenStats[$kab->id];
+            $kab->pending_count = $kabupatenStats[$kab->id]['pending'];
+            $kab->rejected_count = $kabupatenStats[$kab->id]['rejected'];
         }
 
         return view('verification.index', compact('kabupatens'));
