@@ -15,6 +15,8 @@ use App\Http\Controllers\RhNilaiController;
 use App\Http\Controllers\RhTahunController;
 use App\Http\Controllers\PriceRangeController;
 use App\Http\Controllers\VerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ProfileCompletionController;
 
 
 Route::get('/', function () {
@@ -202,6 +204,21 @@ Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])
 Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
 Route::get('/verification/{kabupatenId}', [VerificationController::class, 'show'])->name('verification.show');
 Route::post('/verification/{kabupatenId}', [VerificationController::class, 'store'])->name('verification.store');
+
+Route::get('/login', function () {
+    if (Auth::check()) {
+        return redirect('/dashboard');
+    }
+    return view('auth.login');
+})->name('login');
+
+Route::get('auth/google', [LoginController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/complete-profile', [ProfileCompletionController::class, 'show'])->name('complete-profile');
+    Route::post('/complete-profile', [ProfileCompletionController::class, 'update'])->name('complete-profile.update');
+});
 
 Route::post('/logout', function () {
     Auth::logout();
