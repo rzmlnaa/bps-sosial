@@ -67,7 +67,8 @@ class LoginController extends Controller
                 'google_id' => $googleUser->id,
                 'password' => bcrypt(str()->random(16)), // Dummy password
                 'status' => 'pending',
-                'team' => 'TBD', // To be defined
+                'role' => 'user',
+                'team' => null, // To be defined
             ]);
 
             Auth::login($newUser);
