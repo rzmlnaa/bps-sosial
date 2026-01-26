@@ -22,6 +22,10 @@ class User extends Authenticatable
         'email',
         'no_hp',
         'password',
+        'google_id',
+        'team',
+        'status',
+        'kabupaten_id',
     ];
 
     /**

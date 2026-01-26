@@ -21,7 +21,6 @@ Route::get('/', function () {
     return redirect('/dashboard');
 });
 
-
 Route::get('/dashboard', function () {
     return view('dashboard.index');
 })->name('dashboard');

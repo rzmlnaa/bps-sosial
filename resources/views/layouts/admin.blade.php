@@ -73,7 +73,9 @@
             </div>
             <div>
                 <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">Badan Pusat Statistik</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">Provinsi Kalbar</small>
+                @auth
+                    <small class="text-muted" style="font-size: 0.7rem;">Provinsi Kalbar</small>
+                @endauth
             </div>
         </div>
         @php
@@ -88,7 +90,7 @@
         @endphp
         <div class="px-4 mb-3">
             <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
-                {{ $greeting }}, Rezza 👋
+                {{ $greeting }}@auth, {{ Auth::user()->name }}@endauth 👋
             </span>
         </div>
         <div class="py-3">
@@ -102,11 +104,14 @@
                 <span>Dashboard</span>
             </a>
 
+
             <a href="{{ route('poverty') }}"
                 class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
                 <i class="fas fa-chart-bar"></i>
                 <span>Kemiskinan</span>
             </a>
+
+
 
             <a href="#submenu1" class="nav-link" data-bs-toggle="collapse" aria-expanded="false">
                 <i class="fas fa-layer-group"></i>
@@ -137,43 +142,77 @@
                 <span>Komoditas</span>
             </a>
 
-            <a href="{{ route('price-range.index') }}"
-                class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
+
+
+
+            <a href="#submenu2" id="menu-rentang-harga"
+                class="nav-link {{ request()->is('price-range*') || request()->is('verification*') ? 'active' : '' }}"
+                data-bs-toggle="collapse" aria-expanded="true">
                 <i class="fas fa-tags"></i>
-                <span>Rentang Harga</span>
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <span>Rentang Harga</span>
+                    <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                </div>
             </a>
 
-            <a href="{{ route('verification.index') }}"
-                class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
-                <i class="fas fa-clipboard-check"></i>
-                <span>Verifikasi Harga</span>
-            </a>
+            <div class="collapse {{ request()->is('price-range*') || request()->is('verification*') ? 'show' : '' }}"
+                id="submenu2">
+                <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                    <li class="nav-item">
+                        <a href="{{ route('price-range.index') }}"
+                            class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
+                            <i class="fas fa-table"></i>
+                            <span>Visualisasi RH</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('verification.index') }}"
+                            class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Verifikasi Harga</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+
+
+
 
             <a href="#" class="nav-link">
                 <i class="fas fa-search-dollar"></i>
                 <span>Fenomena</span>
             </a>
+
         </div>
 
         <div class="mt-auto p-4 border-top">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-gray-200 rounded-circle d-flex align-items-center justify-content-center"
-                        style="width: 36px; height: 36px; background: #e2e8f0;">
-                        <i class="fas fa-user text-muted"></i>
+            @auth
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-gray-200 rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 36px; height: 36px; background: #e2e8f0;">
+                            <i class="fas fa-user text-muted"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-medium text-sm">{{ Auth::user()->name }}</p>
+                            <small class="text-muted"
+                                style="font-size: 0.75rem;">{{ Auth::user()->team ?? 'Tim Sosial' }}</small>
+                        </div>
                     </div>
-                    <div>
-                        <p class="mb-0 fw-medium text-sm">Rezza Maulana</p>
-                        <small class="text-muted" style="font-size: 0.75rem;">Tim Sosial</small>
-                    </div>
+                    <form action="{{ route('logout') }}" method="POST" id="logout-form">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Log Out">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" id="logout-form">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Log Out">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                </form>
-            </div>
+            @else
+                <button class="btn btn-google-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </button>
+            @endauth
         </div>
     </nav>
 
@@ -252,6 +291,39 @@
             });
         });
     </script>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-bps-blue text-white">
+                    <h5 class="modal-title fw-bold" id="loginModalLabel">Login Sistem</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-4">
+                        <div class="logo-icon mx-auto mb-3" style="width: 64px; height: 64px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
+                                alt="Logo BPS">
+                        </div>
+                        <h4 class="fw-bold text-navy">Selamat Datang</h4>
+                        <p class="text-muted">Silakan login menggunakan akun Google untuk mengakses fitur sistem.</p>
+                    </div>
+
+                    <div class="login-divider"></div>
+
+                    <a href="{{ url('/auth/google') }}" class="btn btn-google-login py-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/960px-Google_%22G%22_logo.svg.png"
+                            alt="Google Logo">
+                        <span>Login with Google</span>
+                    </a>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
 
     @stack('scripts')
 </body>
