@@ -26,7 +26,7 @@ class User extends Authenticatable
         'team',
         'status',
         'kabupaten_id',
-        'role'
+        'role',
     ];
 
     /**

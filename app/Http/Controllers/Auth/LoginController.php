@@ -42,9 +42,12 @@ class LoginController extends Controller
             }
 
             Auth::login($user);
-
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
             // Check if profile is complete
             if (empty($user->no_hp) || empty($user->kabupaten_id)) {
+
                 return redirect()->route('complete-profile');
             }
 

@@ -32,6 +32,11 @@ class CheckUserStatus
 
                     return redirect()->route('complete-profile');
                 }
+            } else {
+
+                if ($user->role !== 'admin') {
+                    return $next($request);
+                }
             }
         }
 

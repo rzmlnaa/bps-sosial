@@ -32,10 +32,20 @@ Route::get('/login', function () {
 Route::get('auth/google', [LoginController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback']);
 
-Route::post('/logout', function () {
-    Auth::logout();
-    return redirect('/dashboard');
-})->name('logout');
+Route::middleware(['auth'])->group(function () {
+    // Admin Routes
+    Route::middleware(['can:access-admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
+        Route::get('/verification', [\App\Http\Controllers\AdminController::class, 'verification'])->name('verification');
+        Route::post('/approve/{id}', [\App\Http\Controllers\AdminController::class, 'approve'])->name('approve');
+        Route::post('/reject/{id}', [\App\Http\Controllers\AdminController::class, 'reject'])->name('reject');
+    });
+
+    Route::post('/logout', function () {
+        Auth::logout();
+        return redirect('/dashboard');
+    })->name('logout');
+});
 
 
 // --- Profile Completion (Auth Required, Self-Allowed by Middleware) ---

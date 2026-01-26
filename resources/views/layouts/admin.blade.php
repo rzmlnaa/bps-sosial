@@ -96,93 +96,110 @@
         <div class="py-3">
 
 
-            <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
-                style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
+            @if(Auth::check() && Auth::user()->role === 'admin')
+                <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Admin</h6>
 
-            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
+                <a href="{{ route('admin.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="{{ route('admin.verification') }}"
+                    class="nav-link {{ request()->routeIs('admin.verification') ? 'active' : '' }}">
+                    <i class="fas fa-user-check"></i>
+                    <span>Verifikasi Akun</span>
+                </a>
+            @else
+                <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
+
+                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
 
 
-            <a href="{{ route('poverty') }}"
-                class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
-                <i class="fas fa-chart-bar"></i>
-                <span>Kemiskinan</span>
-            </a>
+                <a href="{{ route('poverty') }}"
+                    class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Kemiskinan</span>
+                </a>
 
 
 
-            <a href="#submenu1" class="nav-link" data-bs-toggle="collapse" aria-expanded="false">
-                <i class="fas fa-layer-group"></i>
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <span>Sub Kelompok</span>
-                    <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem; width: auto;"></i>
+                <a href="#submenu1" class="nav-link" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="fas fa-layer-group"></i>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Sub Kelompok</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem; width: auto;"></i>
+                    </div>
+                </a>
+                <div class="collapse" id="submenu1">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
+                                <i class="fas fa-circle" style="font-size: 4px;"></i>
+                                <span>Makanan</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
+                                <i class="fas fa-circle" style="font-size: 4px;"></i>
+                                <span>Non-Makanan</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-            </a>
-            <div class="collapse" id="submenu1">
-                <ul class="nav flex-column ps-4 border-start ms-3 py-1">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                            <i class="fas fa-circle" style="font-size: 4px;"></i>
-                            <span>Makanan</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                            <i class="fas fa-circle" style="font-size: 4px;"></i>
-                            <span>Non-Makanan</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
 
-            <a href="#" class="nav-link">
-                <i class="fas fa-shopping-basket"></i>
-                <span>Komoditas</span>
-            </a>
+                <a href="#" class="nav-link">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span>Komoditas</span>
+                </a>
 
 
 
 
-            <a href="#submenu2" id="menu-rentang-harga"
-                class="nav-link {{ request()->is('price-range*') || request()->is('verification*') ? 'active' : '' }}"
-                data-bs-toggle="collapse" aria-expanded="true">
-                <i class="fas fa-tags"></i>
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <span>Rentang Harga</span>
-                    <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                <a href="#submenu2" id="menu-rentang-harga"
+                    class="nav-link {{ request()->is('price-range*') || request()->is('verification*') ? 'active' : '' }}"
+                    data-bs-toggle="collapse" aria-expanded="true">
+                    <i class="fas fa-tags"></i>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Rentang Harga</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                    </div>
+                </a>
+
+                <div class="collapse {{ request()->is('price-range*') || request()->is('verification*') ? 'show' : '' }}"
+                    id="submenu2">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="{{ route('price-range.index') }}"
+                                class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
+                                <i class="fas fa-table"></i>
+                                <span>Visualisasi RH</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('verification.index') }}"
+                                class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                <i class="fas fa-clipboard-check"></i>
+                                <span>Verifikasi Harga</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-            </a>
-
-            <div class="collapse {{ request()->is('price-range*') || request()->is('verification*') ? 'show' : '' }}"
-                id="submenu2">
-                <ul class="nav flex-column ps-4 border-start ms-3 py-1">
-                    <li class="nav-item">
-                        <a href="{{ route('price-range.index') }}"
-                            class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
-                            <i class="fas fa-table"></i>
-                            <span>Visualisasi RH</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('verification.index') }}"
-                            class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
-                            <i class="fas fa-clipboard-check"></i>
-                            <span>Verifikasi Harga</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
 
 
 
 
 
-            <a href="#" class="nav-link">
-                <i class="fas fa-search-dollar"></i>
-                <span>Fenomena</span>
-            </a>
+                <a href="#" class="nav-link">
+                    <i class="fas fa-search-dollar"></i>
+                    <span>Fenomena</span>
+                </a>
+            @endif
 
         </div>
 
@@ -196,8 +213,10 @@
                         </div>
                         <div>
                             <p class="mb-0 fw-medium text-sm">{{ Auth::user()->name }}</p>
-                            <small class="text-muted"
-                                style="font-size: 0.75rem;">{{ Auth::user()->team ?? 'Tim Sosial' }}</small>
+                            @if(Auth::user()->role !== 'admin')
+                                <small class="text-muted"
+                                    style="font-size: 0.75rem;">{{ Auth::user()->team ?? 'Tim Sosial' }}</small>
+                            @endif
                         </div>
                     </div>
                     <form action="{{ route('logout') }}" method="POST" id="logout-form">
