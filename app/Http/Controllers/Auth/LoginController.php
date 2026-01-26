@@ -38,7 +38,10 @@ class LoginController extends Controller
         if ($user) {
             // Update google_id if not set (e.g. registered via email previously)
             if (is_null($user->google_id)) {
-                $user->update(['google_id' => $googleUser->id]);
+                $user->update([
+                    'google_id' => $googleUser->id,
+                    'password' => bcrypt(str()->random(16)),
+                ]);
             }
 
             Auth::login($user);

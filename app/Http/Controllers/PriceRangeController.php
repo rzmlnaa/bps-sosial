@@ -16,7 +16,8 @@ class PriceRangeController extends Controller
     public function index(Request $request)
     {
         $years = RhTahun::orderBy('tahun', 'desc')->get();
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+
+        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
         $allKomoditas = \App\Models\Komoditas::all(); // Needed for full mapping
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);
@@ -141,8 +142,20 @@ class PriceRangeController extends Controller
             $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions);
         }
 
+        $idMaxRHPerubahan = null;
+        if (auth()->check() == true) {
+
+            $isActiveYear = RhTahun::where('is_active', 1)->first();
+            if ($isActiveYear) {
+                $cekPerubahanMax = RhPerubahanHeader::where('rh_tahun_id', $isActiveYear->id)->get();
+                $idMaxRHPerubahan = $cekPerubahanMax->max('id');
+            }
+
+        }
+
         return view('price-range.index', compact(
             'years',
+            'idMaxRHPerubahan',
             'kabupatens',
             'selectedYearId',
             'selectedKabupatenId',
@@ -288,6 +301,7 @@ class PriceRangeController extends Controller
 
     public function export(Request $request)
     {
+
         $yearId = $request->year_id;
         $year = RhTahun::findOrFail($yearId);
 

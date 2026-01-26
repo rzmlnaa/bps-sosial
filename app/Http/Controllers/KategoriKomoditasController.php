@@ -16,6 +16,12 @@ class KategoriKomoditasController extends Controller
 
     public function store(Request $request)
     {
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menambah kategori.');
+        }
+
         $request->validate([
             'nama_kategori' => 'required|string|max:100|unique:tb_kategori_komoditas,nama_kategori',
         ]);
@@ -32,6 +38,12 @@ class KategoriKomoditasController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengubah kategori.');
+        }
+
         $request->validate([
             'nama_kategori' => 'required|string|max:100|unique:tb_kategori_komoditas,nama_kategori,' . $id,
         ]);
@@ -49,6 +61,12 @@ class KategoriKomoditasController extends Controller
 
     public function destroy($id)
     {
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus kategori.');
+        }
+
         $kategori = KategoriKomoditas::findOrFail($id);
 
         // Check if category has commodities

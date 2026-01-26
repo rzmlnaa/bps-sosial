@@ -18,15 +18,9 @@
 
         <!-- Tabs Navigation -->
         <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
-            <li class="nav-item" role="presentation">
 
-                <button class="nav-link active rounded-pill px-4" id="pills-wilayah-tab" data-bs-toggle="pill"
-                    data-bs-target="#pills-wilayah" type="link" role="tab">
-                    <i class="fas fa-map-marker-alt me-2"></i>Master Wilayah
-                </button>
-            </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link rounded-pill px-4" id="pills-variabel-tab" data-bs-toggle="pill"
+                <button class="nav-link active rounded-pill px-4" id="pills-variabel-tab" data-bs-toggle="pill"
                     data-bs-target="#pills-variabel" type="button" role="tab">
                     <i class="fas fa-tags me-2"></i>Master Variabel
                 </button>
@@ -42,107 +36,10 @@
         <div class="tab-content" id="pills-tabContent">
 
             <!-- Tab 1: Master Wilayah -->
-            <div class="tab-pane fade show active" id="pills-wilayah" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom-0">
-                                <h5 class="fw-bold mb-0">Tambah Wilayah</h5>
-                            </div>
-                            <div class="card-body">
-                                <form action="{{ route('kabupaten.store') }}" method="POST">
-                                    @csrf
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Kode
-                                            Kabupaten</label>
-                                        <input type="text" name="kode_kab" class="form-control" placeholder="Contoh: 6101"
-                                            required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Nama
-                                            Kabupaten/Kota</label>
-                                        <input type="text" name="nama_kabupaten" class="form-control"
-                                            placeholder="Contoh: Kab. Sambas" required>
-                                    </div>
-                                    <button type="submit" class="btn text-white w-100 fw-medium"
-                                        style="background-color: var(--bps-blue);">
-                                        <i class="fas fa-plus me-1"></i> Simpan
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom-0">
-                                <h5 class="fw-bold mb-0">Daftar Wilayah</h5>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th class="ps-4 border-0">No</th>
-                                            <th class="border-0">Kode Kabupaten</th>
-                                            <th class="border-0">Nama Kabupaten</th>
-                                            <th class="border-0">Dibuat Oleh</th>
-                                            <th class="border-0">Di Update Oleh</th>
-                                            <th class="text-center border-0">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="border-top-0">
-                                        @forelse($kabupatens as $index => $kab)
-                                            <tr>
-                                                <td class="ps-4 text-muted">{{ $index + 1 }}</td>
-                                                <td class="fw-bold">{{ $kab->kode_kab }}</td>
-                                                <td class="fw-medium">{{ $kab->nama_kabupaten }}</td>
-                                                <td>
-                                                    <span class="badge bg-light text-dark border">
-                                                        {{ $kab->userAdd->name ?? 'Admin' }} pada
-                                                        {{ $kab->created_at->format('d/m/Y H:i') }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    @if($kab->userUpdate)
-                                                        <span class="badge bg-light text-dark border">
-                                                            {{ $kab->userUpdate->name }} pada
-                                                            {{ $kab->updated_at->format('d/m/Y H:i') }}
-                                                        </span>
-                                                    @else
-                                                        <span class="text-muted small">-</span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-warning border-0 btn-edit-kabupaten"
-                                                        data-id="{{ $kab->id }}" data-nama="{{ $kab->nama_kabupaten }}"
-                                                        data-kode="{{ $kab->kode_kab }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <form action="{{ route('kabupaten.destroy', $kab->id) }}" method="POST"
-                                                        class="d-inline form-delete">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data wilayah.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Tab 2: Master Variabel -->
-            <div class="tab-pane fade" id="pills-variabel" role="tabpanel">
+            <div class="tab-pane fade show active" id="pills-variabel" role="tabpanel">
                 <div class="row">
                     <div class="col-md-4 mb-4">
                         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
@@ -182,10 +79,21 @@
                                         <input type="number" name="tahun" class="form-control" placeholder="2024" min="2000"
                                             max="2099" required>
                                     </div>
-                                    <button type="submit" class="btn text-white w-100 fw-medium"
+                                     @php
+                                            $canEdit = auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100';
+                                        @endphp
+
+                                    @if($canEdit)
+                                        <button type="submit" class="btn text-white w-100 fw-medium"
                                         style="background-color: var(--bps-blue);">
                                         <i class="fas fa-plus me-1"></i> Simpan
                                     </button>
+                                        @else
+                                            <div class="alert alert-warning w-100 text-center mb-0 py-2 small border-0 bg-opacity-10">
+                                                <i class="fas fa-lock me-1"></i> Data hanya dapat diubah oleh BPS Provinsi.
+                                            </div>
+                                        @endif
+                                    
                                 </form>
                             </div>
                         </div>
@@ -239,6 +147,9 @@
                                                     </span>
                                                 </td>
                                                 <td class="text-center">
+                                                    @if ($canEdit)
+                                                    
+                                                    
                                                     <form action="{{ route('variabel.destroy', $v->id) }}" method="POST"
                                                         class="d-inline form-delete">
                                                         @csrf
@@ -248,6 +159,9 @@
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
+                                                    @else
+                                                    <i class="fas fa-lock"></i>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty
@@ -326,23 +240,30 @@
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="p-3">
+                                       
                                         <textarea id="textarea_data_poverty" name="raw_data"
                                             class="form-control fw-mono border-0 bg-light" rows="15"
-                                            placeholder="Paste data dari Excel/SPSS disini...&#10;Contoh:&#10;547005,00&#10;547005,00&#10;..."
+                                            placeholder="{{ $canEdit ? "Paste data dari Excel/SPSS disini...\nContoh:\n547005,00\n547005,00\n..." : "Anda tidak memiliki akses untuk menginput data." }}"
                                             style="font-family: 'Courier New', monospace; font-size: 1rem; resize: none;"
-                                            required></textarea>
+                                            {{ $canEdit ? 'required' : 'disabled' }}></textarea>
                                     </div>
                                 </div>
                                 <div class="card-footer bg-white border-top-0 py-3">
                                     <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary flex-grow-1 fw-bold py-2 shadow-sm"
-                                            style="background-color: var(--bps-orange); border: none;">
-                                            <i class="fas fa-save me-2"></i>Simpan
-                                        </button>
-                                        <button type="button" id="btn_clear_data"
-                                            class="btn btn-outline-danger fw-bold py-2 shadow-sm" style="display: none;">
-                                            <i class="fas fa-eraser me-2"></i>Kosongkan
-                                        </button>
+                                        @if($canEdit)
+                                            <button type="submit" class="btn btn-primary flex-grow-1 fw-bold py-2 shadow-sm"
+                                                style="background-color: var(--bps-orange); border: none;">
+                                                <i class="fas fa-save me-2"></i>Simpan
+                                            </button>
+                                            <button type="button" id="btn_clear_data"
+                                                class="btn btn-outline-danger fw-bold py-2 shadow-sm" style="display: none;">
+                                                <i class="fas fa-eraser me-2"></i>Kosongkan
+                                            </button>
+                                        @else
+                                            <div class="alert alert-warning w-100 text-center mb-0 py-2 small border-0 bg-opacity-10">
+                                                <i class="fas fa-lock me-1"></i> Data hanya dapat diubah oleh BPS Provinsi.
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -489,8 +410,8 @@
                 }
             @endif
 
-                            // 3. Edit Kabupaten Modal Logic
-                            const editButtons = document.querySelectorAll('.btn-edit-kabupaten');
+                                // 3. Edit Kabupaten Modal Logic
+                                const editButtons = document.querySelectorAll('.btn-edit-kabupaten');
             const modalEdit = new bootstrap.Modal(document.getElementById('modalEditKabupaten'));
             const formEdit = document.getElementById('formEditKabupaten');
             const inputEditNama = document.getElementById('edit_nama_kabupaten');

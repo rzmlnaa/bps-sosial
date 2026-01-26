@@ -18,7 +18,9 @@ class ProfileCompletionController extends Controller
         // if (!empty($user->no_hp) && !empty($user->kabupaten_id)) {
         //     return redirect('/dashboard');
         // }
-
+        if ($user->status === 'active') {
+            return redirect('/dashboard');
+        }
         $kabupatens = Kabupaten::orderBy('nama_kabupaten', 'asc')->get();
         return view('auth.complete-profile', compact('user', 'kabupatens'));
     }

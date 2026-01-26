@@ -93,14 +93,18 @@
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label class="form-label small fw-bold text-muted text-uppercase">Pilih Kabupaten</label>
-                                    <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
+                                    <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
+                                    <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
                                         onchange="this.form.submit()">
                                         @foreach($kabupatens as $kab)
                                             <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
                                                 [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                             </option>
                                         @endforeach
+                                    </select> -->
+                                    <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none">
+                                        <option value="{{ auth()->user()->kabupaten->id }}">[{{ auth()->user()->kabupaten->kode_kab }}] {{ auth()->user()->kabupaten->nama_kabupaten }}</option>
+        
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -133,10 +137,9 @@
                                 <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
                                     <i class="fas fa-info-circle fa-lg"></i>
                                 </div>
-                                <h6 class="mb-0 fw-bold">Konfigurasi Batas Selisih</h6>
+                                <h6 class="mb-0 fw-bold">Panduan Admin Kabupaten/Kota</h6>
                             </div>
-                            <p class="small mb-0 opacity-75">Batas selisih harga kini diatur per komoditas. Lihat kolom <b>Batas
-                                    Selisih</b> untuk detail setiap komoditas.</p>
+                            <p class="small mb-0 opacity-75">Jika tidak terdapat perubahan RH, kolom tidak perlu diisi. Sistem akan menampilkan nilai RH terakhir pada periode atau tahun sebelumnya</p>
                         </div>
                     </div>
                 </div>

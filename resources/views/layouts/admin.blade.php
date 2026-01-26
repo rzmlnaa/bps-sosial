@@ -74,7 +74,8 @@
             <div>
                 <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">Badan Pusat Statistik</h5>
                 @auth
-                    <small class="text-muted" style="font-size: 0.7rem;">Provinsi Kalbar</small>
+                    <small class="text-muted"
+                        style="font-size: 0.7rem;">{{ Auth::user()->kabupaten->nama_kabupaten ?? '-' }}</small>
                 @endauth
             </div>
         </div>
@@ -106,10 +107,22 @@
                     <span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('admin.verification') }}"
-                    class="nav-link {{ request()->routeIs('admin.verification') ? 'active' : '' }}">
-                    <i class="fas fa-user-check"></i>
-                    <span>Verifikasi Akun</span>
+                <a href="{{ route('admin.users') }}"
+                    class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Akun Pengguna</span>
+                </a>
+
+                <a href="{{ route('admin.admins') }}"
+                    class="nav-link {{ request()->routeIs('admin.admins') ? 'active' : '' }}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Akun Admin</span>
+                </a>
+
+                <a href="{{ route('admin.kabupatens') }}"
+                    class="nav-link {{ request()->routeIs('admin.kabupatens') ? 'active' : '' }}">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Master Wilayah</span>
                 </a>
             @else
                 <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
@@ -181,13 +194,18 @@
                                 <span>Visualisasi RH</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('verification.index') }}"
-                                class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
-                                <i class="fas fa-clipboard-check"></i>
-                                <span>Verifikasi Harga</span>
-                            </a>
-                        </li>
+                        @if (auth()->check() == true)
+                            @if(auth()->user()->kabupaten->kode_kab == '6100')
+                                <li class="nav-item">
+                                    <a href="{{ route('verification.index') }}"
+                                        class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <span>Verifikasi Harga</span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+
                     </ul>
                 </div>
 
@@ -216,6 +234,8 @@
                             @if(Auth::user()->role !== 'admin')
                                 <small class="text-muted"
                                     style="font-size: 0.75rem;">{{ Auth::user()->team ?? 'Tim Sosial' }}</small>
+                            @else
+                                <small class="text-muted" style="font-size: 0.75rem;">Admin</small>
                             @endif
                         </div>
                     </div>
@@ -315,11 +335,7 @@
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-bps-blue text-white">
-                    <h5 class="modal-title fw-bold" id="loginModalLabel">Login Sistem</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
+
                 <div class="modal-body text-center">
                     <div class="mb-4">
                         <div class="logo-icon mx-auto mb-3" style="width: 64px; height: 64px;">
@@ -337,6 +353,8 @@
                             alt="Google Logo">
                         <span>Login with Google</span>
                     </a>
+
+
 
 
                 </div>

@@ -19,6 +19,7 @@ class CheckUserStatus
         if (Auth::check()) {
             $user = Auth::user();
 
+
             // If user status is pending
             if ($user->status === 'pending') {
 
@@ -33,15 +34,13 @@ class CheckUserStatus
                     return redirect()->route('complete-profile');
                 }
             } else {
-
-                if ($user->role !== 'admin') {
-                    return $next($request);
+                // If user is admin, they shouldn't be accessing these routes (protected by check.status)
+                if ($user->role === 'admin') {
+                    return redirect()->route('admin.dashboard');
                 }
             }
         }
 
         return $next($request);
-
-
     }
 }

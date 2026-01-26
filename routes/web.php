@@ -36,9 +36,20 @@ Route::middleware(['auth'])->group(function () {
     // Admin Routes
     Route::middleware(['can:access-admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
-        Route::get('/verification', [\App\Http\Controllers\AdminController::class, 'verification'])->name('verification');
+        Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users'])->name('users');
         Route::post('/approve/{id}', [\App\Http\Controllers\AdminController::class, 'approve'])->name('approve');
         Route::post('/reject/{id}', [\App\Http\Controllers\AdminController::class, 'reject'])->name('reject');
+        Route::post('/make-pending/{id}', [\App\Http\Controllers\AdminController::class, 'makePending'])->name('make-pending');
+
+        // Admin Management
+        Route::get('/admins', [\App\Http\Controllers\AdminController::class, 'admins'])->name('admins');
+        Route::post('/admins', [\App\Http\Controllers\AdminController::class, 'storeAdmin'])->name('admins.store');
+
+        // Master Wilayah
+        Route::get('/kabupaten', [\App\Http\Controllers\AdminController::class, 'kabupatens'])->name('kabupatens');
+        Route::post('/kabupaten', [KabupatenController::class, 'store'])->name('kabupaten.store');
+        Route::put('/kabupaten/{id}', [KabupatenController::class, 'update'])->name('kabupaten.update');
+        Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
     });
 
     Route::post('/logout', function () {
@@ -75,6 +86,7 @@ Route::middleware(['check.status'])->group(function () {
     })->name('layouts');
 
     Route::get('/poverty', function (Request $request) {
+
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
         $variabels = VariabelKemiskinan::all();
         $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
@@ -124,18 +136,24 @@ Route::middleware(['check.status'])->group(function () {
         ];
         $latestLabel = $mainVar ? (($mainVar->bulan ? $bulanNama[$mainVar->bulan] . ' ' : '') . ($mainVar->tahun ?? '')) : '';
 
+
         return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears'));
     })->name('poverty');
 
     Route::get('/poverty/input', function () {
+        // Strict Access: Only Province User (6100)
+        if (auth()->check() == false) {
+            return back()->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengakses halaman ini.');
+        }
+
         $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
         $variabels = VariabelKemiskinan::with('userAdd')->get();
         return view('poverty.input', compact('kabupatens', 'variabels'));
     })->name('poverty.input');
-
-    Route::post('/kabupaten', [KabupatenController::class, 'store'])->name('kabupaten.store');
-    Route::put('/kabupaten/{id}', [KabupatenController::class, 'update'])->name('kabupaten.update');
-    Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
 
     Route::post('/variabel', [VariabelController::class, 'store'])->name('variabel.store');
     Route::delete('/variabel/{id}', [VariabelController::class, 'destroy'])->name('variabel.destroy');
@@ -150,6 +168,13 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name('price-range.export');
 
     Route::get('/price-range/input', function () {
+        if (!auth()->check()) {
+            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
+        }
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menginput data.');
+        }
         $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
         $rhTahun = \App\Models\RhTahun::with([
             'perubahanHeaders' => function ($query) {
