@@ -10,6 +10,9 @@ class PovertyDataController extends Controller
 {
     public function store(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = auth()->user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -160,6 +163,10 @@ class PovertyDataController extends Controller
     }
     public function clearData(Request $request)
     {
+
+        if (auth()->check() == false) {
+            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = auth()->user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {

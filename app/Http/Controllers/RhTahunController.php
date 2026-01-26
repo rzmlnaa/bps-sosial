@@ -12,6 +12,9 @@ class RhTahunController extends Controller
 {
     public function storeTahun(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -46,6 +49,9 @@ class RhTahunController extends Controller
 
     public function toggleActive($id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -65,6 +71,9 @@ class RhTahunController extends Controller
 
     public function destroyTahun($id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -92,6 +101,9 @@ class RhTahunController extends Controller
 
     public function updateTahun(Request $request, $id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -123,6 +135,9 @@ class RhTahunController extends Controller
 
     public function storePerubahan(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -177,6 +192,9 @@ class RhTahunController extends Controller
 
     public function updatePerubahan(Request $request, $id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -224,6 +242,9 @@ class RhTahunController extends Controller
 
     public function destroyPerubahan($id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {

@@ -14,8 +14,8 @@ class VerificationController extends Controller
 {
     public function index()
     {
-        if (!auth()->check()) {
-            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
         }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
@@ -92,6 +92,9 @@ class VerificationController extends Controller
 
     public function show($kabupatenId)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
@@ -144,6 +147,9 @@ class VerificationController extends Controller
 
     public function store(Request $request, $kabupatenId)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
         // Strict Access: Only Province User (6100)
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {

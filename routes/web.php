@@ -143,7 +143,7 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/poverty/input', function () {
         // Strict Access: Only Province User (6100)
         if (auth()->check() == false) {
-            return back()->with('error', 'Anda tidak memiliki akses ke halaman ini');
+            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
         }
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {

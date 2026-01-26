@@ -17,7 +17,7 @@ class RhNilaiController extends Controller
     {
 
         if (auth()->check() == false) {
-            return redirect()->back()->with('error', 'Silahkan login terlebih dahulu.');
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
         }
 
         $user = Auth::user();
@@ -234,7 +234,7 @@ class RhNilaiController extends Controller
     {
         // Strict Access: Only Province User (6100)
         if (auth()->check() == false) {
-            return redirect()->back()->with('error', 'Silahkan login terlebih dahulu.');
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
         }
         $user = Auth::user();
         if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
