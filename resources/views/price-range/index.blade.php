@@ -14,9 +14,9 @@
                     @if (auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                            </a> -->
+                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                    </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -547,7 +547,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             var tableElement = document.getElementById('commodity-table');
             if (tableElement) {
-                // Add a small delay to ensure rendering is complete and to make the transition noticeable
+
                 setTimeout(function () {
                     tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 500);
@@ -555,7 +555,7 @@
         });
 
         document.addEventListener("DOMContentLoaded", function () {
-            // Toggle Previous Year Columns
+
             const togglePrev = document.getElementById('togglePrevYear');
             if (togglePrev) {
                 togglePrev.addEventListener('change', function () {
@@ -568,12 +568,7 @@
                         }
                     });
 
-                    // Update table header colspan if dynamic
-                    // Actually we added absolute TH, so we just toggle them.
-                    // But maybe we need to update the main category colspan?
-                    // Category row colspan: <td colspan="{{ $colspan }}"
-                    // $colspan = 6 + ($revisions->count() * 3);
-                    // If we show 3 more cols, we should update this.
+
 
                     const catRows = document.querySelectorAll('.category-header-cell');
                     catRows.forEach(td => {

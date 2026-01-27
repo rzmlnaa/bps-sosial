@@ -10,10 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'role')) {
-                $table->string('role')->default('user')->after('status');
-            }
+        Schema::create('tb_rh_tahun', function (Blueprint $table) {
+            $table->id();
+            $table->string('tahun', 4);
+            $table->boolean('is_active')->default(false);
+            $table->foreignId('user_id_add')->nullable()->constrained('users');
+            $table->timestamps();
         });
     }
 
@@ -22,8 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
+        Schema::dropIfExists('tb_rh_tahun');
     }
 };

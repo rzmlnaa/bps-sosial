@@ -14,7 +14,7 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::where('role', '!=', 'admin');
+        $query = User::where('role', '!=', 'admin')->where('kabupaten_id', '!=', null);
 
         // Filter by Name
         if ($request->filled('search')) {
@@ -39,7 +39,11 @@ class AdminController extends Controller
 
     public function approve($id)
     {
+
         $user = User::findOrFail($id);
+        if ($user->kabupaten_id == null) {
+            return redirect()->back()->with('error', 'Akun pengguna tidak memiliki kabupaten.');
+        }
         $user->update(['status' => 'active']);
 
         return redirect()->back()->with('success', 'Akun pengguna berhasil disetujui.');
@@ -48,6 +52,9 @@ class AdminController extends Controller
     public function reject($id)
     {
         $user = User::findOrFail($id);
+        if ($user->kabupaten_id == null) {
+            return redirect()->back()->with('error', 'Akun pengguna tidak memiliki kabupaten.');
+        }
         $user->update(['status' => 'rejected']);
 
         return redirect()->back()->with('success', 'Akun pengguna berhasil ditolak.');

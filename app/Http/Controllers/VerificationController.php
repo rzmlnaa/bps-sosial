@@ -200,7 +200,7 @@ class VerificationController extends Controller
                 ->get();
 
             $pesan = "Kepada Yth. Bapak/Ibu Perwakilan " . $namaKabupaten . ",\n\n";
-            $pesan .= "Berikut kami sampaikan rincian data rentang harga yang *DITOLAK* pada proses verifikasi:\n\n";
+            $pesan .= "Berikut kami sampaikan rincian data Rentang Harga yang *DITOLAK* pada proses verifikasi:\n\n";
 
             $groupedItems = $rejectedItems->groupBy(function ($item) {
                 if ($item->rh_perubahan_header_id) {
@@ -246,7 +246,8 @@ class VerificationController extends Controller
             }
 
             $pesan .= "\nSilahkan melakukan revisi atau perubahan pada link website berikut.\n" . url('/price-range/input-nilai');
-            $pesan .= "\nTerima kasih.";
+            $pesan .= "\n\n*Salam,*";
+            $pesan .= "\n*BPS Provinsi Kalimantan Barat*";
 
             // Send WhatsApp to the user who added the data
             $userIds = $rejectedItems->pluck('user_id_add')->unique();

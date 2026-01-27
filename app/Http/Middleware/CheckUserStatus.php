@@ -21,7 +21,7 @@ class CheckUserStatus
 
 
             // If user status is pending
-            if ($user->status === 'pending') {
+            if ($user->status === 'pending' || $user->status === 'rejected') {
 
                 //Allow access to complete-profile, logout, and any assets if needed (though assets usually bypass middleware)
                 //Also checking route names to be safe

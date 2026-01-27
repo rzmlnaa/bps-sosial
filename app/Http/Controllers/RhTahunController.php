@@ -35,7 +35,7 @@ class RhTahunController extends Controller
         // Use global check because new year usually carries over from previous, which must be stable.
         $hasPending = RhPerubahanDetail::whereIn('verification_status', ['pending', 'rejected'])->exists();
         if ($hasPending) {
-            return back()->with('error', "Gagal menambah tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+            return redirect('/verification')->with('error', "Gagal menambah tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         RhTahun::create([
@@ -49,6 +49,10 @@ class RhTahunController extends Controller
 
     public function toggleActive($id)
     {
+        $hasPending = RhPerubahanDetail::whereIn('verification_status', ['pending', 'rejected'])->exists();
+        if ($hasPending) {
+            return redirect('/verification')->with('error', "Gagal mengubah status tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+        }
         if (auth()->check() == false) {
             return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
         }
@@ -163,7 +167,7 @@ class RhTahunController extends Controller
             ->exists();
 
         if ($hasPending) {
-            return back()->with('error', "Gagal menambah header perubahan. Masih ada data perubahan di tahun ini dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+            return redirect('/verification')->with('error', "Gagal menambah header perubahan. Masih ada data perubahan di tahun ini dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Prevent duplicate or earlier date

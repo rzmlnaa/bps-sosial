@@ -17,7 +17,7 @@ class KabupatenController extends Controller
                 'string',
                 'max:100',
                 'unique:tb_kabupaten,nama_kabupaten',
-                'regex:/^[A-Za-z\s]+$/'
+                'regex:/^[A-Za-z\s\.]+$/'
             ],
         ], [
             'kode_kab.required' => 'Kode Kabupaten wajib diisi.',

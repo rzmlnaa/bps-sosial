@@ -25,9 +25,9 @@ class PriceRangeController extends Controller
 
         $activeYear = $years->where('id', $selectedYearId)->first();
 
-        if ($activeYear == null) {
-            return back()->with('error', 'Tahun RH tidak ditemukan');
-        }
+        // if ($activeYear == null) {
+        //     return back()->with('error', 'Tahun RH tidak ditemukan');
+        // }
         $categories = KategoriKomoditas::with(['komoditas'])->get();
 
         // 1. Fetch Current View Data (Specific Kabupaten)
