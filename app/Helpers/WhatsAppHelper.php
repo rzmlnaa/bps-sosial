@@ -6,7 +6,7 @@ class WhatsAppHelper
 {
     public static function kirimPesanWhatsApp($phone, $message)
     {
-        $token = "5Tzht4GEmSJJa4KFnFE7PhaIwqCbjkMrbqYf8lzGteQE9YX3a4";
+        $token = "uth13r97dzwv9Nvs0sLTypXX2aC4CkvxgAUY736xrv2PGaPZOU";
 
         $curl = curl_init();
 
