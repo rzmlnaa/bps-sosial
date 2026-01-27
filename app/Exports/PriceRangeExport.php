@@ -17,7 +17,7 @@ class PriceRangeExport implements WithMultipleSheets
     public function sheets(): array
     {
         $sheets = [];
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
 
         foreach ($kabupatens as $kab) {
             // The instruction implies that KabupatenPriceSheet should accept the Kabupaten model

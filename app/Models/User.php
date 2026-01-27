@@ -20,7 +20,16 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'no_hp',
         'password',
+        'google_id',
+        'team',
+        'status',
+        'kabupaten_id',
+        'role',
+        'otp_code',
+        'otp_expires_at',
+        'no_hp_verified_at',
     ];
 
     /**
@@ -31,6 +40,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'otp_code', // Good practice to hide sensitive data
     ];
 
     /**
@@ -42,7 +52,16 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'no_hp_verified_at' => 'datetime',
+            'otp_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
+
+    // app/Models/User.php
+    public function kabupaten()
+    {
+        return $this->belongsTo(Kabupaten::class, 'kabupaten_id');
+    }
+
 }

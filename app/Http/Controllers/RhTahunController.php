@@ -12,6 +12,15 @@ class RhTahunController extends Controller
 {
     public function storeTahun(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menambah tahun.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $request->validate([
             'tahun' => 'required|numeric|unique:tb_rh_tahun,tahun',
         ]);
@@ -26,7 +35,7 @@ class RhTahunController extends Controller
         // Use global check because new year usually carries over from previous, which must be stable.
         $hasPending = RhPerubahanDetail::whereIn('verification_status', ['pending', 'rejected'])->exists();
         if ($hasPending) {
-            return back()->with('error', "Gagal menambah tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+            return redirect('/verification')->with('error', "Gagal menambah tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         RhTahun::create([
@@ -40,6 +49,19 @@ class RhTahunController extends Controller
 
     public function toggleActive($id)
     {
+        $hasPending = RhPerubahanDetail::whereIn('verification_status', ['pending', 'rejected'])->exists();
+        if ($hasPending) {
+            return redirect('/verification')->with('error', "Gagal mengubah status tahun. Masih ada data perubahan dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+        }
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengubah status tahun.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $tahun = RhTahun::findOrFail($id);
 
         // Deactivate all others
@@ -53,26 +75,59 @@ class RhTahunController extends Controller
 
     public function destroyTahun($id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus tahun.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $tahun = RhTahun::findOrFail($id);
 
-        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+        $hasValues = $tahun->perubahanDetails()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
+
+        if ($tahun->perubahanHeaders()->count() > 0 || $hasValues) {
             return back()->with('error', 'Tahun tidak bisa dihapus karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
 
+        // Delete associated details (empty ones) before deleting year
+        $tahun->perubahanDetails()->delete();
         $tahun->delete();
         return back()->with('success', 'Tahun RH berhasil dihapus.')->with('active_tab', 'pills-rh-settings-tab');
     }
 
     public function updateTahun(Request $request, $id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengubah tahun.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $request->validate([
             'tahun' => 'required|numeric|unique:tb_rh_tahun,tahun,' . $id,
         ]);
 
         $tahun = RhTahun::findOrFail($id);
 
+        $hasValues = $tahun->perubahanDetails()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
 
-        if ($tahun->perubahanHeaders()->count() > 0 || $tahun->perubahanDetails()->exists()) {
+        if ($tahun->perubahanHeaders()->count() > 0 || $hasValues) {
             return back()->with('error', 'Tahun tidak bisa diedit karena memiliki data perubahan atau nilai min/max.')->with('active_tab', 'pills-rh-settings-tab');
         }
         $tahun->update([
@@ -84,6 +139,15 @@ class RhTahunController extends Controller
 
     public function storePerubahan(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menambah header perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $request->validate([
             'rh_tahun_id' => 'required|exists:tb_rh_tahun,id',
             'tanggal_perubahan' => 'required|date',
@@ -103,7 +167,7 @@ class RhTahunController extends Controller
             ->exists();
 
         if ($hasPending) {
-            return back()->with('error', "Gagal menambah header perubahan. Masih ada data perubahan di tahun ini dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
+            return redirect('/verification')->with('error', "Gagal menambah header perubahan. Masih ada data perubahan di tahun ini dengan status verifikasi Pending atau Rejected.")->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Prevent duplicate or earlier date
@@ -132,14 +196,30 @@ class RhTahunController extends Controller
 
     public function updatePerubahan(Request $request, $id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengubah header perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $request->validate([
             'tanggal_perubahan' => 'required|date',
         ]);
 
         $perubahan = RhPerubahanHeader::findOrFail($id);
 
-        if ($perubahan->details()->exists()) {
-            return back()->with('error', 'Header perubahan tidak bisa diedit karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
+        $hasValues = $perubahan->details()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
+
+        if ($hasValues) {
+            return back()->with('error', 'Header perubahan tidak bisa diedit karena sudah memiliki rincian nilai (min/max).')->with('active_tab', 'pills-rh-settings-tab');
         }
 
         // Prevent duplicate date in the same year
@@ -166,12 +246,30 @@ class RhTahunController extends Controller
 
     public function destroyPerubahan($id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus header perubahan.')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
         $perubahan = RhPerubahanHeader::findOrFail($id);
 
-        // if ($perubahan->details()->exists()) {
-        //     return back()->with('error', 'Header perubahan tidak bisa dihapus karena sudah memiliki rincian nilai.')->with('active_tab', 'pills-rh-settings-tab');
-        // }
+        $hasValues = $perubahan->details()
+            ->where(function ($q) {
+                $q->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })
+            ->exists();
 
+        if ($hasValues) {
+            return back()->with('error', 'Header perubahan tidak bisa dihapus karena sudah memiliki rincian nilai (min/max).')->with('active_tab', 'pills-rh-settings-tab');
+        }
+
+        // Delete associated details (which are all nulls/empty at this point)
+        $perubahan->details()->delete();
         $perubahan->delete();
 
         return back()->with('success', 'Header perubahan berhasil dihapus.')->with('active_tab', 'pills-rh-settings-tab');

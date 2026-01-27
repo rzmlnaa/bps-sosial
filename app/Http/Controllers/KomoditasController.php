@@ -10,6 +10,15 @@ class KomoditasController extends Controller
 {
     public function store(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menambah komoditas.');
+        }
+
         $request->validate([
             'kategori_id' => 'required|exists:tb_kategori_komoditas,id',
             'raw_data' => 'required|string',
@@ -75,6 +84,18 @@ class KomoditasController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengubah komoditas.');
+        }
+
         $request->validate([
             'nama_komoditas' => 'required|string',
             'satuan' => 'nullable|string',
@@ -102,6 +123,16 @@ class KomoditasController extends Controller
 
     public function destroy(Request $request, $id)
     {
+
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus komoditas.');
+        }
+
         $komoditas = Komoditas::findOrFail($id);
         $kategori_id = $komoditas->kategori_id;
         $komoditas->delete();
@@ -127,6 +158,15 @@ class KomoditasController extends Controller
 
     public function clearData(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus data.');
+        }
+
         $request->validate([
             'kategori_id' => 'required|exists:tb_kategori_komoditas,id',
         ]);

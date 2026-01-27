@@ -15,6 +15,20 @@ class RhNilaiController extends Controller
 {
     public function index(Request $request)
     {
+
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
+        }
+
+        if ($user->kabupaten->id != $request->query('kabupaten_id')) {
+            return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->query('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->query('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
+        }
+
         $activeYear = RhTahun::where('is_active', true)->first();
 
         if (!$activeYear) {
@@ -156,6 +170,8 @@ class RhNilaiController extends Controller
         // Rename $allRevisions to $revisions to match view variable expectation
         $revisions = $allRevisions;
 
+
+
         // 6. Gather Rejected Items for Summary Alert
         $rejectedSummary = collect();
 
@@ -216,6 +232,18 @@ class RhNilaiController extends Controller
 
     public function save(Request $request)
     {
+        // Strict Access: Only Province User (6100)
+        if (auth()->check() == false) {
+            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        $user = Auth::user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
+        }
+
+        if ($user->kabupaten->id != $request->input('kabupaten_id')) {
+            return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->input('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->input('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
+        }
 
         $activeYear = RhTahun::where('id', $request->input('rh_tahun_id'))->first();
         if ($activeYear->is_active == false) {
@@ -321,9 +349,10 @@ class RhNilaiController extends Controller
                         continue;
                     }
                 }
-                if ($min == null && $max == null) {
-                    continue;
-                }
+                // if ($min == null && $max == null) {
+                //     continue;
+                // }
+
                 RhPerubahanDetail::updateOrCreate(
                     [
                         'rh_tahun_id' => $tahunId,
@@ -369,9 +398,11 @@ class RhNilaiController extends Controller
                             continue;
                         }
                     }
-                    if ($min == null && $max == null) {
-                        continue;
-                    }
+                    // dd($request);
+                    // if ($min == null && $max == null) {
+                    //     continue;
+                    // }
+
                     RhPerubahanDetail::updateOrCreate(
                         [
                             'rh_perubahan_header_id' => $revHeaderId,

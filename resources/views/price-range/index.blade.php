@@ -10,14 +10,27 @@
                 <p class="text-muted mb-0">Visualisasi data rentang harga komoditas di Kalimantan Barat</p>
             </div>
             <div class="mt-3 mt-md-0 d-flex gap-2">
-                <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                </a>
-                <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
-                    style="background-color: var(--bps-blue);">
-                    <i class="fas fa-plus-circle me-1"></i> Input Komoditas
-                </a>
+                @if (auth()->check() == true)
+                    @if (auth()->user()->kabupaten->kode_kab != '6100')
+
+                        <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
+                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                    </a> -->
+                        <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
+                            class="btn fw-bold shadow-sm"
+                            style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                            <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                        </a>
+                    @endif
+
+                    @if (auth()->user()->kabupaten->kode_kab == '6100')
+                        <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
+                            style="background-color: var(--bps-blue);">
+                            <i class="fas fa-plus-circle me-1"></i> Input Komoditas
+                        </a>
+                    @endif
+                @endif
             </div>
         </div>
         @if ($selectedYearId && $selectedKabupatenId)
@@ -328,7 +341,7 @@
                                                 ? ($master->max_nilai - $master->min_nilai)
                                                 : 0;
                                             $limit = $komo->batas_selisih_harga ?? 0;
-                                            $isMasterExceeded = $masterDiff > $limit;
+                                            // $isMasterExceeded moved below to check inheritance
 
                                             // Previous Year Data extraction
                                             $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
@@ -339,6 +352,12 @@
                                             // Highlight Logic: If Master differs from Prev Year
                                             $isMinChanged = $master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin;
                                             $isMaxChanged = $master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax;
+
+                                            // Fix: If values are inherited (same as prev), do not flag as exceeded (Red)
+                                            $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
+                                                && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
+
+                                            $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
                                         @endphp
 
                                         <!-- Previous Year Columns (Hidden by Default) -->
@@ -528,7 +547,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             var tableElement = document.getElementById('commodity-table');
             if (tableElement) {
-                // Add a small delay to ensure rendering is complete and to make the transition noticeable
+
                 setTimeout(function () {
                     tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 500);
@@ -536,7 +555,7 @@
         });
 
         document.addEventListener("DOMContentLoaded", function () {
-            // Toggle Previous Year Columns
+
             const togglePrev = document.getElementById('togglePrevYear');
             if (togglePrev) {
                 togglePrev.addEventListener('change', function () {
@@ -549,12 +568,7 @@
                         }
                     });
 
-                    // Update table header colspan if dynamic
-                    // Actually we added absolute TH, so we just toggle them.
-                    // But maybe we need to update the main category colspan?
-                    // Category row colspan: <td colspan="{{ $colspan }}"
-                    // $colspan = 6 + ($revisions->count() * 3);
-                    // If we show 3 more cols, we should update this.
+
 
                     const catRows = document.querySelectorAll('.category-header-cell');
                     catRows.forEach(td => {

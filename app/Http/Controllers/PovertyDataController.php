@@ -10,6 +10,14 @@ class PovertyDataController extends Controller
 {
     public function store(Request $request)
     {
+        if (auth()->check() == false) {
+            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menginput data.');
+        }
         $request->validate([
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
             'variabel_id' => 'required|exists:tb_variabel_kemiskinan,id',
@@ -70,6 +78,7 @@ class PovertyDataController extends Controller
 
     public function getData(Request $request, $kabupaten_id)
     {
+
         $tahun = $request->get('tahun', 'all');
 
         $query = NilaiKemiskinan::with(['variabelKemiskinan', 'kabupaten']);
@@ -102,6 +111,7 @@ class PovertyDataController extends Controller
 
     public function getRawData($kabupaten_id, $variabel_id)
     {
+
         $data = NilaiKemiskinan::where('kabupaten_id', $kabupaten_id)
             ->where('variabel_kemiskinan_id', $variabel_id)
             ->orderBy('persentil')
@@ -153,6 +163,16 @@ class PovertyDataController extends Controller
     }
     public function clearData(Request $request)
     {
+
+        if (auth()->check() == false) {
+            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
+        }
+        // Strict Access: Only Province User (6100)
+        $user = auth()->user();
+        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
+            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus data.');
+        }
+
         $request->validate([
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
             'variabel_id' => 'required|exists:tb_variabel_kemiskinan,id',
