@@ -41,6 +41,9 @@ class AdminController extends Controller
     {
 
         $user = User::findOrFail($id);
+        if ($user->otp_code != null) {
+            return redirect()->back()->with('error', 'Akun pengguna belum melakukan verifikasi nomor WhatsApp.');
+        }
         if ($user->kabupaten_id == null) {
             return redirect()->back()->with('error', 'Akun pengguna tidak memiliki kabupaten.');
         }
@@ -52,10 +55,16 @@ class AdminController extends Controller
     public function reject($id)
     {
         $user = User::findOrFail($id);
+        if ($user->otp_code != null) {
+            return redirect()->back()->with('error', 'Akun pengguna belum melakukan verifikasi nomor WhatsApp.');
+        }
         if ($user->kabupaten_id == null) {
             return redirect()->back()->with('error', 'Akun pengguna tidak memiliki kabupaten.');
         }
-        $user->update(['status' => 'rejected']);
+        $user->update([
+            'status' => 'rejected',
+            'no_hp_verified_at' => null,
+        ]);
 
         return redirect()->back()->with('success', 'Akun pengguna berhasil ditolak.');
     }

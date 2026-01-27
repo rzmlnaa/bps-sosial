@@ -14,28 +14,74 @@
             </p>
         </div>
 
-        <div class="w-full max-w-md">
+
+        <div class="w-full max-w-lg">
+
+            <!-- Stepper -->
+            <div class="flex items-center justify-center mb-8">
+                @php
+                    $isVerified = !empty($user->no_hp_verified_at);
+                @endphp
+                <!-- Step 1 -->
+                <div class="flex items-center">
+                    <div
+                        class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ !$showOtpStep && !$isVerified ? 'border-blue-600 bg-blue-600 text-white' : 'border-green-500 bg-green-500 text-white' }} font-bold text-sm">
+                        @if($showOtpStep || $isVerified) <i class="fas fa-check"></i> @else 1 @endif
+                    </div>
+                    <div
+                        class="ml-2 text-sm font-medium {{ !$showOtpStep && !$isVerified ? 'text-blue-600' : 'text-green-500' }}">
+                        Data Diri
+                    </div>
+                </div>
+
+                <!-- Line -->
+                <div class="w-12 h-1 mx-4 {{ $showOtpStep || $isVerified ? 'bg-green-500' : 'bg-gray-200' }}"></div>
+
+                <!-- Step 2 -->
+                <div class="flex items-center">
+                    <div
+                        class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $showOtpStep ? 'border-blue-600 bg-blue-600 text-white' : ($isVerified ? 'border-green-500 bg-green-500 text-white' : 'border-gray-200 text-gray-500') }} font-bold text-sm">
+                        @if($isVerified) <i class="fas fa-check"></i> @else 2 @endif
+                    </div>
+                    <div
+                        class="ml-2 text-sm font-medium {{ $showOtpStep ? 'text-blue-600' : ($isVerified ? 'text-green-500' : 'text-gray-500') }}">
+                        Verifikasi
+                        WA</div>
+                </div>
+            </div>
+
             <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
                 <!-- Blue Header Bar -->
                 <div class="h-2 bg-blue-600 w-full"></div>
 
                 <div class="p-8">
                     <!-- Status Alert -->
-                    @if($user->status == 'pending' && $user->no_hp && $user->kabupaten_id)
+                    @if($user->status == 'pending' && $user->no_hp_verified_at)
                         <div class="mb-6 bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-md">
                             <div class="flex items-start">
                                 <div class="flex-shrink-0">
                                     <i class="fas fa-clock text-orange-400 mt-0.5"></i>
                                 </div>
                                 <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-orange-800">Menunggu Verifikasi</h3>
+                                    <h3 class="text-sm font-medium text-orange-800">Menunggu Persetujuan Admin</h3>
                                     <p class="mt-1 text-sm text-orange-700 leading-relaxed">
-                                        Akun Anda sedang dalam proses verifikasi oleh Admin BPS Provinsi. <br>
-                                        Silakan menunggu hingga akun diaktifkan.
+                                        Nomor WhatsApp Anda telah terverifikasi. <br>
+                                        Akun sedang menunggu persetujuan akhir dari Admin.
                                     </p>
-                                    <p class="mt-2 text-xs text-orange-600 font-medium">
-                                        Estimasi verifikasi: 1–2 hari kerja
-                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Fail/Error Message -->
+                    @if(session('error'))
+                        <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -55,108 +101,147 @@
                         </div>
                     @endif
 
-                    <form class="space-y-6" action="{{ route('complete-profile.update') }}" method="POST">
-                        @csrf
+                    @if(!$showOtpStep)
+                        <!-- STEP 1: FORM INPUT DATA -->
+                        <form class="space-y-6" action="{{ route('complete-profile.update') }}" method="POST">
+                            @csrf
 
-                        <!-- Nama Lengkap -->
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                            <div class="relative">
-                                <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required
-                                    class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors {{ $user->status == 'pending' && $user->no_hp ? 'text-gray-500 cursor-not-allowed bg-gray-100' : '' }}"
-                                    {{ $user->status == 'pending' && $user->no_hp ? 'disabled' : '' }}>
-                                @if($user->status == 'pending' && $user->no_hp)
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- WhatsApp / HP -->
-                        <div>
-                            <label for="no_hp" class="block text-sm font-medium text-gray-700 mb-1">WhatsApp / Nomor
-                                Telepon</label>
-                            <div class="relative">
-                                <input type="text" id="no_hp" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}"
-                                    placeholder="Contoh: 08123456789" required
-                                    class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors {{ $user->status == 'pending' && $user->no_hp ? 'text-gray-500 cursor-not-allowed bg-gray-100' : '' }}"
-                                    {{ $user->status == 'pending' && $user->no_hp ? 'disabled' : '' }}>
-                                @if($user->status == 'pending' && $user->no_hp)
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    </div>
-                                @endif
-                            </div>
-                            @error('no_hp')
-                                <p class="mt-1 text-xs text-red-600 flex items-center gap-1"><i
-                                        class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Kabupaten -->
-                        <div>
-                            <label for="kabupaten_id" class="block text-sm font-medium text-gray-700 mb-1">Kabupaten /
-                                Kota</label>
-                            <div class="relative">
-                                <select id="kabupaten_id" name="kabupaten_id" required
-                                    class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none {{ $user->status == 'pending' && $user->no_hp ? 'text-gray-500 cursor-not-allowed bg-gray-100' : '' }}"
-                                    {{ $user->status == 'pending' && $user->no_hp ? 'disabled' : '' }}>
-                                    <option value="">-- Pilih Wilayah --</option>
-                                    @foreach($kabupatens as $kab)
-                                        <option value="{{ $kab->id }}" {{ old('kabupaten_id', $user->kabupaten_id) == $kab->id ? 'selected' : '' }}>
-                                            [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                    @if($user->status == 'pending' && $user->no_hp)
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    @else
-                                        <i class="fas fa-chevron-down text-gray-400"></i>
-                                    @endif
+                            <!-- Nama Lengkap -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                <div class="relative">
+                                    <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required
+                                        class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                        {{ $user->status == 'pending' && $user->no_hp_verified_at ? 'disabled' : '' }}>
                                 </div>
                             </div>
-                            @error('kabupaten_id')
-                                <p class="mt-1 text-xs text-red-600 flex items-center gap-1"><i
-                                        class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                            @enderror
-                        </div>
 
-                        <!-- Tim Kerja -->
-                        <div>
-                            <label for="team" class="block text-sm font-medium text-gray-700 mb-1">Tim / Unit Kerja</label>
-                            <div class="relative">
-                                <select id="team" name="team" required
-                                    class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none {{ $user->status == 'pending' && $user->no_hp ? 'text-gray-500 cursor-not-allowed bg-gray-100' : '' }}"
-                                    {{ $user->status == 'pending' && $user->no_hp ? 'disabled' : '' }}>
-                                    <option value="Statistik Sosial" {{ old('team', $user->team) == 'Statistik Sosial' ? 'selected' : '' }}>Statistik Sosial</option>
-                                </select>
-                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                    @if($user->status == 'pending' && $user->no_hp)
-                                        <i class="fas fa-lock text-gray-400"></i>
-                                    @else
+                            <!-- WhatsApp / HP -->
+                            <div>
+                                <label for="no_hp" class="block text-sm font-medium text-gray-700 mb-1">WhatsApp / Nomor
+                                    Telepon</label>
+                                <div class="relative">
+                                    <input type="text" id="no_hp" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}"
+                                        placeholder="Contoh: 08123456789" required
+                                        class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                        {{ $user->status == 'pending' && $user->no_hp_verified_at ? 'disabled' : '' }}>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Kode OTP akan dikirim ke nomor ini via WhatsApp.</p>
+                                @error('no_hp')
+                                    <p class="mt-1 text-xs text-red-600 flex items-center gap-1"><i
+                                            class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Kabupaten -->
+                            <div>
+                                <label for="kabupaten_id" class="block text-sm font-medium text-gray-700 mb-1">Kabupaten /
+                                    Kota</label>
+                                <div class="relative">
+                                    <select id="kabupaten_id" name="kabupaten_id" required
+                                        class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
+                                        {{ $user->status == 'pending' && $user->no_hp_verified_at ? 'disabled' : '' }}>
+                                        <option value="">-- Pilih Wilayah --</option>
+                                        @foreach($kabupatens as $kab)
+                                            <option value="{{ $kab->id }}" {{ old('kabupaten_id', $user->kabupaten_id) == $kab->id ? 'selected' : '' }}>
+                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                                         <i class="fas fa-chevron-down text-gray-400"></i>
-                                    @endif
+                                    </div>
+                                </div>
+                                @error('kabupaten_id')
+                                    <p class="mt-1 text-xs text-red-600 flex items-center gap-1"><i
+                                            class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Tim Kerja -->
+                            <div>
+                                <label for="team" class="block text-sm font-medium text-gray-700 mb-1">Tim / Unit Kerja</label>
+                                <div class="relative">
+                                    <select id="team" name="team" required
+                                        class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
+                                        {{ $user->status == 'pending' && $user->no_hp_verified_at ? 'disabled' : '' }}>
+                                        <option value="Statistik Sosial" {{ old('team', $user->team) == 'Statistik Sosial' ? 'selected' : '' }}>Statistik Sosial</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                        <i class="fas fa-chevron-down text-gray-400"></i>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        @if($user->status == 'pending' && $user->no_hp)
-                            <p class="text-xs text-gray-500 text-center bg-gray-50 p-2 rounded border border-gray-100">
-                                <i class="fas fa-info-circle mr-1"></i> Data tidak dapat diubah selama proses verifikasi.
+                            @if(!($user->status == 'pending' && $user->no_hp_verified_at))
+                                <div class="pt-2">
+                                    <button type="submit"
+                                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:-translate-y-0.5">
+                                        Simpan & Kirim OTP <i class="fas fa-arrow-right ml-2 mt-0.5"></i>
+                                    </button>
+                                </div>
+                            @endif
+                        </form>
+                    @else
+                        <!-- STEP 2: OTP VERIFICATION -->
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+                                <i class="fas fa-mobile-alt text-2xl text-blue-600"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Masukkan Kode OTP</h3>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Kode verifikasi telah dikirim ke WhatsApp
+                                <span class="font-bold text-gray-800">+{{ $user->no_hp }}</span>
                             </p>
-                        @endif
+                            <form action="{{ route('complete-profile.reset-number') }}" method="POST" class="inline-block mt-2">
+                                @csrf
+                                <input type="hidden" name="name" value="{{ $user->name }}">
+                                <input type="hidden" name="no_hp" value="{{ $user->no_hp }}">
+                                <!-- Keep raw value or formatted? -->
+                                <input type="hidden" name="kabupaten_id" value="{{ $user->kabupaten_id }}">
+                                <input type="hidden" name="team" value="{{ $user->team }}">
+                                <button type="submit"
+                                    class="text-xs text-blue-600 hover:text-blue-800 underline bg-transparent border-0 p-0 cursor-pointer">
+                                    (Bukan nomor Anda? Ganti nomor)
+                                </button>
+                            </form>
+                        </div>
 
-                        @if($user->status != 'pending' || !$user->no_hp)
+                        <form class="space-y-6" action="{{ route('complete-profile.verify-otp') }}" method="POST">
+                            @csrf
+                            <div>
+                                <label for="otp_code" class="sr-only">Kode OTP</label>
+                                <input type="text" id="otp_code" name="otp_code" placeholder="0 0 0 0 0 0"
+                                    class="block w-full text-center text-3xl tracking-widest px-4 py-4 rounded-lg border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-mono"
+                                    maxlength="6" required autofocus>
+                                @error('otp_code')
+                                    <p class="mt-1 text-xs text-red-600 flex items-center justify-center gap-1"><i
+                                            class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <div class="pt-2">
                                 <button type="submit"
-                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:-translate-y-0.5">
-                                    Simpan & Lanjutkan
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform hover:-translate-y-0.5">
+                                    Verifikasi & Selesai <i class="fas fa-check ml-2 mt-0.5"></i>
                                 </button>
                             </div>
-                        @endif
-                    </form>
+                        </form>
+
+                        <div class="mt-6 text-center">
+                            <p class="text-sm text-gray-600">
+                                Tidak menerima kode?
+                            </p>
+                            <form action="{{ route('complete-profile.resend-otp') }}" method="POST" class="mt-2">
+                                @csrf
+                                <button type="submit"
+                                    class="text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none">
+                                    Kirim Ulang OTP
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                 </div>
 
                 <!-- Footer / Logout -->

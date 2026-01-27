@@ -78,13 +78,24 @@
                                         @elseif($user->status === 'pending')
                                             <span
                                                 class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
+                                            @if($user->otp_code != null)
+                                                <br><span
+                                                    class="badge bg-danger mt-2 bg-opacity-10 text-danger px-3 py-2 rounded-pill">Sedang
+                                                    Verifikasi WA</span>
+                                            @endif
                                         @elseif($user->status === 'rejected')
                                             <span
                                                 class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Rejected</span>
+                                            @if($user->otp_code != null)
+                                                <br><span
+                                                    class="badge bg-danger mt-2 bg-opacity-10 text-danger px-3 py-2 rounded-pill">Sedang
+                                                    Verifikasi WA</span>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-end">
-                                        @if($user->status === 'pending')
+
+                                        @if($user->status === 'pending' && $user->otp_code == null)
                                             <form action="{{ route('admin.approve', $user->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 me-1"

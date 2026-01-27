@@ -196,10 +196,11 @@ class VerificationController extends Controller
 
             // Fetch rejected details for the message
             $rejectedItems = RhPerubahanDetail::whereIn('id', $rejectedIds)
-                ->with(['komoditas', 'rhTahun', 'revisionHeader'])
+                ->with(['komoditas', 'rhTahun', 'revisionHeader', 'userAdd'])
                 ->get();
 
-            $pesan = "Kepada Yth. Bapak/Ibu Perwakilan " . $namaKabupaten . ",\n\n";
+            $team = $rejectedItems->first()->userAdd->team ?? '-';
+            $pesan = "Kepada Yth. Bapak/Ibu Tim " . $team . " Perwakilan " . $namaKabupaten . ",\n\n";
             $pesan .= "Berikut kami sampaikan rincian data Rentang Harga yang *DITOLAK* pada proses verifikasi:\n\n";
 
             $groupedItems = $rejectedItems->groupBy(function ($item) {
@@ -247,7 +248,7 @@ class VerificationController extends Controller
 
             $pesan .= "\nSilahkan melakukan revisi atau perubahan pada link website berikut.\n" . url('/price-range/input-nilai');
             $pesan .= "\n\n*Salam,*";
-            $pesan .= "\n*BPS Provinsi Kalimantan Barat*";
+            $pesan .= "\n*Tim Sosial BPS Provinsi Kalbar*";
 
             // Send WhatsApp to the user who added the data
             $userIds = $rejectedItems->pluck('user_id_add')->unique();

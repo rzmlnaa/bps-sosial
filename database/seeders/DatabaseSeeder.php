@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Rezza Maulana',
             'email' => 'reza.kocoy@gmail.com',
             'no_hp' => '6285945622246',
+            'no_hp_verified_at' => now(),
+            'role' => 'admin',
+            'status' => 'active',
         ]);
     }
 }

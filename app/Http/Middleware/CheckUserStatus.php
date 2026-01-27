@@ -28,6 +28,9 @@ class CheckUserStatus
                 if (
                     !$request->routeIs('complete-profile') &&
                     !$request->routeIs('complete-profile.update') &&
+                    !$request->routeIs('complete-profile.verify-otp') &&
+                    !$request->routeIs('complete-profile.resend-otp') &&
+                    !$request->routeIs('complete-profile.reset-number') &&
                     !$request->routeIs('logout')
                 ) {
 
