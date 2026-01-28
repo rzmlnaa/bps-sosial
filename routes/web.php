@@ -52,9 +52,13 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
     });
 
-    Route::post('/logout', function () {
+    Route::post('/logout', function (Request $request) {
         Auth::logout();
-        return redirect('/dashboard');
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     })->name('logout');
 });
 
