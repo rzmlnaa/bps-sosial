@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['can:access-admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
         Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users'])->name('users');
+        Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'destroy'])->name('users.destroy');
         Route::post('/approve/{id}', [\App\Http\Controllers\AdminController::class, 'approve'])->name('approve');
         Route::post('/reject/{id}', [\App\Http\Controllers\AdminController::class, 'reject'])->name('reject');
         Route::post('/make-pending/{id}', [\App\Http\Controllers\AdminController::class, 'makePending'])->name('make-pending');

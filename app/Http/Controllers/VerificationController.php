@@ -189,80 +189,79 @@ class VerificationController extends Controller
             }
         });
 
-        $pesan = '';
-        if (count($rejectedIds) > 0) {
-            $kabupaten = Kabupaten::find($kabupatenId);
-            $namaKabupaten = $kabupaten ? $kabupaten->nama_kabupaten : '-';
+        // $pesan = '';
+        // if (count($rejectedIds) > 0) {
+        //     $kabupaten = Kabupaten::find($kabupatenId);
+        //     $namaKabupaten = $kabupaten ? $kabupaten->nama_kabupaten : '-';
 
-            // Fetch rejected details for the message
-            $rejectedItems = RhPerubahanDetail::whereIn('id', $rejectedIds)
-                ->with(['komoditas', 'rhTahun', 'revisionHeader', 'userAdd'])
-                ->get();
+        //     // Fetch rejected details for the message
+        //     $rejectedItems = RhPerubahanDetail::whereIn('id', $rejectedIds)
+        //         ->with(['komoditas', 'rhTahun', 'revisionHeader', 'userAdd'])
+        //         ->get();
 
-            $team = $rejectedItems->first()->userAdd->team ?? '-';
-            $pesan = "Kepada Yth. Bapak/Ibu Tim " . $team . " Perwakilan " . $namaKabupaten . ",\n\n";
-            $pesan .= "Berikut kami sampaikan rincian data Rentang Harga yang *DITOLAK* pada proses verifikasi:\n\n";
+        //     $team = $rejectedItems->first()->userAdd->team ?? '-';
+        //     $pesan = "Kepada Yth. Bapak/Ibu Tim " . $team . " Perwakilan " . $namaKabupaten . ",\n\n";
+        //     $pesan .= "Berikut kami sampaikan rincian data Rentang Harga yang *DITOLAK* pada proses verifikasi:\n\n";
 
-            $groupedItems = $rejectedItems->groupBy(function ($item) {
-                if ($item->rh_perubahan_header_id) {
-                    $tanggal = $item->revisionHeader->tanggal_perubahan ?? null;
-                    if ($tanggal) {
-                        $date = \Carbon\Carbon::parse($tanggal);
-                        $months = [
-                            1 => 'Januari',
-                            2 => 'Februari',
-                            3 => 'Maret',
-                            4 => 'April',
-                            5 => 'Mei',
-                            6 => 'Juni',
-                            7 => 'Juli',
-                            8 => 'Agustus',
-                            9 => 'September',
-                            10 => 'Oktober',
-                            11 => 'November',
-                            12 => 'Desember'
-                        ];
-                        $monthName = $months[$date->month];
-                        return '*PERUBAHAN ' . $date->day . ' ' . $monthName . ' ' . $date->year . '*';
-                    }
-                    return '*PERUBAHAN*';
-                } else {
-                    return '*MASTER ' . ($item->rhTahun->tahun ?? '') . '*';
-                }
-            });
+        //     $groupedItems = $rejectedItems->groupBy(function ($item) {
+        //         if ($item->rh_perubahan_header_id) {
+        //             $tanggal = $item->revisionHeader->tanggal_perubahan ?? null;
+        //             if ($tanggal) {
+        //                 $date = \Carbon\Carbon::parse($tanggal);
+        //                 $months = [
+        //                     1 => 'Januari',
+        //                     2 => 'Februari',
+        //                     3 => 'Maret',
+        //                     4 => 'April',
+        //                     5 => 'Mei',
+        //                     6 => 'Juni',
+        //                     7 => 'Juli',
+        //                     8 => 'Agustus',
+        //                     9 => 'September',
+        //                     10 => 'Oktober',
+        //                     11 => 'November',
+        //                     12 => 'Desember'
+        //                 ];
+        //                 $monthName = $months[$date->month];
+        //                 return '*PERUBAHAN ' . $date->day . ' ' . $monthName . ' ' . $date->year . '*';
+        //             }
+        //             return '*PERUBAHAN*';
+        //         } else {
+        //             return '*MASTER ' . ($item->rhTahun->tahun ?? '') . '*';
+        //         }
+        //     });
 
-            foreach ($groupedItems as $header => $items) {
-                $pesan .= $header . "\n";
-                $counter = 1;
-                foreach ($items as $item) {
-                    $komoditas = $item->komoditas ? $item->komoditas->nama_komoditas : 'Komoditas Tidak Dikenal';
-                    $tahun = $item->rhTahun->tahun ?? '-';
-                    $alasan = $item->rejection_reason ?? '-';
+        //     foreach ($groupedItems as $header => $items) {
+        //         $pesan .= $header . "\n";
+        //         $counter = 1;
+        //         foreach ($items as $item) {
+        //             $komoditas = $item->komoditas ? $item->komoditas->nama_komoditas : 'Komoditas Tidak Dikenal';
+        //             $tahun = $item->rhTahun->tahun ?? '-';
+        //             $alasan = $item->rejection_reason ?? '-';
 
-                    $pesan .= $counter . ". " . $komoditas . " (" . $tahun . ")\n";
-                    $pesan .= "   Alasan: " . $alasan . "\n";
-                    $counter++;
-                }
-                $pesan .= "\n";
-            }
+        //             $pesan .= $counter . ". " . $komoditas . " (" . $tahun . ")\n";
+        //             $pesan .= "   Alasan: " . $alasan . "\n";
+        //             $counter++;
+        //         }
+        //         $pesan .= "\n";
+        //     }
 
-            $pesan .= "\nSilahkan melakukan revisi atau perubahan pada link website berikut.\n" . url('/price-range/input-nilai');
-            $pesan .= "\n\n*Salam,*";
-            $pesan .= "\n*Tim Sosial BPS Provinsi Kalbar*";
+        //     $pesan .= "\nSilahkan melakukan revisi atau perubahan pada link website berikut.\n" . url('/price-range/input-nilai');
+        //     $pesan .= "\n\n*Salam,*";
+        //     $pesan .= "\n*Tim Sosial BPS Provinsi Kalbar*";
 
-            // Send WhatsApp to the user who added the data
-            $userIds = $rejectedItems->pluck('user_id_add')->unique();
-            $users = \App\Models\User::whereIn('id', $userIds)->get();
+        //     // Send WhatsApp to the user who added the data
+        //     $userIds = $rejectedItems->pluck('user_id_add')->unique();
+        //     $users = \App\Models\User::whereIn('id', $userIds)->get();
 
-            foreach ($users as $user) {
-                if ($user->no_hp) {
-                    WhatsAppHelper::kirimPesanWhatsApp($user->no_hp, $pesan);
-                }
-            }
-        }
+        //     foreach ($users as $user) {
+        //         if ($user->no_hp) {
+        //             WhatsAppHelper::kirimPesanWhatsApp($user->no_hp, $pesan);
+        //         }
+        //     }
+        // }
 
         return redirect()->route('verification.index')
-            ->with('success', 'Verifikasi berhasil disimpan.')
-            ->with('generated_message', $pesan);
+            ->with('success', 'Verifikasi berhasil disimpan.');
     }
 }

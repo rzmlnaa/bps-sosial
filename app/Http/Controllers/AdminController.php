@@ -32,9 +32,13 @@ class AdminController extends Controller
         }
 
         $users = $query->latest()->get();
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
 
-        return view('admin.users', compact('users', 'kabupatens'));
+        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $userTidakFinalPofile = User::where('role', '!=', 'admin')->where('kabupaten_id', null)->latest()->get();
+
+
+
+        return view('admin.users', compact('users', 'kabupatens', 'userTidakFinalPofile'));
     }
 
     public function approve($id)
@@ -75,6 +79,29 @@ class AdminController extends Controller
         $user->update(['status' => 'pending']);
 
         return redirect()->back()->with('success', 'Status akun diubah menjadi Pending.');
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Check dependencies across multiple tables
+        $hasDependencies = \App\Models\RhTahun::where('user_id_add', $id)->exists()
+            || \App\Models\RhPerubahanDetail::where('user_id_add', $id)->orWhere('verified_by', $id)->exists()
+            || \App\Models\Kabupaten::where('user_id_add', $id)->orWhere('user_id_update', $id)->exists()
+            || \App\Models\KategoriKomoditas::where('user_id_add', $id)->orWhere('user_id_update', $id)->exists()
+            || \App\Models\VariabelKemiskinan::where('user_id_add', $id)->exists()
+            || \App\Models\RhPerubahanHeader::where('user_id_add', $id)->exists()
+            || \App\Models\Komoditas::where('user_id_add', $id)->orWhere('user_id_update', $id)->exists();
+
+
+        if ($hasDependencies) {
+            return redirect()->back()->with('error', 'Gagal menghapus! User ini masih digunakan di referensi data lain.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'User berhasil dihapus.');
     }
 
     public function admins()

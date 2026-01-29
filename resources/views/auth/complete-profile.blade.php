@@ -189,10 +189,13 @@
                                 <i class="fas fa-mobile-alt text-2xl text-blue-600"></i>
                             </div>
                             <h3 class="text-lg font-semibold text-gray-900">Masukkan Kode OTP</h3>
+
                             <p class="text-sm text-gray-500 mt-1">
-                                Kode verifikasi telah dikirim ke WhatsApp
-                                <span class="font-bold text-gray-800">+{{ $user->no_hp }}</span>
+                                Kode verifikasi sementara dikirim disini
                             </p>
+                            @if(session('success'))
+                                <h1 class="font-bold text-success mt-2">{{ $user->otp_code }}</h1>
+                            @endif
                             <form action="{{ route('complete-profile.reset-number') }}" method="POST" class="inline-block mt-2">
                                 @csrf
                                 <input type="hidden" name="name" value="{{ $user->name }}">
