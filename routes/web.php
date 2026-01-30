@@ -160,7 +160,7 @@ Route::middleware(['check.status'])->group(function () {
         }
 
         $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
-        $variabels = VariabelKemiskinan::with('userAdd')->get();
+        $variabels = VariabelKemiskinan::with('userAdd')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
         return view('poverty.input', compact('kabupatens', 'variabels'));
     })->name('poverty.input');
 

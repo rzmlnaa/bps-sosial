@@ -499,6 +499,14 @@
                         let headerHtml = `<th class="py-3" style="width: 60px;">Persentil</th>`;
                         console.log(variabels);
                         
+                        // Sort variabels by year ascending, then month ascending
+                        variabels.sort((a, b) => {
+                            if (a.tahun !== b.tahun) {
+                                return a.tahun - b.tahun;
+                            }
+                            return (a.bulan || 0) - (b.bulan || 0);
+                        });
+
                         variabels.forEach(v => {
                             headerHtml += `<th class="py-3">${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan]})` : ''} ${v.tahun}</th>`;
                         });
