@@ -500,7 +500,7 @@
                         console.log(variabels);
                         
                         variabels.forEach(v => {
-                            headerHtml += `<th class="py-3">${v.nama_variabel} (${bulanNama[v.bulan]}) ${v.tahun}</th>`;
+                            headerHtml += `<th class="py-3">${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan]})` : ''} ${v.tahun}</th>`;
                         });
                         tableHeader.innerHTML = headerHtml;
 
