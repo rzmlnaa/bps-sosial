@@ -94,33 +94,109 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            @if($user->status === 'pending' && $user->otp_code == null)
+                                                <form action="{{ route('admin.approve', $user->id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"
+                                                        title="Terima">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('admin.reject', $user->id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3"
+                                                        title="Tolak">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                            @elseif($user->status === 'active')
+                                                <form action="{{ route('admin.make-pending', $user->id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="btn btn-sm btn-warning rounded-pill px-3 text-white"
+                                                        title="Jadikan Pending">
+                                                        <i class="fas fa-clock me-1"></i> Pending-kan
+                                                    </button>
+                                                </form>
+                                            @endif
 
-                                        @if($user->status === 'pending' && $user->otp_code == null)
-                                            <form action="{{ route('admin.approve', $user->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.');">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 me-1"
-                                                    title="Terima">
-                                                    <i class="fas fa-check"></i>
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                    title="Hapus Pengguna">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
-                                            <form action="{{ route('admin.reject', $user->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3" title="Tolak">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </form>
-                                        @elseif($user->status === 'active')
-                                            <form action="{{ route('admin.make-pending', $user->id) }}" method="POST"
-                                                class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-warning rounded-pill px-3 text-white"
-                                                    title="Jadikan Pending">
-                                                    <i class="fas fa-clock me-1"></i> Pending-kan
-                                                </button>
-                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <div class="mb-2"><i class="fas fa-users-slash fa-3x opacity-25"></i></div>
+                                        Tidak ada data pengguna yang ditemukan.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3 mt-5">
+            <h2 class="fw-bold text-navy mb-0">Akun Pengguna Tidak Final Profile</h2>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0">Nama Lengkap</th>
+                                <th class="px-4 py-3 border-0">Email</th>
+                                <th class="px-4 py-3 border-0">Tim / Asal</th>
+
+                                <th class="px-4 py-3 border-0 text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($userTidakFinalPofile as $user)
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-bold text-dark">{{ $user->name }}</div>
+                                        <small class="text-muted">{{ $user->no_hp ?? '-' }}</small>
+                                    </td>
+                                    <td class="px-4 py-3 text-muted">{{ $user->email }}</td>
+                                    <td class="px-4 py-3">
+                                        @if($user->kabupaten)
+                                            {{ $user->kabupaten->nama_kabupaten }}
                                         @else
-                                            <span class="text-muted">-</span>
+                                            {{ $user->team ?? '-' }}
                                         @endif
+                                    </td>
+
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                    title="Hapus Pengguna">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

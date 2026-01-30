@@ -40,5 +40,10 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
     ],
+    'whatsapp' => [
+        'token' => env('WA_API_TOKEN'),
+        'url' => env('WA_API_URL'),
+    ],
+
 
 ];

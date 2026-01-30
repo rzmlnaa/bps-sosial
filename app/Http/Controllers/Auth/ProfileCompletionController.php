@@ -86,7 +86,8 @@ class ProfileCompletionController extends Controller
         // Generate and Send OTP
         $this->generateAndSendOtp($user);
 
-        return redirect('/complete-profile')->with('success', 'Kode OTP telah dikirim ke WhatsApp Anda. Silakan masukkan kode untuk verifikasi.');
+
+        return redirect('/complete-profile')->with('success', 'Sementara Kode OTP dikirim disini, kode Anda adalah ' . $user->otp_code . '  Silakan masukkan kode untuk verifikasi.');
     }
 
     public function verifyOtp(Request $request)
@@ -143,7 +144,7 @@ class ProfileCompletionController extends Controller
 
         $this->generateAndSendOtp($user);
 
-        return back()->with('success', 'Kode OTP baru telah dikirim ke WhatsApp Anda.');
+        return back()->with('success', 'Kode OTP baru telah dikirim disini, Kode Anda adalah Silakan masukkan kode untuk verifikasi.');
     }
 
     public function resetNumber()
@@ -176,13 +177,13 @@ class ProfileCompletionController extends Controller
             'otp_expires_at' => $expiresAt
         ]);
 
-        $message = "Halo {$user->name},\n\n";
-        $message .= "Kode OTP verifikasi Anda adalah: *{$otp}*\n";
-        $message .= "Kode ini berlaku selama 5 menit.\n\n";
-        $message .= "Jangan berikan kode ini kepada siapapun.\n\n";
-        $message .= "*Salam,* \n";
-        $message .= "*Tim Sosial BPS Provinsi Kalbar*";
+        // $message = "Halo {$user->name},\n\n";
+        // $message .= "Kode OTP verifikasi Anda adalah: *{$otp}*\n";
+        // $message .= "Kode ini berlaku selama 5 menit.\n\n";
+        // $message .= "Jangan berikan kode ini kepada siapapun.\n\n";
+        // $message .= "*Salam,* \n";
+        // $message .= "*Tim Sosial BPS Provinsi Kalbar*";
 
-        \App\Helpers\WhatsAppHelper::kirimPesanWhatsApp($user->no_hp, $message);
+        // \App\Helpers\WhatsAppHelper::kirimPesanWhatsApp($user->no_hp, $message);
     }
 }
