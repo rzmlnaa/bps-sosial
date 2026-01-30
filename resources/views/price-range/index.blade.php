@@ -14,9 +14,9 @@
                     @if (auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                    </a> -->
+                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -25,6 +25,11 @@
                     @endif
 
                     @if (auth()->user()->kabupaten->kode_kab == '6100')
+
+                        <a href="/price-range/input-nilai" class="btn fw-bold shadow-sm"
+                            style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                            <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                        </a>
                         <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
                             style="background-color: var(--bps-blue);">
                             <i class="fas fa-plus-circle me-1"></i> Input Komoditas

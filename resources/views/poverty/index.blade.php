@@ -51,28 +51,28 @@
         <div class="row g-4 mb-4">
             <!-- Highlights -->
             <!-- <div class="col-lg-4">
-                                                                                                                <div class="stats-card h-100 bg-orange-faded border-0">
-                                                                                                                    <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                                                                                                                    <div class="d-flex align-items-end mb-2">
-                                                                                                                        <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                                                                                                                            Rp {{ number_format($provAvg, 0, ',', '.') }}
-                                                                                                                        </h1>
-                                                                                                                        <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                                                                                                                    </div>
-                                                                                                                    <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                                                                                                                    <hr style="border-color: rgba(0,0,0,0.1);">
-                                                                                                                    <div class="d-flex justify-content-between">
-                                                                                                                        <div>
-                                                                                                                            <small class="text-muted d-block">Garis Kemiskinan</small>
-                                                                                                                            <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
-                                                                                                                        </div>
-                                                                                                                        <div>
-                                                                                                                            <small class="text-muted d-block">Penduduk Miskin</small>
-                                                                                                                            <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            </div> -->
+                                                                                                                                                                                            <div class="stats-card h-100 bg-orange-faded border-0">
+                                                                                                                                                                                                <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                                                                                                                                                                                                <div class="d-flex align-items-end mb-2">
+                                                                                                                                                                                                    <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                                                                                                                                                                                        Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                                                                                                                                                                                    </h1>
+                                                                                                                                                                                                    <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                                                                                                                                                                                                <hr style="border-color: rgba(0,0,0,0.1);">
+                                                                                                                                                                                                <div class="d-flex justify-content-between">
+                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                        <small class="text-muted d-block">Garis Kemiskinan</small>
+                                                                                                                                                                                                        <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                        <small class="text-muted d-block">Penduduk Miskin</small>
+                                                                                                                                                                                                        <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -220,7 +220,7 @@
 
 @push('scripts')
     <script>
-
+        const bulanNama = {!! json_encode($bulanNama) !!};
 
         // --- 2. Interactive Line Chart (Dynamic) ---
         const ctxLine = document.getElementById('povertyLineChart').getContext('2d');
@@ -302,7 +302,7 @@
                             });
 
                             return {
-                                label: `${v.nama_variabel} ${v.tahun}`,
+                                label: `${v.nama_variabel} (${bulanNama[v.bulan].substring(0, 3)}) ${v.tahun}`,
                                 data: lineData,
                                 borderColor: colorPalette[index % colorPalette.length],
                                 backgroundColor: 'transparent',
@@ -430,7 +430,7 @@
                         // Update Table Header
                         let header = '<th>P</th>';
                         variabels.forEach(v => {
-                            header += `<th title="${v.nama_variabel} ${v.tahun}">${v.nama_variabel.substring(0, 3)} ${v.tahun.toString().substring(2)}</th>`;
+                            header += `<th title="${v.nama_variabel} ${v.tahun}">${v.nama_variabel.substring(0, 3)} (${bulanNama[v.bulan].substring(0, 3)}) ${v.tahun.toString().substring(2)}</th>`;
                         });
                         document.getElementById('modalTableHeader').innerHTML = header;
 
@@ -440,7 +440,11 @@
                             body += `<tr><td class="fw-bold bg-light">${p}</td>`;
                             variabels.forEach(v => {
                                 const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
-                                body += `<td>${record ? record.nilai.toLocaleString('id-ID') : '-'}</td>`;
+                                body += `<td>${record ? Number(record.nilai).toLocaleString('id-ID', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }) : '-'}</td>`;
+
                             });
                             body += '</tr>';
                         });
@@ -454,7 +458,7 @@
                             });
 
                             return {
-                                label: `${v.nama_variabel} ${v.tahun}`,
+                                label: `${v.nama_variabel} (${bulanNama[v.bulan].substring(0, 3)}) ${v.tahun}`,
                                 data: lineData,
                                 borderColor: colorPalette[index % colorPalette.length],
                                 tension: 0.3,

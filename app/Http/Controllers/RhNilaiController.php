@@ -21,13 +21,19 @@ class RhNilaiController extends Controller
         }
 
         $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
+        // if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
+        //     return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
+        // }
+
+        // dd($user->kabupaten->id, $request->query('kabupaten_id'));
+
+        if ($user->kabupaten->kode_kab !== '6100') {
+            if ($user->kabupaten->id != $request->query('kabupaten_id')) {
+                return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->query('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->query('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
+            }
         }
 
-        if ($user->kabupaten->id != $request->query('kabupaten_id')) {
-            return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->query('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->query('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
-        }
+
 
         $activeYear = RhTahun::where('is_active', true)->first();
 
@@ -36,6 +42,9 @@ class RhNilaiController extends Controller
         }
 
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+        if ($user->kabupaten->kode_kab == '6100') {
+            $kabupatens = $kabupatens->where('kode_kab', '!=', '6100');
+        }
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
 
         // 1. Fetch ALL Revisions for Calculation (Ascending)
@@ -237,12 +246,14 @@ class RhNilaiController extends Controller
             return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
         }
         $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
-        }
+        // if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
+        //     return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');
+        // }
 
-        if ($user->kabupaten->id != $request->input('kabupaten_id')) {
-            return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->input('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->input('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
+        if ($user->kabupaten->kode_kab !== '6100') {
+            if ($user->kabupaten->id != $request->input('kabupaten_id')) {
+                return redirect('/price-range/input-nilai?rh_tahun_id=' . $request->input('rh_tahun_id') . '&kabupaten_id=' . $user->kabupaten->id . '&revision_id=' . $request->input('revision_id'))->with('error', 'Anda tidak dapat mengakses data ini.');
+            }
         }
 
         $activeYear = RhTahun::where('id', $request->input('rh_tahun_id'))->first();

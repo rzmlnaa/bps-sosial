@@ -102,10 +102,26 @@
                                             </option>
                                         @endforeach
                                     </select> -->
-                                    <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none">
-                                        <option value="{{ auth()->user()->kabupaten->id }}">[{{ auth()->user()->kabupaten->kode_kab }}] {{ auth()->user()->kabupaten->nama_kabupaten }}</option>
-        
-                                    </select>
+
+                                   
+                                    @if (auth()->user()->kabupaten->kode_kab == '6100')
+                                        <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none" onchange="this.form.submit()">
+                                            @foreach($kabupatens as $kab)
+                                                
+                                                <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                            
+                                    @else
+                                         <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none" onchange="this.form.submit()">
+                                            <option value="{{ auth()->user()->kabupaten->id }}">[{{ auth()->user()->kabupaten->kode_kab }}] {{ auth()->user()->kabupaten->nama_kabupaten }}</option>
+                                            </select>
+                                        @endif
+                                    
+                                    
+                                    
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Pilih Header Perubahan

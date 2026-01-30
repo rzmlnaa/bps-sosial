@@ -242,9 +242,10 @@
                             @endif
                         </div>
                     </div>
-                    <form action="{{ route('logout') }}" method="POST" id="logout-form">
+                    <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Log Out">
+                        <button type="submit" onclick="setTimeout(() => window.location.href = '/', 50)"
+                            class="btn btn-sm btn-outline-danger border-0">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>
