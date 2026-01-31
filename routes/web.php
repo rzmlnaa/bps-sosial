@@ -59,7 +59,8 @@ Route::middleware(['auth'])->group(function () {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->guest('/');
+
     })->name('logout');
 });
 
@@ -145,7 +146,7 @@ Route::middleware(['check.status'])->group(function () {
         $latestLabel = $mainVar ? (($mainVar->bulan ? $bulanNama[$mainVar->bulan] . ' ' : '') . ($mainVar->tahun ?? '')) : '';
 
 
-        return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears'));
+        return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears', 'bulanNama'));
     })->name('poverty');
 
     Route::get('/poverty/input', function () {
@@ -159,7 +160,7 @@ Route::middleware(['check.status'])->group(function () {
         }
 
         $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
-        $variabels = VariabelKemiskinan::with('userAdd')->get();
+        $variabels = VariabelKemiskinan::with('userAdd')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
         return view('poverty.input', compact('kabupatens', 'variabels'));
     })->name('poverty.input');
 

@@ -10,6 +10,7 @@ class PovertyDataController extends Controller
 {
     public function store(Request $request)
     {
+
         if (auth()->check() == false) {
             return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
         }
@@ -36,6 +37,11 @@ class PovertyDataController extends Controller
             if ($line === '')
                 continue;
 
+            // HANYA jika ada titik, hapus titik (pemisah ribuan)
+            if (str_contains($line, '.')) {
+                $line = str_replace('.', '', $line);
+            }
+
             // Handle decimal format (replace comma with dot)
             $value = str_replace(',', '.', $line);
             if (is_numeric($value)) {
@@ -43,6 +49,7 @@ class PovertyDataController extends Controller
             }
         }
 
+        //dd($values, $request->raw_data);
         if (empty($values)) {
             return redirect()->back()->with('error', 'Tidak ada data valid yang ditemukan.');
         }

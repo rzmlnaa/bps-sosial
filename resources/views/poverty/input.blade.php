@@ -377,6 +377,7 @@
 
 @push('scripts')
     <script>
+        const bulanNama = @json($bulanNama);
         document.addEventListener("DOMContentLoaded", function () {
             // Unique key for this page to avoid conflicts
             const storageKey = 'activeTab_poverty_input';
@@ -474,10 +475,12 @@
             const showLoading = () => {
                 tableBody.innerHTML = `<tr><td colspan="${tableHeader.children.length}" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat data...</p></td></tr>`;
             };
-
+           
+            
             // When Kabupaten is selected
             selectKabupaten.addEventListener('change', function () {
                 const kabId = this.value;
+               
                 const kabName = this.options[this.selectedIndex].text;
                 tableTitle.innerText = `Data Tersimpan - ${kabName}`;
 
@@ -494,8 +497,18 @@
 
                         // Update Header
                         let headerHtml = `<th class="py-3" style="width: 60px;">Persentil</th>`;
+                        console.log(variabels);
+                        
+                        // Sort variabels by year ascending, then month ascending
+                        variabels.sort((a, b) => {
+                            if (a.tahun !== b.tahun) {
+                                return a.tahun - b.tahun;
+                            }
+                            return (a.bulan || 0) - (b.bulan || 0);
+                        });
+
                         variabels.forEach(v => {
-                            headerHtml += `<th class="py-3">${v.nama_variabel} ${v.tahun}</th>`;
+                            headerHtml += `<th class="py-3">${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan]})` : ''} ${v.tahun}</th>`;
                         });
                         tableHeader.innerHTML = headerHtml;
 
@@ -540,7 +553,13 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.length > 0) {
-                            textareaData.value = data.join('\n');
+                            textareaData.value = data
+                        .map(v => Number(v).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }))
+                        .join('\n');
+                        
                             textareaData.placeholder = "Data ditemukan. Silakan edit dan simpan kembali.";
                         } else {
                             textareaData.value = "";
