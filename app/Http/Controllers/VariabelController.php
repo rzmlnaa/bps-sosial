@@ -10,13 +10,6 @@ class VariabelController extends Controller
 {
     public function store(Request $request)
     {
-        if (auth()->check() == false) {
-            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menambah variabel.')->with('active_tab', 'pills-rh-settings-tab');
-        }
         $request->validate([
             'nama_variabel' => 'required|string|max:100',
             'bulan' => 'nullable|integer|between:1,12',
@@ -49,13 +42,6 @@ class VariabelController extends Controller
 
     public function destroy($id)
     {
-        if (auth()->check() == false) {
-            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus tahun.')->with('active_tab', 'pills-rh-settings-tab');
-        }
         $variabel = VariabelKemiskinan::withCount('nilaiKemiskinan')->findOrFail($id);
 
         if ($variabel->nilai_kemiskinan_count > 0) {

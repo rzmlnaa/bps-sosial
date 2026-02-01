@@ -198,7 +198,7 @@
                             </a>
                         </li>
                         @if (auth()->check() == true)
-                            @if(auth()->user()->kabupaten->kode_kab == '6100')
+                            @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('verification.index') }}"
                                         class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
@@ -244,7 +244,7 @@
                     </div>
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit" onclick="setTimeout(() => window.location.href = '/', 50)"
+                        <button type="submit" onclick="setTimeout(() => window.location.href = '/login', 50)"
                             class="btn btn-sm btn-outline-danger border-0">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -278,6 +278,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
 
     @if(session('success'))
         <script>

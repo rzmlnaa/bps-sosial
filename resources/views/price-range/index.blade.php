@@ -11,12 +11,12 @@
             </div>
             <div class="mt-3 mt-md-0 d-flex gap-2">
                 @if (auth()->check() == true)
-                    @if (auth()->user()->kabupaten->kode_kab != '6100')
+                    @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                </a> -->
+                                                                                                                                                                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                    </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -24,7 +24,7 @@
                         </a>
                     @endif
 
-                    @if (auth()->user()->kabupaten->kode_kab == '6100')
+                    @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
 
                         <a href="/price-range/input-nilai" class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">

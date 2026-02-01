@@ -153,7 +153,7 @@
 
 
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3 mt-5">
-            <h2 class="fw-bold text-navy mb-0">Akun Pengguna Tidak Final Profile</h2>
+            <h2 class="fw-bold text-navy mb-0">Profil Pengguna Belum Diselesaikan</h2>
         </div>
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
@@ -163,8 +163,6 @@
                             <tr>
                                 <th class="px-4 py-3 border-0">Nama Lengkap</th>
                                 <th class="px-4 py-3 border-0">Email</th>
-                                <th class="px-4 py-3 border-0">Tim / Asal</th>
-
                                 <th class="px-4 py-3 border-0 text-end">Aksi</th>
                             </tr>
                         </thead>
@@ -176,14 +174,6 @@
                                         <small class="text-muted">{{ $user->no_hp ?? '-' }}</small>
                                     </td>
                                     <td class="px-4 py-3 text-muted">{{ $user->email }}</td>
-                                    <td class="px-4 py-3">
-                                        @if($user->kabupaten)
-                                            {{ $user->kabupaten->nama_kabupaten }}
-                                        @else
-                                            {{ $user->team ?? '-' }}
-                                        @endif
-                                    </td>
-
                                     <td class="px-4 py-3 text-end">
                                         <div class="d-flex justify-content-end gap-2">
                                             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"

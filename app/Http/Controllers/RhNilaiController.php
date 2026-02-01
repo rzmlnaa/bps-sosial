@@ -16,9 +16,9 @@ class RhNilaiController extends Controller
     public function index(Request $request)
     {
 
-        if (auth()->check() == false) {
-            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
-        }
+        // if (auth()->check() == false) {
+        //     return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        // }
 
         $user = Auth::user();
         // if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
@@ -242,9 +242,9 @@ class RhNilaiController extends Controller
     public function save(Request $request)
     {
         // Strict Access: Only Province User (6100)
-        if (auth()->check() == false) {
-            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
-        }
+        // if (auth()->check() == false) {
+        //     return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
+        // }
         $user = Auth::user();
         // if (!$user->kabupaten || $user->kabupaten->kode_kab === '6100') {
         //     return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Kabupaten/Kota yang dapat mengakses input nilai RH Kabupaten.');

@@ -14,14 +14,6 @@ class VerificationController extends Controller
 {
     public function index()
     {
-        if (auth()->check() == false) {
-            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        // Strict Access: Only Province User (6100)
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengakses halaman verifikasi.');
-        }
 
         // Get Kabupaten IDs that have pending/rejected verifications
 
@@ -92,15 +84,6 @@ class VerificationController extends Controller
 
     public function show($kabupatenId)
     {
-        if (auth()->check() == false) {
-            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        // Strict Access: Only Province User (6100)
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengakses detail verifikasi.');
-        }
-
         $kabupaten = Kabupaten::findOrFail($kabupatenId);
 
         // Map min_edit/max_edit to min_nilai/max_nilai via select alias for consistent view usage if needed,
@@ -147,15 +130,6 @@ class VerificationController extends Controller
 
     public function store(Request $request, $kabupatenId)
     {
-        if (auth()->check() == false) {
-            return redirect('/price-range')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        // Strict Access: Only Province User (6100)
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menyimpan hasil verifikasi.');
-        }
-
         $data = $request->input('verifications', []);
         $rejectedIds = [];
 

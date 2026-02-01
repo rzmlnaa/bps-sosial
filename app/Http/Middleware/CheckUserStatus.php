@@ -16,9 +16,9 @@ class CheckUserStatus
      */
     public function handle(Request $request, Closure $next): Response
     {
+
         if (Auth::check()) {
             $user = Auth::user();
-
 
             // If user status is pending
             if ($user->status === 'pending' || $user->status === 'rejected') {
@@ -45,5 +45,7 @@ class CheckUserStatus
         }
 
         return $next($request);
+
+
     }
 }
