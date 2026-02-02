@@ -49,28 +49,28 @@
         <div class="row g-4 mb-4">
             <!-- Highlights -->
             <!-- <div class="col-lg-4">
-                                                                                                                                                                                                                                                            <div class="stats-card h-100 bg-orange-faded border-0">
-                                                                                                                                                                                                                                                                <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                                                                                                                                                                                                                                                                <div class="d-flex align-items-end mb-2">
-                                                                                                                                                                                                                                                                    <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                                                                                                                                                                                                                                                                        Rp {{ number_format($provAvg, 0, ',', '.') }}
-                                                                                                                                                                                                                                                                    </h1>
-                                                                                                                                                                                                                                                                    <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                                                                                                                                                                                                                                                                <hr style="border-color: rgba(0,0,0,0.1);">
-                                                                                                                                                                                                                                                                <div class="d-flex justify-content-between">
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Garis Kemiskinan</small>
-                                                                                                                                                                                                                                                                        <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Penduduk Miskin</small>
-                                                                                                                                                                                                                                                                        <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                        </div> -->
+                                                                                                                                                                                                                                                                            <div class="stats-card h-100 bg-orange-faded border-0">
+                                                                                                                                                                                                                                                                                <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                                                                                                                                                                                                                                                                                <div class="d-flex align-items-end mb-2">
+                                                                                                                                                                                                                                                                                    <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                                                                                                                                                                                                                                                                        Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                                                                                                                                                                                                                                                                    </h1>
+                                                                                                                                                                                                                                                                                    <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                                                                                                                                                                                                                                                                                <hr style="border-color: rgba(0,0,0,0.1);">
+                                                                                                                                                                                                                                                                                <div class="d-flex justify-content-between">
+                                                                                                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Garis Kemiskinan</small>
+                                                                                                                                                                                                                                                                                        <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Penduduk Miskin</small>
+                                                                                                                                                                                                                                                                                        <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                        </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -242,6 +242,12 @@
             '#06b6d4', // Cyan
         ];
 
+        function generateColor(index, total = 360) {
+            const hue = (index * 360 / total) % 360;
+            return `hsl(${hue}, 70%, 50%)`;
+        }
+
+
         // Hide chart initially
         chartCanvas.style.display = 'none';
 
@@ -281,7 +287,8 @@
                                     datasets.push({
                                         label: `${kab.nama_kabupaten} - ${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
                                         data: lineData,
-                                        borderColor: colorPalette[datasets.length % colorPalette.length],
+                                        //borderColor: colorPalette[datasets.length % colorPalette.length],
+                                        borderColor: generateColor(datasets.length),
                                         backgroundColor: 'transparent',
                                         tension: 0.3,
                                         borderWidth: 2,
@@ -303,7 +310,9 @@
                             return {
                                 label: `${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
                                 data: lineData,
-                                borderColor: colorPalette[index % colorPalette.length],
+                                //borderColor: colorPalette[index % colorPalette.length],
+                                borderColor: generateColor(index),
+
                                 backgroundColor: 'transparent',
                                 tension: 0.3,
                                 borderWidth: 3,
@@ -459,7 +468,8 @@
                             return {
                                 label: `${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
                                 data: lineData,
-                                borderColor: colorPalette[index % colorPalette.length],
+                                //borderColor: colorPalette[index % colorPalette.length],\
+                                borderColor: generateColor(index),
                                 tension: 0.3,
                                 borderWidth: 2,
                                 pointRadius: 2
