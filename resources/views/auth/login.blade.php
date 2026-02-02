@@ -7,7 +7,11 @@
 
         <div class="text-center" style="max-width: 720px;">
 
-
+            @if(session('error'))
+                <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
 
             <dotlottie-player src="{{ asset('statistik-animasi.json') }}" background="transparent" speed="1"
                 style="display:block; margin:0 auto; width:100%; max-width:500px;" loop autoplay>

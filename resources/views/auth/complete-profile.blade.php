@@ -251,7 +251,7 @@
                 <div class="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-center">
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit"
+                        <button type="submit" onclick="setTimeout(() => window.location.href = '/login', 50)"
                             class="text-sm font-medium text-gray-500 hover:text-blue-600 flex items-center gap-2 transition-colors focus:outline-none">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
