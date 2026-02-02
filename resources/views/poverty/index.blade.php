@@ -49,28 +49,28 @@
         <div class="row g-4 mb-4">
             <!-- Highlights -->
             <!-- <div class="col-lg-4">
-                                                                                                                                                                                                                                                                            <div class="stats-card h-100 bg-orange-faded border-0">
-                                                                                                                                                                                                                                                                                <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
-                                                                                                                                                                                                                                                                                <div class="d-flex align-items-end mb-2">
-                                                                                                                                                                                                                                                                                    <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
-                                                                                                                                                                                                                                                                                        Rp {{ number_format($provAvg, 0, ',', '.') }}
-                                                                                                                                                                                                                                                                                    </h1>
-                                                                                                                                                                                                                                                                                    <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
-                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
-                                                                                                                                                                                                                                                                                <hr style="border-color: rgba(0,0,0,0.1);">
-                                                                                                                                                                                                                                                                                <div class="d-flex justify-content-between">
-                                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Garis Kemiskinan</small>
-                                                                                                                                                                                                                                                                                        <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
-                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                                        <small class="text-muted d-block">Penduduk Miskin</small>
-                                                                                                                                                                                                                                                                                        <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
-                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                        </div> -->
+                                                                                                                                                                                                                                                                                                                        <div class="stats-card h-100 bg-orange-faded border-0">
+                                                                                                                                                                                                                                                                                                                            <h5 class="fw-bold text-dark mb-3">Provinsi Kalimantan Barat</h5>
+                                                                                                                                                                                                                                                                                                                            <div class="d-flex align-items-end mb-2">
+                                                                                                                                                                                                                                                                                                                                <h1 class="fw-bold mb-0 text-orange" style="font-size: 2.5rem;">
+                                                                                                                                                                                                                                                                                                                                    Rp {{ number_format($provAvg, 0, ',', '.') }}
+                                                                                                                                                                                                                                                                                                                                </h1>
+                                                                                                                                                                                                                                                                                                                                <span class="mb-2 ms-2 fw-medium text-muted">{{ $latestLabel }}</span>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                            <p class="text-muted small">Rata-rata nilai (Rp) dari seluruh Kabupaten/Kota di Kalimantan Barat.</p>
+                                                                                                                                                                                                                                                                                                                            <hr style="border-color: rgba(0,0,0,0.1);">
+                                                                                                                                                                                                                                                                                                                            <div class="d-flex justify-content-between">
+                                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                                    <small class="text-muted d-block">Garis Kemiskinan</small>
+                                                                                                                                                                                                                                                                                                                                    <span class="fw-bold">Rp {{ number_format($provGK, 0, ',', '.') }}</span>
+                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                                    <small class="text-muted d-block">Penduduk Miskin</small>
+                                                                                                                                                                                                                                                                                                                                    <span class="fw-bold">{{ number_format($provCount, 2, ',', '.') }} Ribu</span>
+                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                    </div> -->
 
             <!-- Trend Chart by Regency -->
             <div class="col-lg-12">
@@ -93,6 +93,37 @@
                                         title="Grafik Balok" style="border-radius: 8px; transition: all 0.2s;">
                                         <i class="fas fa-chart-bar"></i>
                                     </button>
+                                </div>
+
+                                <div class="dropdown">
+                                    <button class="btn btn-light border-0 shadow-sm dropdown-toggle fw-bold" type="button"
+                                        id="variableFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                        style="border-radius: 8px;">
+                                        <i class="fas fa-filter me-1"></i> Pilih Variabel
+                                    </button>
+                                    <div class="dropdown-menu p-3 shadow-lg border-0"
+                                        aria-labelledby="variableFilterDropdown"
+                                        style="width: 300px; max-height: 400px; overflow-y: auto; border-radius: 12px;">
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text bg-white border-end-0"><i
+                                                    class="fas fa-search text-muted"></i></span>
+                                            <input type="text" class="form-control border-start-0 ps-0"
+                                                id="variableSearchInput" placeholder="Cari variabel..."
+                                                style="box-shadow: none;">
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <small class="text-muted fw-bold">Daftar Variabel</small>
+                                            <div>
+                                                <a href="#" class="text-decoration-none small me-2"
+                                                    id="checkAllVars">All</a>
+                                                <a href="#" class="text-decoration-none small text-muted"
+                                                    id="uncheckAllVars">None</a>
+                                            </div>
+                                        </div>
+                                        <div id="variableListContainer">
+                                            <!-- Checkboxes will be populated by JS -->
+                                        </div>
+                                    </div>
                                 </div>
                                 <select class="form-select w-100 w-md-auto border-0 bg-light fw-bold"
                                     id="regencySelectorChart" style="border-radius: 8px;">
@@ -230,19 +261,11 @@
         let currentChartType = 'line';
 
 
-        // Colors for line chart
-        const colorPalette = [
-            '#f58220', // Orange
-            '#0093dd', // Blue
-            '#7ab800', // Green
-            '#6366f1', // Indigo
-            '#ec4899', // Pink
-            '#f43f5e', // Rose
-            '#8b5cf6', // Violet
-            '#06b6d4', // Cyan
-        ];
-
-        function generateColor(index, total = 360) {
+        // Helper to generate dynamic colors
+        function generateColor(index, total) {
+            // Ensure total is at least 1 to avoid division by zero
+            // If total is small, we can just use 360 to span the wheel, 
+            // but the user wants (index * 360 / total), so let's stick to that for distribution.
             const hue = (index * 360 / total) % 360;
             return `hsl(${hue}, 70%, 50%)`;
         }
@@ -264,6 +287,9 @@
                 .then(result => {
                     const { data, variabels, kabupatens } = result;
 
+                    // Sort variables by year ascending, then by month
+                    variabels.sort((a, b) => a.tahun - b.tahun || a.bulan - b.bulan);
+
                     chartLoading.classList.add('d-none');
                     chartCanvas.style.display = 'block';
 
@@ -283,12 +309,11 @@
                                 });
 
                                 // Check if this line has any data points before adding
-                                if (lineData.some(val => val !== null)) {
+                                if (lineData.some(val => val !== null && Number(val) !== 0)) {
                                     datasets.push({
                                         label: `${kab.nama_kabupaten} - ${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
                                         data: lineData,
-                                        //borderColor: colorPalette[datasets.length % colorPalette.length],
-                                        borderColor: generateColor(datasets.length),
+                                        // Colors will be assigned later
                                         backgroundColor: 'transparent',
                                         tension: 0.3,
                                         borderWidth: 2,
@@ -301,31 +326,68 @@
                         });
                     } else {
                         // Original logic for single region
-                        datasets = variabels.map((v, index) => {
+                        datasets = [];
+                        variabels.forEach((v, index) => {
                             const lineData = persentils.map(p => {
                                 const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
                                 return record ? record.nilai : null;
                             });
 
-                            return {
-                                label: `${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
-                                data: lineData,
-                                //borderColor: colorPalette[index % colorPalette.length],
-                                borderColor: generateColor(index),
-
-                                backgroundColor: 'transparent',
-                                tension: 0.3,
-                                borderWidth: 3,
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                                spanGaps: true
-                            };
+                            if (lineData.some(val => val !== null && Number(val) !== 0)) {
+                                datasets.push({
+                                    label: `${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
+                                    data: lineData,
+                                    // Colors will be assigned later
+                                    backgroundColor: 'transparent',
+                                    tension: 0.3,
+                                    borderWidth: 3,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    spanGaps: true
+                                });
+                            }
                         });
                     }
+
+                    // Assign dynamic colors based on the final total number of datasets
+                    datasets.forEach((ds, index) => {
+                        ds.borderColor = generateColor(index, datasets.length);
+                    });
 
                     if (povertyLineChart) {
                         povertyLineChart.destroy();
                     }
+
+                    // --- POPULATE FILTER LIST ---
+                    const variableListContainer = document.getElementById('variableListContainer');
+                    variableListContainer.innerHTML = ''; // Clear existing
+
+                    datasets.forEach((ds, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check mb-1';
+                        // Use ds.borderColor for the legend dot
+                        div.innerHTML = `
+                                                <input class="form-check-input variable-checkbox" type="checkbox" value="${index}" id="varCheck${index}" checked>
+                                                <label class="form-check-label small text-truncate d-block" for="varCheck${index}" title="${ds.label}" style="cursor: pointer;">
+                                                    <span class="d-inline-block rounded-circle me-1" style="width: 10px; height: 10px; background-color: ${ds.borderColor}"></span>
+                                                    ${ds.label}
+                                                </label>
+                                            `;
+                        variableListContainer.appendChild(div);
+                    });
+
+                    // Checkbox Event Listeners
+                    document.querySelectorAll('.variable-checkbox').forEach(cb => {
+                        cb.addEventListener('change', function () {
+                            const idx = parseInt(this.value);
+                            if (povertyLineChart) {
+                                // Toggle visibility: if checked, visible (show). If unchecked, hidden.
+                                povertyLineChart.setDatasetVisibility(idx, this.checked);
+                                povertyLineChart.update();
+                            }
+                        });
+                    });
+                    // -----------------------------
 
                     povertyLineChart = new Chart(ctxLine, {
                         type: currentChartType,
@@ -402,6 +464,44 @@
             });
         });
 
+        // Match Search Filter
+        document.getElementById('variableSearchInput').addEventListener('keyup', function () {
+            const value = this.value.toLowerCase();
+            document.querySelectorAll('#variableListContainer .form-check').forEach(div => {
+                const label = div.querySelector('label').innerText.toLowerCase();
+                div.style.display = label.includes(value) ? 'block' : 'none';
+            });
+        });
+
+        // Select All
+        document.getElementById('checkAllVars').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.variable-checkbox').forEach(cb => {
+                cb.checked = true;
+                if (div = cb.closest('.form-check')) if (div.style.display === 'none') return; // Optional: respect search? Maybe just all.
+            });
+            if (povertyLineChart) {
+                povertyLineChart.data.datasets.forEach((ds, i) => {
+                    povertyLineChart.setDatasetVisibility(i, true);
+                });
+                povertyLineChart.update();
+            }
+        });
+
+        // Select None
+        document.getElementById('uncheckAllVars').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.variable-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            if (povertyLineChart) {
+                povertyLineChart.data.datasets.forEach((ds, i) => {
+                    povertyLineChart.setDatasetVisibility(i, false);
+                });
+                povertyLineChart.update();
+            }
+        });
+
         // Trigger chart load for "Semua Wilayah" on page load
         document.addEventListener('DOMContentLoaded', function () {
             const selector = document.getElementById('regencySelectorChart');
@@ -433,11 +533,23 @@
                     .then(response => response.json())
                     .then(result => {
                         const { data, variabels } = result;
+
+                        // Sort variables by year ascending, then by month
+                        variabels.sort((a, b) => a.tahun - b.tahun || a.bulan - b.bulan);
+
+                        // Filter out variables that have no data
+                        const activeVariabels = variabels.filter(v => {
+                            return Object.keys(data).some(p => {
+                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                return record && record.nilai !== null && record.nilai !== undefined && Number(record.nilai) !== 0;
+                            });
+                        });
+
                         const persentils = Object.keys(data).sort((a, b) => a - b);
 
                         // Update Table Header
                         let header = '<th>P</th>';
-                        variabels.forEach(v => {
+                        activeVariabels.forEach(v => {
                             header += `<th title="${v.nama_variabel} ${v.tahun}">${v.nama_variabel.substring(0, 3)} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun.toString().substring(2)}</th>`;
                         });
                         document.getElementById('modalTableHeader').innerHTML = header;
@@ -445,21 +557,31 @@
                         // Update Table Body
                         let body = '';
                         persentils.forEach(p => {
-                            body += `<tr><td class="fw-bold bg-light">${p}</td>`;
-                            variabels.forEach(v => {
-                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
-                                body += `<td>${record ? Number(record.nilai).toLocaleString('id-ID', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                }) : '-'}</td>`;
+                            let rowHtml = `<tr><td class="fw-bold bg-light">${p}</td>`;
+                            let hasData = false;
 
+                            activeVariabels.forEach(v => {
+                                const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
+                                if (record) {
+                                    hasData = true;
+                                    rowHtml += `<td>${Number(record.nilai).toLocaleString('id-ID', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}</td>`;
+                                } else {
+                                    rowHtml += `<td>-</td>`;
+                                }
                             });
-                            body += '</tr>';
+                            rowHtml += '</tr>';
+
+                            if (hasData) {
+                                body += rowHtml;
+                            }
                         });
                         document.getElementById('modalTableBody').innerHTML = body;
 
                         // Update Chart
-                        const datasets = variabels.map((v, index) => {
+                        const datasets = activeVariabels.map((v, index) => {
                             const lineData = persentils.map(p => {
                                 const record = data[p].find(r => r.variabel_kemiskinan_id == v.id);
                                 return record ? record.nilai : null;
@@ -468,8 +590,7 @@
                             return {
                                 label: `${v.nama_variabel} ${bulanNama[v.bulan] ? `(${bulanNama[v.bulan].substring(0, 3)})` : ''} ${v.tahun}`,
                                 data: lineData,
-                                //borderColor: colorPalette[index % colorPalette.length],\
-                                borderColor: generateColor(index),
+                                borderColor: generateColor(index, activeVariabels.length),
                                 tension: 0.3,
                                 borderWidth: 2,
                                 pointRadius: 2
