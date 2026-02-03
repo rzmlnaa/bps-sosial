@@ -162,6 +162,7 @@ Route::middleware(['check.status'])->group(function () {
 
     // SERUTI (Public Read)
     Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
+    Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
 });
 
 
