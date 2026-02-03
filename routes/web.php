@@ -162,8 +162,7 @@ Route::middleware(['check.status'])->group(function () {
 
     // SERUTI (Public Read)
     Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
-    Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
-    Route::post('/seruti/store', [SerutiController::class, 'store'])->name('seruti.store');
+
 });
 
 
@@ -238,4 +237,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/seruti/input', [SerutiController::class, 'create'])->name('seruti.create');
     Route::get('/seruti/get-data', [SerutiController::class, 'getData'])->name('seruti.get-data');
     Route::post('/seruti', [SerutiController::class, 'store'])->name('seruti.store');
+
+
+    Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
+    Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
 });

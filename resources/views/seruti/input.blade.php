@@ -42,23 +42,51 @@
             <!-- Tab 1: Master Kelompok -->
             <div class="tab-pane fade" id="master" role="tabpanel" aria-labelledby="master-tab">
                 <div class="row g-4">
-                    <!-- Left: Paste Area -->
+                    <!-- Left: Input Area -->
                     <div class="col-lg-12">
                         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                            <div class="card-body p-4">
-                                <h5 class="fw-bold mb-3">Copy-Paste dari Excel</h5>
-                                <p class="text-muted small">
-                                    Salin data dari Excel dengan kolom (Kode | COICOP | SERUTI) lalu tempel di bawah ini.
-                                </p>
-                                <div class="form-group mb-3">
-                                    <textarea id="pasteArea" class="form-control" rows="8"
-                                        placeholder="Paste data Excel di sini..."
-                                        style="font-family: monospace; font-size: 0.9rem;"></textarea>
+                            <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0 text-uppercase text-secondary">Input Master Coicop</h6>
+                                <div class="btn-group" role="group" aria-label="Input Mode">
+                                    <input type="radio" class="btn-check" name="inputMode" id="modePaste" autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="modePaste"><i class="fas fa-paste me-1"></i> Paste Excel</label>
+
+                                    <input type="radio" class="btn-check" name="inputMode" id="modeManual" autocomplete="off">
+                                    <label class="btn btn-outline-primary btn-sm" for="modeManual"><i class="fas fa-keyboard me-1"></i> Manual</label>
                                 </div>
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button class="btn btn-secondary" id="clearBtn">Clear</button>
-                                    <button class="btn btn-primary" id="previewBtn">Preview Data</button>
+                            </div>
+                            <div class="card-body p-4 pt-0">
+                                
+                                <!-- Paste Section -->
+                                <div id="pasteSection">
+                                    <p class="text-muted small">
+                                        Salin data dari Excel dengan kolom (Kode | COICOP | SERUTI) lalu tempel di bawah ini.
+                                    </p>
+                                    <div class="form-group mb-3">
+                                        <textarea id="pasteArea" class="form-control" rows="8"
+                                            placeholder="Paste data Excel di sini..."
+                                            style="font-family: monospace; font-size: 0.9rem;"></textarea>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-secondary" id="clearBtn">Clear</button>
+                                        <button class="btn btn-primary" id="previewBtn">Preview & Simpan</button>
+                                    </div>
                                 </div>
+
+                                <!-- Manual Section -->
+                                <div id="manualSection" class="d-none">
+                                    <p class="text-muted small">Masukkan data kelompok secara manual.</p>
+                                    <div id="manualRowsContainer">
+                                        <!-- Dynamic Rows -->
+                                    </div>
+                                    <div class="mt-3 d-flex justify-content-between">
+                                        <button class="btn btn-outline-primary btn-sm" id="addManualRowBtn">
+                                            <i class="fas fa-plus me-1"></i> Tambah Baris
+                                        </button>
+                                        <button class="btn btn-primary" id="previewManualBtn">Simpan Data</button>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -81,7 +109,7 @@
                                             <th class="ps-4" style="width: 100px;">Kode</th>
                                             <th>Nama COICOP</th>
                                             <th>SERUTI</th>
-                                            <th class="text-center">Status</th>
+                                            <th class="text-center">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="coicopTableBody">
@@ -90,7 +118,20 @@
                                                 <td class="ps-4 fw-bold">{{ $c->kode }}</td>
                                                 <td>{{ $c->nama }}</td>
                                                 <td><span class="badge bg-info text-dark">{{ $c->seruti }}</span></td>
-                                                <td class="text-center"><span class="badge bg-secondary">Tersimpan</span></td>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-coicop-btn" 
+                                                        data-id="{{ $c->id }}" 
+                                                        data-kode="{{ $c->kode }}" 
+                                                        data-nama="{{ $c->nama }}" 
+                                                        data-seruti="{{ $c->seruti }}">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-icon btn-outline-danger delete-coicop-btn" 
+                                                        data-id="{{ $c->id }}" 
+                                                        data-obj="{{ $c->kode }} - {{ $c->nama }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
@@ -170,8 +211,8 @@
                                                     style="font-family: monospace; font-size: 0.9rem; white-space: pre;"></textarea>
                                             </div>
                                             <div class="d-flex flex-column gap-2 justify-content-start">
-                                                <button class="btn btn-primary" id="previewConsumptionBtn">
-                                                    <i class="fas fa-sync-alt me-1"></i> Preview
+                                                <button class="btn btn-primary" id="actionSaveBtn">
+                                                    <i class="fas fa-save me-1"></i> Simpan Data
                                                 </button>
                                                 <button class="btn btn-outline-secondary" id="clearConsumptionBtn">
                                                     <i class="fas fa-trash me-1"></i> Clear
@@ -188,8 +229,8 @@
                                     <div
                                         class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                                         <h5 class="fw-bold mb-0" id="tableHeaderTitle">Data Tersimpan - [Pilih Wilayah]</h5>
-                                        <button class="btn btn-success d-none" id="saveConsumptionBtn">
-                                            <i class="fas fa-save me-2"></i>Simpan Data
+                                        <button class="btn btn-outline-dark d-none" id="printBtn">
+                                            <i class="fas fa-print"></i>
                                         </button>
                                     </div>
                                     <div class="table-responsive">
@@ -236,15 +277,220 @@
             const pasteArea = document.getElementById('pasteArea');
             const previewBtn = document.getElementById('previewBtn');
             const clearBtn = document.getElementById('clearBtn');
-            const saveBtn = document.getElementById('saveBtn');
+            const saveBtn = document.getElementById('saveBtn'); // Note: This button is hidden in new design, integrated into Preview
             const tableBody = document.getElementById('coicopTableBody');
+            
+            // Toggle Logic
+            const modePaste = document.getElementById('modePaste');
+            const modeManual = document.getElementById('modeManual');
+            const pasteSection = document.getElementById('pasteSection');
+            const manualSection = document.getElementById('manualSection');
+
+            if(modePaste && modeManual) {
+                modePaste.addEventListener('change', () => {
+                    if(modePaste.checked) {
+                        pasteSection.classList.remove('d-none');
+                        manualSection.classList.add('d-none');
+                    }
+                });
+                modeManual.addEventListener('change', () => {
+                    if(modeManual.checked) {
+                        manualSection.classList.remove('d-none');
+                        pasteSection.classList.add('d-none');
+                        if(manualRowsContainer.children.length === 0) addRow(); // Init one row
+                    }
+                });
+            }
+
+            // Manual Input Logic
+            const manualRowsContainer = document.getElementById('manualRowsContainer');
+            const addManualRowBtn = document.getElementById('addManualRowBtn');
+            const previewManualBtn = document.getElementById('previewManualBtn');
+
+            function createRowHtml() {
+                return `
+                    <div class="row g-2 mb-2 manual-row align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Kode</label>
+                            <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted mb-1">Nama COICOP</label>
+                            <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Seruti</label>
+                            <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
+                        </div>
+                        <div class="col-md-1">
+                             <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function addRow(data = null) {
+                const div = document.createElement('div');
+                div.innerHTML = createRowHtml();
+                const newRow = div.firstElementChild;
+                manualRowsContainer.appendChild(newRow);
+                
+                if (data) {
+                    newRow.querySelector('.input-kode').value = data.kode || '';
+                    newRow.querySelector('.input-nama').value = data.nama || '';
+                    newRow.querySelector('.input-seruti').value = data.seruti || '';
+                }
+
+                newRow.querySelector('.remove-row-btn').addEventListener('click', function() {
+                    newRow.remove();
+                });
+            }
+
+            if(addManualRowBtn) {
+                addManualRowBtn.addEventListener('click', () => addRow());
+            }
+
+            // Edit Logic
+            document.querySelectorAll('.edit-coicop-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const kode = this.dataset.kode;
+                    const nama = this.dataset.nama;
+                    const seruti = this.dataset.seruti;
+
+                    Swal.fire({
+                        title: 'Edit Kelompok COICOP',
+                        html: `
+                            <div class="text-start">
+                                <div class="mb-3">
+                                    <label class="form-label small">Kode</label>
+                                    <input id="editKode" class="form-control" value="${kode}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small">Nama</label>
+                                    <input id="editNama" class="form-control" value="${nama}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small">Seruti</label>
+                                    <input id="editSeruti" class="form-control" value="${seruti}">
+                                </div>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Simpan',
+                        preConfirm: () => {
+                            return {
+                                id: id, // Include ID for Update Logic
+                                kode: document.getElementById('editKode').value,
+                                nama: document.getElementById('editNama').value,
+                                seruti: document.getElementById('editSeruti').value
+                            }
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Reuse store-coicop endpoint
+                            saveCoicopData([result.value]);
+                        }
+                    });
+                });
+            });
+
+            // Delete Logic
+             document.querySelectorAll('.delete-coicop-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const label = this.dataset.obj;
+
+                    Swal.fire({
+                        title: 'Hapus Komoditas?',
+                        text: `Anda akan menghapus "${label}". Data tidak dapat dikembalikan. Pastikan data tidak memiliki nilai konsumsi tersimpan.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Ya, Hapus!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`{{ url('/seruti/coicop') }}/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Terhapus!', data.message, 'success').then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Gagal', data.message, 'error');
+                                }
+                            })
+                            .catch(err => {
+                                Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Save/Processing Logic
             let parsedData = [];
 
             if (clearBtn) {
                 clearBtn.addEventListener('click', () => {
                     pasteArea.value = '';
-                    parsedData = [];
-                    saveBtn.classList.add('d-none');
+                });
+            }
+
+            function getManualData() {
+                const rows = document.querySelectorAll('.manual-row');
+                const data = [];
+                rows.forEach(row => {
+                    const kode = row.querySelector('.input-kode').value.trim();
+                    const nama = row.querySelector('.input-nama').value.trim();
+                    const seruti = row.querySelector('.input-seruti').value.trim();
+                    if(kode && nama) {
+                        data.push({kode, nama, seruti});
+                    }
+                });
+                return data;
+            }
+
+            function saveCoicopData(data) {
+                 if (data.length === 0) {
+                     Swal.fire('Error', 'Tidak ada data valid.', 'warning');
+                     return;
+                 }
+                 
+                 Swal.fire({
+                    title: 'Simpan Data?',
+                    text: `Akan menyimpan ${data.length} item data.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Simpan',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        return fetch('{{ route("seruti.store-coicop") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ coicops: data })
+                        })
+                        .then(response => response.json())
+                        .catch(error => Swal.showValidationMessage(`Request failed: ${error}`));
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && result.value.success) {
+                        Swal.fire('Berhasil!', result.value.message, 'success').then(() => {
+                            window.location.reload();
+                        });
+                    } else if (result.value && !result.value.success) {
+                        Swal.fire('Gagal', result.value.message, 'error');
+                    }
                 });
             }
 
@@ -273,30 +519,23 @@
                     });
 
                     if (newRows.length === 0) {
-                        Swal.fire('Error', 'Format data tidak dikenali. Pastikan copy-paste dari Excel dengan benar.', 'error');
+                        Swal.fire('Error', 'Format data tidak dikenali.', 'error');
                         return;
                     }
 
-                    parsedData = newRows;
-                    renderPreview(newRows);
-                    saveBtn.classList.remove('d-none');
-                    Swal.fire('Sukses', `${newRows.length} baris data dikenali. Klik Simpan untuk memproses.`, 'success');
+                    saveCoicopData(newRows);
+                });
+            }
+            
+            if (previewManualBtn) {
+                previewManualBtn.addEventListener('click', () => {
+                    const data = getManualData();
+                    saveCoicopData(data);
                 });
             }
 
             function renderPreview(data) {
-                let html = '';
-                data.forEach(item => {
-                    html += `
-                            <tr class="table-warning">
-                                <td class="ps-4 fw-bold">${item.kode}</td>
-                                <td>${item.nama}</td>
-                                <td>${item.seruti}</td>
-                                <td class="text-center"><span class="badge bg-warning text-dark">Preview (Belum Disimpan)</span></td>
-                            </tr>
-                        `;
-                });
-                tableBody.innerHTML = html;
+               // Deprecated as we save immediately now
             }
 
             if (saveBtn) {
@@ -342,9 +581,9 @@
 
             // --- INPUT CONSUMPTION LOGIC ---
             const pasteConsumption = document.getElementById('pasteConsumption');
-            const previewConsumptionBtn = document.getElementById('previewConsumptionBtn');
+            const actionSaveBtn = document.getElementById('actionSaveBtn');
             const clearConsumptionBtn = document.getElementById('clearConsumptionBtn');
-            const saveConsumptionBtn = document.getElementById('saveConsumptionBtn');
+            const printBtn = document.getElementById('printBtn');
             const consumptionTableBody = document.getElementById('consumptionTableBody');
             const tableHeaderTitle = document.getElementById('tableHeaderTitle');
 
@@ -356,31 +595,36 @@
             function updatePreviewHeader() {
                 const y = inputYear ? inputYear.value : '';
                 const q = inputQuarter && inputQuarter.value ? inputQuarter.options[inputQuarter.selectedIndex].text : '';
-
+                
                 let kName = '[Pilih Wilayah]';
                 let kId = '';
-
+                
                 if (inputKabupaten && inputKabupaten.value) {
                     kName = inputKabupaten.options[inputKabupaten.selectedIndex].text;
                     kId = inputKabupaten.value;
                 }
 
                 if (tableHeaderTitle) {
-                    tableHeaderTitle.innerText = `Data Tersimpan - ${kName}`;
+                    let title = 'Data Tersimpan';
+                    if (y) title += ` ${y}`;
+                    if (q) title += ` - ${q}`;
+                    title += ` - ${kName}`;
+                    tableHeaderTitle.innerText = title;
                 }
 
                 if (y && y.length === 4 && inputQuarter.value && kId) {
                     fetchExistingData(y, inputQuarter.value, kId);
                 } else {
-                    consumptionTableBody.innerHTML = `
-                            <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
-                                    <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
-                                    <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
-                                </td>
-                            </tr>
-                        `;
+                     consumptionTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
+                                <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
+                            </td>
+                        </tr>
+                    `;
                     pasteConsumption.value = '';
+                    if(printBtn) printBtn.classList.add('d-none');
                 }
             }
 
@@ -388,7 +632,7 @@
                 // Show loading state
                 consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">Memuat data...</div></td></tr>';
                 pasteConsumption.value = 'Memuat data...';
-                saveConsumptionBtn.classList.add('d-none');
+                if(printBtn) printBtn.classList.add('d-none');
 
                 const url = `{{ route('seruti.get-data') }}?year=${year}&quarter=${quarter}&kabupaten_id=${kabupatenId}`;
 
@@ -404,6 +648,7 @@
 
                             renderConsumptionTable(parsedConsumption);
                             populateTextArea(parsedConsumption);
+                            if(printBtn) printBtn.classList.remove('d-none');
                         } else {
                             Swal.fire('Error', response.message, 'error');
                             consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
@@ -411,7 +656,6 @@
                         }
                     })
                     .catch(err => {
-
                         console.error(err);
                         consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Gagal menghubungi server.</td></tr>';
                         pasteConsumption.value = '';
@@ -420,65 +664,46 @@
 
             function renderConsumptionTable(data) {
                 let html = '';
-                let hasData = false;
-
+                
                 data.forEach(item => {
                     const hasValue = item.value !== null && item.value !== '' && !isNaN(item.value);
-                    if (hasValue) hasData = true;
-
-                    const valDisplay = hasValue ? parseFloat(item.value).toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '-';
-
+                    const valDisplay = hasValue ? parseFloat(item.value).toLocaleString('id-ID', {minimumFractionDigits: 2}) : '-';
                     let rowClass = '';
                     if (item.state === 'ready') {
-                        rowClass = 'table-info'; // Highlight changed rows
+                         rowClass = 'table-info'; // Highlight changed rows
                     }
 
                     html += `
-                            <tr class="${rowClass}">
-                                <td class="ps-4 fw-bold align-middle">${item.kode}</td>
-                                <td class="align-middle">${item.nama}</td>
-                                <td class="align-middle">
-                                    <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
-                                </td>
-                                <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
-                            </tr>
-                        `;
+                        <tr class="${rowClass}">
+                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
+                            <td class="align-middle">${item.nama}</td>
+                            <td class="align-middle">
+                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
+                            </td>
+                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
+                        </tr>
+                    `;
                 });
 
                 if (data.length === 0) {
-                    html = '<tr><td colspan="5" class="text-center py-4 text-muted">Master data kosong.</td></tr>';
+                    html = '<tr><td colspan="4" class="text-center py-4 text-muted">Master data kosong.</td></tr>';
                 }
 
                 consumptionTableBody.innerHTML = html;
-
-                // Always allow saving if we have parsed data (to allow updating)
-                if (data.length > 0) {
-                    saveConsumptionBtn.classList.remove('d-none');
-                }
             }
 
             function populateTextArea(data) {
-                // "jika ada konsumsi perkaipta nya maka tampil di inputan nilai"
                 const lines = [];
                 let hasValues = false;
-
+                
                 data.forEach(item => {
                     if (item.value !== null && item.value !== '' && !isNaN(item.value)) {
-                        // Format nicely? Or raw? Excel usually prefers raw numbers or simple format.
-                        // Let's use raw number for editing accuracy, but maybe format for readability?
-                        // TextArea usually needs raw for re-parsing easily.
-                        // User said "tampil di inputan nilai". 
-                        lines.push(item.value);
-                        hasValues = true;
+                         lines.push(item.value);
+                         hasValues = true;
                     } else {
-                        lines.push(""); // Keep empty line to maintain alignment with Master
+                        lines.push("");
                     }
                 });
-
-                // Only fill if there is at least one value? Or always fill to show structure?
-                // If we fill empty lines, it helps user know where to paste.
-                // But empty lines might be confusing if they just want to paste a block.
-                // However, logic relies on index matching. So we MUST maintain lines.
 
                 if (hasValues) {
                     pasteConsumption.value = lines.join('\n');
@@ -487,7 +712,7 @@
                     pasteConsumption.placeholder = "Belum ada data nilai. Paste data dari Excel di sini...";
                 }
             }
-
+            
             if (inputYear) inputYear.addEventListener('input', updatePreviewHeader);
             if (inputQuarter) inputQuarter.addEventListener('change', updatePreviewHeader);
             if (inputKabupaten) inputKabupaten.addEventListener('change', updatePreviewHeader);
@@ -498,66 +723,56 @@
             if (clearConsumptionBtn) {
                 clearConsumptionBtn.addEventListener('click', () => {
                     pasteConsumption.value = '';
-                    // Do not clear parsedConsumption immediately, just the text. 
-                    // Or clearing text should imply clearing preview?
-                    // Usually Clear button clears the INPUT. The table shows DB data until overridden.
-                    // But here, let's keep it simple.
                     pasteConsumption.focus();
                 });
             }
+            
+            if (printBtn) {
+                printBtn.addEventListener('click', () => {
+                    window.print();
+                });
+            }
 
-            if (previewConsumptionBtn) {
-                previewConsumptionBtn.addEventListener('click', () => {
-                    const rawText = pasteConsumption.value.trim(); // Trim only start/end of whole text
+            if (actionSaveBtn) {
+                actionSaveBtn.addEventListener('click', () => {
+                    const year = document.getElementById('inputYear').value;
+                    const quarter = document.getElementById('inputQuarter').value;
+                    const kabupatenId = document.getElementById('inputKabupaten').value;
+
+                    if (!year || !quarter || !kabupatenId) {
+                        Swal.fire('Peringatan', 'Harap pilih Tahun, Triwulan, dan Kabupaten terlebih dahulu.', 'warning');
+                        return;
+                    }
+                    
+                    const rawText = pasteConsumption.value.trim();
                     if (!rawText) {
-                        Swal.fire('Info', 'Silakan paste data excel terlebih dahulu', 'info');
+                        Swal.fire('Info', 'Silakan paste data excel/nilai terlebih dahulu pada kolom input.', 'info');
                         return;
                     }
 
-                    // We need to split by newline, preserving empty lines to maintain index alignment if user pasted a column with gaps.
-                    // However, standard "trim()" above might kill empty lines at end.
-                    // Let's use raw value.
                     const rawVal = pasteConsumption.value;
                     const rows = rawVal.split('\n');
-
-                    // If user pasted just values (1 column), map to Master
-                    // Logic: Map pasted rows 1-to-1 with masterCoicops
-
+                    
                     if (rows.length > masterCoicops.length) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Jumlah Baris Berlebih',
-                            text: `Data paste memiliki ${rows.length} baris, sedangkan Master COICOP memiliki ${masterCoicops.length} baris. Data berlebih akan diabaikan.`,
-                        });
+                         // Warning handled implicitly
                     }
 
-                    // Reset parsedConsumption to Master Clone before applying updates
-                    // This ensures we start fresh with the layout
+                    // Reset parsedConsumption based on Master
                     const newParsed = JSON.parse(JSON.stringify(masterCoicops)).map(item => ({
                         ...item,
                         value: null,
                         state: 'empty'
                     }));
-
-                    // If we previously had DB data, maybe we should merge?
-                    // Usually "Preview" takes what is in the Text Area as the Source of Truth for "New Input".
-
+                    
                     let validCount = 0;
 
                     masterCoicops.forEach((coicop, index) => {
                         if (index < rows.length) {
                             let valueStr = rows[index].trim();
-
-                            // Handling Excel formatting (dots as thousands, commas as decimals OR vice versa depending on locale)
-                            // Assuming Indonesia Locale: 1.000.000,00
-                            // Remove dots, replace comma with dot.
-
-                            if (valueStr === '' || valueStr === '-') {
-                                // Empty
-                            } else {
+                            if (valueStr !== '' && valueStr !== '-') {
                                 let valueClean = valueStr.replace(/\./g, '').replace(/,/g, '.');
                                 let value = parseFloat(valueClean);
-
+        
                                 if (!isNaN(value)) {
                                     newParsed[index].value = value;
                                     newParsed[index].state = 'ready';
@@ -569,44 +784,21 @@
 
                     parsedConsumption = newParsed;
                     renderConsumptionTable(parsedConsumption);
-
+                    
                     if (validCount === 0) {
-                        Swal.fire('Info', 'Tidak ada angka valid yang ditemukan dalam paste area.', 'info');
-                    } else {
-                        Swal.fire('Sukses', `${validCount} data nilai berhasil dibaca. Klik Simpan untuk melanjutkan.`, 'success');
+                         Swal.fire('Info', 'Tidak ada nilai valid yang ditemukan.', 'info');
+                         return;
                     }
-                });
-            }
-
-            if (saveConsumptionBtn) {
-                saveConsumptionBtn.addEventListener('click', () => {
-                    const year = document.getElementById('inputYear').value;
-                    const quarter = document.getElementById('inputQuarter').value;
-                    const kabupatenId = document.getElementById('inputKabupaten').value;
-
-                    if (!year || !quarter || !kabupatenId) {
-                        Swal.fire('Peringatan', 'Harap pilih Tahun, Triwulan, dan Kabupaten terlebih dahulu.', 'warning');
-                        return;
-                    }
-
-                    const dataToSave = parsedConsumption.filter(item =>
-                        item.state === 'ready' || (item.state === 'saved' && item.value !== null)
-                        // Actually we should save EVERYTHING that has a value, to ensure full sync.
-                        // Or just 'ready' items?
-                        // If we overwrite, we should save all non-nulls.
-                    ).map(item => ({
+                    
+                    // Proceed to Save
+                    const dataToSave = parsedConsumption.filter(item => item.state === 'ready').map(item => ({
                         kode: item.kode,
                         value: item.value
                     }));
 
-                    if (dataToSave.length === 0) {
-                        Swal.fire('Info', 'Tidak ada data nilai yang valid untuk disimpan.', 'info');
-                        return;
-                    }
-
                     Swal.fire({
-                        title: 'Simpan Data Konsumsi?',
-                        text: `Anda akan menyimpan ${dataToSave.length} data untuk ${year} Q${quarter}.`,
+                        title: 'Simpan Data?',
+                        text: `Anda akan menyimpan ${validCount} data untuk ${year} Q${quarter}.`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonText: 'Ya, Simpan',
@@ -632,9 +824,7 @@
                                     return response.json()
                                 })
                                 .catch(error => {
-                                    Swal.showValidationMessage(
-                                        `Request failed: ${error}`
-                                    )
+                                    Swal.showValidationMessage(`Request failed: ${error}`);
                                 })
                         },
                         allowOutsideClick: () => !Swal.isLoading()
@@ -642,7 +832,6 @@
                         if (result.isConfirmed) {
                             if (result.value.success) {
                                 Swal.fire('Berhasil!', result.value.message, 'success').then(() => {
-                                    // Reload data to reflect saved state
                                     fetchExistingData(year, quarter, kabupatenId);
                                 });
                             } else {

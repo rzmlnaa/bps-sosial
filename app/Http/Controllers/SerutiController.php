@@ -75,14 +75,14 @@ class SerutiController extends Controller
             'coicops.*.kode' => 'required',
             'coicops.*.nama' => 'required',
             'coicops.*.seruti' => 'nullable',
+            'coicops.*.id' => 'nullable',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Option: Clear existing or Update/Upsert
-            // For "Master", usually safer to Upsert or Check existence. 
-            // Given the requirement "paste excel", let's assuming adding/updating.
+            $savedCount = 0;
+            $skippedCount = 0;
 
             foreach ($request->coicops as $row) {
                 // Determine is_total based on keyword if not provided
@@ -91,18 +91,55 @@ class SerutiController extends Controller
                     $isTotal = true;
                 }
 
-                Coicop::updateOrCreate(
-                    ['kode' => $row['kode']],
-                    [
+                if (isset($row['id']) && $row['id']) {
+                    // --- UPDATE EXISTING (Edit Mode) ---
+                    $existing = Coicop::find($row['id']);
+                    if ($existing) {
+                        // Check if new code conflicts with ANOTHER record
+                        $conflict = Coicop::where('kode', $row['kode'])
+                            ->where('id', '!=', $row['id'])
+                            ->exists();
+
+                        if ($conflict) {
+                            throw new \Exception("Gagal Edit: Kode '{$row['kode']}' sudah digunakan oleh komoditas lain.");
+                        }
+
+                        $existing->update([
+                            'kode' => $row['kode'],
+                            'nama' => $row['nama'],
+                            'seruti' => $row['seruti'] ?? '',
+                            'is_total' => $isTotal
+                        ]);
+                        $savedCount++;
+                    }
+                } else {
+                    // --- CREATE NEW (Paste/Manual Mode) ---
+                    // "Jangan memasukan data yang sama atau sudah ada"
+                    $exists = Coicop::where('kode', $row['kode'])->exists();
+
+                    if ($exists) {
+                        $skippedCount++;
+                        continue; // SKIP DUPLICATE
+                    }
+
+                    Coicop::create([
+                        'kode' => $row['kode'],
                         'nama' => $row['nama'],
                         'seruti' => $row['seruti'] ?? '',
                         'is_total' => $isTotal
-                    ]
-                );
+                    ]);
+                    $savedCount++;
+                }
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Data Master Kelompok berhasil disimpan!']);
+
+            $message = "Simpan berhasil! {$savedCount} data diproses.";
+            if ($skippedCount > 0) {
+                $message .= " ({$skippedCount} data diabaikan karena Kode sudah ada)";
+            }
+
+            return response()->json(['success' => true, 'message' => $message]);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -152,6 +189,34 @@ class SerutiController extends Controller
 
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error fetching data: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyCoicop($id)
+    {
+        try {
+            $coicop = Coicop::find($id);
+
+            if (!$coicop) {
+                return response()->json(['success' => false, 'message' => 'Data komoditas tidak ditemukan.'], 404);
+            }
+
+            // Check if ANY value exists in consumption_values table for this coicop.
+            $hasUsage = ConsumptionValue::where('coicop_id', $id)->exists();
+
+            if ($hasUsage) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kelompok ini sudah memiliki data nilai yang tersimpan.'
+                ], 400);
+            }
+
+            $coicop->delete();
+
+            return response()->json(['success' => true, 'message' => 'Data komoditas berhasil dihapus!']);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
 }
