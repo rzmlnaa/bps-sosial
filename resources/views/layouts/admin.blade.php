@@ -143,38 +143,10 @@
                     <span>Kemiskinan</span>
                 </a>
 
-
-
-                <a href="#submenu1" class="nav-link" data-bs-toggle="collapse" aria-expanded="false">
-                    <i class="fas fa-layer-group"></i>
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <span>Sub Kelompok</span>
-                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem; width: auto;"></i>
-                    </div>
+                <a href="{{ route('seruti.index') }}" class="nav-link {{ request()->routeIs('seruti.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>SERUTI</span>
                 </a>
-                <div class="collapse" id="submenu1">
-                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                                <i class="fas fa-circle" style="font-size: 4px;"></i>
-                                <span>Makanan</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                                <i class="fas fa-circle" style="font-size: 4px;"></i>
-                                <span>Non-Makanan</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <a href="#" class="nav-link">
-                    <i class="fas fa-shopping-basket"></i>
-                    <span>Komoditas</span>
-                </a>
-
-
 
 
                 <a href="#submenu2" id="menu-rentang-harga"

@@ -18,6 +18,7 @@ use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\SerutiController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -158,6 +159,9 @@ Route::middleware(['check.status'])->group(function () {
 
     Route::get('/price-range', [PriceRangeController::class, 'index'])->name('price-range.index');
     Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name('price-range.export');
+
+    // SERUTI (Public Read)
+    Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
 });
 
 
@@ -227,4 +231,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::get('/verification/{kabupatenId}', [VerificationController::class, 'show'])->name('verification.show');
     Route::post('/verification/{kabupatenId}', [VerificationController::class, 'store'])->name('verification.store');
+
+    // SERUTI (Input Restricted)
+    Route::get('/seruti/input', [SerutiController::class, 'create'])->name('seruti.create');
+    Route::post('/seruti', [SerutiController::class, 'store'])->name('seruti.store');
 });
