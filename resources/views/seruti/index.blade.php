@@ -123,11 +123,30 @@
 
                 <!-- Chart Container -->
                 <div id="chartContainer" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="fw-bold mb-0 text-dark" id="chartTitle">Judul Grafik</h5>
-                        <!-- Legend Info or Tooltip hint -->
+                    <div class="row g-4">
+                        <div class="col-lg-8">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0 text-dark" id="chartTitle">Judul Grafik</h5>
+                            </div>
+                            <div id="mainChart"></div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card bg-light border-0" style="border-radius: 12px;">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold text-dark mb-3 d-flex justify-content-between align-items-center">
+                                        <span><i class="fas fa-microscope me-2 text-primary"></i> Analisis Anomali
+                                            (>25%)</span>
+                                        <span class="badge bg-primary rounded-pill" id="anomalyCount"
+                                            style="font-size: 0.7rem;">0</span>
+                                    </h6>
+                                    <div id="anomalyList" class="d-flex flex-column gap-2"
+                                        style="max-height: 420px; overflow-y: auto; scrollbar-width: thin;">
+                                        <!-- JS will populate this -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="mainChart"></div>
                 </div>
 
             </div>
@@ -344,7 +363,6 @@
                 updateUIState('chart');
                 chartTitle.innerText = data.title;
                 const colors = generateTWColors(data.series);
-                //const colors = data.series.map(s => twColorByName(s.name));
 
                 console.log('Render chart with:', data);
 
@@ -370,6 +388,50 @@
                 }, false, true);
 
                 chart.updateSeries(data.series, true);
+
+                // Populate Anomalies
+                const anomalyList = document.getElementById('anomalyList');
+                const anomalyCount = document.getElementById('anomalyCount');
+                anomalyList.innerHTML = '';
+
+                if (!data.anomalies || data.anomalies.length === 0) {
+                    if (anomalyCount) anomalyCount.innerText = '0';
+                    anomalyList.innerHTML = `
+                                <div class="p-4 text-center">
+                                    <i class="fas fa-check-circle fa-2x text-success opacity-50 mb-2"></i>
+                                    <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (>25%) pada dataset ini.</p>
+                                </div>
+                            `;
+                } else {
+                    if (anomalyCount) anomalyCount.innerText = data.anomalies.length;
+                    data.anomalies.forEach(ano => {
+                        const isHigh = ano.type === 'Tinggi';
+                        const badgeClass = isHigh ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-dark';
+                        const iconClass = isHigh ? 'fa-arrow-up' : 'fa-arrow-down';
+
+                        const div = document.createElement('div');
+                        div.className = 'p-3 bg-white border-start border-4 border-' + (isHigh ? 'danger' : 'warning') + ' rounded shadow-sm';
+                        div.style.borderRadius = '8px';
+                        div.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="badge ${badgeClass} small" style="font-size: 0.7rem;">
+                                            <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
+                                        </span>
+                                        <span class="text-muted" style="font-size: 0.65rem;">${ano.period}</span>
+                                    </div>
+                                    <h6 class="mb-1 fw-bold text-dark" style="font-size: 0.85rem;">${ano.item}</h6>
+                                    <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+                                        <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
+                                        <span class="mx-1">vs</span>
+                                        <span>Rata-rata: Rp ${ano.reference.toLocaleString('id-ID')}</span>
+                                    </p>
+                                    <div class="mt-1 small text-muted" style="font-size: 0.7rem; font-style: italic;">
+                                        Lokasi/Kategori: ${ano.location}
+                                    </div>
+                                `;
+                        anomalyList.appendChild(div);
+                    });
+                }
             }
 
             console.log('Chart width:', document.querySelector('#mainChart').offsetWidth);
@@ -386,10 +448,26 @@
             max-width: 400px;
         }
 
-        .form-select-sm,
-        .form-control-sm {
-            border-radius: 6px;
-            font-size: 0.85rem;
+        .bg-danger-subtle {
+            background-color: #f8d7da !important;
+        }
+
+        .bg-warning-subtle {
+            background-color: #fff3cd !important;
+        }
+
+        /* Custom scrollbar for anomaly list */
+        #anomalyList::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #anomalyList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        #anomalyList::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
         }
     </style>
 @endpush

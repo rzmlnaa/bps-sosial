@@ -331,11 +331,78 @@ class SerutiController extends Controller
             return response()->json(['empty' => true, 'debug' => ['count' => $rawData->count(), 'mode' => $mode]]);
         }
 
+        // --- DEV-ANALYSIS: Identifying Anomalies (>25% deviation from Provincial Average) ---
+        $anomalies = [];
+        $periodIds = $rawData->pluck('period_id')->unique();
+
+        if ($mode === 'regency') {
+            $allCoicopIds = $rawData->pluck('coicop_id')->unique();
+            $provincialAverages = ConsumptionValue::whereIn('coicop_id', $allCoicopIds)
+                ->whereIn('period_id', $periodIds)
+                ->select('coicop_id', 'period_id', DB::raw('AVG(value) as avg_value'))
+                ->groupBy('coicop_id', 'period_id')
+                ->get()
+                ->groupBy('coicop_id');
+
+            foreach ($rawData as $row) {
+                $avgGroup = $provincialAverages->get($row->coicop_id);
+                $avg = $avgGroup ? $avgGroup->firstWhere('period_id', $row->period_id)?->avg_value : null;
+
+                if ($avg && $avg > 0) {
+                    $diff = (($row->value - $avg) / $avg) * 100;
+                    if (abs($diff) > 25) {
+                        $anomalies[] = [
+                            'item' => $row->coicop->nama,
+                            'code' => $row->coicop->kode,
+                            'location' => $row->kabupaten->nama_kabupaten,
+                            'period' => "Tw {$row->period->quarter} {$row->period->year}",
+                            'value' => (float) $row->value,
+                            'reference' => (float) $avg,
+                            'deviation' => round($diff, 1),
+                            'type' => $diff > 0 ? 'Tinggi' : 'Rendah'
+                        ];
+                    }
+                }
+            }
+        } else {
+            $coicopId = $rawData->first()->coicop_id;
+            $provincialAverages = ConsumptionValue::where('coicop_id', $coicopId)
+                ->whereIn('period_id', $periodIds)
+                ->select('period_id', DB::raw('AVG(value) as avg_value'))
+                ->groupBy('period_id')
+                ->get()
+                ->keyBy('period_id');
+
+            foreach ($rawData as $row) {
+                $avg = $provincialAverages->get($row->period_id)?->avg_value;
+
+                if ($avg && $avg > 0) {
+                    $diff = (($row->value - $avg) / $avg) * 100;
+                    if (abs($diff) > 25) {
+                        $anomalies[] = [
+                            'item' => $row->kabupaten->nama_kabupaten,
+                            'code' => $row->kabupaten->kode_kab,
+                            'location' => $row->coicop->nama,
+                            'period' => "Tw {$row->period->quarter} {$row->period->year}",
+                            'value' => (float) $row->value,
+                            'reference' => (float) $avg,
+                            'deviation' => round($diff, 1),
+                            'type' => $diff > 0 ? 'Tinggi' : 'Rendah'
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sort anomalies by absolute deviation descending
+        usort($anomalies, fn($a, $b) => abs($b['deviation']) <=> abs($a['deviation']));
+
         return response()->json([
             'categories' => $categories,
             'series' => array_values($series),
             'title' => $title,
             'mode' => $mode,
+            'anomalies' => $anomalies,
             'debug' => ['count' => $rawData->count()]
         ]);
     }
