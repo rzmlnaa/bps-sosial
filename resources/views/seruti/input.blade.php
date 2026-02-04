@@ -265,16 +265,16 @@
                                         </button>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-striped table-hover align-middle mb-0"
+                                        <table class="table table-hover align-middle mb-0"
                                             style="font-size: 0.9rem;">
                                             <thead class="bg-light">
                                                 <tr>
-                                                    <th class="ps-4" style="width: 80px;">Kode</th>
-                                                    <th>COICOP / Komoditas</th>
-                                                    <th>SERUTI</th>
-                                                    <th class="text-end" style="width: 150px;">Nilai (Rp)</th>
-                                                    <th class="text-center" style="width: 200px;">Operator</th>
-                                                    <th class="text-center" style="width: 80px;">Aksi</th>
+                                                    <th class="ps-4 zone-data" style="width: 80px;">Kode</th>
+                                                    <th class="zone-data">COICOP / Komoditas</th>
+                                                    <th class="zone-data zone-divider">SERUTI</th>
+                                                    <th class="text-end zone-action" style="width: 150px;">Nilai (Rp)</th>
+                                                    <th class="text-center zone-action" style="width: 240px;">Operator</th>
+                                                    <th class="text-center zone-action" style="width: 80px;">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="consumptionTableBody">
@@ -724,23 +724,23 @@
                                         `;
                     }
 
-                    html += `
-                                                        <tr class="${rowClass}">
-                                                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
-                                                            <td class="align-middle">${item.nama}</td>
-                                                            <td class="align-middle">
-                                                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
-                                                            </td>
-                                                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
-                                                            <td class="align-middle">${operatorHtml}</td>
-                                                            <td class="text-center">
-                                                                <button class="btn btn-sm btn-icon btn-outline-warning edit-consumption-btn"
-                                                                    data-kode="${item.kode}" data-nama="${item.nama}" data-value="${item.value || ''}">
-                                                                    <i class="fas fa-pencil-alt"></i>
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    `;
+                        html += `
+                                            <tr class="${rowClass}">
+                                                <td class="ps-4 fw-bold align-middle zone-data text-primary">${item.kode}</td>
+                                                <td class="align-middle zone-data scrollable-cell">${item.nama}</td>
+                                                <td class="align-middle zone-data zone-divider text-center">
+                                                    <span class="badge bg-white text-dark border-secondary-subtle" style="font-size: 0.7rem;">${item.seruti || '-'}</span>
+                                                </td>
+                                                <td class="text-end fw-bold align-middle zone-action ${hasValue ? 'text-dark' : 'text-muted'}" style="font-size: 1rem;">${valDisplay}</td>
+                                                <td class="align-middle zone-action">${operatorHtml}</td>
+                                                <td class="text-center zone-action">
+                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-consumption-btn"
+                                                        data-kode="${item.kode}" data-nama="${item.nama}" data-value="${item.value || ''}">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
                 });
 
                 if (data.length === 0) {
@@ -1033,6 +1033,39 @@
 
         .nav-pills .nav-link {
             color: #64748b;
+        }
+
+        /* Zoning Table Styles */
+        .zone-data {
+            background-color: rgba(248, 249, 250, 0.7) !important;
+            color: #475569;
+        }
+
+        .zone-action {
+            background-color: #ffffff !important;
+        }
+
+        .zone-divider {
+            border-right: 1.5px dashed #e2e8f0 !important;
+        }
+
+        /* Row Hover Highlight - Unified for both zones */
+        .table-hover tbody tr:hover td.zone-data,
+        .table-hover tbody tr:hover td.zone-action {
+            background-color: #f1f5f9 !important;
+            transition: background-color 0.2s ease;
+        }
+
+        .scrollable-cell {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scrollable-cell:hover {
+            white-space: normal;
+            word-break: break-word;
         }
     </style>
 @endpush
