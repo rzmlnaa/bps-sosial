@@ -23,4 +23,13 @@ class ConsumptionValue extends Model
         return $this->belongsTo(Kabupaten::class);
     }
 
+    public function userAdd()
+    {
+        return $this->belongsTo(User::class, 'user_id_add');
+    }
+
+    public function userUpdate()
+    {
+        return $this->belongsTo(User::class, 'user_id_update');
+    }
 }

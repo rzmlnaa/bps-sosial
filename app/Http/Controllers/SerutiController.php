@@ -55,16 +55,26 @@ class SerutiController extends Controller
             foreach ($request->data as $row) {
                 $coicop = Coicop::where('kode', $row['kode'])->first();
                 if ($coicop) {
-                    ConsumptionValue::updateOrCreate(
-                        [
+                    $existing = ConsumptionValue::where([
+                        'period_id' => $period->id,
+                        'coicop_id' => $coicop->id,
+                        'kabupaten_id' => $request->kabupaten_id
+                    ])->first();
+
+                    if ($existing) {
+                        $existing->update([
+                            'value' => $row['value'],
+                            'user_id_update' => auth()->id()
+                        ]);
+                    } else {
+                        ConsumptionValue::create([
                             'period_id' => $period->id,
                             'coicop_id' => $coicop->id,
-                            'kabupaten_id' => $request->kabupaten_id
-                        ],
-                        [
-                            'value' => $row['value']
-                        ]
-                    );
+                            'kabupaten_id' => $request->kabupaten_id,
+                            'value' => $row['value'],
+                            'user_id_add' => auth()->id()
+                        ]);
+                    }
                     $count++;
                 }
             }
@@ -177,7 +187,7 @@ class SerutiController extends Controller
 
             $values = [];
             if ($period) {
-                $values = ConsumptionValue::where('period_id', $period->id)
+                $values = ConsumptionValue::with(['userAdd', 'userUpdate'])->where('period_id', $period->id)
                     ->where('kabupaten_id', $request->kabupaten_id)
                     ->get()
                     ->keyBy('coicop_id'); // Key by coicop ID for easy lookup
@@ -185,12 +195,16 @@ class SerutiController extends Controller
 
             // 3. Merge Data
             $data = $coicops->map(function ($item) use ($values) {
-                $val = isset($values[$item->id]) ? $values[$item->id]->value : null;
+                $valObj = isset($values[$item->id]) ? $values[$item->id] : null;
                 return [
                     'kode' => $item->kode,
                     'nama' => $item->nama,
                     'seruti' => $item->seruti,
-                    'value' => $val
+                    'value' => $valObj ? $valObj->value : null,
+                    'operator_add' => $valObj && $valObj->userAdd ? $valObj->userAdd->name : '-',
+                    'date_add' => $valObj ? $valObj->created_at->format('d/m/y H:i') : null,
+                    'operator_update' => $valObj && $valObj->userUpdate ? $valObj->userUpdate->name : '-',
+                    'date_update' => $valObj && $valObj->user_id_update ? $valObj->updated_at->format('d/m/y H:i') : null,
                 ];
             });
 

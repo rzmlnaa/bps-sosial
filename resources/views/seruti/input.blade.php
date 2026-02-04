@@ -80,7 +80,7 @@
                                     </div>
                                     <div class="d-flex justify-content-end gap-2">
                                         <button class="btn btn-secondary" id="clearBtn">Clear</button>
-                                        <button class="btn btn-primary" id="previewBtn">Preview & Simpan</button>
+                                        <button class="btn btn-primary" id="previewBtn">Simpan Data</button>
                                     </div>
                                 </div>
 
@@ -272,12 +272,14 @@
                                                     <th class="ps-4" style="width: 80px;">Kode</th>
                                                     <th>COICOP / Komoditas</th>
                                                     <th>SERUTI</th>
-                                                    <th class="text-end" style="width: 180px;">Konsumsi per Kapita (Rp)</th>
+                                                    <th class="text-end" style="width: 150px;">Nilai (Rp)</th>
+                                                    <th class="text-center" style="width: 200px;">Operator</th>
+                                                    <th class="text-center" style="width: 80px;">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="consumptionTableBody">
                                                 <tr>
-                                                    <td colspan="4" class="text-center py-5 text-muted">
+                                                    <td colspan="6" class="text-center py-5 text-muted">
                                                         <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
                                                         <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih
                                                             dahulu.</p>
@@ -340,24 +342,24 @@
 
             function createRowHtml() {
                 return `
-                                    <div class="row g-2 mb-2 manual-row align-items-end">
-                                        <div class="col-md-2">
-                                            <label class="form-label small text-muted mb-1">Kode</label>
-                                            <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
-                                        </div>
-                                        <div class="col-md-5">
-                                            <label class="form-label small text-muted mb-1">Nama COICOP</label>
-                                            <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small text-muted mb-1">Seruti</label>
-                                            <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
-                                        </div>
-                                        <div class="col-md-1">
-                                             <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
-                                        </div>
-                                    </div>
-                                `;
+                                                            <div class="row g-2 mb-2 manual-row align-items-end">
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label small text-muted mb-1">Kode</label>
+                                                                    <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
+                                                                </div>
+                                                                <div class="col-md-5">
+                                                                    <label class="form-label small text-muted mb-1">Nama COICOP</label>
+                                                                    <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label small text-muted mb-1">Seruti</label>
+                                                                    <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
+                                                                </div>
+                                                                <div class="col-md-1">
+                                                                     <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
+                                                                </div>
+                                                            </div>
+                                                        `;
             }
 
             function addRow(data = null) {
@@ -392,21 +394,21 @@
                     Swal.fire({
                         title: 'Edit Kelompok COICOP',
                         html: `
-                                            <div class="text-start">
-                                                <div class="mb-3">
-                                                    <label class="form-label small">Kode</label>
-                                                    <input id="editKode" class="form-control" value="${kode}" readonly>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label small">Nama</label>
-                                                    <input id="editNama" class="form-control" value="${nama}">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label small">Seruti</label>
-                                                    <input id="editSeruti" class="form-control" value="${seruti}">
-                                                </div>
-                                            </div>
-                                        `,
+                                                                    <div class="text-start">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label small">Kode</label>
+                                                                            <input id="editKode" class="form-control" value="${kode}" readonly>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label small">Nama</label>
+                                                                            <input id="editNama" class="form-control" value="${nama}">
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label small">Seruti</label>
+                                                                            <input id="editSeruti" class="form-control" value="${seruti}">
+                                                                        </div>
+                                                                    </div>
+                                                                `,
                         showCancelButton: true,
                         confirmButtonText: 'Simpan',
                         preConfirm: () => {
@@ -647,13 +649,13 @@
                     fetchExistingData(y, inputQuarter.value, kId);
                 } else {
                     consumptionTableBody.innerHTML = `
-                                        <tr>
-                                            <td colspan="4" class="text-center py-5 text-muted">
-                                                <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
-                                                <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
-                                            </td>
-                                        </tr>
-                                    `;
+                                            <tr>
+                                                <td colspan="6" class="text-center py-5 text-muted">
+                                                    <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
+                                                    <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
+                                                </td>
+                                            </tr>
+                                        `;
                     pasteConsumption.value = '';
                     if (printBtn) printBtn.classList.add('d-none');
                 }
@@ -661,7 +663,7 @@
 
             function fetchExistingData(year, quarter, kabupatenId) {
                 // Show loading state
-                consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">Memuat data...</div></td></tr>';
+                consumptionTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">Memuat data...</div></td></tr>';
                 pasteConsumption.value = 'Memuat data...';
                 if (printBtn) printBtn.classList.add('d-none');
 
@@ -682,13 +684,13 @@
                             if (printBtn) printBtn.classList.remove('d-none');
                         } else {
                             Swal.fire('Error', response.message, 'error');
-                            consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
+                            consumptionTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
                             pasteConsumption.value = '';
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Gagal menghubungi server.</td></tr>';
+                        consumptionTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Gagal menghubungi server.</td></tr>';
                         pasteConsumption.value = '';
                     });
             }
@@ -703,24 +705,50 @@
                     if (item.state === 'ready') {
                         rowClass = 'table-info'; // Highlight changed rows
                     }
+                    let operatorHtml = '-';
+                    if (item.operator_add !== null) {
+                        operatorHtml = `
+                                            <div class="d-flex flex-column text-start" style="font-size: 0.75rem;">
+                                                <div class="mb-1">
+                                                    <i class="fas fa-plus-circle text-success me-1"></i>
+                                                    <strong>${item.operator_add}</strong>
+                                                    <span class="text-muted">${item.date_add || ''}</span>
+                                                </div>
+                                                ${item.operator_update !== null && item.operator_update !== item.operator_add ? `
+                                                <div>
+                                                    <i class="fas fa-edit text-warning me-1"></i>
+                                                    <strong>${item.operator_update}</strong>
+                                                    <span class="text-muted">${item.date_update || ''}</span>
+                                                </div>` : ''}
+                                            </div>
+                                        `;
+                    }
 
                     html += `
-                                        <tr class="${rowClass}">
-                                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
-                                            <td class="align-middle">${item.nama}</td>
-                                            <td class="align-middle">
-                                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
-                                            </td>
-                                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
-                                        </tr>
-                                    `;
+                                                        <tr class="${rowClass}">
+                                                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
+                                                            <td class="align-middle">${item.nama}</td>
+                                                            <td class="align-middle">
+                                                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
+                                                            </td>
+                                                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
+                                                            <td class="align-middle">${operatorHtml}</td>
+                                                            <td class="text-center">
+                                                                <button class="btn btn-sm btn-icon btn-outline-warning edit-consumption-btn"
+                                                                    data-kode="${item.kode}" data-nama="${item.nama}" data-value="${item.value || ''}">
+                                                                    <i class="fas fa-pencil-alt"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    `;
                 });
 
                 if (data.length === 0) {
-                    html = '<tr><td colspan="4" class="text-center py-4 text-muted">Master data kosong.</td></tr>';
+                    html = '<tr><td colspan="6" class="text-center py-4 text-muted">Master data kosong.</td></tr>';
                 }
 
                 consumptionTableBody.innerHTML = html;
+                attachEditConsumptionListeners(); // Attach listeners after rendering
             }
 
             function populateTextArea(data) {
@@ -819,6 +847,73 @@
                 });
             }
 
+            function attachEditConsumptionListeners() {
+                document.querySelectorAll('.edit-consumption-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const kode = this.dataset.kode;
+                        const nama = this.dataset.nama;
+                        const oldValue = this.dataset.value;
+                        const year = inputYear.value;
+                        const quarter = inputQuarter.value;
+                        const kabupatenId = inputKabupaten.value;
+
+                        Swal.fire({
+                            title: 'Edit Nilai Konsumsi',
+                            html: `
+                                                    <div class="text-start mb-2">
+                                                        <small class="text-muted d-block mb-1">[${kode}] ${nama}</small>
+                                                        <label class="form-label fw-bold small">Konsumsi per Kapita (Rp)</label>
+                                                        <input type="number" id="editConsValue" class="form-control" value="${oldValue}" placeholder="Masukkan nilai...">
+                                                    </div>
+                                                `,
+                            showCancelButton: true,
+                            confirmButtonText: 'Simpan',
+                            cancelButtonText: 'Batal',
+                            preConfirm: () => {
+                                const newValue = document.getElementById('editConsValue').value;
+                                if (newValue === '') {
+                                    Swal.showValidationMessage('Nilai tidak boleh kosong');
+                                    return false;
+                                }
+                                return newValue;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                const newValue = result.value;
+
+                                fetch('{{ route("seruti.store") }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        year: year,
+                                        quarter: quarter,
+                                        kabupaten_id: kabupatenId,
+                                        data: [{ kode: kode, value: newValue }]
+                                    })
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            Swal.fire('Berhasil!', 'Nilai berhasil diperbarui.', 'success').then(() => {
+                                                fetchExistingData(year, quarter, kabupatenId);
+                                            });
+                                        } else {
+                                            Swal.fire('Gagal', data.message, 'error');
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error(err);
+                                        Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+                                    });
+                            }
+                        });
+                    });
+                });
+            }
+
             if (actionSaveBtn) {
                 actionSaveBtn.addEventListener('click', () => {
                     const year = document.getElementById('inputYear').value;
@@ -869,7 +964,8 @@
                     });
 
                     parsedConsumption = newParsed;
-                    renderConsumptionTable(parsedConsumption);
+                    // Skip local preview rendering as requested by user
+                    // renderConsumptionTable(parsedConsumption);
 
                     if (validCount === 0) {
                         Swal.fire('Info', 'Tidak ada nilai valid yang ditemukan.', 'info');
