@@ -13,12 +13,22 @@ class SerutiController extends Controller
 {
     public function index()
     {
-        return view('seruti.index');
+        $years = Period::distinct()->orderBy('year', 'desc')->pluck('year');
+        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $coicops = Coicop::orderBy('kode', 'asc')->get();
+
+        // Get first Kabupaten that has data
+        $defaultKabupatenId = ConsumptionValue::select('kabupaten_id')
+            ->distinct()
+            ->first()
+                ?->kabupaten_id;
+
+        return view('seruti.index', compact('years', 'kabupatens', 'coicops', 'defaultKabupatenId'));
     }
 
     public function create()
     {
-        $coicops = Coicop::orderBy('kode', 'asc')->get();
+        $coicops = Coicop::with(['userAdd', 'userUpdate'])->orderBy('kode', 'asc')->get();
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
         return view('seruti.input', compact('coicops', 'kabupatens'));
     }
@@ -108,7 +118,8 @@ class SerutiController extends Controller
                             'kode' => $row['kode'],
                             'nama' => $row['nama'],
                             'seruti' => $row['seruti'] ?? '',
-                            'is_total' => $isTotal
+                            'is_total' => $isTotal,
+                            'user_id_update' => auth()->id()
                         ]);
                         $savedCount++;
                     }
@@ -126,7 +137,8 @@ class SerutiController extends Controller
                         'kode' => $row['kode'],
                         'nama' => $row['nama'],
                         'seruti' => $row['seruti'] ?? '',
-                        'is_total' => $isTotal
+                        'is_total' => $isTotal,
+                        'user_id_add' => auth()->id()
                     ]);
                     $savedCount++;
                 }
@@ -192,6 +204,142 @@ class SerutiController extends Controller
         }
     }
 
+    public function getChartData(Request $request)
+    {
+        $yearInfo = $request->get('year');
+        $quartersStr = $request->get('quarters');
+        $quarters = $quartersStr ? explode(',', $quartersStr) : [1, 2, 3, 4];
+
+        $kabupatenId = $request->get('kabupaten_id');
+        $coicopId = $request->get('coicop_id');
+
+        // Explicitly check for empty strings or 'null' strings from frontend
+        if ($kabupatenId === 'null' || $kabupatenId === '')
+            $kabupatenId = null;
+        if ($coicopId === 'null' || $coicopId === '')
+            $coicopId = null;
+
+        if (!$yearInfo || (!$kabupatenId && !$coicopId)) {
+            return response()->json(['empty' => true]);
+        }
+
+        $query = ConsumptionValue::with(['period', 'coicop', 'kabupaten']);
+
+        // Handle Year Filter
+        if ($yearInfo !== 'all') {
+            $query->whereHas('period', function ($q) use ($yearInfo) {
+                $q->where('year', $yearInfo);
+            });
+        }
+
+        // Handle Quarter Filter
+        $query->whereHas('period', function ($q) use ($quarters) {
+            $q->whereIn('quarter', $quarters);
+        });
+
+        // Determine Mode: 
+        // 1. If Coicop is selected (and not Kabupaten), we are comparing Kabupatens for that Coicop.
+        // 2. If Kabupaten is selected (and not Coicop), we are comparing Coicops for that Kabupaten.
+        // If both are present, we prioritize the one that makes more sense (usually regency mode if a specific kab is picked).
+
+        $mode = 'regency'; // Default: X-Axis are COICOPs
+        if ($coicopId && !$kabupatenId) {
+            $mode = 'subgroup'; // X-Axis are Kabupatens
+        }
+
+        if ($kabupatenId) {
+            $query->where('kabupaten_id', $kabupatenId);
+        }
+
+        if ($coicopId) {
+            $query->where('coicop_id', $coicopId);
+        }
+
+        $rawData = $query->get();
+
+        if ($rawData->isEmpty()) {
+            return response()->json(['empty' => true, 'mode' => $mode, 'debug' => ['params' => $request->all()]]);
+        }
+
+        $series = [];
+        $categories = [];
+
+        // --- New Logic for Chronological Series ---
+        // Series = "Tw [Quarter] [Year]". Categories = Coicops or Kabupatens.
+
+        // 1. Determine all unique periods (Year + Quarter) present in the data, sorted chronologically
+        $availablePeriods = $rawData->map(function ($item) {
+            return [
+                'year' => $item->period->year,
+                'quarter' => $item->period->quarter,
+                'key' => $item->period->year . '-' . $item->period->quarter,
+                'label' => "Tw {$item->period->quarter} {$item->period->year}"
+            ];
+        })->unique('key')->values()->sort(function ($a, $b) {
+            if ($a['year'] != $b['year'])
+                return $a['year'] <=> $b['year'];
+            return $a['quarter'] <=> $b['quarter'];
+        })->values();
+
+        foreach ($availablePeriods as $p) {
+            $series[$p['key']] = [
+                'name' => $p['label'],
+                'data' => []
+            ];
+        }
+
+        if ($mode === 'regency') {
+            // X-Axis: Coicops
+            $grouped = $rawData->groupBy('coicop_id');
+            // Filter out items where value is 0 if needed, but for grouped bar usually keep all in categories
+            $sortedCoicops = $rawData->unique('coicop_id')->sortBy(fn($item) => $item->coicop->kode);
+
+            foreach ($sortedCoicops as $item) {
+                $categories[] = "[{$item->coicop->kode}] {$item->coicop->nama}";
+                foreach ($availablePeriods as $p) {
+                    $val = isset($grouped[$item->coicop_id])
+                        ? $grouped[$item->coicop_id]->first(fn($v) => $v->period->year == $p['year'] && $v->period->quarter == $p['quarter'])
+                        : null;
+                    $series[$p['key']]['data'][] = $val ? (float) $val->value : 0;
+                }
+            }
+            $kabName = $rawData->first()->kabupaten->nama_kabupaten;
+            $title = "Konsumsi per Kapita - {$kabName}";
+            if ($yearInfo !== 'all')
+                $title .= " ({$yearInfo})";
+        } else {
+            // X-Axis: Kabupatens
+            $grouped = $rawData->groupBy('kabupaten_id');
+            $sortedKabs = $rawData->unique('kabupaten_id')->sortBy(fn($item) => $item->kabupaten->kode_kab);
+
+            foreach ($sortedKabs as $item) {
+                $categories[] = "[{$item->kabupaten->kode_kab}] {$item->kabupaten->nama_kabupaten}";
+                foreach ($availablePeriods as $p) {
+                    $val = isset($grouped[$item->kabupaten_id])
+                        ? $grouped[$item->kabupaten_id]->first(fn($v) => $v->period->year == $p['year'] && $v->period->quarter == $p['quarter'])
+                        : null;
+                    $series[$p['key']]['data'][] = $val ? (float) $val->value : 0;
+                }
+            }
+            $coicopName = $rawData->first()->coicop->nama;
+            $title = "Perbandingan {$coicopName}";
+            if ($yearInfo !== 'all')
+                $title .= " ({$yearInfo})";
+        }
+
+        if (empty($categories) || empty($series)) {
+            return response()->json(['empty' => true, 'debug' => ['count' => $rawData->count(), 'mode' => $mode]]);
+        }
+
+        return response()->json([
+            'categories' => $categories,
+            'series' => array_values($series),
+            'title' => $title,
+            'mode' => $mode,
+            'debug' => ['count' => $rawData->count()]
+        ]);
+    }
+
     public function destroyCoicop($id)
     {
         try {
@@ -215,6 +363,33 @@ class SerutiController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Data komoditas berhasil dihapus!']);
 
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyConsumption(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|numeric',
+            'quarter' => 'required|numeric|min:1|max:4',
+            'kabupaten_id' => 'required|exists:tb_kabupaten,id',
+        ]);
+
+        try {
+            $period = Period::where('year', $request->year)
+                ->where('quarter', $request->quarter)
+                ->first();
+
+            if (!$period) {
+                return response()->json(['success' => false, 'message' => 'Data untuk periode tersebut belum ada.']);
+            }
+
+            ConsumptionValue::where('period_id', $period->id)
+                ->where('kabupaten_id', $request->kabupaten_id)
+                ->delete();
+
+            return response()->json(['success' => true, 'message' => 'Seluruh data nilai konsumsi untuk wilayah dan periode terpilih telah dihapus!']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }

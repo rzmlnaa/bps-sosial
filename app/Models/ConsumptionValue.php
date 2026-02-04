@@ -17,4 +17,10 @@ class ConsumptionValue extends Model
     {
         return $this->belongsTo(Coicop::class);
     }
+
+    public function kabupaten()
+    {
+        return $this->belongsTo(Kabupaten::class);
+    }
+
 }

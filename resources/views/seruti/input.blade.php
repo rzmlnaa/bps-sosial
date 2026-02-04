@@ -3,6 +3,9 @@
 @section('title', 'Input Data Seruti')
 
 @section('content')
+    @php
+        $activeTab = request()->query('tab', 'input');
+    @endphp
     <div class="fade-in-up">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -20,15 +23,16 @@
             <div class="card-header bg-white p-2">
                 <ul class="nav nav-pills card-header-pills" id="serutiTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold" id="master-tab" data-bs-toggle="tab" data-bs-target="#master"
-                            type="button" role="tab" aria-controls="master" aria-selected="false"
-                            style="border-radius: 8px;">
+                        <button class="nav-link {{ $activeTab == 'master' ? 'active' : '' }} fw-bold" id="master-tab"
+                            data-bs-toggle="tab" data-bs-target="#master" type="button" role="tab" aria-controls="master"
+                            aria-selected="{{ $activeTab == 'master' ? 'true' : 'false' }}" style="border-radius: 8px;">
                             <i class="fas fa-tags me-2"></i>Master Kelompok
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-bold" id="input-tab" data-bs-toggle="tab" data-bs-target="#input"
-                            type="button" role="tab" aria-controls="input" aria-selected="true" style="border-radius: 8px;">
+                        <button class="nav-link {{ $activeTab == 'input' ? 'active' : '' }} fw-bold" id="input-tab"
+                            data-bs-toggle="tab" data-bs-target="#input" type="button" role="tab" aria-controls="input"
+                            aria-selected="{{ $activeTab == 'input' ? 'true' : 'false' }}" style="border-radius: 8px;">
                             <i class="fas fa-edit me-2"></i>Input Data
                         </button>
                     </li>
@@ -40,27 +44,34 @@
         <div class="tab-content" id="serutiTabContent">
 
             <!-- Tab 1: Master Kelompok -->
-            <div class="tab-pane fade" id="master" role="tabpanel" aria-labelledby="master-tab">
+            <div class="tab-pane fade {{ $activeTab == 'master' ? 'show active' : '' }}" id="master" role="tabpanel"
+                aria-labelledby="master-tab">
                 <div class="row g-4">
                     <!-- Left: Input Area -->
                     <div class="col-lg-12">
                         <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                            <div
+                                class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0 text-uppercase text-secondary">Input Master Coicop</h6>
                                 <div class="btn-group" role="group" aria-label="Input Mode">
-                                    <input type="radio" class="btn-check" name="inputMode" id="modePaste" autocomplete="off" checked>
-                                    <label class="btn btn-outline-primary btn-sm" for="modePaste"><i class="fas fa-paste me-1"></i> Paste Excel</label>
+                                    <input type="radio" class="btn-check" name="inputMode" id="modePaste" autocomplete="off"
+                                        checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="modePaste"><i
+                                            class="fas fa-paste me-1"></i> Paste Excel</label>
 
-                                    <input type="radio" class="btn-check" name="inputMode" id="modeManual" autocomplete="off">
-                                    <label class="btn btn-outline-primary btn-sm" for="modeManual"><i class="fas fa-keyboard me-1"></i> Manual</label>
+                                    <input type="radio" class="btn-check" name="inputMode" id="modeManual"
+                                        autocomplete="off">
+                                    <label class="btn btn-outline-primary btn-sm" for="modeManual"><i
+                                            class="fas fa-keyboard me-1"></i> Manual</label>
                                 </div>
                             </div>
                             <div class="card-body p-4 pt-0">
-                                
+
                                 <!-- Paste Section -->
                                 <div id="pasteSection">
                                     <p class="text-muted small">
-                                        Salin data dari Excel dengan kolom (Kode | COICOP | SERUTI) lalu tempel di bawah ini.
+                                        Salin data dari Excel dengan kolom (Kode | COICOP | SERUTI) lalu tempel di bawah
+                                        ini.
                                     </p>
                                     <div class="form-group mb-3">
                                         <textarea id="pasteArea" class="form-control" rows="8"
@@ -109,6 +120,7 @@
                                             <th class="ps-4" style="width: 100px;">Kode</th>
                                             <th>Nama COICOP</th>
                                             <th>SERUTI</th>
+                                            <th>Operator</th>
                                             <th class="text-center">Aksi</th>
                                         </tr>
                                     </thead>
@@ -118,24 +130,42 @@
                                                 <td class="ps-4 fw-bold">{{ $c->kode }}</td>
                                                 <td>{{ $c->nama }}</td>
                                                 <td><span class="badge bg-info text-dark">{{ $c->seruti }}</span></td>
+                                                <td class="small">
+                                                    @if($c->userAdd)
+                                                        <div class="text-muted mb-1" title="Dibuat oleh">
+                                                            <i class="fas fa-user-plus me-1 text-success"></i>
+                                                            {{ $c->userAdd->name }}
+                                                            <span
+                                                                class="text-xs opacity-75 ms-1">({{ $c->created_at->format('d/m/y') }})</span>
+                                                        </div>
+                                                    @endif
+                                                    @if($c->userUpdate)
+                                                        <div class="text-muted" title="Diupdate oleh">
+                                                            <i class="fas fa-user-edit me-1 text-warning"></i>
+                                                            {{ $c->userUpdate->name }}
+                                                            <span
+                                                                class="text-xs opacity-75 ms-1">({{ $c->updated_at->format('d/m/y') }})</span>
+                                                        </div>
+                                                    @endif
+                                                    @if(!$c->userAdd && !$c->userUpdate)
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-coicop-btn" 
-                                                        data-id="{{ $c->id }}" 
-                                                        data-kode="{{ $c->kode }}" 
-                                                        data-nama="{{ $c->nama }}" 
-                                                        data-seruti="{{ $c->seruti }}">
+                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-coicop-btn"
+                                                        data-id="{{ $c->id }}" data-kode="{{ $c->kode }}"
+                                                        data-nama="{{ $c->nama }}" data-seruti="{{ $c->seruti }}">
                                                         <i class="fas fa-pencil-alt"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-icon btn-outline-danger delete-coicop-btn" 
-                                                        data-id="{{ $c->id }}" 
-                                                        data-obj="{{ $c->kode }} - {{ $c->nama }}">
+                                                    <button class="btn btn-sm btn-icon btn-outline-danger delete-coicop-btn"
+                                                        data-id="{{ $c->id }}" data-obj="{{ $c->kode }} - {{ $c->nama }}">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center py-4 text-muted">Belum ada data. Silakan
+                                                <td colspan="5" class="text-center py-4 text-muted">Belum ada data. Silakan
                                                     input di atas.</td>
                                             </tr>
                                         @endforelse
@@ -148,7 +178,8 @@
             </div>
 
             <!-- Tab 2: Input Data -->
-            <div class="tab-pane fade show active" id="input" role="tabpanel" aria-labelledby="input-tab">
+            <div class="tab-pane fade {{ $activeTab == 'input' ? 'show active' : '' }}" id="input" role="tabpanel"
+                aria-labelledby="input-tab">
                 <div class="row g-4">
 
                     <!-- LEFT COLUMN: FILTER -->
@@ -279,25 +310,25 @@
             const clearBtn = document.getElementById('clearBtn');
             const saveBtn = document.getElementById('saveBtn'); // Note: This button is hidden in new design, integrated into Preview
             const tableBody = document.getElementById('coicopTableBody');
-            
+
             // Toggle Logic
             const modePaste = document.getElementById('modePaste');
             const modeManual = document.getElementById('modeManual');
             const pasteSection = document.getElementById('pasteSection');
             const manualSection = document.getElementById('manualSection');
 
-            if(modePaste && modeManual) {
+            if (modePaste && modeManual) {
                 modePaste.addEventListener('change', () => {
-                    if(modePaste.checked) {
+                    if (modePaste.checked) {
                         pasteSection.classList.remove('d-none');
                         manualSection.classList.add('d-none');
                     }
                 });
                 modeManual.addEventListener('change', () => {
-                    if(modeManual.checked) {
+                    if (modeManual.checked) {
                         manualSection.classList.remove('d-none');
                         pasteSection.classList.add('d-none');
-                        if(manualRowsContainer.children.length === 0) addRow(); // Init one row
+                        if (manualRowsContainer.children.length === 0) addRow(); // Init one row
                     }
                 });
             }
@@ -309,24 +340,24 @@
 
             function createRowHtml() {
                 return `
-                    <div class="row g-2 mb-2 manual-row align-items-end">
-                        <div class="col-md-2">
-                            <label class="form-label small text-muted mb-1">Kode</label>
-                            <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label small text-muted mb-1">Nama COICOP</label>
-                            <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small text-muted mb-1">Seruti</label>
-                            <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
-                        </div>
-                        <div class="col-md-1">
-                             <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
-                        </div>
-                    </div>
-                `;
+                                    <div class="row g-2 mb-2 manual-row align-items-end">
+                                        <div class="col-md-2">
+                                            <label class="form-label small text-muted mb-1">Kode</label>
+                                            <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nama COICOP</label>
+                                            <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Seruti</label>
+                                            <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
+                                        </div>
+                                        <div class="col-md-1">
+                                             <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                `;
             }
 
             function addRow(data = null) {
@@ -334,25 +365,25 @@
                 div.innerHTML = createRowHtml();
                 const newRow = div.firstElementChild;
                 manualRowsContainer.appendChild(newRow);
-                
+
                 if (data) {
                     newRow.querySelector('.input-kode').value = data.kode || '';
                     newRow.querySelector('.input-nama').value = data.nama || '';
                     newRow.querySelector('.input-seruti').value = data.seruti || '';
                 }
 
-                newRow.querySelector('.remove-row-btn').addEventListener('click', function() {
+                newRow.querySelector('.remove-row-btn').addEventListener('click', function () {
                     newRow.remove();
                 });
             }
 
-            if(addManualRowBtn) {
+            if (addManualRowBtn) {
                 addManualRowBtn.addEventListener('click', () => addRow());
             }
 
             // Edit Logic
             document.querySelectorAll('.edit-coicop-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     const id = this.dataset.id;
                     const kode = this.dataset.kode;
                     const nama = this.dataset.nama;
@@ -361,21 +392,21 @@
                     Swal.fire({
                         title: 'Edit Kelompok COICOP',
                         html: `
-                            <div class="text-start">
-                                <div class="mb-3">
-                                    <label class="form-label small">Kode</label>
-                                    <input id="editKode" class="form-control" value="${kode}" readonly>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small">Nama</label>
-                                    <input id="editNama" class="form-control" value="${nama}">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small">Seruti</label>
-                                    <input id="editSeruti" class="form-control" value="${seruti}">
-                                </div>
-                            </div>
-                        `,
+                                            <div class="text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small">Kode</label>
+                                                    <input id="editKode" class="form-control" value="${kode}" readonly>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small">Nama</label>
+                                                    <input id="editNama" class="form-control" value="${nama}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small">Seruti</label>
+                                                    <input id="editSeruti" class="form-control" value="${seruti}">
+                                                </div>
+                                            </div>
+                                        `,
                         showCancelButton: true,
                         confirmButtonText: 'Simpan',
                         preConfirm: () => {
@@ -396,8 +427,8 @@
             });
 
             // Delete Logic
-             document.querySelectorAll('.delete-coicop-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+            document.querySelectorAll('.delete-coicop-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
                     const id = this.dataset.id;
                     const label = this.dataset.obj;
 
@@ -417,19 +448,19 @@
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 }
                             })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    Swal.fire('Terhapus!', data.message, 'success').then(() => {
-                                        window.location.reload();
-                                    });
-                                } else {
-                                    Swal.fire('Gagal', data.message, 'error');
-                                }
-                            })
-                            .catch(err => {
-                                Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
-                            });
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Terhapus!', data.message, 'success').then(() => {
+                                            window.location.href = "{{ route('seruti.create', ['tab' => 'master']) }}";
+                                        });
+                                    } else {
+                                        Swal.fire('Gagal', data.message, 'error');
+                                    }
+                                })
+                                .catch(err => {
+                                    Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+                                });
                         }
                     });
                 });
@@ -451,20 +482,20 @@
                     const kode = row.querySelector('.input-kode').value.trim();
                     const nama = row.querySelector('.input-nama').value.trim();
                     const seruti = row.querySelector('.input-seruti').value.trim();
-                    if(kode && nama) {
-                        data.push({kode, nama, seruti});
+                    if (kode && nama) {
+                        data.push({ kode, nama, seruti });
                     }
                 });
                 return data;
             }
 
             function saveCoicopData(data) {
-                 if (data.length === 0) {
-                     Swal.fire('Error', 'Tidak ada data valid.', 'warning');
-                     return;
-                 }
-                 
-                 Swal.fire({
+                if (data.length === 0) {
+                    Swal.fire('Error', 'Tidak ada data valid.', 'warning');
+                    return;
+                }
+
+                Swal.fire({
                     title: 'Simpan Data?',
                     text: `Akan menyimpan ${data.length} item data.`,
                     icon: 'question',
@@ -480,13 +511,13 @@
                             },
                             body: JSON.stringify({ coicops: data })
                         })
-                        .then(response => response.json())
-                        .catch(error => Swal.showValidationMessage(`Request failed: ${error}`));
+                            .then(response => response.json())
+                            .catch(error => Swal.showValidationMessage(`Request failed: ${error}`));
                     }
                 }).then((result) => {
                     if (result.isConfirmed && result.value.success) {
                         Swal.fire('Berhasil!', result.value.message, 'success').then(() => {
-                            window.location.reload();
+                            window.location.href = "{{ route('seruti.create', ['tab' => 'master']) }}";
                         });
                     } else if (result.value && !result.value.success) {
                         Swal.fire('Gagal', result.value.message, 'error');
@@ -526,7 +557,7 @@
                     saveCoicopData(newRows);
                 });
             }
-            
+
             if (previewManualBtn) {
                 previewManualBtn.addEventListener('click', () => {
                     const data = getManualData();
@@ -535,7 +566,7 @@
             }
 
             function renderPreview(data) {
-               // Deprecated as we save immediately now
+                // Deprecated as we save immediately now
             }
 
             if (saveBtn) {
@@ -564,7 +595,7 @@
                                 .then(data => {
                                     if (data.success) {
                                         Swal.fire('Berhasil!', data.message, 'success').then(() => {
-                                            window.location.reload();
+                                            window.location.href = "{{ route('seruti.create', ['tab' => 'master']) }}";
                                         });
                                     } else {
                                         Swal.fire('Gagal', data.message, 'error');
@@ -595,10 +626,10 @@
             function updatePreviewHeader() {
                 const y = inputYear ? inputYear.value : '';
                 const q = inputQuarter && inputQuarter.value ? inputQuarter.options[inputQuarter.selectedIndex].text : '';
-                
+
                 let kName = '[Pilih Wilayah]';
                 let kId = '';
-                
+
                 if (inputKabupaten && inputKabupaten.value) {
                     kName = inputKabupaten.options[inputKabupaten.selectedIndex].text;
                     kId = inputKabupaten.value;
@@ -615,16 +646,16 @@
                 if (y && y.length === 4 && inputQuarter.value && kId) {
                     fetchExistingData(y, inputQuarter.value, kId);
                 } else {
-                     consumptionTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
-                                <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
-                                <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
-                            </td>
-                        </tr>
-                    `;
+                    consumptionTableBody.innerHTML = `
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
+                                                <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
+                                            </td>
+                                        </tr>
+                                    `;
                     pasteConsumption.value = '';
-                    if(printBtn) printBtn.classList.add('d-none');
+                    if (printBtn) printBtn.classList.add('d-none');
                 }
             }
 
@@ -632,7 +663,7 @@
                 // Show loading state
                 consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">Memuat data...</div></td></tr>';
                 pasteConsumption.value = 'Memuat data...';
-                if(printBtn) printBtn.classList.add('d-none');
+                if (printBtn) printBtn.classList.add('d-none');
 
                 const url = `{{ route('seruti.get-data') }}?year=${year}&quarter=${quarter}&kabupaten_id=${kabupatenId}`;
 
@@ -648,7 +679,7 @@
 
                             renderConsumptionTable(parsedConsumption);
                             populateTextArea(parsedConsumption);
-                            if(printBtn) printBtn.classList.remove('d-none');
+                            if (printBtn) printBtn.classList.remove('d-none');
                         } else {
                             Swal.fire('Error', response.message, 'error');
                             consumptionTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
@@ -664,25 +695,25 @@
 
             function renderConsumptionTable(data) {
                 let html = '';
-                
+
                 data.forEach(item => {
                     const hasValue = item.value !== null && item.value !== '' && !isNaN(item.value);
-                    const valDisplay = hasValue ? parseFloat(item.value).toLocaleString('id-ID', {minimumFractionDigits: 2}) : '-';
+                    const valDisplay = hasValue ? parseFloat(item.value).toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '-';
                     let rowClass = '';
                     if (item.state === 'ready') {
-                         rowClass = 'table-info'; // Highlight changed rows
+                        rowClass = 'table-info'; // Highlight changed rows
                     }
 
                     html += `
-                        <tr class="${rowClass}">
-                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
-                            <td class="align-middle">${item.nama}</td>
-                            <td class="align-middle">
-                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
-                            </td>
-                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
-                        </tr>
-                    `;
+                                        <tr class="${rowClass}">
+                                            <td class="ps-4 fw-bold align-middle">${item.kode}</td>
+                                            <td class="align-middle">${item.nama}</td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-light text-dark border">${item.seruti || '-'}</span>
+                                            </td>
+                                            <td class="text-end fw-bold align-middle ${hasValue ? 'text-dark' : 'text-muted'}">${valDisplay}</td>
+                                        </tr>
+                                    `;
                 });
 
                 if (data.length === 0) {
@@ -695,11 +726,11 @@
             function populateTextArea(data) {
                 const lines = [];
                 let hasValues = false;
-                
+
                 data.forEach(item => {
                     if (item.value !== null && item.value !== '' && !isNaN(item.value)) {
-                         lines.push(item.value);
-                         hasValues = true;
+                        lines.push(item.value);
+                        hasValues = true;
                     } else {
                         lines.push("");
                     }
@@ -712,7 +743,7 @@
                     pasteConsumption.placeholder = "Belum ada data nilai. Paste data dari Excel di sini...";
                 }
             }
-            
+
             if (inputYear) inputYear.addEventListener('input', updatePreviewHeader);
             if (inputQuarter) inputQuarter.addEventListener('change', updatePreviewHeader);
             if (inputKabupaten) inputKabupaten.addEventListener('change', updatePreviewHeader);
@@ -722,11 +753,66 @@
 
             if (clearConsumptionBtn) {
                 clearConsumptionBtn.addEventListener('click', () => {
-                    pasteConsumption.value = '';
-                    pasteConsumption.focus();
+                    const year = inputYear.value;
+                    const quarter = inputQuarter.value;
+                    const kabupatenId = inputKabupaten.value;
+
+                    if (!year || !quarter || !kabupatenId) {
+                        // If no filter selected, just clear the textarea
+                        pasteConsumption.value = '';
+                        pasteConsumption.focus();
+                        return;
+                    }
+
+                    const hasSavedData = parsedConsumption.some(item => item.state === 'saved');
+                    if (!hasSavedData) {
+                        Swal.fire('Info', 'Tidak ada data nilai tersimpan yang bisa dihapus untuk filter ini.', 'info');
+                        pasteConsumption.value = '';
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Hapus Data Nilai?',
+                        text: "Seluruh data nilai konsumsi yang tersimpan untuk wilayah dan periode ini akan dihapus permanen.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Ya, Hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('{{ route("seruti.destroy-consumption") }}', {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    year: year,
+                                    quarter: quarter,
+                                    kabupaten_id: kabupatenId
+                                })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Terhapus!', data.message, 'success').then(() => {
+                                            fetchExistingData(year, quarter, kabupatenId);
+                                        });
+                                    } else {
+                                        Swal.fire('Gagal', data.message, 'error');
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+                                });
+                        }
+                    });
                 });
             }
-            
+
             if (printBtn) {
                 printBtn.addEventListener('click', () => {
                     window.print();
@@ -743,7 +829,7 @@
                         Swal.fire('Peringatan', 'Harap pilih Tahun, Triwulan, dan Kabupaten terlebih dahulu.', 'warning');
                         return;
                     }
-                    
+
                     const rawText = pasteConsumption.value.trim();
                     if (!rawText) {
                         Swal.fire('Info', 'Silakan paste data excel/nilai terlebih dahulu pada kolom input.', 'info');
@@ -752,9 +838,9 @@
 
                     const rawVal = pasteConsumption.value;
                     const rows = rawVal.split('\n');
-                    
+
                     if (rows.length > masterCoicops.length) {
-                         // Warning handled implicitly
+                        // Warning handled implicitly
                     }
 
                     // Reset parsedConsumption based on Master
@@ -763,7 +849,7 @@
                         value: null,
                         state: 'empty'
                     }));
-                    
+
                     let validCount = 0;
 
                     masterCoicops.forEach((coicop, index) => {
@@ -772,7 +858,7 @@
                             if (valueStr !== '' && valueStr !== '-') {
                                 let valueClean = valueStr.replace(/\./g, '').replace(/,/g, '.');
                                 let value = parseFloat(valueClean);
-        
+
                                 if (!isNaN(value)) {
                                     newParsed[index].value = value;
                                     newParsed[index].state = 'ready';
@@ -784,12 +870,12 @@
 
                     parsedConsumption = newParsed;
                     renderConsumptionTable(parsedConsumption);
-                    
+
                     if (validCount === 0) {
-                         Swal.fire('Info', 'Tidak ada nilai valid yang ditemukan.', 'info');
-                         return;
+                        Swal.fire('Info', 'Tidak ada nilai valid yang ditemukan.', 'info');
+                        return;
                     }
-                    
+
                     // Proceed to Save
                     const dataToSave = parsedConsumption.filter(item => item.state === 'ready').map(item => ({
                         kode: item.kode,
