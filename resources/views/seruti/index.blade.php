@@ -2,6 +2,16 @@
 
 @section('title', 'Data Seruti')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .ts-control {
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="fade-in-up">
         <!-- Header -->
@@ -134,17 +144,49 @@
                     </div>
 
                     <!-- Anomaly Insight Section (Full Width Below Chart) -->
-                    <div class="card border-0 bg-light shadow-sm" style="border-radius: 12px;">
+                    <div id="anomalySection" class="card border-0 bg-light shadow-sm" style="border-radius: 12px;">
                         <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="fw-bold text-dark mb-0">
-                                    <i class="fas fa-microscope me-2 text-primary"></i> Analisis Anomali (>25%)
+                                    <i class="fas fa-microscope me-2 text-primary"></i>
+                                    <span id="anomalyHeaderText">Analisis Anomali (><span
+                                            id="thresholdLabel">25</span>%)</span>
                                 </h5>
-                                <span class="badge bg-primary rounded-pill px-3 py-2" id="anomalyCount"
-                                    style="font-size: 0.85rem;">0</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="input-group input-group-sm" style="width: 120px;">
+                                        <input type="number" id="filterThreshold" class="form-control" value="25" min="1"
+                                            max="100">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill px-3 py-2" id="anomalyCount"
+                                        style="font-size: 0.85rem;">0</span>
+                                </div>
                             </div>
                             <p class="text-muted small mt-2 mb-0">Perbandingan data terhadap rata-rata provinsi pada periode
                                 yang sama.</p>
+
+                            <!-- Multi-select COICOP Filter (Visible only in Regency Mode) -->
+                            <div id="anomalyCoicopContainer" class="mt-3" style="display: none;">
+                                <label class="form-label small fw-bold">Pilih Sub Kelompok (Analisis)</label>
+                                <select id="anomalyCoicops" class="form-select form-select-sm" multiple
+                                    placeholder="Ketik untuk mencari...">
+                                    @foreach($coicops as $c)
+                                        <option value="{{ $c->id }}">[{{ $c->kode }}] {{ $c->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Multi-select Regency Filter (Visible only in Subgroup Mode) -->
+                            <div id="anomalyRegencyContainer" class="mt-3" style="display: none;">
+                                <label class="form-label small fw-bold">Pilih Kabupaten/Kota (Analisis)</label>
+                                <select id="anomalyKabupatens" class="form-select form-select-sm" multiple
+                                    placeholder="Ketik untuk mencari...">
+                                    @foreach($kabupatens as $kab)
+                                        <option value="{{ $kab->id }}">[{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="card-body p-4">
                             <div id="anomalyList" class="row g-3">
@@ -176,8 +218,29 @@
             const emptyState = document.getElementById('emptyState');
             const chartContainer = document.getElementById('chartContainer');
             const chartTitle = document.getElementById('chartTitle');
+            const filterThreshold = document.getElementById('filterThreshold');
+            const thresholdLabel = document.getElementById('thresholdLabel');
+            const anomalyHeaderText = document.getElementById('anomalyHeaderText');
+            const anomalyCoicopContainer = document.getElementById('anomalyCoicopContainer');
+            const anomalyCoicops = document.getElementById('anomalyCoicops');
+            const anomalyRegencyContainer = document.getElementById('anomalyRegencyContainer');
+            const anomalyKabupatens = document.getElementById('anomalyKabupatens');
 
+            let tomSelectCoicop = null;
+            let tomSelectRegency = null;
+            let scrollToAnomalyFlag = false;
             let chart = null;
+
+            // Initialize Tom Selects
+            tomSelectCoicop = new TomSelect('#anomalyCoicops', {
+                plugins: ['remove_button'],
+                onChange: () => fetchData({ scrollToAnomaly: true })
+            });
+
+            tomSelectRegency = new TomSelect('#anomalyKabupatens', {
+                plugins: ['remove_button'],
+                onChange: () => fetchData({ scrollToAnomaly: true })
+            });
 
             function generateTWColors(series) {
                 return series.map((s, i) => {
@@ -280,11 +343,69 @@
             filterYear.addEventListener('change', () => fetchData());
             filterQuarters.forEach(q => q.addEventListener('change', () => fetchData()));
 
+            filterThreshold.addEventListener('input', function () {
+                const anomalyList = document.getElementById('anomalyList');
+                const anomalyCount = document.getElementById('anomalyCount');
+
+                if (this.value === '') {
+                    anomalyHeaderText.innerText = 'Mohon inputan angka persen';
+                    anomalyHeaderText.classList.add('text-danger');
+                    if (anomalyCount) anomalyCount.innerText = '0';
+                    if (anomalyList) {
+                        anomalyList.innerHTML = `
+                                                        <div class="col-12 text-center py-5 text-muted">
+                                                            <i class="fas fa-exclamation-circle fa-3x mb-3 opacity-50"></i>
+                                                            <h6 class="fw-bold">Mohon inputan angka persen</h6>
+                                                            <p class="small mb-0">Masukkan angka 1-100 untuk melihat analisis anomali.</p>
+                                                        </div>
+                                                    `;
+                    }
+                    return;
+                }
+                anomalyHeaderText.classList.remove('text-danger');
+                anomalyHeaderText.innerHTML = `Analisis Anomali (><span id="thresholdLabel">${this.value}</span>%)`;
+
+                let val = parseInt(this.value);
+                if (val > 100) this.value = 100;
+                if (val < 1) this.value = 1;
+
+                const label = document.getElementById('thresholdLabel');
+                if (label) label.innerText = this.value;
+            });
+
+            filterThreshold.addEventListener('change', () => fetchData({ scrollToAnomaly: true }));
+
+            function updateAnomalyFilterVisibility() {
+                const isRegencySelected = (filterKabupaten.value !== "");
+                const isCoicopSelected = (filterCoicop.value !== "");
+
+                if (isRegencySelected && !isCoicopSelected) {
+                    anomalyCoicopContainer.style.setProperty('display', 'block', 'important');
+                    anomalyRegencyContainer.style.setProperty('display', 'none', 'important');
+                    if (tomSelectRegency) tomSelectRegency.clear();
+                } else if (!isRegencySelected && isCoicopSelected) {
+                    anomalyRegencyContainer.style.setProperty('display', 'block', 'important');
+                    anomalyCoicopContainer.style.setProperty('display', 'none', 'important');
+                    if (tomSelectCoicop) tomSelectCoicop.clear();
+                } else {
+                    anomalyCoicopContainer.style.setProperty('display', 'none', 'important');
+                    anomalyRegencyContainer.style.setProperty('display', 'none', 'important');
+                    if (tomSelectCoicop) tomSelectCoicop.clear();
+                    if (tomSelectRegency) tomSelectRegency.clear();
+                }
+            }
+
             resetBtn.addEventListener('click', () => {
                 if (filterYear.options.length > 1) filterYear.selectedIndex = 1;
                 filterKabupaten.value = "";
                 filterCoicop.value = "";
                 filterQuarters.forEach(q => q.checked = true);
+                filterThreshold.value = 25;
+                anomalyHeaderText.classList.remove('text-danger');
+                anomalyHeaderText.innerHTML = `Analisis Anomali (><span id="thresholdLabel">25</span>%)`;
+                if (tomSelectCoicop) tomSelectCoicop.clear();
+                if (tomSelectRegency) tomSelectRegency.clear();
+                updateAnomalyFilterVisibility();
                 fetchData();
             });
 
@@ -304,6 +425,7 @@
             }
 
             initChart();
+            updateAnomalyFilterVisibility();
             fetchData();
 
 
@@ -329,21 +451,30 @@
                 }
             }
 
-            function fetchData() {
+            function fetchData(options = {}) {
+                scrollToAnomalyFlag = options.scrollToAnomaly || false;
+
                 const year = filterYear.value;
                 const kabupatenId = filterKabupaten.value;
                 const coicopId = filterCoicop.value;
                 const quarters = Array.from(filterQuarters).filter(c => c.checked).map(c => c.value);
+                const aCoicops = tomSelectCoicop ? tomSelectCoicop.getValue() : [];
+                const aKabupatens = tomSelectRegency ? tomSelectRegency.getValue() : [];
 
                 if (!year) return;
+                if (filterThreshold.value === '') return;
 
+                updateAnomalyFilterVisibility();
                 updateUIState('loading');
 
                 const params = new URLSearchParams({
                     year: year,
                     quarters: quarters.join(','),
                     kabupaten_id: kabupatenId,
-                    coicop_id: coicopId
+                    coicop_id: coicopId,
+                    threshold: filterThreshold.value,
+                    anomaly_coicops: aCoicops.join(','),
+                    anomaly_kabupatens: aKabupatens.join(',')
                 });
 
                 fetch(`{{ route('seruti.chart-data') }}` + `?${params.toString()}`)
@@ -366,6 +497,14 @@
 
             function renderChart(data) {
                 updateUIState('chart');
+
+                if (scrollToAnomalyFlag) {
+                    setTimeout(() => {
+                        document.getElementById('anomalySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        scrollToAnomalyFlag = false;
+                    }, 100);
+                }
+
                 chartTitle.innerText = data.title;
                 const colors = generateTWColors(data.series);
 
@@ -408,12 +547,12 @@
                 if (!data.anomalies || data.anomalies.length === 0) {
                     if (anomalyCount) anomalyCount.innerText = '0';
                     anomalyList.innerHTML = `
-                                                                                <div class="col-12 text-center py-5">
-                                                                                    <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
-                                                                                    <h6 class="fw-bold text-dark">Data Normal</h6>
-                                                                                    <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (>25%) pada dataset ini.</p>
-                                                                                </div>
-                                                                            `;
+                                                                                                                        <div class="col-12 text-center py-5">
+                                                                                                                            <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+                                                                                                                            <h6 class="fw-bold text-dark">Data Normal</h6>
+                                                                                                                            <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (><span class="current-threshold">${filterThreshold.value}</span>%) pada dataset ini.</p>
+                                                                                                                        </div>
+                                                                                                                    `;
                 } else {
                     if (anomalyCount) anomalyCount.innerText = data.anomalies.length;
                     data.anomalies.forEach(ano => {
@@ -425,33 +564,33 @@
                         const col = document.createElement('div');
                         col.className = 'col-md-6 col-xl-4';
                         col.innerHTML = `
-                                                                                    <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
-                                                                                        <div class="card-body p-3">
-                                                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                                                <span class="${badgeClass}">
-                                                                                                    <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
-                                                                                                </span>
-                                                                                                <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
-                                                                                            </div>
+                                                                                                                            <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
+                                                                                                                                <div class="card-body p-3">
+                                                                                                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                                                                                        <span class="${badgeClass}">
+                                                                                                                                            <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
+                                                                                                                                        </span>
+                                                                                                                                        <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
+                                                                                                                                    </div>
 
-                                                                                            <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">[${ano.code}] ${ano.item}</h6>
-                                                                                            <p class="text-muted mb-3" style="font-size: 0.75rem;">
-                                                                                                <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
-                                                                                            </p>
+                                                                                                                                    <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">[${ano.code}] ${ano.item}</h6>
+                                                                                                                                    <p class="text-muted mb-3" style="font-size: 0.75rem;">
+                                                                                                                                        <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
+                                                                                                                                    </p>
 
-                                                                                            <div class="d-flex flex-column bg-light rounded p-2">
-                                                                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                                                                    <span class="text-muted extra-small">Nilai Aktual:</span>
-                                                                                                    <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
-                                                                                                </div>
-                                                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                                                    <span class="text-muted extra-small">Prov. Avg:</span>
-                                                                                                    <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                `;
+                                                                                                                                    <div class="d-flex flex-column bg-light rounded p-2">
+                                                                                                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                                                                                            <span class="text-muted extra-small">Nilai Aktual:</span>
+                                                                                                                                            <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                                                                                            <span class="text-muted extra-small">Prov. Avg:</span>
+                                                                                                                                            <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                        `;
                         anomalyList.appendChild(col);
                     });
                 }
@@ -515,4 +654,7 @@
             letter-spacing: 0.5px;
         }
     </style>
+@endpush
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 @endpush

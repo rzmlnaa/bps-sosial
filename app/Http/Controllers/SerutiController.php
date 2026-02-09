@@ -223,6 +223,7 @@ class SerutiController extends Controller
         $yearInfo = $request->get('year');
         $quartersStr = $request->get('quarters');
         $quarters = $quartersStr ? explode(',', $quartersStr) : [1, 2, 3, 4];
+        $threshold = $request->get('threshold', 25);
 
         $kabupatenId = $request->get('kabupaten_id');
         $coicopId = $request->get('coicop_id');
@@ -232,6 +233,12 @@ class SerutiController extends Controller
             $kabupatenId = null;
         if ($coicopId === 'null' || $coicopId === '')
             $coicopId = null;
+
+        $anomalyCoicopsStr = $request->get('anomaly_coicops');
+        $anomalyCoicopIds = $anomalyCoicopsStr ? explode(',', $anomalyCoicopsStr) : [];
+
+        $anomalyKabupatensStr = $request->get('anomaly_kabupatens');
+        $anomalyKabupatenIds = $anomalyKabupatensStr ? explode(',', $anomalyKabupatensStr) : [];
 
         if (!$yearInfo || (!$kabupatenId && !$coicopId)) {
             return response()->json(['empty' => true]);
@@ -349,8 +356,21 @@ class SerutiController extends Controller
         $anomalies = [];
         $periodIds = $rawData->pluck('period_id')->unique();
 
+        // 1. Filter rawData for anomalies if anomalyCoicopIds or anomalyKabupatenIds is present
+        $anomalyBaseData = $rawData;
+        if (!empty($anomalyCoicopIds)) {
+            $anomalyBaseData = $anomalyBaseData->filter(function ($item) use ($anomalyCoicopIds) {
+                return in_array($item->coicop_id, $anomalyCoicopIds);
+            });
+        }
+        if (!empty($anomalyKabupatenIds)) {
+            $anomalyBaseData = $anomalyBaseData->filter(function ($item) use ($anomalyKabupatenIds) {
+                return in_array($item->kabupaten_id, $anomalyKabupatenIds);
+            });
+        }
+
         if ($mode === 'regency') {
-            $allCoicopIds = $rawData->pluck('coicop_id')->unique();
+            $allCoicopIds = $anomalyBaseData->pluck('coicop_id')->unique();
             $provincialAverages = ConsumptionValue::whereIn('coicop_id', $allCoicopIds)
                 ->whereIn('period_id', $periodIds)
                 ->select('coicop_id', 'period_id', DB::raw('AVG(value) as avg_value'))
@@ -358,13 +378,13 @@ class SerutiController extends Controller
                 ->get()
                 ->groupBy('coicop_id');
 
-            foreach ($rawData as $row) {
+            foreach ($anomalyBaseData as $row) {
                 $avgGroup = $provincialAverages->get($row->coicop_id);
                 $avg = $avgGroup ? $avgGroup->firstWhere('period_id', $row->period_id)?->avg_value : null;
 
                 if ($avg && $avg > 0) {
                     $diff = (($row->value - $avg) / $avg) * 100;
-                    if (abs($diff) > 25) {
+                    if (abs($diff) > $threshold) {
                         $anomalies[] = [
                             'item' => $row->coicop->nama,
                             'code' => $row->coicop->kode,
@@ -379,20 +399,20 @@ class SerutiController extends Controller
                 }
             }
         } else {
-            $coicopId = $rawData->first()->coicop_id;
-            $provincialAverages = ConsumptionValue::where('coicop_id', $coicopId)
+            $coicopIdUsed = $rawData->first()->coicop_id;
+            $provincialAverages = ConsumptionValue::where('coicop_id', $coicopIdUsed)
                 ->whereIn('period_id', $periodIds)
                 ->select('period_id', DB::raw('AVG(value) as avg_value'))
                 ->groupBy('period_id')
                 ->get()
                 ->keyBy('period_id');
 
-            foreach ($rawData as $row) {
+            foreach ($anomalyBaseData as $row) {
                 $avg = $provincialAverages->get($row->period_id)?->avg_value;
 
                 if ($avg && $avg > 0) {
                     $diff = (($row->value - $avg) / $avg) * 100;
-                    if (abs($diff) > 25) {
+                    if (abs($diff) > $threshold) {
                         $anomalies[] = [
                             'item' => $row->kabupaten->nama_kabupaten,
                             'code' => $row->kabupaten->kode_kab,
@@ -408,8 +428,8 @@ class SerutiController extends Controller
             }
         }
 
-        // Sort anomalies by absolute deviation descending
-        usort($anomalies, fn($a, $b) => abs($b['deviation']) <=> abs($a['deviation']));
+        // Sort anomalies by code ascending
+        usort($anomalies, fn($a, $b) => $a['code'] <=> $b['code']);
 
         return response()->json([
             'categories' => $categories,
