@@ -201,9 +201,9 @@ class SerutiController extends Controller
                     'nama' => $item->nama,
                     'seruti' => $item->seruti,
                     'value' => $valObj ? $valObj->value : null,
-                    'operator_add' => $valObj && $valObj->userAdd ? $valObj->userAdd->name : '-',
+                    'operator_add' => $valObj && $valObj->userAdd ? $valObj->userAdd->name : null,
                     'date_add' => $valObj ? $valObj->created_at->format('d/m/y H:i') : null,
-                    'operator_update' => $valObj && $valObj->userUpdate ? $valObj->userUpdate->name : '-',
+                    'operator_update' => $valObj && $valObj->userUpdate ? $valObj->userUpdate->name : null,
                     'date_update' => $valObj && $valObj->user_id_update ? $valObj->updated_at->format('d/m/y H:i') : null,
                 ];
             });

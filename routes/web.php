@@ -107,7 +107,8 @@ Route::middleware(['check.status'])->group(function () {
         $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
         $latestYear = VariabelKemiskinan::max('tahun') ?? date('Y');
         if (!$request->has('tahun')) {
-            $request->merge(['tahun' => $latestYear]);
+            $request->merge(['tahun' => 'all']);
+            //$request->merge(['tahun' => $latestYear]);
         }
         $selectedTahun = $request->get('tahun');
 
@@ -116,24 +117,48 @@ Route::middleware(['check.status'])->group(function () {
         } else {
             $mainVar = VariabelKemiskinan::where('tahun', $selectedTahun)->latest()->first();
         }
+        $nilaiKemiskinan = \App\Models\NilaiKemiskinan::all()->keyBy('kabupaten_id');
 
-        $kabupatenData = [];
-        foreach ($kabupatens as $kab) {
-            $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
-            $kabupatenData[] = [
+        // $kabupatenData = [];
+        // foreach ($kabupatens as $kab) {
+        //     $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
+        //     $kabupatenData[] = [
+        //         'id' => $kab->id,
+        //         'kode_kab' => $kab->kode_kab,
+        //         'name' => $kab->nama_kabupaten,
+        //         'nilai' => $ceknilai
+        //     ];
+        // }
+        // $kabupatenData = array_filter($kabupatenData, function ($item) {
+        //     return !is_null($item['nilai']);
+        // });
+
+        $kabupatenData = $kabupatens->map(function ($kab) use ($nilaiKemiskinan) {
+            $nilai = $nilaiKemiskinan->get($kab->id);
+
+            if (!$nilai) {
+                return null;
+            }
+
+            return [
                 'id' => $kab->id,
                 'kode_kab' => $kab->kode_kab,
                 'name' => $kab->nama_kabupaten,
-                'nilai' => $ceknilai
+                'nilai' => $nilai
             ];
-        }
-        $kabupatenData = array_filter($kabupatenData, function ($item) {
-            return !is_null($item['nilai']);
-        });
+        })->filter()->values();
 
-        $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
-        $provCount = array_sum(array_column($kabupatenData, 'count'));
-        $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
+        //dd($kabupatenData);
+
+        //dd($kabupatens, $kabupatenData);
+
+        // $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
+        // $provCount = array_sum(array_column($kabupatenData, 'count'));
+        // $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
+
+        $provAvg = $kabupatenData->whereNotNull('nilai')->avg(fn($item) => $item['nilai']->avg_nilai);
+        $provCount = $kabupatenData->sum(fn($item) => $item['nilai']->count);
+        $provGK = $kabupatenData->avg(fn($item) => $item['nilai']->gk);
 
         $bulanNama = [
             1 => 'Januari',

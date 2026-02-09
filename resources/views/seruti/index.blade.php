@@ -140,9 +140,11 @@
                                 <h5 class="fw-bold text-dark mb-0">
                                     <i class="fas fa-microscope me-2 text-primary"></i> Analisis Anomali (>25%)
                                 </h5>
-                                <span class="badge bg-primary rounded-pill px-3 py-2" id="anomalyCount" style="font-size: 0.85rem;">0</span>
+                                <span class="badge bg-primary rounded-pill px-3 py-2" id="anomalyCount"
+                                    style="font-size: 0.85rem;">0</span>
                             </div>
-                            <p class="text-muted small mt-2 mb-0">Perbandingan data terhadap rata-rata provinsi pada periode yang sama.</p>
+                            <p class="text-muted small mt-2 mb-0">Perbandingan data terhadap rata-rata provinsi pada periode
+                                yang sama.</p>
                         </div>
                         <div class="card-body p-4">
                             <div id="anomalyList" class="row g-3">
@@ -259,7 +261,7 @@
             // Optional UX: Mutually exclusive highlight
             filterKabupaten.addEventListener('change', () => {
                 const val = filterKabupaten.value;
-                console.log('Kabupaten changed:', val);
+                //console.log('Kabupaten changed:', val);
                 if (val !== "") {
                     filterCoicop.value = ""; // Clear COICOP
                 }
@@ -268,7 +270,7 @@
 
             filterCoicop.addEventListener('change', () => {
                 const val = filterCoicop.value;
-                console.log('COICOP changed:', val);
+                //console.log('COICOP changed:', val);
                 if (val !== "") {
                     filterKabupaten.value = ""; // Clear Kabupaten
                 }
@@ -310,7 +312,7 @@
              * States: 'loading', 'empty', 'chart'
              */
             function updateUIState(state, message = '') {
-                console.log('UI State Change:', state, message ? '(' + message + ')' : '');
+                //console.log('UI State Change:', state, message ? '(' + message + ')' : '');
 
                 // Hide All Initially
                 loadingOverlay.style.setProperty('display', 'none', 'important');
@@ -367,8 +369,11 @@
                 chartTitle.innerText = data.title;
                 const colors = generateTWColors(data.series);
 
-                console.log('Render chart with:', data);
-
+                //console.log('Render chart with:', data.categories);
+                const formattedCategories = data.categories.map(item => {
+                    const match = item.match(/^\[(\d+)\]\s*(\S+)/);
+                    return match ? `[${match[1]}] ${match[2]}` : item;
+                });
                 chart.updateOptions({
                     colors: colors,
                     plotOptions: {
@@ -379,7 +384,7 @@
                         }
                     },
                     xaxis: {
-                        categories: data.categories,
+                        categories: formattedCategories,
                         labels: {
                             rotate: -45,
                             style: { fontSize: '11px' }
@@ -397,15 +402,18 @@
                 const anomalyCount = document.getElementById('anomalyCount');
                 anomalyList.innerHTML = '';
 
+                console.log(data.anomalies);
+
+
                 if (!data.anomalies || data.anomalies.length === 0) {
                     if (anomalyCount) anomalyCount.innerText = '0';
                     anomalyList.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
-                            <h6 class="fw-bold text-dark">Data Normal</h6>
-                            <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (>25%) pada dataset ini.</p>
-                        </div>
-                    `;
+                                                                                <div class="col-12 text-center py-5">
+                                                                                    <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+                                                                                    <h6 class="fw-bold text-dark">Data Normal</h6>
+                                                                                    <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (>25%) pada dataset ini.</p>
+                                                                                </div>
+                                                                            `;
                 } else {
                     if (anomalyCount) anomalyCount.innerText = data.anomalies.length;
                     data.anomalies.forEach(ano => {
@@ -417,39 +425,39 @@
                         const col = document.createElement('div');
                         col.className = 'col-md-6 col-xl-4';
                         col.innerHTML = `
-                            <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <span class="${badgeClass}">
-                                            <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
-                                        </span>
-                                        <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
-                                    </div>
-                                    
-                                    <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">${ano.item}</h6>
-                                    <p class="text-muted mb-3" style="font-size: 0.75rem;">
-                                        <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
-                                    </p>
+                                                                                    <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
+                                                                                        <div class="card-body p-3">
+                                                                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                                                <span class="${badgeClass}">
+                                                                                                    <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
+                                                                                                </span>
+                                                                                                <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
+                                                                                            </div>
 
-                                    <div class="d-flex flex-column bg-light rounded p-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <span class="text-muted extra-small">Nilai Aktual:</span>
-                                            <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted extra-small">Prov. Avg:</span>
-                                            <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                                                                                            <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">[${ano.code}] ${ano.item}</h6>
+                                                                                            <p class="text-muted mb-3" style="font-size: 0.75rem;">
+                                                                                                <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
+                                                                                            </p>
+
+                                                                                            <div class="d-flex flex-column bg-light rounded p-2">
+                                                                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                                                    <span class="text-muted extra-small">Nilai Aktual:</span>
+                                                                                                    <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
+                                                                                                </div>
+                                                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                                                    <span class="text-muted extra-small">Prov. Avg:</span>
+                                                                                                    <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                `;
                         anomalyList.appendChild(col);
                     });
                 }
             }
 
-            console.log('Chart width:', document.querySelector('#mainChart').offsetWidth);
+            //console.log('Chart width:', document.querySelector('#mainChart').offsetWidth);
 
 
         });

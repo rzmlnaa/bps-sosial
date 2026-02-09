@@ -240,9 +240,15 @@
         <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
             <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
                 rights reserved.</small>
-            <small>Jika terdapat pertanyaan atau error - bug pada sistem, harap hubungi Developer dengan <a
-                    href="https://wa.me/6289529406362" target="_blank" class="text-decoration-none fw-bold"
-                    style="color: var(--bps-orange);">klik disini</a></small>
+            <small>
+                Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
+                    class="text-danger fw-bold">error - bug</span> pada sistem,
+                harap hubungi Developer dengan
+                <a href="https://kostapp.reservasiaja.com/portofolio" target="_blank"
+                    class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
+                    klik disini
+                </a>
+            </small>
         </footer>
     </main>
 

@@ -19,7 +19,7 @@
         </div>
 
         <!-- Tabs/Navigation -->
-        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+        <div class="card border-0 shadow-sm mb-4 " style="border-radius: 12px; overflow: hidden;">
             <div class="card-header bg-white p-2">
                 <ul class="nav nav-pills card-header-pills" id="serutiTab" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -265,8 +265,7 @@
                                         </button>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-hover align-middle mb-0"
-                                            style="font-size: 0.9rem;">
+                                        <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
                                             <thead class="bg-light">
                                                 <tr>
                                                     <th class="ps-4 zone-data" style="width: 80px;">Kode</th>
@@ -342,24 +341,24 @@
 
             function createRowHtml() {
                 return `
-                                                            <div class="row g-2 mb-2 manual-row align-items-end">
-                                                                <div class="col-md-2">
-                                                                    <label class="form-label small text-muted mb-1">Kode</label>
-                                                                    <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
-                                                                </div>
-                                                                <div class="col-md-5">
-                                                                    <label class="form-label small text-muted mb-1">Nama COICOP</label>
-                                                                    <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
-                                                                </div>
-                                                                <div class="col-md-4">
-                                                                    <label class="form-label small text-muted mb-1">Seruti</label>
-                                                                    <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
-                                                                </div>
-                                                                <div class="col-md-1">
-                                                                     <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
-                                                                </div>
-                                                            </div>
-                                                        `;
+                                                                            <div class="row g-2 mb-2 manual-row align-items-end">
+                                                                                <div class="col-md-2">
+                                                                                    <label class="form-label small text-muted mb-1">Kode</label>
+                                                                                    <input type="text" class="form-control form-control-sm input-kode" placeholder="ex: 01">
+                                                                                </div>
+                                                                                <div class="col-md-5">
+                                                                                    <label class="form-label small text-muted mb-1">Nama COICOP</label>
+                                                                                    <input type="text" class="form-control form-control-sm input-nama" placeholder="Nama Komoditas">
+                                                                                </div>
+                                                                                <div class="col-md-4">
+                                                                                    <label class="form-label small text-muted mb-1">Seruti</label>
+                                                                                    <input type="text" class="form-control form-control-sm input-seruti" placeholder="Kelompok Seruti">
+                                                                                </div>
+                                                                                <div class="col-md-1">
+                                                                                     <button class="btn btn-outline-danger btn-sm w-100 remove-row-btn" tabindex="-1"><i class="fas fa-times"></i></button>
+                                                                                </div>
+                                                                                                                                                  </div>
+                                                                        `;
             }
 
             function addRow(data = null) {
@@ -394,21 +393,21 @@
                     Swal.fire({
                         title: 'Edit Kelompok COICOP',
                         html: `
-                                                                    <div class="text-start">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label small">Kode</label>
-                                                                            <input id="editKode" class="form-control" value="${kode}" readonly>
-                                                                        </div>
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label small">Nama</label>
-                                                                            <input id="editNama" class="form-control" value="${nama}">
-                                                                        </div>
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label small">Seruti</label>
-                                                                            <input id="editSeruti" class="form-control" value="${seruti}">
-                                                                        </div>
-                                                                    </div>
-                                                                `,
+                                                                                    <div class="text-start">
+                                                                                        <div class="mb-3">
+                                                                                            <label class="form-label small">Kode</label>
+                                                                                            <input id="editKode" class="form-control" value="${kode}" readonly>
+                                                                                        </div>
+                                                                                        <div class="mb-3">
+                                                                                            <label class="form-label small">Nama</label>
+                                                                                            <input id="editNama" class="form-control" value="${nama}">
+                                                                                        </div>
+                                                                                        <div class="mb-3">
+                                                                                            <label class="form-label small">Seruti</label>
+                                                                                            <input id="editSeruti" class="form-control" value="${seruti}">
+                                                                                        </div>
+                                                                                    </div>
+                                                                                `,
                         showCancelButton: true,
                         confirmButtonText: 'Simpan',
                         preConfirm: () => {
@@ -649,13 +648,13 @@
                     fetchExistingData(y, inputQuarter.value, kId);
                 } else {
                     consumptionTableBody.innerHTML = `
-                                            <tr>
-                                                <td colspan="6" class="text-center py-5 text-muted">
-                                                    <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
-                                                    <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
-                                                </td>
-                                            </tr>
-                                        `;
+                                                            <tr>
+                                                                <td colspan="6" class="text-center py-5 text-muted">
+                                                                    <i class="fas fa-filter fa-3x mb-3 text-secondary opacity-50"></i>
+                                                                    <p class="mb-0">Silakan pilih Tahun, Triwulan, dan Wilayah terlebih dahulu.</p>
+                                                                </td>
+                                                            </tr>
+                                                        `;
                     pasteConsumption.value = '';
                     if (printBtn) printBtn.classList.add('d-none');
                 }
@@ -705,42 +704,55 @@
                     if (item.state === 'ready') {
                         rowClass = 'table-info'; // Highlight changed rows
                     }
-                    let operatorHtml = '-';
-                    if (item.operator_add !== null) {
-                        operatorHtml = `
-                                            <div class="d-flex flex-column text-start" style="font-size: 0.75rem;">
+                    let operatorHtml = '<span class="text-muted opacity-50"> — </span>';
+
+                    if (item.operator_add || item.operator_update) {
+                        let addPart = '';
+                        if (item.operator_add) {
+                            addPart = `
                                                 <div class="mb-1">
                                                     <i class="fas fa-plus-circle text-success me-1"></i>
                                                     <strong>${item.operator_add}</strong>
                                                     <span class="text-muted">${item.date_add || ''}</span>
+                                                </div>`;
+                        }
+
+                        let updatePart = '';
+                        if (item.operator_update) {
+                            updatePart = `
+                                            <div>
+                                                <i class="fas fa-edit text-warning me-1"></i>
+                                                <strong>${item.operator_update}</strong>
+                                                <span class="text-muted">${item.date_update || ''}</span>
+                                            </div>`;
+                        }
+                        if (addPart || updatePart) {
+                            operatorHtml = `
+                                                <div class="d-flex flex-column text-start" style="font-size: 0.75rem;">
+                                                    ${addPart}
+                                                    ${updatePart}
                                                 </div>
-                                                ${item.operator_update !== null && item.operator_update !== item.operator_add ? `
-                                                <div>
-                                                    <i class="fas fa-edit text-warning me-1"></i>
-                                                    <strong>${item.operator_update}</strong>
-                                                    <span class="text-muted">${item.date_update || ''}</span>
-                                                </div>` : ''}
-                                            </div>
-                                        `;
+                                            `;
+                        }
                     }
 
-                        html += `
-                                            <tr class="${rowClass}">
-                                                <td class="ps-4 fw-bold align-middle zone-data text-primary">${item.kode}</td>
-                                                <td class="align-middle zone-data scrollable-cell">${item.nama}</td>
-                                                <td class="align-middle zone-data zone-divider text-center">
-                                                    <span class="badge bg-white text-dark border-secondary-subtle" style="font-size: 0.7rem;">${item.seruti || '-'}</span>
-                                                </td>
-                                                <td class="text-end fw-bold align-middle zone-action ${hasValue ? 'text-dark' : 'text-muted'}" style="font-size: 1rem;">${valDisplay}</td>
-                                                <td class="align-middle zone-action">${operatorHtml}</td>
-                                                <td class="text-center zone-action">
-                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-consumption-btn"
-                                                        data-kode="${item.kode}" data-nama="${item.nama}" data-value="${item.value || ''}">
-                                                        <i class="fas fa-pencil-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `;
+                    html += `
+                                                            <tr class="${rowClass}">
+                                                                <td class="ps-4 fw-bold align-middle zone-data text-primary">${item.kode}</td>
+                                                                <td class="align-middle zone-data scrollable-cell">${item.nama}</td>
+                                                                <td class="align-middle zone-data zone-divider text-center">
+                                                                    <span class="badge bg-white text-dark border-secondary-subtle" style="font-size: 0.7rem;">${item.seruti || '-'}</span>
+                                                                </td>
+                                                                <td class="text-end fw-bold align-middle zone-action ${hasValue ? 'text-dark' : 'text-muted'}" style="font-size: 1rem;">${valDisplay}</td>
+                                                                <td class="align-middle zone-action">${operatorHtml}</td>
+                                                                <td class="text-center zone-action">
+                                                                    <button class="btn btn-sm btn-icon btn-outline-warning edit-consumption-btn"
+                                                                        data-kode="${item.kode}" data-nama="${item.nama}" data-value="${item.value || ''}">
+                                                                        <i class="fas fa-pencil-alt"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        `;
                 });
 
                 if (data.length === 0) {
@@ -860,12 +872,12 @@
                         Swal.fire({
                             title: 'Edit Nilai Konsumsi',
                             html: `
-                                                    <div class="text-start mb-2">
-                                                        <small class="text-muted d-block mb-1">[${kode}] ${nama}</small>
-                                                        <label class="form-label fw-bold small">Konsumsi per Kapita (Rp)</label>
-                                                        <input type="number" id="editConsValue" class="form-control" value="${oldValue}" placeholder="Masukkan nilai...">
-                                                    </div>
-                                                `,
+                                                                    <div class="text-start mb-2">
+                                                                        <small class="text-muted d-block mb-1">[${kode}] ${nama}</small>
+                                                                        <label class="form-label fw-bold small">Konsumsi per Kapita (Rp)</label>
+                                                                        <input type="number" id="editConsValue" class="form-control" value="${oldValue}" placeholder="Masukkan nilai...">
+                                                                    </div>
+                                                                `,
                             showCancelButton: true,
                             confirmButtonText: 'Simpan',
                             cancelButtonText: 'Batal',
