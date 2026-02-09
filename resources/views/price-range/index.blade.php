@@ -2,6 +2,53 @@
 
 @section('title', 'Rentang Harga - BPS Kalbar')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .ts-control {
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+            background-color: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .ts-dropdown .active {
+            background-color: var(--bps-blue) !important;
+            color: #fff !important;
+        }
+    </style>
+@endpush
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize Tom Select for Category Filter
+            new TomSelect('#categoryFilter', {
+                plugins: ['remove_button'],
+                maxOptions: null,
+                placeholder: 'Cari kategori...',
+                render: {
+                    no_results: function (data, escape) {
+                        return '<div class="no-results">Kategori "' + escape(data.input) + '" tidak ditemukan</div>';
+                    },
+                }
+            });
+
+            // Initialize Tom Select for Commodity Filter
+            new TomSelect('#komoditasFilter', {
+                plugins: ['remove_button'],
+                maxOptions: null,
+                placeholder: 'Cari komoditas...',
+                render: {
+                    no_results: function (data, escape) {
+                        return '<div class="no-results">Komoditas "' + escape(data.input) + '" tidak ditemukan</div>';
+                    },
+                }
+            });
+        });
+    </script>
+@endpush
+
 @section('content')
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
@@ -14,9 +61,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                    </a> -->
+                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -40,22 +87,76 @@
         </div>
         @if ($selectedYearId && $selectedKabupatenId)
             <!-- Analisis Insight Section -->
-            @if(!empty($outliers))
-                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga
-                            Antar Kabupaten</h5>
-                        <small class="text-muted">Menampilkan kabupaten dengan harga yang menyimpang jauh (>25%) dari rata-rata
-                            kabupaten.</small>
+            <div class="card border-0 shadow-sm mb-4" id="analysis-section" style="border-radius: 12px;">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten
+                            {{ $activeYear->tahun }}
+                        </h5>
+                        <div class="d-flex flex-column align-items-end gap-1" style="min-width: 250px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small fw-bold text-muted mb-0">BATAS</label>
+                                <div class="input-group input-group-sm" style="width: 100px;">
+                                    <input type="number" name="threshold" id="thresholdInput"
+                                        class="form-control text-center fw-bold" value="{{ request('threshold') }}" min="1"
+                                        max="100" form="filter-form" oninput="validateThresholdInput(this)"
+                                        onchange="submitThreshold(this)">
+                                    <span class="input-group-text fw-bold">%</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="active_tab" id="activeTabInput"
+                                value="{{ request('active_tab', array_key_first($outliers ?? [])) }}" form="filter-form">
+                            <small id="thresholdError" class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
+                                style="font-size: 0.7rem;">Masukan angka 1-100</small>
+                        </div>
                     </div>
+                    <div class="mt-3 row g-2">
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Filter Kategori
+                                (Analisis)</label>
+                            <select name="category_ids[]" id="categoryFilter" class="form-select form-select-sm" multiple
+                                form="filter-form" placeholder="Pilih satu atau lebih kategori..."
+                                onchange="this.form.submit()">
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ in_array($cat->id, $selectedCategoryIds) ? 'selected' : '' }}>
+                                        {{ $cat->nama_kategori }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Pilih Komoditas
+                                (Analisis)</label>
+                            <select name="komoditas_ids[]" id="komoditasFilter" class="form-select form-select-sm" multiple
+                                form="filter-form"
+                                placeholder="{{ empty($selectedCategoryIds) ? 'Pilih kategori dulu...' : 'Cari komoditas...' }}"
+                                onchange="this.form.submit()">
+                                @foreach($availableKomoditas as $kom)
+                                    <option value="{{ $kom->id }}" {{ in_array($kom->id, $selectedKomoditasIds) ? 'selected' : '' }}>
+                                        {{ $kom->nama_komoditas }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <small class="text-muted">Menampilkan kabupaten dengan harga yang menyimpang jauh
+                        ({{ $thresholdPercent ? ($thresholdPercent * 100) . '%' : '>...%' }}) dari
+                        rata-rata kabupaten.</small>
+                </div>
+                <div id="analysis-content" class="{{ $thresholdPercent === null ? 'd-none' : '' }}">
                     <div class="card-body">
                         <ul class="nav nav-tabs flex-nowrap overflow-auto mb-3 pb-1" id="insightTabs" role="tablist"
                             style="white-space: nowrap;">
+                            @php
+                                $activeTab = request('active_tab', array_key_first($outliers ?? []));
+                            @endphp
                             @foreach($outliers as $periodName => $data)
                                 <li class="nav-item flex-shrink-0" role="presentation">
-                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold"
+                                    <button class="nav-link {{ $activeTab == $periodName ? 'active' : '' }} fw-bold"
                                         id="tab-{{ Str::slug($periodName) }}" data-bs-toggle="tab"
-                                        data-bs-target="#content-{{ Str::slug($periodName) }}" type="button" role="tab">
+                                        data-bs-target="#content-{{ Str::slug($periodName) }}" type="button" role="tab"
+                                        onclick="setActiveTab('{{ $periodName }}')">
                                         {{ $periodName }}
                                     </button>
                                 </li>
@@ -64,7 +165,7 @@
                         <div class="tab-content" id="insightTabsContent">
                             @foreach($outliers as $periodName => $commodities)
 
-                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                                <div class="tab-pane fade {{ $activeTab == $periodName ? 'show active' : '' }}"
                                     id="content-{{ Str::slug($periodName) }}" role="tabpanel">
 
                                     @if(empty($commodities))
@@ -141,7 +242,13 @@
                         </div>
                     </div>
                 </div>
-            @endif
+                <div class="card-body py-5 text-center {{ $thresholdPercent === null ? '' : 'd-none' }}"
+                    id="analysis-empty-state">
+                    <i class="fas fa-percentage mb-3 text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <h4 class="fw-bold text-dark mb-2">Mohon inputan angka persen</h4>
+                    <p class="text-muted mb-0">Masukkan angka 1-100 untuk melihat analisis anomali.</p>
+                </div>
+            </div>
             <!-- Info Batas Selisih & Legend -->
             <div class="alert alert-info border-0 shadow-sm mb-4" role="alert"
                 style="background-color: rgba(13, 202, 240, 0.1); color: #055160;">
@@ -226,7 +333,7 @@
             </div>
         @endif
 
-        <div class="card border-0 shadow-sm mb-1" style="border-radius: 12px;">
+        <div class="card border-0 shadow-sm mb-1" id="filter-section" style="border-radius: 12px;">
             <div class="card-body p-4">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
                     <form action="{{ route('price-range.index') }}" method="GET" class="row g-3 flex-grow-1 align-items-end"
@@ -550,12 +657,27 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            var tableElement = document.getElementById('commodity-table');
-            if (tableElement) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const threshold = urlParams.get('threshold');
+            const hasThresholdValue = threshold !== null && threshold !== "";
+            const hasYear = urlParams.has('year_id');
+            const hasKab = urlParams.has('kabupaten_id');
+            const activeTab = urlParams.get('active_tab');
 
-                setTimeout(function () {
-                    tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 500);
+            if (hasThresholdValue || activeTab) {
+                var analysisElement = document.getElementById('analysis-section');
+                if (analysisElement) {
+                    setTimeout(function () {
+                        analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 500);
+                }
+            } else if (hasYear || hasKab) {
+                var filterSection = document.getElementById('filter-section');
+                if (filterSection) {
+                    setTimeout(function () {
+                        filterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 500);
+                }
             }
         });
 
@@ -587,5 +709,45 @@
                 });
             }
         });
+
+        function validateThresholdInput(input) {
+            let val = input.value;
+            const errorElement = document.getElementById('thresholdError');
+            const contentElement = document.getElementById('analysis-content');
+            const emptyStateElement = document.getElementById('analysis-empty-state');
+
+            if (val === "" || val === null) {
+                errorElement.classList.remove('d-none');
+                if (contentElement) contentElement.classList.add('d-none');
+                if (emptyStateElement) emptyStateElement.classList.remove('d-none');
+                return;
+            }
+
+            errorElement.classList.add('d-none');
+            if (contentElement) contentElement.classList.remove('d-none');
+            if (emptyStateElement) emptyStateElement.classList.add('d-none');
+
+            // Restrict 1-100
+            if (val < 1) input.value = 1;
+            if (val > 100) input.value = 100;
+        }
+
+        function submitThreshold(input) {
+            const errorElement = document.getElementById('thresholdError');
+            if (input.value === "" || input.value === null) {
+                errorElement.classList.remove('d-none');
+                input.focus();
+                return;
+            }
+            errorElement.classList.add('d-none');
+            input.form.submit();
+        }
+
+        function setActiveTab(tabName) {
+            const input = document.getElementById('activeTabInput');
+            if (input) {
+                input.value = tabName;
+            }
+        }
     </script>
 @endsection

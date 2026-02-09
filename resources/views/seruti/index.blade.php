@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Data Seruti')
+@section('title', 'Seruti')
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
@@ -353,12 +353,12 @@
                     if (anomalyCount) anomalyCount.innerText = '0';
                     if (anomalyList) {
                         anomalyList.innerHTML = `
-                                                        <div class="col-12 text-center py-5 text-muted">
-                                                            <i class="fas fa-exclamation-circle fa-3x mb-3 opacity-50"></i>
-                                                            <h6 class="fw-bold">Mohon inputan angka persen</h6>
-                                                            <p class="small mb-0">Masukkan angka 1-100 untuk melihat analisis anomali.</p>
-                                                        </div>
-                                                    `;
+                                                            <div class="col-12 text-center py-5 text-muted">
+                                                                <i class="fas fa-exclamation-circle fa-3x mb-3 opacity-50"></i>
+                                                                <h6 class="fw-bold">Mohon inputan angka persen</h6>
+                                                                <p class="small mb-0">Masukkan angka 1-100 untuk melihat analisis anomali.</p>
+                                                            </div>
+                                                        `;
                     }
                     return;
                 }
@@ -547,12 +547,12 @@
                 if (!data.anomalies || data.anomalies.length === 0) {
                     if (anomalyCount) anomalyCount.innerText = '0';
                     anomalyList.innerHTML = `
-                                                                                                                        <div class="col-12 text-center py-5">
-                                                                                                                            <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
-                                                                                                                            <h6 class="fw-bold text-dark">Data Normal</h6>
-                                                                                                                            <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (><span class="current-threshold">${filterThreshold.value}</span>%) pada dataset ini.</p>
-                                                                                                                        </div>
-                                                                                                                    `;
+                                                                                                                            <div class="col-12 text-center py-5">
+                                                                                                                                <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+                                                                                                                                <h6 class="fw-bold text-dark">Data Normal</h6>
+                                                                                                                                <p class="text-muted small mb-0">Tidak ditemukan anomali signifikan (><span class="current-threshold">${filterThreshold.value}</span>%) pada dataset ini.</p>
+                                                                                                                            </div>
+                                                                                                                        `;
                 } else {
                     if (anomalyCount) anomalyCount.innerText = data.anomalies.length;
                     data.anomalies.forEach(ano => {
@@ -564,33 +564,33 @@
                         const col = document.createElement('div');
                         col.className = 'col-md-6 col-xl-4';
                         col.innerHTML = `
-                                                                                                                            <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
-                                                                                                                                <div class="card-body p-3">
-                                                                                                                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                                                                                        <span class="${badgeClass}">
-                                                                                                                                            <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
-                                                                                                                                        </span>
-                                                                                                                                        <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
-                                                                                                                                    </div>
-
-                                                                                                                                    <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">[${ano.code}] ${ano.item}</h6>
-                                                                                                                                    <p class="text-muted mb-3" style="font-size: 0.75rem;">
-                                                                                                                                        <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
-                                                                                                                                    </p>
-
-                                                                                                                                    <div class="d-flex flex-column bg-light rounded p-2">
-                                                                                                                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                                                                                                                            <span class="text-muted extra-small">Nilai Aktual:</span>
-                                                                                                                                            <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
+                                                                                                                                <div class="card h-100 border-0 shadow-sm anomaly-card border-start border-4 ${borderClass}">
+                                                                                                                                    <div class="card-body p-3">
+                                                                                                                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                                                                                            <span class="${badgeClass}">
+                                                                                                                                                <i class="fas ${iconClass} me-1"></i> ${ano.type} (${ano.deviation}%)
+                                                                                                                                            </span>
+                                                                                                                                            <span class="text-muted fw-bold" style="font-size: 0.75rem;">${ano.period}</span>
                                                                                                                                         </div>
-                                                                                                                                        <div class="d-flex justify-content-between align-items-center">
-                                                                                                                                            <span class="text-muted extra-small">Prov. Avg:</span>
-                                                                                                                                            <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
+
+                                                                                                                                        <h6 class="fw-bold text-dark mb-1 text-truncate" title="${ano.item}">[${ano.code}] ${ano.item}</h6>
+                                                                                                                                        <p class="text-muted mb-3" style="font-size: 0.75rem;">
+                                                                                                                                            <i class="fas fa-map-marker-alt me-1"></i> ${ano.location}
+                                                                                                                                        </p>
+
+                                                                                                                                        <div class="d-flex flex-column bg-light rounded p-2">
+                                                                                                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                                                                                                <span class="text-muted extra-small">Nilai Aktual:</span>
+                                                                                                                                                <span class="fw-bold text-dark">Rp ${ano.value.toLocaleString('id-ID')}</span>
+                                                                                                                                            </div>
+                                                                                                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                                                                                                <span class="text-muted extra-small">Prov. Avg:</span>
+                                                                                                                                                <span class="text-secondary small">Rp ${ano.reference.toLocaleString('id-ID')}</span>
+                                                                                                                                            </div>
                                                                                                                                         </div>
                                                                                                                                     </div>
                                                                                                                                 </div>
-                                                                                                                            </div>
-                                                                                                                        `;
+                                                                                                                            `;
                         anomalyList.appendChild(col);
                     });
                 }
