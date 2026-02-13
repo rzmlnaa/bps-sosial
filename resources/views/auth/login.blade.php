@@ -18,23 +18,28 @@
             </dotlottie-player>
 
 
-            <h2 class="fw-bold mb-2">
-                Sistem Informasi Statistika Sosial
+            <h2 class="fw-bold mb-2 text-center">
+                Sistem Informasi Statistik Sosial
             </h2>
+            <p class="text-secondary text-center mx-auto mb-2" style="max-width:520px;">
+                Menyediakan informasi statistik sosial untuk BPS Kabupaten/Kota se-Kalimantan Barat.
+            </p>
 
-
-            <p class="text-muted mb-4">
-                Badan Pusat Statistik Provinsi Kalimantan Barat
+            <p class="text-muted text-center small mb-4">
+                Masuk menggunakan akun Google untuk mengakses fitur.
             </p>
 
 
-            <p class="text-secondary mb-5">
-                Sistem ini menyajikan informasi statistika sosial yang dapat diakses oleh BPS Kabupaten/Kota di Provinsi
-                Kalimantan Barat. <br>
-                Untuk mengakses fitur lanjutan, silakan login menggunakan akun Google.
-            </p>
+            <!-- <button class="btn btn-google-login mb-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+                                                    <i class="fas fa-sign-in-alt"></i>
+                                                    <span>Login</span>
+                                                </button> -->
 
-
+            <a href="{{ url('/auth/google') }}" class="btn btn-google-login py-3 mb-3">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/960px-Google_%22G%22_logo.svg.png"
+                    alt="Google Logo">
+                <span>Login with Google</span>
+            </a>
 
         </div>
 

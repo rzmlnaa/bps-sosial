@@ -223,7 +223,7 @@
                     </form>
                 </div>
             @else
-                <button class="btn btn-google-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <button class="btn btn-google-login" onclick="window.location.href = '/login'">
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Login</span>
                 </button>
