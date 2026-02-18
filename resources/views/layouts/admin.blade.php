@@ -143,38 +143,10 @@
                     <span>Kemiskinan</span>
                 </a>
 
-
-
-                <a href="#submenu1" class="nav-link" data-bs-toggle="collapse" aria-expanded="false">
-                    <i class="fas fa-layer-group"></i>
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <span>Sub Kelompok</span>
-                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem; width: auto;"></i>
-                    </div>
+                <a href="{{ route('seruti.index') }}" class="nav-link {{ request()->routeIs('seruti.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>SERUTI</span>
                 </a>
-                <div class="collapse" id="submenu1">
-                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                                <i class="fas fa-circle" style="font-size: 4px;"></i>
-                                <span>Makanan</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link d-flex align-items-center gap-2 py-2 text-sm text-muted">
-                                <i class="fas fa-circle" style="font-size: 4px;"></i>
-                                <span>Non-Makanan</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <a href="#" class="nav-link">
-                    <i class="fas fa-shopping-basket"></i>
-                    <span>Komoditas</span>
-                </a>
-
-
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
@@ -198,7 +170,7 @@
                             </a>
                         </li>
                         @if (auth()->check() == true)
-                            @if(auth()->user()->kabupaten->kode_kab == '6100')
+                            @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('verification.index') }}"
                                         class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
@@ -244,14 +216,14 @@
                     </div>
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit" onclick="setTimeout(() => window.location.href = '/', 50)"
+                        <button type="submit" onclick="setTimeout(() => window.location.href = '/login', 50)"
                             class="btn btn-sm btn-outline-danger border-0">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>
                 </div>
             @else
-                <button class="btn btn-google-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <button class="btn btn-google-login" onclick="window.location.href = '/login'">
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Login</span>
                 </button>
@@ -268,9 +240,15 @@
         <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
             <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
                 rights reserved.</small>
-            <small>Jika terdapat pertanyaan atau error - bug pada sistem, harap hubungi Developer dengan <a
-                    href="https://wa.me/6289529406362" target="_blank" class="text-decoration-none fw-bold"
-                    style="color: var(--bps-orange);">klik disini</a></small>
+            <small>
+                Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
+                    class="text-danger fw-bold">error - bug</span> pada sistem,
+                harap hubungi Developer dengan
+                <a href="https://kostapp.reservasiaja.com/portofolio" target="_blank"
+                    class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
+                    klik disini
+                </a>
+            </small>
         </footer>
     </main>
 
@@ -278,6 +256,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
 
     @if(session('success'))
         <script>

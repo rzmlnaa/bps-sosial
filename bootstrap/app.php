@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'check.status' => \App\Http\Middleware\CheckUserStatus::class,
+            'only.province' => \App\Http\Middleware\OnlyProvince6100::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -18,6 +18,7 @@ use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\SerutiController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -59,7 +60,7 @@ Route::middleware(['auth'])->group(function () {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->guest('/');
+        return redirect('/login');
 
     })->name('logout');
 });
@@ -73,6 +74,11 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     Route::post('/complete-profile/verify-otp', [ProfileCompletionController::class, 'verifyOtp'])->name('complete-profile.verify-otp');
     Route::post('/complete-profile/resend-otp', [ProfileCompletionController::class, 'resendOtp'])->name('complete-profile.resend-otp');
     Route::post('/complete-profile/reset-number', [ProfileCompletionController::class, 'resetNumber'])->name('complete-profile.reset-number');
+
+
+    // RH Price Range Values
+    Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
+    Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
 });
 
 
@@ -101,7 +107,8 @@ Route::middleware(['check.status'])->group(function () {
         $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
         $latestYear = VariabelKemiskinan::max('tahun') ?? date('Y');
         if (!$request->has('tahun')) {
-            $request->merge(['tahun' => $latestYear]);
+            $request->merge(['tahun' => 'all']);
+            //$request->merge(['tahun' => $latestYear]);
         }
         $selectedTahun = $request->get('tahun');
 
@@ -110,24 +117,48 @@ Route::middleware(['check.status'])->group(function () {
         } else {
             $mainVar = VariabelKemiskinan::where('tahun', $selectedTahun)->latest()->first();
         }
+        $nilaiKemiskinan = \App\Models\NilaiKemiskinan::all()->keyBy('kabupaten_id');
 
-        $kabupatenData = [];
-        foreach ($kabupatens as $kab) {
-            $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
-            $kabupatenData[] = [
+        // $kabupatenData = [];
+        // foreach ($kabupatens as $kab) {
+        //     $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
+        //     $kabupatenData[] = [
+        //         'id' => $kab->id,
+        //         'kode_kab' => $kab->kode_kab,
+        //         'name' => $kab->nama_kabupaten,
+        //         'nilai' => $ceknilai
+        //     ];
+        // }
+        // $kabupatenData = array_filter($kabupatenData, function ($item) {
+        //     return !is_null($item['nilai']);
+        // });
+
+        $kabupatenData = $kabupatens->map(function ($kab) use ($nilaiKemiskinan) {
+            $nilai = $nilaiKemiskinan->get($kab->id);
+
+            if (!$nilai) {
+                return null;
+            }
+
+            return [
                 'id' => $kab->id,
                 'kode_kab' => $kab->kode_kab,
                 'name' => $kab->nama_kabupaten,
-                'nilai' => $ceknilai
+                'nilai' => $nilai
             ];
-        }
-        $kabupatenData = array_filter($kabupatenData, function ($item) {
-            return !is_null($item['nilai']);
-        });
+        })->filter()->values();
 
-        $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
-        $provCount = array_sum(array_column($kabupatenData, 'count'));
-        $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
+        //dd($kabupatenData);
+
+        //dd($kabupatens, $kabupatenData);
+
+        // $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
+        // $provCount = array_sum(array_column($kabupatenData, 'count'));
+        // $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
+
+        $provAvg = $kabupatenData->whereNotNull('nilai')->avg(fn($item) => $item['nilai']->avg_nilai);
+        $provCount = $kabupatenData->sum(fn($item) => $item['nilai']->count);
+        $provGK = $kabupatenData->avg(fn($item) => $item['nilai']->gk);
 
         $bulanNama = [
             1 => 'Januari',
@@ -149,16 +180,21 @@ Route::middleware(['check.status'])->group(function () {
         return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears', 'bulanNama'));
     })->name('poverty');
 
-    Route::get('/poverty/input', function () {
-        // Strict Access: Only Province User (6100)
-        if (auth()->check() == false) {
-            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        $user = Auth::user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat mengakses halaman ini.');
-        }
+    Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
 
+    Route::get('/price-range', [PriceRangeController::class, 'index'])->name('price-range.index');
+    Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name('price-range.export');
+
+    // SERUTI (Public Read)
+    Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
+    Route::get('/seruti/chart-data', [SerutiController::class, 'getChartData'])->name('seruti.chart-data');
+
+});
+
+
+Route::middleware(['auth', 'check.status', 'only.province'])->group(function () {
+
+    Route::get('/poverty/input', function () {
         $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
         $variabels = VariabelKemiskinan::with('userAdd')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
         return view('poverty.input', compact('kabupatens', 'variabels'));
@@ -169,21 +205,31 @@ Route::middleware(['check.status'])->group(function () {
 
     Route::post('/poverty-data', [PovertyDataController::class, 'store'])->name('poverty-data.store');
     Route::delete('/poverty-data/clear', [PovertyDataController::class, 'clearData'])->name('poverty-data.clear');
-    Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
+    // Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
     Route::get('/poverty-data/get-raw/{kabupaten_id}/{variabel_id}', [PovertyDataController::class, 'getRawData']);
     Route::get('/poverty-data/export/{kabupaten_id}', [PovertyDataController::class, 'exportToCSV'])->name('poverty-data.export');
 
-    Route::get('/price-range', [PriceRangeController::class, 'index'])->name('price-range.index');
-    Route::get('/price-range/export', [PriceRangeController::class, 'export'])->name('price-range.export');
+    Route::post('/kategori-komoditas', [KategoriKomoditasController::class, 'store'])->name('kategori-komoditas.store');
+    Route::put('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'update'])->name('kategori-komoditas.update');
+    Route::delete('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'destroy'])->name('kategori-komoditas.destroy');
 
+    Route::post('/komoditas', [KomoditasController::class, 'store'])->name('komoditas.store');
+    Route::put('/komoditas/{id}', [KomoditasController::class, 'update'])->name('komoditas.update');
+    Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
+    Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
+    Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);
+
+    // RH Year & Revision Management
+    Route::post('/rh-tahun', [RhTahunController::class, 'storeTahun'])->name('rh-tahun.store');
+    Route::patch('/rh-tahun/{id}/toggle-active', [RhTahunController::class, 'toggleActive'])->name('rh-tahun.toggle-active');
+    Route::put('/rh-tahun/{id}', [RhTahunController::class, 'updateTahun'])->name('rh-tahun.update');
+    Route::delete('/rh-tahun/{id}', [RhTahunController::class, 'destroyTahun'])->name('rh-tahun.destroy');
+    Route::post('/rh-perubahan', [RhTahunController::class, 'storePerubahan'])->name('rh-perubahan.store');
+    Route::put('/rh-perubahan/{id}', [RhTahunController::class, 'updatePerubahan'])->name('rh-perubahan.update');
+    Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan'])->name('rh-perubahan.destroy');
+
+    // Input Komoditas
     Route::get('/price-range/input', function () {
-        if (!auth()->check()) {
-            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
-        }
-        $user = auth()->user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menginput data.');
-        }
         $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
         $rhTahun = \App\Models\RhTahun::with([
             'perubahanHeaders' => function ($query) {
@@ -207,31 +253,19 @@ Route::middleware(['check.status'])->group(function () {
         return view('price-range/input', compact('kategori', 'rhTahun'));
     })->name('price-range.input');
 
-    Route::post('/kategori-komoditas', [KategoriKomoditasController::class, 'store'])->name('kategori-komoditas.store');
-    Route::put('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'update'])->name('kategori-komoditas.update');
-    Route::delete('/kategori-komoditas/{id}', [KategoriKomoditasController::class, 'destroy'])->name('kategori-komoditas.destroy');
 
-    Route::post('/komoditas', [KomoditasController::class, 'store'])->name('komoditas.store');
-    Route::put('/komoditas/{id}', [KomoditasController::class, 'update'])->name('komoditas.update');
-    Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
-    Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
-    Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);
-
-    // RH Year & Revision Management
-    Route::post('/rh-tahun', [RhTahunController::class, 'storeTahun'])->name('rh-tahun.store');
-    Route::patch('/rh-tahun/{id}/toggle-active', [RhTahunController::class, 'toggleActive'])->name('rh-tahun.toggle-active');
-    Route::put('/rh-tahun/{id}', [RhTahunController::class, 'updateTahun'])->name('rh-tahun.update');
-    Route::delete('/rh-tahun/{id}', [RhTahunController::class, 'destroyTahun'])->name('rh-tahun.destroy');
-    Route::post('/rh-perubahan', [RhTahunController::class, 'storePerubahan'])->name('rh-perubahan.store');
-    Route::put('/rh-perubahan/{id}', [RhTahunController::class, 'updatePerubahan'])->name('rh-perubahan.update');
-    Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan'])->name('rh-perubahan.destroy');
-
-    // RH Price Range Values
-    Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
-    Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
-
-    // RH Verification
+    //RH Verification
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::get('/verification/{kabupatenId}', [VerificationController::class, 'show'])->name('verification.show');
     Route::post('/verification/{kabupatenId}', [VerificationController::class, 'store'])->name('verification.store');
+
+    // SERUTI (Input Restricted)
+    Route::get('/seruti/input', [SerutiController::class, 'create'])->name('seruti.create');
+    Route::get('/seruti/get-data', [SerutiController::class, 'getData'])->name('seruti.get-data');
+    Route::post('/seruti', [SerutiController::class, 'store'])->name('seruti.store');
+
+
+    Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
+    Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
+    Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
 });

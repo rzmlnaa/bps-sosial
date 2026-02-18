@@ -1,56 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.admin')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - BPS Sosial</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
+@section('title', 'Login')
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 transform transition-all hover:scale-[1.01]">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p class="text-gray-500">Sign in to access BPS Sosial dashboard</p>
-        </div>
+@section('content')
+    <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 180px);">
 
-        @if(session('error'))
-            <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
-                {{ session('error') }}
-            </div>
-        @endif
+        <div class="text-center" style="max-width: 720px;">
 
-        <div class="space-y-4">
-            <a href="{{ route('auth.google') }}"
-                class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="h-5 w-5 mr-3">
-                <span class="text-base">Continue with Google</span>
+            @if(session('error'))
+                <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <dotlottie-player src="{{ asset('statistik-animasi.json') }}" background="transparent" speed="1"
+                style="display:block; margin:0 auto; width:100%; max-width:500px;" loop autoplay>
+            </dotlottie-player>
+
+
+            <h2 class="fw-bold mb-2 text-center">
+                Sistem Informasi Statistik Sosial
+            </h2>
+            <p class="text-secondary text-center mx-auto mb-2" style="max-width:520px;">
+                Menyediakan informasi statistik sosial untuk BPS Kabupaten/Kota se-Kalimantan Barat.
+            </p>
+
+            <p class="text-muted text-center small mb-4">
+                Masuk menggunakan akun Google untuk mengakses fitur.
+            </p>
+
+
+            <!-- <button class="btn btn-google-login mb-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+                                                    <i class="fas fa-sign-in-alt"></i>
+                                                    <span>Login</span>
+                                                </button> -->
+
+            <a href="{{ url('/auth/google') }}" class="btn btn-google-login py-3 mb-3">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/960px-Google_%22G%22_logo.svg.png"
+                    alt="Google Logo">
+                <span>Login with Google</span>
             </a>
 
-            <!-- Future implementation for standard login if needed -->
-            <!-- 
-            <div class="relative">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-            </div>
-            -->
         </div>
 
-        <p class="mt-8 text-center text-xs text-gray-400">
-            &copy; {{ date('Y') }} BPS Sosial. All rights reserved.
-        </p>
     </div>
-</body>
 
-</html>
+
+
+
+@endsection

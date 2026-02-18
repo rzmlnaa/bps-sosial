@@ -22,6 +22,9 @@ class PriceRangeController extends Controller
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
+        $thresholdPercent = $request->threshold ? ($request->threshold / 100) : null;
+        $selectedCategoryIds = $request->category_ids ?? [];
+        $selectedKomoditasIds = $request->komoditas_ids ?? [];
 
         $activeYear = $years->where('id', $selectedYearId)->first();
 
@@ -29,6 +32,14 @@ class PriceRangeController extends Controller
         //     return back()->with('error', 'Tahun RH tidak ditemukan');
         // }
         $categories = KategoriKomoditas::with(['komoditas'])->get();
+
+        // Fetch commodities filtered by categories for the dropdown
+        $availableKomoditas = \App\Models\Komoditas::query()
+            ->when(!empty($selectedCategoryIds), function ($q) use ($selectedCategoryIds) {
+                return $q->whereIn('kategori_id', $selectedCategoryIds);
+            })
+            ->orderBy('nama_komoditas', 'asc')
+            ->get();
 
         // 1. Fetch Current View Data (Specific Kabupaten)
         $masterNilai = collect();
@@ -138,8 +149,9 @@ class PriceRangeController extends Controller
 
         // 2. Outlier Analysis (Global Context for Selected Year)
         $outliers = [];
-        if ($activeYear) {
-            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions);
+        if ($selectedYearId && $thresholdPercent !== null) {
+            $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)->orderBy('id', 'asc')->get();
+            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedKomoditasIds);
         }
 
         $idMaxRHPerubahan = null;
@@ -166,27 +178,51 @@ class PriceRangeController extends Controller
             'revisions',
             'revisionDetails',
             'outliers',
-            'rejectedSummary'
+            'rejectedSummary',
+            'thresholdPercent',
+            'selectedCategoryIds',
+            'availableKomoditas',
+            'selectedKomoditasIds'
         ));
     }
 
-    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions)
+    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedKomoditasIds = [])
     {
-        $results = [];
-        $thresholdPercent = 0.25; // 25% deviation
+        $activeYear = RhTahun::find($yearId);
+        if (!$activeYear) {
+            return [];
+        }
 
-        // Initial State: Load all Master Data
+        $results = [];
+        // Filter commodities by selected categories/specific IDs if provided
+        if (!empty($selectedCategoryIds)) {
+            $allKomoditas = $allKomoditas->whereIn('kategori_id', $selectedCategoryIds);
+        }
+
+        if (!empty($selectedKomoditasIds)) {
+            $allKomoditas = $allKomoditas->whereIn('id', $selectedKomoditasIds);
+        }
+        // Initial State: Load all Master Data (Carrying over from previous year)
         $dataState = []; // [kab_id][kom_id] => ['min' => val, 'max' => val]
 
+        foreach ($kabupatens as $kab) {
+            // Get final state of previous year as base
+            $prevYearFinal = $this->getFinalStateForYear($activeYear->tahun - 1, $kab->id);
+            $dataState[$kab->id] = $prevYearFinal;
+        }
+
+        // Overlay current year's Master Data (explicit edits for this year)
         $masterData = RhPerubahanDetail::where('rh_tahun_id', $yearId)
             ->whereNull('rh_perubahan_header_id')
             ->get();
 
         foreach ($masterData as $md) {
-            $dataState[$md->kabupaten_id][$md->komoditas_id] = [
-                'min' => $md->min_edit,
-                'max' => $md->max_edit
-            ];
+            if ($md->min_edit !== null || $md->max_edit !== null) {
+                $dataState[$md->kabupaten_id][$md->komoditas_id] = [
+                    'min' => $md->min_edit,
+                    'max' => $md->max_edit
+                ];
+            }
         }
 
         // --- Analyze Master Period ---

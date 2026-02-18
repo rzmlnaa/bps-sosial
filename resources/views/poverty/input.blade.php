@@ -3,6 +3,22 @@
 @section('title', 'Input Data Kemiskinan - BPS Kalbar')
 
 @section('content')
+    @php
+                                                        $bulanNama = [
+                                                            1 => 'Januari',
+                                                            2 => 'Februari',
+                                                            3 => 'Maret',
+                                                            4 => 'April',
+                                                            5 => 'Mei',
+                                                            6 => 'Juni',
+                                                            7 => 'Juli',
+                                                            8 => 'Agustus',
+                                                            9 => 'September',
+                                                            10 => 'Oktober',
+                                                            11 => 'November',
+                                                            12 => 'Desember'
+                                                        ];
+    @endphp
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
@@ -121,22 +137,7 @@
                                                 <td class="ps-4 text-muted">{{ $index + 1 }}</td>
                                                 <td class="fw-medium">{{ $v->nama_variabel }}</td>
                                                 <td>
-                                                    @php
-                                                        $bulanNama = [
-                                                            1 => 'Januari',
-                                                            2 => 'Februari',
-                                                            3 => 'Maret',
-                                                            4 => 'April',
-                                                            5 => 'Mei',
-                                                            6 => 'Juni',
-                                                            7 => 'Juli',
-                                                            8 => 'Agustus',
-                                                            9 => 'September',
-                                                            10 => 'Oktober',
-                                                            11 => 'November',
-                                                            12 => 'Desember'
-                                                        ];
-                                                    @endphp
+                                                    
                                                     {{ $bulanNama[$v->bulan] ?? '-' }}
                                                 </td>
                                                 <td><span class="badge bg-blue-faded text-blue">{{ $v->tahun }}</span></td>

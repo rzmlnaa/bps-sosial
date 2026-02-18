@@ -10,15 +10,6 @@ class PovertyDataController extends Controller
 {
     public function store(Request $request)
     {
-
-        if (auth()->check() == false) {
-            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        // Strict Access: Only Province User (6100)
-        $user = auth()->user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menginput data.');
-        }
         $request->validate([
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
             'variabel_id' => 'required|exists:tb_variabel_kemiskinan,id',
@@ -28,6 +19,7 @@ class PovertyDataController extends Controller
             'variabel_id.required' => 'Variabel wajib dipilih.',
             'raw_data.required' => 'Data nilai wajib diisi (paste dari excel).',
         ]);
+
 
         // Parse data from textarea
         $lines = preg_split('/\r\n|\r|\n/', $request->raw_data);
@@ -48,12 +40,15 @@ class PovertyDataController extends Controller
                 $values[] = floatval($value);
             }
         }
+        $countValues = count($values);
 
+        if ($countValues > 20) {
+            return redirect()->back()->with('error', 'Data tidak boleh lebih dari 20.');
+        }
         //dd($values, $request->raw_data);
         if (empty($values)) {
             return redirect()->back()->with('error', 'Tidak ada data valid yang ditemukan.');
         }
-
         try {
             DB::beginTransaction();
 
@@ -73,7 +68,7 @@ class PovertyDataController extends Controller
             DB::commit();
 
             return redirect()->back()->with([
-                'success' => count($values) . ' data berhasil disimpan!',
+                'success' => $countValues . ' data berhasil disimpan!',
                 'last_kabupaten_id' => $request->kabupaten_id,
                 'last_variabel_id' => $request->variabel_id,
             ]);
@@ -170,16 +165,6 @@ class PovertyDataController extends Controller
     }
     public function clearData(Request $request)
     {
-
-        if (auth()->check() == false) {
-            return redirect('/poverty')->with('error', 'Silahkan login terlebih dahulu.');
-        }
-        // Strict Access: Only Province User (6100)
-        $user = auth()->user();
-        if (!$user->kabupaten || $user->kabupaten->kode_kab != '6100') {
-            return redirect()->back()->with('error', 'Akses Ditolak: Hanya BPS Provinsi (6100) yang dapat menghapus data.');
-        }
-
         $request->validate([
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
             'variabel_id' => 'required|exists:tb_variabel_kemiskinan,id',
