@@ -24,7 +24,7 @@ class PriceRangeController extends Controller
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
         $thresholdPercent = $request->threshold ? ($request->threshold / 100) : null;
         $selectedCategoryIds = $request->category_ids ?? [];
-        $selectedKomoditasIds = $request->komoditas_ids ?? [];
+        $selectedAnalysisKabupatenIds = $request->analysis_kabupaten_ids ?? [];
 
         $activeYear = $years->where('id', $selectedYearId)->first();
 
@@ -151,7 +151,7 @@ class PriceRangeController extends Controller
         $outliers = [];
         if ($selectedYearId && $thresholdPercent !== null) {
             $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)->orderBy('id', 'asc')->get();
-            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedKomoditasIds);
+            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedAnalysisKabupatenIds);
         }
 
         $idMaxRHPerubahan = null;
@@ -182,11 +182,11 @@ class PriceRangeController extends Controller
             'thresholdPercent',
             'selectedCategoryIds',
             'availableKomoditas',
-            'selectedKomoditasIds'
+            'selectedAnalysisKabupatenIds'
         ));
     }
 
-    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedKomoditasIds = [])
+    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedAnalysisKabupatenIds = [])
     {
         $activeYear = RhTahun::find($yearId);
         if (!$activeYear) {
@@ -197,10 +197,6 @@ class PriceRangeController extends Controller
         // Filter commodities by selected categories/specific IDs if provided
         if (!empty($selectedCategoryIds)) {
             $allKomoditas = $allKomoditas->whereIn('kategori_id', $selectedCategoryIds);
-        }
-
-        if (!empty($selectedKomoditasIds)) {
-            $allKomoditas = $allKomoditas->whereIn('id', $selectedKomoditasIds);
         }
         // Initial State: Load all Master Data (Carrying over from previous year)
         $dataState = []; // [kab_id][kom_id] => ['min' => val, 'max' => val]
@@ -226,7 +222,7 @@ class PriceRangeController extends Controller
         }
 
         // --- Analyze Master Period ---
-        $results['Master Data'] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent);
+        $results['Master Data'] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent, $selectedAnalysisKabupatenIds);
 
         // --- Analyze Each Revision ---
         foreach ($revisions as $rev) {
@@ -255,13 +251,13 @@ class PriceRangeController extends Controller
                 }
             }
 
-            $results[strtoupper($rev->label)] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent);
+            $results[strtoupper($rev->label)] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent, $selectedAnalysisKabupatenIds);
         }
 
         return $results;
     }
 
-    private function analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $threshold)
+    private function analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $threshold, $selectedAnalysisKabupatenIds = [])
     {
         $snapshotOutliers = [];
 
@@ -293,6 +289,11 @@ class PriceRangeController extends Controller
             // Check Min Outliers (Low)
             if ($avgMin > 0) {
                 foreach ($pricesMin as $kid => $p) {
+                    // Filter: Only include if no filter selected OR if this kab is in selected list
+                    if (!empty($selectedAnalysisKabupatenIds) && !in_array($kid, $selectedAnalysisKabupatenIds)) {
+                        continue;
+                    }
+
                     if ($p < $avgMin * (1 - $threshold)) {
                         $itemOutliers['below'][] = [
                             'kode_kab' => $kabupatens->find($kid)->kode_kab,
@@ -310,6 +311,11 @@ class PriceRangeController extends Controller
             // Check Max Outliers (High)
             if ($avgMax > 0) {
                 foreach ($pricesMax as $kid => $p) {
+                    // Filter: Only include if no filter selected OR if this kab is in selected list
+                    if (!empty($selectedAnalysisKabupatenIds) && !in_array($kid, $selectedAnalysisKabupatenIds)) {
+                        continue;
+                    }
+
                     if ($p > $avgMax * (1 + $threshold)) {
                         $itemOutliers['above'][] = [
                             'kode_kab' => $kabupatens->find($kid)->kode_kab,

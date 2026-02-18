@@ -34,14 +34,14 @@
                 }
             });
 
-            // Initialize Tom Select for Commodity Filter
-            new TomSelect('#komoditasFilter', {
+            // Initialize Tom Select for Kabupaten Filter (Analysis)
+            new TomSelect('#kabupatenFilter', {
                 plugins: ['remove_button'],
                 maxOptions: null,
-                placeholder: 'Cari komoditas...',
+                placeholder: 'Cari kabupaten...',
                 render: {
                     no_results: function (data, escape) {
-                        return '<div class="no-results">Komoditas "' + escape(data.input) + '" tidak ditemukan</div>';
+                        return '<div class="no-results">Kabupaten "' + escape(data.input) + '" tidak ditemukan</div>';
                     },
                 }
             });
@@ -202,15 +202,15 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Pilih Komoditas
-                                (Analisis)</label>
-                            <select name="komoditas_ids[]" id="komoditasFilter" class="form-select form-select-sm" multiple
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">PILIH KABUPATEN
+                                (ANALISIS)</label>
+                            <select name="analysis_kabupaten_ids[]" id="kabupatenFilter" class="form-select form-select-sm" multiple
                                 form="filter-form"
-                                placeholder="{{ empty($selectedCategoryIds) ? 'Pilih kategori dulu...' : 'Cari komoditas...' }}"
+                                placeholder="Cari kabupaten..."
                                 onchange="this.form.submit()">
-                                @foreach($availableKomoditas as $kom)
-                                    <option value="{{ $kom->id }}" {{ in_array($kom->id, $selectedKomoditasIds) ? 'selected' : '' }}>
-                                        {{ $kom->nama_komoditas }}
+                                @foreach($kabupatens as $kab)
+                                    <option value="{{ $kab->id }}" {{ in_array($kab->id, $selectedAnalysisKabupatenIds) ? 'selected' : '' }}>
+                                        {{ $kab->nama_kabupaten }}
                                     </option>
                                 @endforeach
                             </select>
