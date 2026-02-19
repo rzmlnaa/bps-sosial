@@ -22,6 +22,7 @@
                                 <th class="px-4 py-3 border-0">Email</th>
                                 <th class="px-4 py-3 border-0">No. HP</th>
                                 <th class="px-4 py-3 border-0">Status</th>
+                                <th class="px-4 py-3 border-0">Login Terakhir</th>
                                 <th class="px-4 py-3 border-0">Bergabung</th>
                             </tr>
                         </thead>
@@ -42,6 +43,9 @@
                                     <td class="px-4 py-3">
                                         <span
                                             class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-muted">
+                                        {{ $admin->last_login_at?->format('d M Y H:i') ?? '-' }}
                                     </td>
                                     <td class="px-4 py-3 text-muted">
                                         {{ $admin->created_at?->format('d M Y') ?? '-' }}

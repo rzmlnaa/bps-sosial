@@ -53,6 +53,7 @@
                                 <th class="px-4 py-3 border-0">Email</th>
                                 <th class="px-4 py-3 border-0">Tim / Asal</th>
                                 <th class="px-4 py-3 border-0">Status</th>
+                                <th class="px-4 py-3 border-0">Login Terakhir</th>
                                 <th class="px-4 py-3 border-0 text-end">Aksi</th>
                             </tr>
                         </thead>
@@ -92,6 +93,9 @@
                                                     Verifikasi WA</span>
                                             @endif
                                         @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-muted">
+                                        {{ $user->last_login_at?->format('d M Y H:i') ?? '-' }}
                                     </td>
                                     <td class="px-4 py-3 text-end">
                                         <div class="d-flex justify-content-end gap-2">
