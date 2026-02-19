@@ -24,6 +24,7 @@ class PriceRangeController extends Controller
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
         $thresholdPercent = $request->threshold ? ($request->threshold / 100) : null;
         $selectedCategoryIds = $request->category_ids ?? [];
+        $selectedCommodityIds = $request->commodity_ids ?? [];
         $selectedAnalysisKabupatenIds = $request->analysis_kabupaten_ids ?? [];
 
         $activeYear = $years->where('id', $selectedYearId)->first();
@@ -151,7 +152,7 @@ class PriceRangeController extends Controller
         $outliers = [];
         if ($selectedYearId && $thresholdPercent !== null) {
             $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)->orderBy('id', 'asc')->get();
-            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedAnalysisKabupatenIds);
+            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedAnalysisKabupatenIds, $selectedCommodityIds);
         }
 
         $idMaxRHPerubahan = null;
@@ -182,11 +183,14 @@ class PriceRangeController extends Controller
             'thresholdPercent',
             'selectedCategoryIds',
             'availableKomoditas',
-            'selectedAnalysisKabupatenIds'
+            'selectedCategoryIds',
+            'availableKomoditas',
+            'selectedAnalysisKabupatenIds',
+            'selectedCommodityIds'
         ));
     }
 
-    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedAnalysisKabupatenIds = [])
+    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedAnalysisKabupatenIds = [], $selectedCommodityIds = [])
     {
         $activeYear = RhTahun::find($yearId);
         if (!$activeYear) {
@@ -197,6 +201,11 @@ class PriceRangeController extends Controller
         // Filter commodities by selected categories/specific IDs if provided
         if (!empty($selectedCategoryIds)) {
             $allKomoditas = $allKomoditas->whereIn('kategori_id', $selectedCategoryIds);
+        }
+
+        // Filter by specific commodities if provided
+        if (!empty($selectedCommodityIds)) {
+            $allKomoditas = $allKomoditas->whereIn('id', $selectedCommodityIds);
         }
         // Initial State: Load all Master Data (Carrying over from previous year)
         $dataState = []; // [kab_id][kom_id] => ['min' => val, 'max' => val]

@@ -45,6 +45,18 @@
                     },
                 }
             });
+
+            // Initialize Tom Select for Commodity Filter (Analysis)
+            new TomSelect('#commodityFilter', {
+                plugins: ['remove_button'],
+                maxOptions: null,
+                placeholder: 'Cari komoditas...',
+                render: {
+                    no_results: function (data, escape) {
+                        return '<div class="no-results">Komoditas "' + escape(data.input) + '" tidak ditemukan</div>';
+                    },
+                }
+            });
         });
     </script>
 @endpush
@@ -52,77 +64,77 @@
 @push('scripts')
     <script>
         function confirmExport(e, btn, year) {
-                e.preventDefault();
-                const url = btn.getAttribute('href');
-                // Store original content to revert later
-                const originalContent = btn.innerHTML;
+            e.preventDefault();
+            const url = btn.getAttribute('href');
+            // Store original content to revert later
+            const originalContent = btn.innerHTML;
 
-                Swal.fire({
-                    title: `Apakah yakin export RH Tahun ${year} ini?`,
-                    html: 'Ketika proses mengekspor data. Mohon jangan meninggalkan halaman sampai proses selesai hingga terlihat "<i class="fas fa-check me-2"></i>Berhasil!"',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#198754', // Match success btn color
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Export',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Disable button and show loading state
-                        btn.classList.add('disabled');
-                        btn.style.pointerEvents = 'none'; // Prevent double clicks
-                        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sedang mengunduh..';
+            Swal.fire({
+                title: `Apakah yakin export RH Tahun ${year} ini?`,
+                html: 'Ketika proses mengekspor data. Mohon jangan meninggalkan halaman sampai proses selesai hingga terlihat "<i class="fas fa-check me-2"></i>Berhasil!"',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754', // Match success btn color
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Export',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Disable button and show loading state
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none'; // Prevent double clicks
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sedang mengunduh..';
 
-                        // Use fetch to handle the download and know when it starts/finishes
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) throw new Error('Network response was not ok');
+                    // Use fetch to handle the download and know when it starts/finishes
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
 
-                                // Try to get filename from headers
-                                let filename = 'data_export.xlsx';
-                                const disposition = response.headers.get('Content-Disposition');
-                                if (disposition && disposition.indexOf('attachment') !== -1) {
-                                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                                    const matches = filenameRegex.exec(disposition);
-                                    if (matches != null && matches[1]) {
-                                        filename = matches[1].replace(/['"]/g, '');
-                                    }
+                            // Try to get filename from headers
+                            let filename = 'data_export.xlsx';
+                            const disposition = response.headers.get('Content-Disposition');
+                            if (disposition && disposition.indexOf('attachment') !== -1) {
+                                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                                const matches = filenameRegex.exec(disposition);
+                                if (matches != null && matches[1]) {
+                                    filename = matches[1].replace(/['"]/g, '');
                                 }
+                            }
 
-                                return response.blob().then(blob => ({ blob, filename }));
-                            })
-                            .then(({ blob, filename }) => {
-                                // Create download link
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.style.display = 'none';
-                                a.href = url;
-                                a.download = filename;
-                                document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
+                            return response.blob().then(blob => ({ blob, filename }));
+                        })
+                        .then(({ blob, filename }) => {
+                            // Create download link
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
 
-                                // Success State
-                                btn.innerHTML = '<i class="fas fa-check me-2"></i> Berhasil!';
+                            // Success State
+                            btn.innerHTML = '<i class="fas fa-check me-2"></i> Berhasil!';
 
-                                // Revert after delay
-                                setTimeout(() => {
-                                    btn.classList.remove('disabled');
-                                    btn.style.pointerEvents = 'auto';
-                                    btn.innerHTML = originalContent;
-                                }, 2000);
-                            })
-                            .catch(error => {
-                                console.error('Download failed:', error);
+                            // Revert after delay
+                            setTimeout(() => {
                                 btn.classList.remove('disabled');
                                 btn.style.pointerEvents = 'auto';
                                 btn.innerHTML = originalContent;
-                                Swal.fire('Error', 'Gagal mengunduh file.', 'error');
-                            });
-                    }
-                });
-            }
-        </script>
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.error('Download failed:', error);
+                            btn.classList.remove('disabled');
+                            btn.style.pointerEvents = 'auto';
+                            btn.innerHTML = originalContent;
+                            Swal.fire('Error', 'Gagal mengunduh file.', 'error');
+                        });
+                }
+            });
+        }
+    </script>
 @endpush
 
 @section('content')
@@ -137,9 +149,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                                style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                                <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                            </a> -->
+                                                                                                                                                                                                                                                                                                                                                                            style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                            <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                        </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -188,7 +200,7 @@
                         </div>
                     </div>
                     <div class="mt-3 row g-2">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Filter Kategori
                                 (Analisis)</label>
                             <select name="category_ids[]" id="categoryFilter" class="form-select form-select-sm" multiple
@@ -201,13 +213,23 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">PILIH KOMODITAS
+                                (ANALISIS)</label>
+                            <select name="commodity_ids[]" id="commodityFilter" class="form-select form-select-sm" multiple
+                                form="filter-form" placeholder="Cari komoditas..." onchange="this.form.submit()">
+                                @foreach($availableKomoditas as $kom)
+                                    <option value="{{ $kom->id }}" {{ in_array($kom->id, $selectedCommodityIds) ? 'selected' : '' }}>
+                                        {{ $kom->nama_komoditas }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
                             <label class="small fw-bold text-muted text-uppercase mb-2 d-block">PILIH KABUPATEN
                                 (ANALISIS)</label>
-                            <select name="analysis_kabupaten_ids[]" id="kabupatenFilter" class="form-select form-select-sm" multiple
-                                form="filter-form"
-                                placeholder="Cari kabupaten..."
-                                onchange="this.form.submit()">
+                            <select name="analysis_kabupaten_ids[]" id="kabupatenFilter" class="form-select form-select-sm"
+                                multiple form="filter-form" placeholder="Cari kabupaten..." onchange="this.form.submit()">
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}" {{ in_array($kab->id, $selectedAnalysisKabupatenIds) ? 'selected' : '' }}>
                                         {{ $kab->nama_kabupaten }}
