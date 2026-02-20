@@ -19,6 +19,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SerutiController;
+use App\Http\Controllers\FenomenaController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -268,4 +269,6 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
     Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
     Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
+    Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
+    Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
 });

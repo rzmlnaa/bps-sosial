@@ -188,8 +188,9 @@
 
 
 
-                <a href="#" class="nav-link">
-                    <i class="fas fa-search-dollar"></i>
+                <a href="{{ route('fenomena.index') }}"
+                    class="nav-link {{ request()->routeIs('fenomena.index') ? 'active' : '' }}">
+                    <i class="fas fa-newspaper"></i>
                     <span>Fenomena</span>
                 </a>
             @endif
