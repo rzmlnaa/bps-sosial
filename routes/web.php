@@ -20,6 +20,8 @@ use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SerutiController;
 use App\Http\Controllers\FenomenaController;
+use App\Http\Controllers\DynamicMenuController;
+use App\Http\Controllers\FrontendMenuController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -53,6 +55,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kabupaten', [KabupatenController::class, 'store'])->name('kabupaten.store');
         Route::put('/kabupaten/{id}', [KabupatenController::class, 'update'])->name('kabupaten.update');
         Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
+
+        // Dynamic Menus Admin
+        Route::resource('dynamic-menus', DynamicMenuController::class)->except(['show']);
     });
 
     Route::post('/logout', function (Request $request) {
@@ -190,6 +195,11 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
     Route::get('/seruti/chart-data', [SerutiController::class, 'getChartData'])->name('seruti.chart-data');
 
+    // Dynamic Menu Frontend
+    Route::get('/menu/{slug}', [FrontendMenuController::class, 'show'])->name('dynamic-menu.show');
+
+
+    Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
 });
 
 
@@ -269,6 +279,6 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
     Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
     Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
-    Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
+
     Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
 });

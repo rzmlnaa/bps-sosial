@@ -10,7 +10,7 @@
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">FENOMENA</h2>
                 <p class="text-muted mb-0">Fenomena Sosial Ekonomi & Kejadian Penting</p>
             </div>
-            
+
             <div class="mt-3 mt-md-0">
                 <a href="{{ route('fenomena.create') }}" class="btn btn-success text-white shadow-sm"
                     style="border: none; border-radius: 8px;">
@@ -18,7 +18,6 @@
                 </a>
             </div>
         </div>
-
         <!-- Filters Section (Sample) -->
         <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: #fff;">
             <div class="card-body p-4">
@@ -49,7 +48,8 @@
                 </div>
                 <h5 class="fw-bold text-dark">Daftar Fenomena</h5>
                 <p class="text-muted mb-0 max-w-md">Belum ada data fenomena yang tersimpan.</p>
-                <p class="text-muted small">Silakan klik tombol <strong>Input Fenomena</strong> untuk menambahkan data baru.</p>
+                <p class="text-muted small">Silakan klik tombol <strong>Input Fenomena</strong> untuk menambahkan data baru.
+                </p>
             </div>
         </div>
     </div>

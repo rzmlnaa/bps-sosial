@@ -127,6 +127,12 @@
                     <i class="fas fa-map-marked-alt"></i>
                     <span>Master Wilayah</span>
                 </a>
+
+                <a href="{{ route('admin.dynamic-menus.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.dynamic-menus.*') ? 'active' : '' }}">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Menu Dinamis</span>
+                </a>
             @else
                 <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                     style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
@@ -193,6 +199,58 @@
                     <i class="fas fa-newspaper"></i>
                     <span>Fenomena</span>
                 </a>
+
+                @php
+                    $dynamicMenus = \App\Models\DynamicMenu::whereNull('parent_id')
+                        ->where('is_active', true)
+                        ->with([
+                            'children' => function ($q) {
+                                $q->where('is_active', true)->orderBy('order_number');
+                            }
+                        ])
+                        ->orderBy('order_number')
+                        ->get();
+                @endphp
+
+                @foreach($dynamicMenus as $menu)
+                    @if($menu->children->count() > 0)
+                        @php
+                            $childPatterns = $menu->children->pluck('slug')->map(function ($slug) {
+                                return 'menu/' . $slug;
+                            })->toArray();
+                            $isDropdownActive = request()->is($childPatterns);
+                        @endphp
+                        <a href="#dynamicSubmenu{{ $menu->id }}" id="menu-dynamic-{{ $menu->id }}"
+                            class="nav-link {{ $isDropdownActive ? 'active' : '' }}" data-bs-toggle="collapse"
+                            aria-expanded="{{ $isDropdownActive ? 'true' : 'false' }}">
+                            <i class="fas fa-folder"></i>
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <span>{{ $menu->name }}</span>
+                                <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                            </div>
+                        </a>
+                        <div class="collapse {{ $isDropdownActive ? 'show' : '' }}" id="dynamicSubmenu{{ $menu->id }}">
+                            <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+
+                                @foreach($menu->children as $child)
+                                    <li class="nav-item">
+                                        <a href="{{ route('dynamic-menu.show', $child->slug) }}"
+                                            class="nav-link {{ request()->is('menu/' . $child->slug) ? 'active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <span>{{ $child->name }}</span>
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @else
+                        <a href="{{ route('dynamic-menu.show', $menu->slug) }}"
+                            class="nav-link {{ request()->is('menu/' . $menu->slug) ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span>{{ $menu->name }}</span>
+                        </a>
+                    @endif
+                @endforeach
             @endif
 
         </div>
@@ -234,7 +292,7 @@
 
     <!-- Main Content -->
     <main class="main-content d-flex flex-column min-vh-100">
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 mb-2">
             @yield('content')
         </div>
 

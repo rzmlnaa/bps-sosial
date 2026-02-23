@@ -3,16 +3,19 @@
 @section('title', 'Verifikasi - ' . $kabupaten->nama_kabupaten)
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="d-flex align-items-center mb-4 gap-3">
-        <a href="{{ route('verification.index') }}" class="btn btn-outline-secondary rounded-circle" style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-arrow-left"></i>
-        </a>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h1 class="h3 mb-0 text-gray-800">Verifikasi {{ $kabupaten->nama_kabupaten }}</h1>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Verifikasi {{ $kabupaten->nama_kabupaten }}</h2>
             <p class="text-muted mb-0">Tinjau data yang melebihi batas selisih harga.</p>
         </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ route('verification.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
+        </div>
     </div>
+
+
 
     <form action="{{ route('verification.store', $kabupaten->id) }}" method="POST">
         @csrf
@@ -158,7 +161,7 @@
             <div class="alert alert-success">
                 <i class="fas fa-check-circle me-2"></i> Semua data pending untuk kabupaten ini sudah diverifikasi.
             </div>
-            <a href="{{ route('verification.index') }}" class="btn btn-secondary">Kembali</a>
+        
         @else
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body">
@@ -272,7 +275,7 @@
             @endif
         </div>
     @endif
-</div>
+
 
 <script>
     function toggleReason(id, type) {
