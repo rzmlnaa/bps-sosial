@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DynamicMenu;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class DynamicMenuController extends Controller
 {
@@ -30,10 +31,18 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus',
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'spreadsheet_id' => 'nullable|string',
+            'spreadsheet_id' => [
+                'nullable',
+                'string',
+                Rule::unique('dynamic_menus', 'spreadsheet_id')->where(function ($query) use ($request) {
+                    return $query->where('gid', $request->gid);
+                })
+            ],
             'gid' => 'nullable|string',
             'sheet_mode' => 'nullable|in:single,all',
             'order_number' => 'required|integer',
+        ], [
+            'spreadsheet_id.unique' => 'Google Spreadsheet ID dengan GID ini sudah digunakan pada menu lain.'
         ]);
 
         $validated['is_active'] = $request->has('is_active');
@@ -60,10 +69,18 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus,slug,' . $dynamicMenu->id,
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'spreadsheet_id' => 'nullable|string',
+            'spreadsheet_id' => [
+                'nullable',
+                'string',
+                Rule::unique('dynamic_menus', 'spreadsheet_id')->ignore($dynamicMenu->id)->where(function ($query) use ($request) {
+                    return $query->where('gid', $request->gid);
+                })
+            ],
             'gid' => 'nullable|string',
             'sheet_mode' => 'nullable|in:single,all',
             'order_number' => 'required|integer',
+        ], [
+            'spreadsheet_id.unique' => 'Google Spreadsheet ID dengan GID ini sudah digunakan pada menu lain.'
         ]);
 
         $validated['is_active'] = $request->has('is_active');

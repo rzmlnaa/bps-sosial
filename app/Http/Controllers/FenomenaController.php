@@ -16,4 +16,9 @@ class FenomenaController extends Controller
         return view('fenomena.input');
     }
 
+    public function kelola()
+    {
+        return view('fenomena.kelola');
+    }
+
 }

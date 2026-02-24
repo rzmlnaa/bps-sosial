@@ -11,7 +11,11 @@
                 <p class="text-muted mb-0">Fenomena Sosial Ekonomi & Kejadian Penting</p>
             </div>
 
-            <div class="mt-3 mt-md-0">
+            <div class="mt-3 mt-md-0 d-flex gap-2">
+                <a href="{{ route('fenomena.kelola') }}" class="btn btn-primary text-white shadow-sm"
+                    style="border: none; border-radius: 8px; background-color: var(--bps-blue);">
+                    <i class="fas fa-cog me-2"></i>Kelola Fenomena
+                </a>
                 <a href="{{ route('fenomena.create') }}" class="btn btn-success text-white shadow-sm"
                     style="border: none; border-radius: 8px;">
                     <i class="fas fa-plus me-2"></i>Input Fenomena

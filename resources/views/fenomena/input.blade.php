@@ -3,83 +3,87 @@
 @section('title', 'Input Fenomena')
 
 @section('content')
-    <div class="container-fluid px-4">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="card shadow-sm border-0 rounded-lg mt-4">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="font-weight-light my-2"><i class="fas fa-newspaper me-2"></i>Input Fenomena</h4>
-                    </div>
-                    <div class="card-body">
-                        <!-- Link Input Section -->
-                        <div class="mb-4 p-3 bg-light rounded border">
-                            <label for="link" class="form-label fw-bold">Copy - Paste Berita (Opsional)</label>
-                            <div class="input-group">
-                                <textarea type="url" class="form-control" placeholder="Copy - Paste Berita"></textarea>
-                                <button class="btn btn-success text-white fw-bold" type="button" onclick="ambilBerita()"
-                                    id="btn-fetch">
-                                    <i class="fas fa-magic me-1"></i> Ambil Otomatis
-                                </button>
-                            </div>
-                            <small class="text-muted">Copy - Paste berita dan klik "Ambil Otomatis" untuk mengisi form
-                                secara otomatis.</small>
-                        </div>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Input Data Fenomena</h2>
+            <p class="text-muted mb-0">Fenomena Sosial Ekonomi & Kejadian Penting</p>
+        </div>
 
-                        <form action="#" method="POST" id="form-fenomena">
-                            @csrf
-                            <label for="link" class="form-label fw-bold">Link Berita</label>
-                            <input type="url" class="form-control" id="link" placeholder="https://kompas.com/..."
-                                aria-label="Link Berita">
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="tanggal" class="form-label fw-bold">Tanggal</label>
-                                        <input type="number" class="form-control" id="tanggal" name="tanggal" min="1"
-                                            max="31" placeholder="DD" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="bulan" class="form-label fw-bold">Bulan</label>
-                                        <select class="form-select" id="bulan" name="bulan" required>
-                                            <option value="">Pilih Bulan</option>
-                                            @foreach(range(1, 12) as $m)
-                                                <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="tahun" class="form-label fw-bold">Tahun</label>
-                                        <input type="number" class="form-control" id="tahun" name="tahun" min="2000"
-                                            max="{{ date('Y') }}" value="{{ date('Y') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="judul" class="form-label fw-bold">Judul Fenomena</label>
-                                <input type="text" class="form-control" id="judul" name="judul" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="penjelasan" class="form-label fw-bold">Penjelasan Fenomena</label>
-                                <textarea class="form-control" id="penjelasan" name="penjelasan" rows="5"
-                                    required></textarea>
-                            </div>
-
-                            <div class="d-flex justify-content-end gap-2">
-                                <a href="{{ route('fenomena.index') }}" class="btn btn-secondary">Batal</a>
-                                <button type="submit" class="btn btn-primary" disabled
-                                    title="Tabel belum dibuat, hanya simulasi">Simpan (Demo)</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ route('fenomena.index') }}" class="btn btn-outline-secondary shadow-sm"
+                style="border-radius: 8px;">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
         </div>
     </div>
+
+    <div class="card-body">
+                    <!-- Link Input Section -->
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <label for="link" class="form-label fw-bold">Copy - Paste Berita (Opsional)</label>
+                        <div class="input-group">
+                            <textarea type="url" class="form-control" placeholder="Copy - Paste Berita"></textarea>
+                            <button class="btn btn-success text-white fw-bold" type="button" onclick="ambilBerita()"
+                                id="btn-fetch">
+                                <i class="fas fa-magic me-1"></i> Ambil Otomatis
+                            </button>
+                        </div>
+                        <small class="text-muted">Copy - Paste berita dan klik "Ambil Otomatis" untuk mengisi form
+                            secara otomatis.</small>
+                    </div>
+
+                    <form action="#" method="POST" id="form-fenomena">
+                        @csrf
+                        <label for="link" class="form-label fw-bold">Link Berita</label>
+                        <input type="url" class="form-control" id="link" placeholder="https://kompas.com/..."
+                            aria-label="Link Berita">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="tanggal" class="form-label fw-bold">Tanggal</label>
+                                    <input type="number" class="form-control" id="tanggal" name="tanggal" min="1" max="31"
+                                        placeholder="DD" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="bulan" class="form-label fw-bold">Bulan</label>
+                                    <select class="form-select" id="bulan" name="bulan" required>
+                                        <option value="">Pilih Bulan</option>
+                                        @foreach(range(1, 12) as $m)
+                                            <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="tahun" class="form-label fw-bold">Tahun</label>
+                                    <input type="number" class="form-control" id="tahun" name="tahun" min="2000"
+                                        max="{{ date('Y') }}" value="{{ date('Y') }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="judul" class="form-label fw-bold">Judul Fenomena</label>
+                            <input type="text" class="form-control" id="judul" name="judul" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="penjelasan" class="form-label fw-bold">Penjelasan Fenomena</label>
+                            <textarea class="form-control" id="penjelasan" name="penjelasan" rows="5" required></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ route('fenomena.index') }}" class="btn btn-secondary">Batal</a>
+                            <button type="submit" class="btn btn-primary" disabled
+                                title="Tabel belum dibuat, hanya simulasi">Simpan (Demo)</button>
+                        </div>
+                    </form>
+    </div>
+
+
 
     @push('scripts')
         <script>

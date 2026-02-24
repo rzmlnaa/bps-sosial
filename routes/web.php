@@ -281,4 +281,5 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
 
     Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
+    Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
 });

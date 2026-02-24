@@ -172,7 +172,7 @@
                             <a href="{{ route('price-range.index') }}"
                                 class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
                                 <i class="fas fa-table"></i>
-                                <span>Visualisasi RH</span>
+                                <span>Visualisasi</span>
                             </a>
                         </li>
                         @if (auth()->check() == true)
@@ -181,7 +181,7 @@
                                     <a href="{{ route('verification.index') }}"
                                         class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
-                                        <span>Verifikasi Harga</span>
+                                        <span>Verifikasi</span>
                                     </a>
                                 </li>
                             @endif
@@ -191,6 +191,37 @@
                 </div>
 
 
+                <a href="#submenu3" id="menu-fenomena" class="nav-link {{ request()->is('fenomena*') ? 'active' : '' }}"
+                    data-bs-toggle="collapse" aria-expanded="true">
+                    <i class="fas fa-newspaper"></i>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Fenomena</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                    </div>
+                </a>
+
+                <div class="collapse {{ request()->is('fenomena*') ? 'show' : '' }}" id="submenu3">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.index') }}"
+                                class="nav-link {{ request()->is('fenomena*') ? 'active' : '' }}">
+                                <i class="fas fa-table"></i>
+                                <span>Visualisasi</span>
+                            </a>
+                        </li>
+                        @if (auth()->check() == true)
+                            @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
+                                <li class="nav-item">
+                                    <a href="{{ route('verification.index') }}"
+                                        class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <span>Verifikasi</span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+                    </ul>
+                </div>
 
 
 

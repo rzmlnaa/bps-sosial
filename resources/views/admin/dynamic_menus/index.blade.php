@@ -72,7 +72,16 @@
                                             <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Tidak Aktif</span>
                                         @endif
                                     </td>
-                                    <td>{{ $parent->creator->name ?? '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                                        <i class="fas fa-user-edit me-1 text-primary"></i>
+                                                        {{ $parent->creator->name ?? 'Admin' }}
+                                                        <br>
+                                                        <small class="text-muted fw-normal" style="font-size: 0.75rem;">
+                                                            {{ $parent->created_at->format('d/m/Y H:i') }}
+                                                        </small>
+                                                    </span>
+                                    </td>
                                     <td>
                                         <div class="d-flex gap-2">
                                             <a href="{{ route('admin.dynamic-menus.edit', $parent->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
@@ -129,7 +138,14 @@
                                                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Tidak Aktif</span>
                                             @endif
                                         </td>
-                                        <td>{{ $child->creator->name ?? '-' }}</td>
+                                        <td> <span class="badge bg-light text-dark border">
+                                                        <i class="fas fa-user-edit me-1 text-primary"></i>
+                                                        {{ $child->creator->name ?? 'Admin' }}
+                                                        <br>
+                                                        <small class="text-muted fw-normal" style="font-size: 0.75rem;">
+                                                            {{ $child->created_at->format('d/m/Y H:i') }}
+                                                        </small>
+                                                    </span></td>
                                         <td>
                                             <div class="d-flex gap-2">
                                                 <a href="{{ route('admin.dynamic-menus.edit', $child->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
