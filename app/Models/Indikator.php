@@ -6,5 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Indikator extends Model
 {
-    protected $fillable = ['kode', 'nama'];
+    protected $fillable = ['kode', 'nama', 'user_id_add', 'user_id_update'];
+
+    public function userAdd()
+    {
+        return $this->belongsTo(User::class, 'user_id_add');
+    }
+
+    public function userUpdate()
+    {
+        return $this->belongsTo(User::class, 'user_id_update');
+    }
 }
