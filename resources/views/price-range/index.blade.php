@@ -149,9 +149,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                                            style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                                            <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                                        </a> -->
+                                                                                                                                                                                                                                                                                                                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                                    </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -487,366 +487,439 @@
 
         @if($activeYear && $selectedKabupatenId)
 
-            <!-- Data Table -->
-            <div id="commodity-table" class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle mb-0">
-                        <thead class="bg-light text-center align-middle">
-                            <tr>
-                                <th rowspan="2" class="ps-4" style="min-width: 200px;">KOMODITAS</th>
-                                <th rowspan="2" style="width: 80px;">SATUAN</th>
-                                <th rowspan="2" style="width: 100px;">BATAS HARGA</th>
-                                <th colspan="3" class="bg-light text-muted prev-year-col d-none">AKHIR
-                                    {{ $activeYear->tahun - 1 }}
-                                </th>
-                                <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
-                                    ({{ substr($activeYear->tahun, -2) }})</th>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i> Geser tabel ke kanan untuk melihat data lebih lengkap
+                        </div>
+                        <div class="btn-group shadow-sm">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.querySelector('.table-responsive').scrollBy({left: -300, behavior: 'smooth'})">
+                                <i class="fas fa-chevron-left me-1"></i> Geser Kiri
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.querySelector('.table-responsive').scrollBy({left: 300, behavior: 'smooth'})">
+                                Geser Kanan <i class="fas fa-chevron-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                                @foreach($revisions as $rev)
-                                    <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
-                                @endforeach
-                            </tr>
-                            <tr>
-                                <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MIN</th>
-                                <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MAX</th>
-                                <th style="width: 180px;" class="bg-light text-muted small prev-year-col d-none">ALASAN</th>
-                                <th style="width: 100px;" class="bg-blue-light text-blue small">MIN</th>
-                                <th style="width: 100px;" class="bg-blue-light text-blue small">MAX</th>
-                                <th style="width: 180px;" class="bg-blue-light text-blue small">ALASAN</th>
-
-                                @foreach($revisions as $rev)
-                                    <th style="width: 100px;" class="bg-orange-light text-orange small">MIN</th>
-                                    <th style="width: 100px;" class="bg-orange-light text-orange small">MAX</th>
-                                    <th style="width: 180px;" class="bg-orange-light text-orange small">ALASAN</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($categories as $category)
-                                <tr class="bg-light">
-                                    @php
-                                        $colspan = 6 + ($revisions->count() * 3);
-                                    @endphp
-                                    <td colspan="{{ $colspan }}"
-                                        class="ps-4 fw-bold text-muted small text-uppercase py-2category-header-cell">
-                                        <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
-                                    </td>
-                                </tr>
-                                @foreach($category->komoditas as $komo)
-                                    @php
-                                        $master = $masterNilai->get($komo->id);
-                                    @endphp
-
+                    <!-- Data Table -->
+                    <div id="commodity-table" class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+                        <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="bg-light text-center align-middle" style="position: sticky; top: 0; z-index: 4;">
                                     <tr>
-                                        <td class="ps-4">{{ $komo->nama_komoditas }}</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            {{ number_format($komo->batas_selisih_harga ?? 0, 0, ',', '.') }}
-                                        </td>
+                                        <th rowspan="2" class="ps-4 sticky-col-1">KOMODITAS</th>
+                                        <th rowspan="2" class="sticky-col-2">SATUAN</th>
+                                        <th rowspan="2" class="sticky-col-3">BATAS HARGA</th>
+                                        <th colspan="3" class="bg-light text-muted prev-year-col d-none">AKHIR
+                                            {{ $activeYear->tahun - 1 }}
+                                        </th>
+                                        <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
+                                            ({{ substr($activeYear->tahun, -2) }})</th>
 
-                                        <!-- Master Data -->
-                                        @php
-                                            $masterDiff = ($master && $master->max_nilai !== null && $master->min_nilai !== null)
-                                                ? ($master->max_nilai - $master->min_nilai)
-                                                : 0;
-                                            $limit = $komo->batas_selisih_harga ?? 0;
-                                            // $isMasterExceeded moved below to check inheritance
-
-                                            // Previous Year Data extraction
-                                            $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
-                                            $prevMin = $prevData['min'] ?? null;
-                                            $prevMax = $prevData['max'] ?? null;
-                                            $prevAlasan = $prevData['alasan'] ?? '-';
-
-                                            // Highlight Logic: If Master differs from Prev Year
-                                            $isMinChanged = $master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin;
-                                            $isMaxChanged = $master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax;
-
-                                            // Fix: If values are inherited (same as prev), do not flag as exceeded (Red)
-                                            $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
-                                                && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
-
-                                            $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
-                                        @endphp
-
-                                        <!-- Previous Year Columns (Hidden by Default) -->
-                                        <td class="text-center bg-light text-muted prev-year-col d-none">
-                                            {{ $prevMin !== null ? number_format($prevMin, 0, ',', '.') : '-' }}
-                                        </td>
-                                        <td class="text-center bg-light text-muted prev-year-col d-none">
-                                            {{ $prevMax !== null ? number_format($prevMax, 0, ',', '.') : '-' }}
-                                        </td>
-                                        <td class="small bg-light text-muted prev-year-col d-none">
-                                            {{ $prevAlasan }}
-                                        </td>
-
-                                        <!-- Actual Master Columns -->
-                                        <td
-                                            class="text-center {{ $isMinChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
-                                            {{ $master && $master->min_nilai !== null ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
-                                        </td>
-                                        <td
-                                            class="text-center {{ $isMaxChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
-                                            {{ $master && $master->max_nilai !== null ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
-                                        </td>
-                                        @php
-                                            $mIsApproved = ($master->verification_status ?? '') === 'approved'
-                                                && ($master->min_nilai ?? null) !== null
-                                                && ($master->max_nilai ?? null) !== null
-                                                && !empty($master->alasan);
-
-                                            $mIsPending = ($master->verification_status ?? '') === 'pending'
-                                                && ($master->min_nilai ?? null) !== null
-                                                && ($master->max_nilai ?? null) !== null
-                                                && !empty($master->alasan);
-                                        @endphp
-                                        <td class="small {{ $mIsApproved ? 'bg-success-light fw-bold text-dark' : ($mIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted')) }}"
-                                            title="{{ $isMasterExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($masterDiff, 0, ',', '.') . ')' : '' }}">
-                                            {{ $master->alasan ?? '-' }}
-                                        </td>
-
-                                        @php
-                                            // Initialize tracking for carry-forward logic
-                                            $currentMin = $master ? $master->min_nilai : null;
-                                            $currentMax = $master ? $master->max_nilai : null;
-                                            $currentAlasan = $master ? $master->alasan : null;
-                                        @endphp
-
-                                        <!-- Revision Data -->
                                         @foreach($revisions as $rev)
-                                            @php
-                                                $revData = isset($revisionDetails[$rev->id]) ? $revisionDetails[$rev->id]->get($komo->id) : null;
-
-                                                $isMinEdit = false;
-                                                $isMaxEdit = false;
-                                                $isAlasanEdit = false;
-
-                                                // Min Carry Forward
-                                                if ($revData && $revData->min_edit !== null) {
-                                                    if ($currentMin != $revData->min_edit) {
-                                                        $isMinEdit = true;
-                                                    }
-                                                    $currentMin = $revData->min_edit;
-                                                }
-
-                                                // Max Carry Forward
-                                                if ($revData && $revData->max_edit !== null) {
-                                                    if ($currentMax != $revData->max_edit) {
-                                                        $isMaxEdit = true;
-                                                    }
-                                                    $currentMax = $revData->max_edit;
-                                                }
-
-                                                // Alasan Carry Forward & Reset Logic
-                                                if ($revData) {
-                                                    if ($revData->alasan !== null) {
-                                                        $currentAlasan = $revData->alasan;
-                                                        $isAlasanEdit = true;
-                                                    } elseif ($revData->min_edit !== null || $revData->max_edit !== null) {
-                                                        // If value updated but reason not provided => reset reason
-                                                        $currentAlasan = null;
-                                                    }
-                                                }
-
-                                                // Check Difference Limit
-                                                $currentDiff = ($currentMax !== null && $currentMin !== null) ? ($currentMax - $currentMin) : 0;
-                                                $limit = $komo->batas_selisih_harga ?? 0;
-                                                $isDiffExceeded = $currentDiff > $limit;
-
-                                                // Check if there was an edit in this revision
-                                                $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));
-
-                                                // Red only if exceeded AND edited in this period
-                                                $isExceeded = $isDiffExceeded && $hasEdit;
-
-                                                // Approved Logic: Must be approved AND have Min, Max, Alasan in THIS revision
-                                                $revIsApproved = ($revData->verification_status ?? '') === 'approved'
-                                                    && ($revData->min_edit ?? null) !== null
-                                                    && ($revData->max_edit ?? null) !== null
-                                                    && !empty($revData->alasan);
-
-                                                // Pending Logic: Must be pending AND have Min, Max, Alasan in THIS revision
-                                                $revIsPending = ($revData->verification_status ?? '') === 'pending'
-                                                    && ($revData->min_edit ?? null) !== null
-                                                    && ($revData->max_edit ?? null) !== null
-                                                    && !empty($revData->alasan);
-                                            @endphp
-                                            <td
-                                                class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
-                                                {{ $currentMin !== null ? number_format($currentMin, 0, ',', '.') : '-' }}
-                                            </td>
-                                            <td
-                                                class="text-center {{ $isMaxEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
-                                                {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
-                                            </td>
-                                            <td class="small {{ $revIsApproved ? 'bg-success-light fw-bold text-dark' : ($revIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted'))) }}"
-                                                title="{{ $isExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($currentDiff, 0, ',', '.') . ')' : '' }}">
-                                                {{ $currentAlasan ?? '-' }}
-                                            </td>
+                                            <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
                                         @endforeach
                                     </tr>
-                                @endforeach
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                    <tr>
+                                        <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MIN</th>
+                                        <th style="width: 100px;" class="bg-light text-muted small prev-year-col d-none">MAX</th>
+                                        <th style="width: 180px;" class="bg-light text-muted small prev-year-col d-none">ALASAN</th>
+                                        <th style="width: 100px;" class="bg-blue-light text-blue small">MIN</th>
+                                        <th style="width: 100px;" class="bg-blue-light text-blue small">MAX</th>
+                                        <th style="width: 180px;" class="bg-blue-light text-blue small">ALASAN</th>
+
+                                        @foreach($revisions as $rev)
+                                            <th style="width: 100px;" class="bg-orange-light text-orange small">MIN</th>
+                                            <th style="width: 100px;" class="bg-orange-light text-orange small">MAX</th>
+                                            <th style="width: 180px;" class="bg-orange-light text-orange small">ALASAN</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($categories as $category)
+                                        <tr class="bg-light">
+                                            @php
+                                                $colspan = 6 + ($revisions->count() * 3);
+                                            @endphp
+                                            <td colspan="{{ $colspan }}"
+                                                class="ps-4 fw-bold text-muted small text-uppercase py-2 category-header-cell sticky-col-category">
+                                                <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
+                                            </td>
+                                        </tr>
+                                        @foreach($category->komoditas as $komo)
+                                            @php
+                                                $master = $masterNilai->get($komo->id);
+                                            @endphp
+
+                                            <tr>
+                                                <td class="ps-4 sticky-col-1 bg-white">{{ $komo->nama_komoditas }}</td>
+                                                <td class="text-center sticky-col-2 bg-white">
+                                                    <span class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
+                                                </td>
+                                                <td class="text-center sticky-col-3 bg-white">
+                                                    {{ number_format($komo->batas_selisih_harga ?? 0, 0, ',', '.') }}
+                                                </td>
+
+                                                <!-- Master Data -->
+                                                @php
+                                                    $masterDiff = ($master && $master->max_nilai !== null && $master->min_nilai !== null)
+                                                        ? ($master->max_nilai - $master->min_nilai)
+                                                        : 0;
+                                                    $limit = $komo->batas_selisih_harga ?? 0;
+                                                    // $isMasterExceeded moved below to check inheritance
+
+                                                    // Previous Year Data extraction
+                                                    $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
+                                                    $prevMin = $prevData['min'] ?? null;
+                                                    $prevMax = $prevData['max'] ?? null;
+                                                    $prevAlasan = $prevData['alasan'] ?? '-';
+
+                                                    // Highlight Logic: If Master differs from Prev Year
+                                                    $isMinChanged = $master && $master->min_nilai !== null && $prevMin !== null && $master->min_nilai != $prevMin;
+                                                    $isMaxChanged = $master && $master->max_nilai !== null && $prevMax !== null && $master->max_nilai != $prevMax;
+
+                                                    // Fix: If values are inherited (same as prev), do not flag as exceeded (Red)
+                                                    $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
+                                                        && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
+
+                                                    $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
+                                                @endphp
+
+                                                <!-- Previous Year Columns (Hidden by Default) -->
+                                                <td class="text-center bg-light text-muted prev-year-col d-none">
+                                                    {{ $prevMin !== null ? number_format($prevMin, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="text-center bg-light text-muted prev-year-col d-none">
+                                                    {{ $prevMax !== null ? number_format($prevMax, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="small bg-light text-muted prev-year-col d-none">
+                                                    {{ $prevAlasan }}
+                                                </td>
+
+                                                <!-- Actual Master Columns -->
+                                                <td
+                                                    class="text-center {{ $isMinChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
+                                                    {{ $master && $master->min_nilai !== null ? number_format($master->min_nilai, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td
+                                                    class="text-center {{ $isMaxChanged ? 'bg-warning-light fw-bold text-dark' : 'bg-blue-faded' }}">
+                                                    {{ $master && $master->max_nilai !== null ? number_format($master->max_nilai, 0, ',', '.') : '-' }}
+                                                </td>
+                                                @php
+                                                    $mIsApproved = ($master->verification_status ?? '') === 'approved'
+                                                        && ($master->min_nilai ?? null) !== null
+                                                        && ($master->max_nilai ?? null) !== null
+                                                        && !empty($master->alasan);
+
+                                                    $mIsPending = ($master->verification_status ?? '') === 'pending'
+                                                        && ($master->min_nilai ?? null) !== null
+                                                        && ($master->max_nilai ?? null) !== null
+                                                        && !empty($master->alasan);
+                                                @endphp
+                                                <td class="small {{ $mIsApproved ? 'bg-success-light fw-bold text-dark' : ($mIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isMasterExceeded ? 'bg-danger-light fw-bold text-dark' : 'bg-blue-faded text-muted')) }}"
+                                                    title="{{ $isMasterExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($masterDiff, 0, ',', '.') . ')' : '' }}">
+                                                    {{ $master->alasan ?? '-' }}
+                                                </td>
+
+                                                @php
+                                                    // Initialize tracking for carry-forward logic
+                                                    $currentMin = $master ? $master->min_nilai : null;
+                                                    $currentMax = $master ? $master->max_nilai : null;
+                                                    $currentAlasan = $master ? $master->alasan : null;
+                                                @endphp
+
+                                                <!-- Revision Data -->
+                                                @foreach($revisions as $rev)
+                                                    @php
+                                                        $revData = isset($revisionDetails[$rev->id]) ? $revisionDetails[$rev->id]->get($komo->id) : null;
+
+                                                        $isMinEdit = false;
+                                                        $isMaxEdit = false;
+                                                        $isAlasanEdit = false;
+
+                                                        // Min Carry Forward
+                                                        if ($revData && $revData->min_edit !== null) {
+                                                            if ($currentMin != $revData->min_edit) {
+                                                                $isMinEdit = true;
+                                                            }
+                                                            $currentMin = $revData->min_edit;
+                                                        }
+
+                                                        // Max Carry Forward
+                                                        if ($revData && $revData->max_edit !== null) {
+                                                            if ($currentMax != $revData->max_edit) {
+                                                                $isMaxEdit = true;
+                                                            }
+                                                            $currentMax = $revData->max_edit;
+                                                        }
+
+                                                        // Alasan Carry Forward & Reset Logic
+                                                        if ($revData) {
+                                                            if ($revData->alasan !== null) {
+                                                                $currentAlasan = $revData->alasan;
+                                                                $isAlasanEdit = true;
+                                                            } elseif ($revData->min_edit !== null || $revData->max_edit !== null) {
+                                                                // If value updated but reason not provided => reset reason
+                                                                $currentAlasan = null;
+                                                            }
+                                                        }
+
+                                                        // Check Difference Limit
+                                                        $currentDiff = ($currentMax !== null && $currentMin !== null) ? ($currentMax - $currentMin) : 0;
+                                                        $limit = $komo->batas_selisih_harga ?? 0;
+                                                        $isDiffExceeded = $currentDiff > $limit;
+
+                                                        // Check if there was an edit in this revision
+                                                        $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));
+
+                                                        // Red only if exceeded AND edited in this period
+                                                        $isExceeded = $isDiffExceeded && $hasEdit;
+
+                                                        // Approved Logic: Must be approved AND have Min, Max, Alasan in THIS revision
+                                                        $revIsApproved = ($revData->verification_status ?? '') === 'approved'
+                                                            && ($revData->min_edit ?? null) !== null
+                                                            && ($revData->max_edit ?? null) !== null
+                                                            && !empty($revData->alasan);
+
+                                                        // Pending Logic: Must be pending AND have Min, Max, Alasan in THIS revision
+                                                        $revIsPending = ($revData->verification_status ?? '') === 'pending'
+                                                            && ($revData->min_edit ?? null) !== null
+                                                            && ($revData->max_edit ?? null) !== null
+                                                            && !empty($revData->alasan);
+                                                    @endphp
+                                                    <td
+                                                        class="text-center {{ $isMinEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
+                                                        {{ $currentMin !== null ? number_format($currentMin, 0, ',', '.') : '-' }}
+                                                    </td>
+                                                    <td
+                                                        class="text-center {{ $isMaxEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded' }}">
+                                                        {{ $currentMax !== null ? number_format($currentMax, 0, ',', '.') : '-' }}
+                                                    </td>
+                                                    <td class="small {{ $revIsApproved ? 'bg-success-light fw-bold text-dark' : ($revIsPending ? 'bg-secondary-light fw-bold text-dark' : ($isExceeded ? 'bg-danger-light fw-bold text-dark' : ($isAlasanEdit ? 'bg-warning-light fw-bold text-dark' : 'bg-orange-faded text-muted'))) }}"
+                                                        title="{{ $isExceeded ? 'Selisih harga melebihi batas (Rp ' . number_format($currentDiff, 0, ',', '.') . ')' : '' }}">
+                                                        {{ $currentAlasan ?? '-' }}
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
         @else
-            <div class="card border-0 shadow-sm p-5 text-center" style="border-radius: 12px;">
-                <i class="fas fa-chart-line mb-3 text-muted" style="font-size: 4rem;"></i>
-                <h4 class="fw-bold">Visualisasi Data Rentang Harga</h4>
-                <p class="text-muted">Data visualisasi akan muncul di sini setelah tahun dan kabupaten dipilih.</p>
-            </div>
-        @endif
-    </div>
+                <div class="card border-0 shadow-sm p-5 text-center" style="border-radius: 12px;">
+                    <i class="fas fa-chart-line mb-3 text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="fw-bold">Visualisasi Data Rentang Harga</h4>
+                    <p class="text-muted">Data visualisasi akan muncul di sini setelah tahun dan kabupaten dipilih.</p>
+                </div>
+            @endif
+        </div>
 
-    <style>
-        .bg-blue-light {
-            background-color: rgba(0, 147, 221, 0.05);
-        }
+        <style>
+            .bg-blue-light {
+                background-color: rgba(0, 147, 221, 0.05);
+            }
 
-        .bg-blue-faded {
-            background-color: rgba(0, 147, 221, 0.02);
-        }
+            .bg-blue-faded {
+                background-color: rgba(0, 147, 221, 0.02);
+            }
 
-        .text-blue {
-            color: var(--bps-blue);
-        }
+            .text-blue {
+                color: var(--bps-blue);
+            }
 
-        .bg-orange-light {
-            background-color: rgba(255, 140, 0, 0.05);
-        }
+            .bg-orange-light {
+                background-color: rgba(255, 140, 0, 0.05);
+            }
 
-        .bg-orange-faded {
-            background-color: rgba(255, 140, 0, 0.02);
-        }
+            .bg-orange-faded {
+                background-color: rgba(255, 140, 0, 0.02);
+            }
 
-        .bg-warning-light {
-            background-color: rgba(255, 193, 7, 0.15) !important;
-        }
+            .bg-warning-light {
+                background-color: rgba(255, 193, 7, 0.15) !important;
+            }
 
-        .bg-success-light {
-            background-color: rgba(25, 135, 84, 0.15) !important;
-        }
+            .bg-success-light {
+                background-color: rgba(25, 135, 84, 0.15) !important;
+            }
 
-        .bg-danger-light {
-            background-color: rgba(220, 53, 69, 0.15) !important;
-        }
+            .bg-danger-light {
+                background-color: rgba(220, 53, 69, 0.15) !important;
+            }
 
-        .bg-secondary-light {
-            background-color: rgba(108, 117, 125, 0.15) !important;
-        }
+            .bg-secondary-light {
+                background-color: rgba(108, 117, 125, 0.15) !important;
+            }
 
-        .text-orange {
-            color: var(--bps-orange);
-        }
+            .text-orange {
+                color: var(--bps-orange);
+            }
 
-        table th {
-            font-weight: 700;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
+            table th {
+                font-weight: 700;
+                font-size: 0.75rem;
+                letter-spacing: 0.5px;
+            }
 
-        .table-bordered> :not(caption)>*>* {
-            border-width: 1px;
-            border-color: #f1f5f9;
-    </style>
+            .table-bordered> :not(caption)>*>* {
+                border-width: 1px;
+                border-color: #f1f5f9;
+            }
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const threshold = urlParams.get('threshold');
-            const hasThresholdValue = threshold !== null && threshold !== "";
-            const hasYear = urlParams.has('year_id');
-            const hasKab = urlParams.has('kabupaten_id');
-            const activeTab = urlParams.get('active_tab');
+            /* Sticky Columns for Rentang Harga Table */
+            .sticky-col-1 {
+                position: sticky !important;
+                left: 0;
+                z-index: 2;
+                min-width: 250px;
+                max-width: 250px;
+                /* use box-shadow to simulate right border without breaking sticky layout */
+                box-shadow: inset -1px 0 0 #f1f5f9;
+            }
 
-            if (hasThresholdValue || activeTab) {
-                var analysisElement = document.getElementById('analysis-section');
-                if (analysisElement) {
-                    setTimeout(function () {
-                        analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 500);
+            .sticky-col-2 {
+                position: sticky !important;
+                left: 250px;
+                z-index: 2;
+                min-width: 100px;
+                max-width: 100px;
+                box-shadow: inset -1px 0 0 #f1f5f9;
+            }
+
+            .sticky-col-3 {
+                position: sticky !important;
+                left: 350px;
+                z-index: 2;
+                min-width: 130px;
+                max-width: 130px;
+                border-right: 2px solid #dee2e6 !important;
+            }
+
+            .sticky-col-category {
+                position: sticky !important;
+                left: 0;
+                z-index: 6;
+                background-color: #f8f9fa !important;
+            }
+
+            /* Ensure Table Headers stay above scrolling content */
+            thead .sticky-col-1,
+            thead .sticky-col-2,
+            thead .sticky-col-3 {
+                z-index: 5 !important;
+                background-color: #f8f9fa !important;
+            }
+
+            /* Apply solid background to td so they hide scrolling behind them */
+            tbody .sticky-col-1,
+            tbody .sticky-col-2,
+            tbody .sticky-col-3 {
+                background-color: #fff !important;
+            }
+
+            /* Fix the row coloring overlapping */
+            table tbody tr:hover .sticky-col-1,
+            table tbody tr:hover .sticky-col-2,
+            table tbody tr:hover .sticky-col-3 {
+                background-color: #f8f9fa !important;
+            }
+        </style>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                const threshold = urlParams.get('threshold');
+                const hasThresholdValue = threshold !== null && threshold !== "";
+                const hasYear = urlParams.has('year_id');
+                const hasKab = urlParams.has('kabupaten_id');
+                const activeTab = urlParams.get('active_tab');
+
+                if (hasThresholdValue || activeTab) {
+                    var analysisElement = document.getElementById('analysis-section');
+                    if (analysisElement) {
+                        setTimeout(function () {
+                            analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    }
+                } else if (hasYear || hasKab) {
+                    var filterSection = document.getElementById('filter-section');
+                    if (filterSection) {
+                        setTimeout(function () {
+                            filterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    }
                 }
-            } else if (hasYear || hasKab) {
-                var filterSection = document.getElementById('filter-section');
-                if (filterSection) {
-                    setTimeout(function () {
-                        filterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 500);
+            });
+
+            document.addEventListener("DOMContentLoaded", function () {
+
+                const togglePrev = document.getElementById('togglePrevYear');
+                if (togglePrev) {
+                    togglePrev.addEventListener('change', function () {
+                        const cols = document.querySelectorAll('.prev-year-col');
+                        cols.forEach(col => {
+                            if (this.checked) {
+                                col.classList.remove('d-none');
+                            } else {
+                                col.classList.add('d-none');
+                            }
+                        });
+
+
+
+                        const catRows = document.querySelectorAll('.category-header-cell');
+                        catRows.forEach(td => {
+                            let current = parseInt(td.getAttribute('colspan'));
+                            if (this.checked) {
+                                td.setAttribute('colspan', current + 3);
+                            } else {
+                                td.setAttribute('colspan', current - 3);
+                            }
+                        });
+                    });
+                }
+            });
+
+            function validateThresholdInput(input) {
+                let val = input.value;
+                const errorElement = document.getElementById('thresholdError');
+                const contentElement = document.getElementById('analysis-content');
+                const emptyStateElement = document.getElementById('analysis-empty-state');
+
+                if (val === "" || val === null) {
+                    errorElement.classList.remove('d-none');
+                    if (contentElement) contentElement.classList.add('d-none');
+                    if (emptyStateElement) emptyStateElement.classList.remove('d-none');
+                    return;
+                }
+
+                errorElement.classList.add('d-none');
+                if (contentElement) contentElement.classList.remove('d-none');
+                if (emptyStateElement) emptyStateElement.classList.add('d-none');
+
+                // Restrict 1-100
+                if (val < 1) input.value = 1;
+                if (val > 100) input.value = 100;
+            }
+
+            function submitThreshold(input) {
+                const errorElement = document.getElementById('thresholdError');
+                if (input.value === "" || input.value === null) {
+                    errorElement.classList.remove('d-none');
+                    input.focus();
+                    return;
+                }
+                errorElement.classList.add('d-none');
+                input.form.submit();
+            }
+
+            function setActiveTab(tabName) {
+                const input = document.getElementById('activeTabInput');
+                if (input) {
+                    input.value = tabName;
                 }
             }
-        });
-
-        document.addEventListener("DOMContentLoaded", function () {
-
-            const togglePrev = document.getElementById('togglePrevYear');
-            if (togglePrev) {
-                togglePrev.addEventListener('change', function () {
-                    const cols = document.querySelectorAll('.prev-year-col');
-                    cols.forEach(col => {
-                        if (this.checked) {
-                            col.classList.remove('d-none');
-                        } else {
-                            col.classList.add('d-none');
-                        }
-                    });
-
-
-
-                    const catRows = document.querySelectorAll('.category-header-cell');
-                    catRows.forEach(td => {
-                        let current = parseInt(td.getAttribute('colspan'));
-                        if (this.checked) {
-                            td.setAttribute('colspan', current + 3);
-                        } else {
-                            td.setAttribute('colspan', current - 3);
-                        }
-                    });
-                });
-            }
-        });
-
-        function validateThresholdInput(input) {
-            let val = input.value;
-            const errorElement = document.getElementById('thresholdError');
-            const contentElement = document.getElementById('analysis-content');
-            const emptyStateElement = document.getElementById('analysis-empty-state');
-
-            if (val === "" || val === null) {
-                errorElement.classList.remove('d-none');
-                if (contentElement) contentElement.classList.add('d-none');
-                if (emptyStateElement) emptyStateElement.classList.remove('d-none');
-                return;
-            }
-
-            errorElement.classList.add('d-none');
-            if (contentElement) contentElement.classList.remove('d-none');
-            if (emptyStateElement) emptyStateElement.classList.add('d-none');
-
-            // Restrict 1-100
-            if (val < 1) input.value = 1;
-            if (val > 100) input.value = 100;
-        }
-
-        function submitThreshold(input) {
-            const errorElement = document.getElementById('thresholdError');
-            if (input.value === "" || input.value === null) {
-                errorElement.classList.remove('d-none');
-                input.focus();
-                return;
-            }
-            errorElement.classList.add('d-none');
-            input.form.submit();
-        }
-
-        function setActiveTab(tabName) {
-            const input = document.getElementById('activeTabInput');
-            if (input) {
-                input.value = tabName;
-            }
-        }
-    </script>
+        </script>
 @endsection

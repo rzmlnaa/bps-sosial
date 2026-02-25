@@ -327,7 +327,7 @@
             @yield('content')
         </div>
 
-        <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
+        <footer class="mt-auto pt-4 border-top text-center text-muted pb-0">
             <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
                 rights reserved.</small>
             <small>

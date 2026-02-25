@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Indikator extends Model
 {
-    protected $fillable = ['kode', 'nama', 'user_id_add', 'user_id_update'];
+    protected $fillable = ['kode', 'nama', 'kelompok', 'is_active', 'user_id_add', 'user_id_update'];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function userAdd()
     {

@@ -18,7 +18,9 @@ class FenomenaController extends Controller
 
     public function kelola()
     {
-        return view('fenomena.kelola');
+        $sektorUsahas = \App\Models\SektorUsaha::with(['userAdd', 'userUpdate'])->orderBy('kode', 'asc')->get();
+        $indikators = \App\Models\Indikator::with(['userAdd', 'userUpdate'])->orderBy('kode', 'asc')->get();
+        return view('fenomena.kelola', compact('sektorUsahas', 'indikators'));
     }
 
 }

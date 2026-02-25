@@ -22,6 +22,8 @@ use App\Http\Controllers\SerutiController;
 use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\DynamicMenuController;
 use App\Http\Controllers\FrontendMenuController;
+use App\Http\Controllers\SektorUsahaController;
+use App\Http\Controllers\IndikatorController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -282,4 +284,15 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
 
     Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
     Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
+
+    // Sektor Usaha
+    Route::post('/sektor-usaha', [SektorUsahaController::class, 'store'])->name('sektor-usaha.store');
+    Route::put('/sektor-usaha/{id}', [SektorUsahaController::class, 'update'])->name('sektor-usaha.update');
+    Route::delete('/sektor-usaha/{id}', [SektorUsahaController::class, 'destroy'])->name('sektor-usaha.destroy');
+
+    // Kode Indikator
+    Route::post('/indikator', [IndikatorController::class, 'store'])->name('indikator.store');
+    Route::put('/indikator/{id}', [IndikatorController::class, 'update'])->name('indikator.update');
+    Route::patch('/indikator/{id}/toggle-active', [IndikatorController::class, 'toggleActive'])->name('indikator.toggle-active');
+    Route::delete('/indikator/{id}', [IndikatorController::class, 'destroy'])->name('indikator.destroy');
 });

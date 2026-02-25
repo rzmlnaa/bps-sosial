@@ -147,7 +147,12 @@ class RhNilaiController extends Controller
 
         // 5. Viewing Logic
         $displayRevisions = collect();
-        $selectedRevisionId = $request->revision_id;
+        $selectedRevisionId = $request->query('revision_id');
+
+        // Default to latest revision if not specified
+        if (!$request->has('revision_id') && $allRevisions->isNotEmpty()) {
+            $selectedRevisionId = (string) $allRevisions->last()->id;
+        }
 
         if ($selectedRevisionId === 'all') {
             $displayRevisions = $allRevisions;
