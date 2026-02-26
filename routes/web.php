@@ -295,4 +295,14 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::put('/indikator/{id}', [IndikatorController::class, 'update'])->name('indikator.update');
     Route::patch('/indikator/{id}/toggle-active', [IndikatorController::class, 'toggleActive'])->name('indikator.toggle-active');
     Route::delete('/indikator/{id}', [IndikatorController::class, 'destroy'])->name('indikator.destroy');
+
+    // Jenis Fenomena
+    Route::post('/jenis-fenomena', [\App\Http\Controllers\JenisFenomenaController::class, 'store'])->name('jenis-fenomena.store');
+    Route::put('/jenis-fenomena/{id}', [\App\Http\Controllers\JenisFenomenaController::class, 'update'])->name('jenis-fenomena.update');
+    Route::delete('/jenis-fenomena/{id}', [\App\Http\Controllers\JenisFenomenaController::class, 'destroy'])->name('jenis-fenomena.destroy');
+
+    // Sumber Berita
+    Route::post('/sumber-berita', [\App\Http\Controllers\SumberBeritaController::class, 'store'])->name('sumber-berita.store');
+    Route::put('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'update'])->name('sumber-berita.update');
+    Route::delete('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'destroy'])->name('sumber-berita.destroy');
 });

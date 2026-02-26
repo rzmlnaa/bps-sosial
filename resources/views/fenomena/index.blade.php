@@ -8,7 +8,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">FENOMENA</h2>
-                <p class="text-muted mb-0">Fenomena Sosial Ekonomi & Kejadian Penting</p>
+                <p class="text-muted mb-0">Visualisasi Fenomena Sosial Ekonomi & Kejadian Penting</p>
             </div>
 
             <div class="mt-3 mt-md-0 d-flex gap-2">

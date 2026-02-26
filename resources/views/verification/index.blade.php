@@ -3,68 +3,70 @@
 @section('title', 'Verifikasi Rentang Harga')
 
 @section('content')
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Verifikasi Rentang Harga</h2>
-            <p class="text-muted mb-0">Daftar Kabupaten/Kota dengan data rentang harga yang perlu diverifikasi.</p>
+    <div class="fade-in-up">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Verifikasi Rentang Harga</h2>
+                <p class="text-muted mb-0">Daftar Kabupaten/Kota dengan data rentang harga yang perlu diverifikasi.</p>
+            </div>
         </div>
-    </div>
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="px-4 py-3 border-0">Kode</th>
-                            <th class="px-4 py-3 border-0">Kabupaten/Kota</th>
-                            <th class="px-4 py-3 border-0 text-center">Jumlah Pending</th>
-                            <th class="px-4 py-3 border-0 text-center">Jumlah Rejected</th>
-                            <th class="px-4 py-3 border-0 text-end">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($kabupatens as $kab)
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <td class="px-4 fw-medium text-muted">{{ $kab->kode_kab }}</td>
-                                <td class="px-4 fw-bold text-dark">{{ $kab->nama_kabupaten }}</td>
-                                <td class="px-4 text-center">
-                                    @if($kab->pending_count > 0)
-                                        <span class="badge bg-warning text-dark rounded-pill px-3">
-                                            {{ $kab->pending_count }} Item
-                                        </span>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 text-center">
-                                    @if($kab->rejected_count > 0)
-                                        <span class="badge bg-danger text-white rounded-pill px-3">
-                                            {{ $kab->rejected_count }} Item
-                                        </span>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 text-end">
-                                    <a href="{{ route('verification.show', $kab->id) }}"
-                                        class="btn btn-primary btn-sm rounded-pill px-4">
-                                        <i class="fas fa-search me-1"></i> Periksa
-                                    </a>
-                                </td>
+                                <th class="px-4 py-3 border-0">Kode</th>
+                                <th class="px-4 py-3 border-0">Kabupaten/Kota</th>
+                                <th class="px-4 py-3 border-0 text-center">Jumlah Pending</th>
+                                <th class="px-4 py-3 border-0 text-center">Jumlah Rejected</th>
+                                <th class="px-4 py-3 border-0 text-end">Aksi</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                                        <h5 class="fw-medium">Semua Bersih!</h5>
-                                        <p class="mb-0">Tidak ada data yang perlu verifikasi saat ini.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($kabupatens as $kab)
+                                <tr>
+                                    <td class="px-4 fw-medium text-muted">{{ $kab->kode_kab }}</td>
+                                    <td class="px-4 fw-bold text-dark">{{ $kab->nama_kabupaten }}</td>
+                                    <td class="px-4 text-center">
+                                        @if($kab->pending_count > 0)
+                                            <span class="badge bg-warning text-dark rounded-pill px-3">
+                                                {{ $kab->pending_count }} Item
+                                            </span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 text-center">
+                                        @if($kab->rejected_count > 0)
+                                            <span class="badge bg-danger text-white rounded-pill px-3">
+                                                {{ $kab->rejected_count }} Item
+                                            </span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 text-end">
+                                        <a href="{{ route('verification.show', $kab->id) }}"
+                                            class="btn btn-primary btn-sm rounded-pill px-4">
+                                            <i class="fas fa-search me-1"></i> Periksa
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                            <h5 class="fw-medium">Semua Bersih!</h5>
+                                            <p class="mb-0">Tidak ada data yang perlu verifikasi saat ini.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

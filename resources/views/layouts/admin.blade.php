@@ -205,7 +205,7 @@
                         <li class="nav-item">
                             <a href="{{ route('fenomena.index') }}"
                                 class="nav-link {{ request()->is('fenomena*') ? 'active' : '' }}">
-                                <i class="fas fa-table"></i>
+                                <i class="fas fa-chart-line"></i>
                                 <span>Visualisasi</span>
                             </a>
                         </li>
@@ -225,11 +225,6 @@
 
 
 
-                <a href="{{ route('fenomena.index') }}"
-                    class="nav-link {{ request()->routeIs('fenomena.index') ? 'active' : '' }}">
-                    <i class="fas fa-newspaper"></i>
-                    <span>Fenomena</span>
-                </a>
 
                 @php
                     $dynamicMenus = \App\Models\DynamicMenu::whereNull('parent_id')

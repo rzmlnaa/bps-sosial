@@ -13,7 +13,7 @@ class IndikatorController extends Controller
         $request->validate([
             'kode' => ['required', 'string', 'regex:/^[0-9]+$/', 'unique:indikators,kode'],
             'nama' => 'required|string|max:255',
-            'kelompok' => 'required|in:Utama,Dampak',
+            'kelompok' => 'required|in:utama,dampak',
         ], [
             'kode.regex' => 'Kode indikator hanya boleh berisi angka (contoh: 01, 02).',
             'kode.unique' => 'Kode indikator sudah ada di database.',
@@ -39,7 +39,7 @@ class IndikatorController extends Controller
         $request->validate([
             'kode' => ['required', 'string', 'regex:/^[0-9]+$/', 'unique:indikators,kode,' . $indikator->id],
             'nama' => 'required|string|max:255',
-            'kelompok' => 'required|in:Utama,Dampak',
+            'kelompok' => 'required|in:utama,dampak',
         ], [
             'kode.regex' => 'Kode indikator hanya boleh berisi angka (contoh: 01, 02).',
             'kode.unique' => 'Kode indikator sudah ada di database.',
