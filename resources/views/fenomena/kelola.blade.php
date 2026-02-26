@@ -613,6 +613,7 @@
                                     <tr>
                                         <th width="5%" class="text-center">No</th>
                                         <th>Nama Sumber Berita</th>
+                                        <th width="10%" class="text-center">Tipe</th>
                                         <th width="25%" class="text-center">Informasi</th>
                                         <th width="10%" class="text-center">Aksi</th>
                                     </tr>
@@ -622,6 +623,13 @@
                                         <tr>
                                             <td class="text-center">{{ $key + 1 }}</td>
                                             <td>{{ $item->nama }}</td>
+                                            <td class="text-center">
+                                                @if($item->is_online)
+                                                    <span class="badge bg-info text-dark">Online</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Offline</span>
+                                                @endif
+                                            </td>
                                             <td class="text-start" style="font-size: 0.85rem;">
                                                 <div class="d-flex flex-column text-muted">
                                                     @if($item->created_at)
@@ -722,6 +730,15 @@
                                                     <label class="form-label fw-bold">Nama Sumber Berita</label>
                                                     <input type="text" class="form-control" name="nama"
                                                         value="{{ $item->nama }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            name="is_online" id="isOnlineEdit{{ $item->id }}"
+                                                            {{ $item->is_online ? 'checked' : '' }} value="1">
+                                                        <label class="form-check-label fw-bold"
+                                                            for="isOnlineEdit{{ $item->id }}">Sumber Online (Wajibkan Link)</label>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -863,6 +880,13 @@
                             <label class="form-label fw-bold">Nama Sumber Berita</label>
                             <input type="text" class="form-control" name="nama" required
                                 placeholder="Masukkan nama sumber berita...">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" name="is_online"
+                                    id="isOnlineAdd" value="1">
+                                <label class="form-check-label fw-bold" for="isOnlineAdd">Sumber Online (Wajibkan Link)</label>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

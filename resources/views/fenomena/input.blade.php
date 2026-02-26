@@ -2,6 +2,35 @@
 
 @section('title', 'Input Fenomena')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--bootstrap-5 .select2-selection {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            height: calc(3.5rem + 2px);
+            padding: 1rem 0.75rem;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
@@ -32,11 +61,25 @@
                             secara otomatis.</small>
                     </div>
 
-                    <form action="#" method="POST" id="form-fenomena">
+                    <form action="{{ route('fenomena.store') }}" method="POST" id="form-fenomena">
                         @csrf
-                        <label for="link" class="form-label fw-bold">Link Berita</label>
-                        <input type="url" class="form-control" id="link" placeholder="https://kompas.com/..."
-                            aria-label="Link Berita">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="link_berita" class="form-label fw-bold">Link Berita (Opsional)</label>
+                                <input type="url" class="form-control" id="link" name="link_berita"
+                                    placeholder="Contoh: https://kompas.com/..." aria-label="Link Berita">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="sumber_berita_id" class="form-label fw-bold">Sumber Berita</label>
+                                <select class="form-select select2" id="sumber_berita_id" name="sumber_berita_id" required>
+                                    <option value="">Pilih Sumber Berita</option>
+                                    @foreach($sumberBeritas as $sumber)
+                                        <option value="{{ $sumber->id }}" data-online="{{ $sumber->is_online ? '1' : '0' }}">
+                                            {{ $sumber->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -70,6 +113,39 @@
                             <input type="text" class="form-control" id="judul" name="judul" required>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="sektor_usaha_id" class="form-label fw-bold">Kode Lapangan Usaha</label>
+                                <select class="form-select select2" id="sektor_usaha_id" name="sektor_usaha_id" required>
+                                    <option value="">Pilih Lapangan Usaha</option>
+                                    @foreach($sektorUsahas as $sektor)
+                                        <option value="{{ $sektor->id }}">[{{ $sektor->kode }}] {{ $sektor->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="indikator_id" class="form-label fw-bold">Kode Indikator</label>
+                                <select class="form-select select2" id="indikator_id" name="indikator_id" required>
+                                    <option value="">Pilih Indikator</option>
+                                    @foreach($indikators as $indikator)
+                                        <option value="{{ $indikator->id }}">[{{ $indikator->kode }}] {{ $indikator->nama }}
+                                            ({{ ucfirst($indikator->kelompok) }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="jenis_fenomena_ids" class="form-label fw-bold">Jenis Fenomena (Bisa pilih lebih dari
+                                1)</label>
+                            <select class="form-select select2" id="jenis_fenomena_ids" name="jenis_fenomena_ids[]"
+                                multiple="multiple" required>
+                                @foreach($jenisFenomenas as $jenis)
+                                    <option value="{{ $jenis->id }}">{{ $jenis->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div class="mb-3">
                             <label for="penjelasan" class="form-label fw-bold">Penjelasan Fenomena</label>
                             <textarea class="form-control" id="penjelasan" name="penjelasan" rows="5" required></textarea>
@@ -77,8 +153,9 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('fenomena.index') }}" class="btn btn-secondary">Batal</a>
-                            <button type="submit" class="btn btn-primary" disabled
-                                title="Tabel belum dibuat, hanya simulasi">Simpan (Demo)</button>
+                            <button type="submit" class="btn btn-primary" id="btn-simpan">
+                                <i class="fas fa-save me-1"></i> Simpan Data Fenomena
+                            </button>
                         </div>
                     </form>
     </div>
@@ -86,7 +163,89 @@
 
 
     @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
+            $(document).ready(function () {
+                $('.select2').select2({
+                    theme: 'default',
+                    width: '100%',
+                    placeholder: function () {
+                        $(this).data('placeholder');
+                    }
+                });
+
+                $('#sumber_berita_id').on('change', function () {
+                    const selectedOption = $(this).find('option:selected');
+                    const isOnline = selectedOption.data('online') == '1';
+                    const linkInput = $('#link');
+                    const linkLabel = $('label[for="link_berita"]');
+
+                    if (isOnline) {
+                        linkInput.attr('required', true);
+                        linkLabel.html('Link Berita <span class="text-danger">* (Wajib)</span>');
+                    } else {
+                        linkInput.attr('required', false);
+                        linkLabel.html('Link Berita (Opsional)');
+                    }
+                }).trigger('change');
+
+                // AJAX Uniqueness Check
+                let timeout = null;
+                const fieldStatus = {
+                    judul: true,
+                    link_berita: true
+                };
+
+                function updateButtonState() {
+                    const isInvalid = !fieldStatus.judul || !fieldStatus.link_berita;
+                    $('#btn-simpan').prop('disabled', isInvalid);
+                }
+
+                function checkUniqueness(field, value, element) {
+                    if (value.length < 3) {
+                        element.removeClass('is-invalid is-valid');
+                        element.next('.invalid-feedback').remove();
+                        fieldStatus[field] = true;
+                        updateButtonState();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "/fenomena/check-uniqueness",
+                        type: "GET",
+                        data: { field: field, value: value },
+                        success: function (response) {
+                            element.next('.invalid-feedback').remove();
+                            if (response.exists) {
+                                element.addClass('is-invalid').removeClass('is-valid');
+                                element.after(`<div class="invalid-feedback d-block">${response.message}</div>`);
+                                fieldStatus[field] = false;
+                            } else {
+                                element.addClass('is-valid').removeClass('is-invalid');
+                                fieldStatus[field] = true;
+                            }
+                            updateButtonState();
+                        },
+                        error: function() {
+                            fieldStatus[field] = true; // Assume valid on error or handle as needed
+                            updateButtonState();
+                        }
+                    });
+                }
+
+                $('#judul, #link').on('input', function () {
+                    const element = $(this);
+                    const field = element.attr('id') === 'link' ? 'link_berita' : 'judul';
+                    const value = element.val();
+
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function () {
+                        checkUniqueness(field, value, element);
+                    }, 500);
+                });
+            });
+
             async function ambilBerita() {
 
                 const btn = document.getElementById("btn-fetch");
@@ -160,6 +319,9 @@
                     isi = isi.replace(/\s+/g, ' ').trim();
 
                     document.getElementById("penjelasan").value = isi;
+
+                    // Trigger input event for AJAX uniqueness check
+                    $('#judul, #link').trigger('input');
 
 
                     Swal.fire({

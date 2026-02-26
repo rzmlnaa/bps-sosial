@@ -4,8 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Models\Fenomena;
+use App\Models\SektorUsaha;
+use App\Models\Indikator;
+use App\Models\JenisFenomena;
+use App\Models\SumberBerita;
+
 class FenomenaController extends Controller
 {
+    public function checkUniqueness(Request $request)
+    {
+        $field = $request->query('field');
+        $value = $request->query('value');
+
+        if (!in_array($field, ['judul', 'link_berita'])) {
+            return response()->json(['valid' => false, 'message' => 'Field tidak valid'], 400);
+        }
+
+        $exists = Fenomena::where($field, $value)->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? ($field == 'judul' ? 'Judul fenomena sudah pernah dimasukkan.' : 'Link berita sudah pernah digunakan.') : ''
+        ]);
+    }
+
     public function index()
     {
         return view('fenomena.index');
@@ -13,7 +36,77 @@ class FenomenaController extends Controller
 
     public function create()
     {
-        return view('fenomena.input');
+        $sektorUsahas = SektorUsaha::orderBy('kode', 'asc')->get();
+        $indikators = Indikator::where('kelompok', 'utama')
+            ->orderBy('kode', 'asc')
+            ->get();
+        $jenisFenomenas = JenisFenomena::orderBy('nama', 'asc')->get();
+        $sumberBeritas = SumberBerita::orderBy('nama', 'asc')->get();
+
+        return view('fenomena.input', compact('sektorUsahas', 'indikators', 'jenisFenomenas', 'sumberBeritas'));
+    }
+
+    public function store(Request $request)
+    {
+        $rules = [
+            'tanggal' => 'required|numeric|min:1|max:31',
+            'bulan' => 'required|numeric|min:1|max:12',
+            'tahun' => 'required|numeric|min:2000|max:' . date('Y'),
+            'judul' => 'required|string|max:255|unique:fenomenas,judul',
+            'penjelasan' => 'required|string',
+            'sektor_usaha_id' => 'required|exists:sektor_usahas,id',
+            'indikator_id' => 'required|exists:indikators,id',
+            'jenis_fenomena_ids' => 'required|array',
+            'jenis_fenomena_ids.*' => 'exists:jenis_fenomenas,id',
+            'sumber_berita_id' => 'required|exists:sumber_beritas,id',
+        ];
+
+        // Conditional validation for link_berita
+        $sumberBerita = \App\Models\SumberBerita::find($request->sumber_berita_id);
+        if ($sumberBerita && $sumberBerita->is_online) {
+            $rules['link_berita'] = 'required|url|unique:fenomenas,link_berita';
+        } else {
+            $rules['link_berita'] = 'nullable|url|unique:fenomenas,link_berita';
+        }
+
+        $request->validate($rules, [
+            'tanggal.required' => 'Tanggal wajib diisi.',
+            'tanggal.numeric' => 'Tanggal harus berupa angka.',
+            'bulan.required' => 'Bulan wajib dipilih.',
+            'tahun.required' => 'Tahun wajib diisi.',
+            'judul.required' => 'Judul fenomena wajib diisi.',
+            'judul.unique' => 'Judul fenomena sudah pernah dimasukkan.',
+            'penjelasan.required' => 'Penjelasan fenomena wajib diisi.',
+            'sektor_usaha_id.required' => 'Kode Lapangan Usaha wajib dipilih.',
+            'sektor_usaha_id.exists' => 'Kode Lapangan Usaha tidak valid.',
+            'indikator_id.required' => 'Kode Indikator wajib dipilih.',
+            'indikator_id.exists' => 'Kode Indikator tidak valid.',
+            'jenis_fenomena_ids.required' => 'Jenis fenomena wajib dipilih minimal satu.',
+            'sumber_berita_id.required' => 'Sumber berita wajib dipilih.',
+            'link_berita.required' => 'Link berita wajib diisi untuk sumber berita online.',
+            'link_berita.url' => 'Format link berita tidak valid.',
+            'link_berita.unique' => 'Link berita sudah pernah digunakan.',
+        ]);
+
+        $tanggal_berita = \Carbon\Carbon::createFromDate($request->tahun, $request->bulan, $request->tanggal);
+
+        $fenomena = \App\Models\Fenomena::create([
+            'tanggal_berita' => $tanggal_berita->toDateString(),
+            'bulan' => $request->bulan,
+            'tahun' => $request->tahun,
+            'judul' => $request->judul,
+            'penjelasan' => $request->penjelasan,
+            'link_berita' => $request->link_berita,
+            'sumber_berita_id' => $request->sumber_berita_id,
+            'status_verifikasi' => 'N',
+            'created_by' => auth()->id(),
+        ]);
+
+        $fenomena->sektors()->sync([$request->sektor_usaha_id]);
+        $fenomena->indikators()->sync([$request->indikator_id]);
+        $fenomena->jenisFenomenas()->sync($request->jenis_fenomena_ids);
+
+        return redirect()->route('fenomena.index')->with('success', 'Data fenomena berhasil disimpan.');
     }
 
     public function kelola()

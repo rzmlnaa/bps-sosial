@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class SumberBerita extends Model
 {
-    protected $fillable = ['nama', 'user_id_add', 'user_id_update'];
+    protected $fillable = ['nama', 'is_online', 'user_id_add', 'user_id_update'];
+
+    protected $casts = [
+        'is_online' => 'boolean',
+    ];
 
     public function userAdd()
     {

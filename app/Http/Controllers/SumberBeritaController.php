@@ -19,6 +19,7 @@ class SumberBeritaController extends Controller
 
         SumberBerita::create([
             'nama' => $request->nama,
+            'is_online' => $request->has('is_online'),
             'user_id_add' => Auth::id(),
             'user_id_update' => Auth::id(),
         ]);
@@ -39,6 +40,7 @@ class SumberBeritaController extends Controller
 
         $sumber->update([
             'nama' => $request->nama,
+            'is_online' => $request->has('is_online'),
             'user_id_update' => Auth::id(),
         ]);
 
