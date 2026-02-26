@@ -20,6 +20,7 @@ use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SerutiController;
 use App\Http\Controllers\FenomenaController;
+use App\Http\Controllers\FenomenaVerificationController;
 use App\Http\Controllers\DynamicMenuController;
 use App\Http\Controllers\FrontendMenuController;
 use App\Http\Controllers\SektorUsahaController;
@@ -87,6 +88,11 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // RH Price Range Values
     Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
     Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
+
+    // Fenomena Values
+    Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
+    Route::get('/fenomena/check-uniqueness', [FenomenaController::class, 'checkUniqueness'])->name('fenomena.check-uniqueness');
+    Route::post('/fenomena', [FenomenaController::class, 'store'])->name('fenomena.store');
 });
 
 
@@ -200,7 +206,7 @@ Route::middleware(['check.status'])->group(function () {
     // Dynamic Menu Frontend
     Route::get('/menu/{slug}', [FrontendMenuController::class, 'show'])->name('dynamic-menu.show');
 
-
+    // Menu Fenomena
     Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
 });
 
@@ -282,9 +288,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
     Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
 
-    Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
-    Route::get('/fenomena/check-uniqueness', [FenomenaController::class, 'checkUniqueness'])->name('fenomena.check-uniqueness');
-    Route::post('/fenomena', [FenomenaController::class, 'store'])->name('fenomena.store');
+
+    // Kelola Fenomena
     Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
 
     // Sektor Usaha
@@ -307,4 +312,11 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/sumber-berita', [\App\Http\Controllers\SumberBeritaController::class, 'store'])->name('sumber-berita.store');
     Route::put('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'update'])->name('sumber-berita.update');
     Route::delete('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'destroy'])->name('sumber-berita.destroy');
+
+    // Fenomena Verification
+    Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
+    Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
+    Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
 });
+
+

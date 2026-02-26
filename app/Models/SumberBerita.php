@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SumberBerita extends Model
 {
+    use HasFactory;
     protected $fillable = ['nama', 'is_online', 'user_id_add', 'user_id_update'];
 
     protected $casts = [

@@ -69,7 +69,7 @@ class FenomenaTest extends TestCase
             'judul' => 'Judul Test',
             'penjelasan' => 'Penjelasan Test',
             'sumber_berita_id' => $sumber->id,
-            'status_verifikasi' => 'N',
+            'status_verifikasi' => 'P',
         ]);
 
         $fenomena = Fenomena::first();
@@ -168,7 +168,7 @@ class FenomenaTest extends TestCase
             'judul' => 'Judul Unik',
             'penjelasan' => 'Penjelasan',
             'sumber_berita_id' => $sumber->id,
-            'status_verifikasi' => 'N',
+            'status_verifikasi' => 'P',
             'created_by' => $user->id,
         ]);
 
@@ -207,7 +207,7 @@ class FenomenaTest extends TestCase
             'penjelasan' => 'Penjelasan',
             'link_berita' => 'https://example.com/berita-1',
             'sumber_berita_id' => $sumber->id,
-            'status_verifikasi' => 'N',
+            'status_verifikasi' => 'P',
             'created_by' => $user->id,
         ]);
 

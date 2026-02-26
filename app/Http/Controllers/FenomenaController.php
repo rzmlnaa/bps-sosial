@@ -98,7 +98,7 @@ class FenomenaController extends Controller
             'penjelasan' => $request->penjelasan,
             'link_berita' => $request->link_berita,
             'sumber_berita_id' => $request->sumber_berita_id,
-            'status_verifikasi' => 'N',
+            'status_verifikasi' => 'P',
             'created_by' => auth()->id(),
         ]);
 

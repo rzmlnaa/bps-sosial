@@ -56,8 +56,12 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="text-center py-5 text-muted">
+                                        <img src="https://cdn.dribbble.com/userupload/22333996/file/original-6ac4030147adbe5d9381c4600c79eccb.gif"
+                                            alt=""
+                                            style="display:block; margin:0 auto; width:100%; max-width:500px; mix-blend-mode: multiply; filter: brightness(1.05) contrast(1.1);"
+                                            background="transparent">
                                         <div class="d-flex flex-column align-items-center">
-                                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                            <!-- <i class="fas fa-check-circle text-success fa-3x mb-3"></i> -->
                                             <h5 class="fw-medium">Semua Bersih!</h5>
                                             <p class="mb-0">Tidak ada data yang perlu verifikasi saat ini.</p>
                                         </div>

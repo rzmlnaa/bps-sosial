@@ -156,7 +156,7 @@
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
-                    class="nav-link {{ request()->is('price-range*') || request()->is('verification*') ? 'active' : '' }}"
+                    class="nav-link {{ request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-tags"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -165,7 +165,7 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->is('price-range*') || request()->is('verification*') ? 'show' : '' }}"
+                <div class="collapse {{ request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'show' : '' }}"
                     id="submenu2">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
@@ -179,7 +179,7 @@
                             @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('verification.index') }}"
-                                        class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                        class="nav-link {{ request()->routeIs('verification.*') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
                                         <span>Verifikasi</span>
                                     </a>
@@ -191,7 +191,8 @@
                 </div>
 
 
-                <a href="#submenu3" id="menu-fenomena" class="nav-link {{ request()->is('fenomena*') ? 'active' : '' }}"
+                <a href="#submenu3" id="menu-fenomena"
+                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-newspaper"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -200,7 +201,8 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->is('fenomena*') ? 'show' : '' }}" id="submenu3">
+                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') ? 'show' : '' }}"
+                    id="submenu3">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
                             <a href="{{ route('fenomena.index') }}"
@@ -212,10 +214,10 @@
                         @if (auth()->check() == true)
                             @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
-                                    <a href="{{ route('verification.index') }}"
-                                        class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                    <a href="{{ route('fenomena.verification.index') }}"
+                                        class="nav-link {{ request()->routeIs('fenomena.verification.*') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
-                                        <span>Verifikasi</span>
+                                        <span>Verifikasi Fenomena</span>
                                     </a>
                                 </li>
                             @endif

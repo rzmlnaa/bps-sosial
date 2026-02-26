@@ -14,7 +14,7 @@
             <div class="mt-3 mt-md-0 d-flex gap-2">
                 <a href="{{ route('fenomena.kelola') }}" class="btn btn-primary text-white shadow-sm"
                     style="border: none; border-radius: 8px; background-color: var(--bps-blue);">
-                    <i class="fas fa-cog me-2"></i>Kelola Fenomena
+                    <i class="fas fa-cog me-2 fa-spin"></i>Kelola Fenomena
                 </a>
                 <a href="{{ route('fenomena.create') }}" class="btn btn-success text-white shadow-sm"
                     style="border: none; border-radius: 8px;">
