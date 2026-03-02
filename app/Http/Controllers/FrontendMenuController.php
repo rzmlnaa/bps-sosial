@@ -14,12 +14,18 @@ class FrontendMenuController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $title = "Administrator belum menyetel Spreadsheet untuk menu ini";
-        $response = Http::get("https://docs.google.com/spreadsheets/d/{$menu->spreadsheet_id}");
+        $title = null;
 
-        if ($response->successful()) {
-            preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches);
-            $title = $matches[1] ?? null;
+        if ($menu->type === 'spreadsheet' && !empty($menu->url)) {
+            $response = Http::get($menu->url);
+
+            if ($response->successful()) {
+                preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches);
+                $title = $matches[1] ?? null;
+                if ($title) {
+                    $title = str_replace([' - Google Sheets', ' - Google Spreadshet'], '', $title);
+                }
+            }
         }
 
         return view('dynamic_menus.show', compact('menu', 'title'));

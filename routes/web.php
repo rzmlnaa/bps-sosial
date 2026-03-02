@@ -291,6 +291,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
 
     // Kelola Fenomena
     Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
+    // Detail Fenomena (setelah /kelola agar route statis tidak tertangkap oleh {id})
+    Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
 
     // Sektor Usaha
     Route::post('/sektor-usaha', [SektorUsahaController::class, 'store'])->name('sektor-usaha.store');

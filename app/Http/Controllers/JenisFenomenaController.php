@@ -48,6 +48,13 @@ class JenisFenomenaController extends Controller
     public function destroy($id)
     {
         $jenis = JenisFenomena::findOrFail($id);
+
+        if ($jenis->fenomenas()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Tidak dapat menghapus Jenis Fenomena ini karena sudah digunakan dalam data fenomena.')
+                ->with('active_tab', 'jenis');
+        }
+
         $jenis->delete();
 
         return redirect()->back()->with('success', 'Data Jenis Fenomena berhasil dihapus.')->with('active_tab', 'jenis');

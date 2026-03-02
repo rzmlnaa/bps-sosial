@@ -17,4 +17,9 @@ class JenisFenomena extends Model
     {
         return $this->belongsTo(User::class, 'user_id_update');
     }
+
+    public function fenomenas()
+    {
+        return $this->belongsToMany(Fenomena::class, 'fenomena_jenis');
+    }
 }

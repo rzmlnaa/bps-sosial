@@ -29,9 +29,71 @@ class FenomenaController extends Controller
         ]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return view('fenomena.index');
+        $query = Fenomena::with(['creator', 'verifier', 'sumberBerita', 'sektors', 'indikators'])
+            ->where('status_verifikasi', 'Y');
+
+        // ── Search ─────────────────────────────────────────────────
+        if ($search = $request->search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%")
+                    ->orWhere('penjelasan', 'like', "%{$search}%");
+            });
+        }
+
+        // ── Sektor ────────────────────────────────────────────────
+        if ($sektor = $request->sektor) {
+            $query->whereHas('sektors', fn($q) => $q->where('kode', $sektor));
+        }
+
+        // ── Indikator ─────────────────────────────────────────────
+        if ($indikator = $request->indikator) {
+            $query->whereHas('indikators', fn($q) => $q->where('kode', $indikator));
+        }
+
+        // ── Sumber Berita ─────────────────────────────────────────
+        if ($sumber = $request->sumber) {
+            $query->where('sumber_berita_id', $sumber);
+        }
+
+        // ── Tahun & Bulan ─────────────────────────────────────────
+        if ($tahun = $request->tahun) {
+            $query->where('tahun', $tahun);
+        }
+        if ($bulan = $request->bulan) {
+            $query->where('bulan', $bulan);
+        }
+
+        // ── Creator (hanya jika login) ────────────────────────────
+        if ($request->creator === 'me' && auth()->check()) {
+            $query->where('created_by', auth()->id());
+        }
+
+        $query->orderBy('tanggal_berita', 'desc');
+        $fenomenas = $query->paginate(10)->withQueryString();
+        $totalFiltered = $fenomenas->total();
+        $totalVerified = Fenomena::where('status_verifikasi', 'Y')->count();
+        $myCount = auth()->check()
+            ? Fenomena::where('status_verifikasi', 'Y')->where('created_by', auth()->id())->count()
+            : 0;
+
+        $sektors = SektorUsaha::orderBy('kode')->get();
+        $indikators = Indikator::where('is_active', true)->orderBy('kode')->get();
+        $sumberBeritas = SumberBerita::orderBy('nama')->get();
+        $availableTahun = Fenomena::where('status_verifikasi', 'Y')
+            ->distinct()->orderBy('tahun', 'desc')->pluck('tahun');
+
+        return view('fenomena.index', compact(
+            'fenomenas',
+            'sektors',
+            'indikators',
+            'sumberBeritas',
+            'availableTahun',
+            'totalFiltered',
+            'totalVerified',
+            'myCount'
+        ));
     }
 
     public function create()
@@ -111,14 +173,33 @@ class FenomenaController extends Controller
 
     public function kelola()
     {
-        $sektorUsahas = \App\Models\SektorUsaha::with(['userAdd', 'userUpdate'])->orderBy('kode', 'asc')->get();
+
+        $sektorUsahas = \App\Models\SektorUsaha::with(['userAdd', 'userUpdate'])->withCount('fenomenas')->orderBy('kode', 'asc')->get();
         $indikators = \App\Models\Indikator::with(['userAdd', 'userUpdate'])
+            ->withCount('fenomenas')
             ->orderByRaw("CASE WHEN kelompok = 'utama' THEN 1 ELSE 2 END")
             ->orderBy('kode', 'asc')
             ->get();
-        $jenisFenomenas = \App\Models\JenisFenomena::with(['userAdd', 'userUpdate'])->orderBy('nama', 'asc')->get();
-        $sumberBeritas = \App\Models\SumberBerita::with(['userAdd', 'userUpdate'])->orderBy('nama', 'asc')->get();
+        $jenisFenomenas = \App\Models\JenisFenomena::with(['userAdd', 'userUpdate'])->withCount('fenomenas')->orderBy('nama', 'asc')->get();
+        $sumberBeritas = \App\Models\SumberBerita::with(['userAdd', 'userUpdate'])->withCount('fenomenas')->orderBy('nama', 'asc')->get();
         return view('fenomena.kelola', compact('sektorUsahas', 'indikators', 'jenisFenomenas', 'sumberBeritas'));
+    }
+
+    public function show($id)
+    {
+        $fenomena = Fenomena::with([
+            'creator',
+            'verifier',
+            'sumberBerita',
+            'sektors',
+            'indikators',
+            'jenisFenomenas',
+        ])->findOrFail($id);
+
+        // from = 'verification' | 'fenomena' (default)
+        $from = request('from', 'fenomena');
+
+        return view('fenomena.show', compact('fenomena', 'from'));
     }
 
 }

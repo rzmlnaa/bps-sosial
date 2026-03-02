@@ -24,7 +24,7 @@
                                 <th>Urutan</th>
                                 <th>Nama Menu</th>
                                 <th>Tipe</th>
-                                <th>Spreadsheet ID</th>
+                                <th>Link / Konten</th>
                                 <th>Status</th>
                                 <th>Dibuat Oleh</th>
                                 <th>Aksi</th>
@@ -43,22 +43,43 @@
                                         <br><small class="text-muted fw-normal">{{ $parent->slug }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge bg-primary">Dropdown (Parent)</span>
-                                    </td>
-                                    <td>
                                         @php
+                                            $icon = 'fas fa-link';
+                                            $color = 'secondary';
+                                            $typeLabel = ucfirst($parent->type ?? 'External');
+                                            if ($parent->type === 'spreadsheet') { $icon = 'fas fa-file-excel'; $color = 'success'; }
+                                            elseif ($parent->type === 'youtube') { $icon = 'fab fa-youtube'; $color = 'danger'; }
+                                            elseif ($parent->type === 'drive') { $icon = 'fab fa-google-drive'; $color = 'primary'; }
+
                                             $hasChildren = $menus->where('parent_id', $parent->id)->count() > 0;
                                         @endphp
+
                                         @if($hasChildren)
-                                            <span class="text-muted fst-italic">Tidak digunakan (Menu Utama)</span>
+                                            <span class="badge bg-navy bg-opacity-10 text-navy px-3 py-2 rounded-pill">
+                                                <i class="fas fa-folder me-1"></i> Parent (Dropdown)
+                                            </span>
                                         @else
-                                            @if($parent->spreadsheet_id)
-                                                @if($parent->sheet_mode === 'all')
-                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ $parent->spreadsheet_id }}</span>
-                                                    <br><small class="text-muted">Mode: All Sheets</small>
-                                                @else
-                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ $parent->spreadsheet_id }}</span>
-                                                    <br><small class="text-muted">Mode: {{ ucfirst($parent->sheet_mode ?? 'single') }} | GID: {{ $parent->gid ?? '-' }}</small>
+                                            <span class="badge bg-{{ $color }} bg-opacity-10 text-{{ $color }} px-3 py-2 rounded-pill">
+                                                <i class="{{ $icon }} me-1"></i> {{ $typeLabel }}
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($hasChildren)
+                                            <span class="text-muted fst-italic">Menu Utama (Dropdown)</span>
+                                        @else
+                                            @if($parent->url)
+                                                <div class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $parent->url }}">
+                                                    <a href="{{ $parent->url }}" target="_blank" class="text-decoration-none">
+                                                        <i class="fas fa-external-link-alt fa-xs me-1"></i>{{ $parent->url }}
+                                                    </a>
+                                                </div>
+                                                @if($parent->type === 'spreadsheet')
+                                                    @php $meta = $parent->meta; @endphp
+                                                    <br><small class="text-muted">
+                                                        Mode: {{ ucfirst($meta['sheet_mode'] ?? 'all') }}
+                                                        {{ ($meta['sheet_mode'] ?? '') === 'single' ? '| GID: ' . ($meta['gid'] ?? '-') : '' }}
+                                                    </small>
                                                 @endif
                                             @else
                                                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Belum di set</span>
@@ -112,23 +133,34 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-info text-dark">Submenu (Child)</span>
+                                            @php
+                                                $icon = 'fas fa-link';
+                                                $color = 'secondary';
+                                                $typeLabel = ucfirst($child->type ?? 'External');
+                                                if ($child->type === 'spreadsheet') { $icon = 'fas fa-file-excel'; $color = 'success'; }
+                                                elseif ($child->type === 'youtube') { $icon = 'fab fa-youtube'; $color = 'danger'; }
+                                                elseif ($child->type === 'drive') { $icon = 'fab fa-google-drive'; $color = 'primary'; }
+                                            @endphp
+                                            <span class="badge bg-{{ $color }} bg-opacity-10 text-{{ $color }} px-3 py-2 rounded-pill">
+                                                <i class="{{ $icon }} me-1"></i> {{ $typeLabel }}
+                                            </span>
                                         </td>
                                         <td>
-                                            @if($child->sheet_mode === 'all')
-                                                @if($child->spreadsheet_id)
-                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ $child->spreadsheet_id }}</span>
-                                                    <br><small class="text-muted">Mode: All Sheets</small>
-                                                @else
-                                                    <span class="text-muted">Mode: All Sheets</span>
+                                            @if($child->url)
+                                                <div class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $child->url }}">
+                                                    <a href="{{ $child->url }}" target="_blank" class="text-decoration-none">
+                                                        <i class="fas fa-external-link-alt fa-xs me-1"></i>{{ $child->url }}
+                                                    </a>
+                                                </div>
+                                                @if($child->type === 'spreadsheet')
+                                                    @php $meta = $child->meta; @endphp
+                                                    <br><small class="text-muted">
+                                                        Mode: {{ ucfirst($meta['sheet_mode'] ?? 'all') }}
+                                                        {{ ($meta['sheet_mode'] ?? '') === 'single' ? '| GID: ' . ($meta['gid'] ?? '-') : '' }}
+                                                    </small>
                                                 @endif
                                             @else
-                                                @if($child->spreadsheet_id)
-                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ $child->spreadsheet_id }}</span>
-                                                    <br><small class="text-muted">Mode: {{ ucfirst($child->sheet_mode ?? 'single') }} | GID: {{ $child->gid ?? '-' }}</small>
-                                                @else
-                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Belum di set</span>
-                                                @endif
+                                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Belum di set</span>
                                             @endif
                                         </td>
                                         <td>

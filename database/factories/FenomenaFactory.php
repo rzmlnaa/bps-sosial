@@ -29,7 +29,7 @@ class FenomenaFactory extends Factory
             'penjelasan' => $this->faker->paragraph(),
             'link_berita' => $this->faker->url(),
             'sumber_berita_id' => SumberBerita::factory(),
-            'status_verifikasi' => 'N',
+            'status_verifikasi' => 'P',
             'created_by' => User::factory(),
         ];
     }

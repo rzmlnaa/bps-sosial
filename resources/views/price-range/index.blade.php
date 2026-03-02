@@ -167,7 +167,7 @@
                         </a>
                         <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
                             style="background-color: var(--bps-blue);">
-                            <i class="fas fa-plus-circle me-1"></i> Input Komoditas
+                            <i class="fas fa-cog me-1 fa-spin"></i> Kelola Komoditas
                         </a>
                     @endif
                 @endif

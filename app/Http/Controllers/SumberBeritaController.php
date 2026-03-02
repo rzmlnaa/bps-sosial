@@ -50,6 +50,13 @@ class SumberBeritaController extends Controller
     public function destroy($id)
     {
         $sumber = SumberBerita::findOrFail($id);
+
+        if ($sumber->fenomenas()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Tidak dapat menghapus Sumber Berita ini karena sudah digunakan dalam data fenomena.')
+                ->with('active_tab', 'sumber');
+        }
+
         $sumber->delete();
 
         return redirect()->back()->with('success', 'Data Sumber Berita berhasil dihapus.')->with('active_tab', 'sumber');

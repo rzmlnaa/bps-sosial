@@ -572,10 +572,65 @@
         }
 
         .results-count strong {
+                color: var(--vf-text);
+            }
+
+            /* ─── Pagination ─────────────────────────────── */
+            .vf-pagination {
+                display: flex;
+            just    ify-content: center;
+                align-items: center;
+            gap: .35rem;
+                margin-top: 1.75rem;
+            flex    -wrap: wrap;
+        }    
+    
+        .vf-pagination .page-link {
+                display: inline-flex;
+            alig    n-items: center;
+                justify-content: center;
+            min-width: 36px;
+                height: 36px;
+            padd    ing: 0 .65rem;
+                border-radius: 9px;
+            font-size: .82rem;
+                font-weight: 500;
+            bord    er: 1px solid var(--vf-border);
+                background: #fff;
+            color: var(--vf-secondary);
+                text-decoration: none;
+            tran    sition: all .18s;
+            curs    or: pointer;
+        }    
+
+        .vf-    pagination .page-link:hover {
+            back    ground: var(--vf-surface);
+                border-color: #cbd5e1;
             color: var(--vf-text);
+        }    
+    
+        .vf-pagi    nation .page-link.active {
+            back    ground: var(--vf-primary);
+                border-color: var(--vf-primary);
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(245,130,32,.3);
+            cursor: default;
         }
 
-        /* ─── Responsive tweaks ──────────────────────── */
+        .vf-pagination .page-link.disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .vf-pagination-info {
+            text-align: center;
+            font-size: .8rem;
+            color: var(--vf-muted);
+            margin-top: .5rem;
+        }
+
+        /* ─── Responsive tweaks ──────────────────────────── */
         @media (max-width: 768px) {
             .vf-title {
                 font-size: 1.35rem;
@@ -613,6 +668,130 @@
                 justify-content: center;
             }
         }
+        /* ─── Tab Switcher ───────────────────────────── */
+        .vf-tabs {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--vf-border);
+            padding-bottom: 0;
+        }
+
+        .vf-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .6rem 1.25rem;
+            border-radius: 10px 10px 0 0;
+            font-size: .875rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            border-bottom: none;
+            background: transparent;
+            color: var(--vf-muted);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all .2s;
+            margin-bottom: -2px;
+        }
+
+        .vf-tab-btn:hover {
+            background: var(--vf-surface);
+            color: var(--vf-text);
+        }
+
+        .vf-tab-btn.active {
+            background: #fff;
+            color: var(--vf-primary);
+            border-color: var(--vf-border);
+            border-bottom-color: #fff;
+        }
+
+        .vf-tab-btn .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 20px;
+            border-radius: 50px;
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 0 6px;
+            background: var(--vf-surface);
+            color: var(--vf-muted);
+        }
+
+        .vf-tab-btn.active .tab-count {
+            background: var(--vf-primary);
+            color: #fff;
+        }
+
+        /* ─── Riwayat card extras ──────────────────────── */
+        .badge-status.diverifikasi {
+            background: var(--vf-success-lt);
+            color: var(--vf-success);
+            border: 1px solid #86efac;
+        }
+
+        .badge-status.ditolak {
+            background: var(--vf-danger-lt);
+            color: var(--vf-danger);
+            border: 1px solid #fca5a5;
+        }
+
+        .verified-by-row {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            padding: .75rem 1rem;
+            background: var(--vf-surface);
+            border-radius: 10px;
+            margin-top: .85rem;
+            border: 1px solid var(--vf-border);
+        }
+
+        .verified-by-row.rejected {
+            background: var(--vf-danger-lt);
+            border-color: #fca5a5;
+        }
+
+        .verified-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .verified-avatar.success { background: linear-gradient(135deg, #16a34a, #15803d); }
+        .verified-avatar.danger  { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+
+        .verified-meta { flex: 1; min-width: 0; }
+
+        .verified-label {
+            font-size: .72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--vf-muted);
+            margin-bottom: .1rem;
+        }
+
+        .verified-name {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--vf-text);
+        }
+
+        .verified-time {
+            font-size: .78rem;
+            color: var(--vf-muted);
+        }
     </style>
 @endpush
 
@@ -640,86 +819,131 @@
                     <i class="fas fa-hourglass-half"></i>
                 </div>
                 <div class="stat-info">
-                    <div class="stat-value" id="stat-menunggu">{{ $fenomenas->count() }}</div>
+                    <div class="stat-value" id="stat-menunggu">{{ $totalMenunggu }}</div>
                     <div class="stat-label">Total Menunggu</div>
                 </div>
             </div>
 
-            {{-- Diverifikasi Hari Ini --}}
+            {{-- Total Diverifikasi --}}
             <div class="stat-card">
                 <div class="stat-icon success">
                     <i class="fas fa-check-double"></i>
                 </div>
                 <div class="stat-info">
-                    <div class="stat-value" id="stat-verified">{{ $verifiedToday ?? 0 }}</div>
-                    <div class="stat-label">Diverifikasi Hari Ini</div>
+                    <div class="stat-value" id="stat-verified">{{ $totalDiverifikasi }}</div>
+                    <div class="stat-label">Total Diverifikasi</div>
                 </div>
             </div>
 
-            {{-- Ditolak --}}
+            {{-- Total Ditolak --}}
             <div class="stat-card">
                 <div class="stat-icon danger">
                     <i class="fas fa-times-circle"></i>
                 </div>
                 <div class="stat-info">
-                    <div class="stat-value" id="stat-rejected">{{ $rejectedCount ?? 0 }}</div>
-                    <div class="stat-label">Ditolak</div>
+                    <div class="stat-value" id="stat-rejected">{{ $totalDitolak }}</div>
+                    <div class="stat-label">Total Ditolak</div>
                 </div>
             </div>
         </div>
 
+        {{-- ════════════════════ TAB SWITCHER ════════════════════ --}}
+        <div class="vf-tabs">
+            <a href="{{ route('fenomena.verification.index', array_merge(request()->except(['tab','page']), ['tab'=>'pending'])) }}"
+               class="vf-tab-btn {{ $tab === 'pending' ? 'active' : '' }}">
+                <i class="fas fa-hourglass-half"></i>
+                Menunggu Verifikasi
+                <span class="tab-count">{{ $totalMenunggu }}</span>
+            </a>
+            <a href="{{ route('fenomena.verification.index', array_merge(request()->except(['tab','page']), ['tab'=>'riwayat'])) }}"
+               class="vf-tab-btn {{ $tab === 'riwayat' ? 'active' : '' }}">
+                <i class="fas fa-history"></i>
+                Riwayat Verifikasi
+                <span class="tab-count">{{ $totalDiverifikasi + $totalDitolak }}</span>
+            </a>
+        </div>
+
+        @if($tab === 'pending')
+
         {{-- ════════════════════ FILTER BAR ════════════════════ --}}
-        <div class="vf-filter-bar">
+        <form method="GET" action="{{ route('fenomena.verification.index') }}" id="filter-form" class="vf-filter-bar">
+            <input type="hidden" name="tab" value="pending">
+
             {{-- Search --}}
             <div class="search-wrap">
                 <i class="fas fa-search"></i>
-                <input type="text" id="filter-search" placeholder="Cari judul fenomena..." autocomplete="off">
+                <input type="text" name="search" id="filter-search"
+                       placeholder="Cari judul fenomena..." autocomplete="off"
+                       value="{{ request('search') }}">
             </div>
 
             {{-- Sektor --}}
-            <select class="vf-select" id="filter-sektor" style="min-width:140px;">
+            <select class="vf-select" name="sektor" id="filter-sektor" style="min-width:140px;">
                 <option value="">🏢 Semua Sektor</option>
                 @foreach($sektors ?? [] as $sektor)
-                    @if(is_object($sektor))
-                        <option value="{{ $sektor->kode }}">{{ $sektor->nama }}</option>
-                    @endif
+                    <option value="{{ $sektor->kode }}" @selected(request('sektor') == $sektor->kode)>
+                        {{ $sektor->nama }}
+                    </option>
                 @endforeach
             </select>
 
             {{-- Indikator --}}
-            <select class="vf-select" id="filter-indikator" style="min-width:150px;">
+            <select class="vf-select" name="indikator" id="filter-indikator" style="min-width:150px;">
                 <option value="">📊 Semua Indikator</option>
                 @foreach($indikators ?? [] as $ind)
-                    @if(is_object($ind))
-                        <option value="{{ $ind->kode }}">{{ $ind->nama }}</option>
-                    @endif
+                    <option value="{{ $ind->kode }}" @selected(request('indikator') == $ind->kode)>
+                        {{ $ind->nama }}
+                    </option>
                 @endforeach
             </select>
 
             {{-- Sumber Berita --}}
-            <select class="vf-select" id="filter-sumber" style="min-width:160px;">
+            <select class="vf-select" name="sumber" id="filter-sumber" style="min-width:160px;">
                 <option value="">📰 Semua Sumber</option>
-                <option value="berita-online">📰 Berita Online</option>
-                <option value="koran">🗞️ Koran</option>
-                <option value="media-sosial">📱 Media Sosial</option>
-                <option value="laporan-internal">📊 Laporan Internal</option>
+                @foreach($sumberBeritas ?? [] as $sb)
+                    <option value="{{ $sb->id }}" @selected(request('sumber') == $sb->id)>
+                        📰 {{ $sb->nama }}
+                    </option>
+                @endforeach
             </select>
 
-            {{-- Date range --}}
-            <input type="date" class="vf-date-input" id="filter-date-from" title="Dari tanggal">
-            <input type="date" class="vf-date-input" id="filter-date-to" title="Sampai tanggal">
+            {{-- Tipe Tanggal + Rentang --}}
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                <select class="vf-select" name="date_type" id="filter-date-type" title="Tipe tanggal" style="min-width:155px;">
+                    <option value="tanggal_berita" @selected(request('date_type','tanggal_berita') === 'tanggal_berita')>🗓️ Tgl. Berita</option>
+                    <option value="created_at"     @selected(request('date_type') === 'created_at')>🗓️ Tgl. Input</option>
+                </select>
+                <input type="date" class="vf-date-input" name="date_from" id="filter-date-from"
+                       title="Dari tanggal" value="{{ request('date_from') }}">
+                <span style="font-size:.8rem;color:var(--vf-muted);">–</span>
+                <input type="date" class="vf-date-input" name="date_to" id="filter-date-to"
+                       title="Sampai tanggal" value="{{ request('date_to') }}">
+            </div>
 
-            {{-- Reset --}}
-            <button class="btn-reset" id="btn-reset-filter" type="button">
-                <i class="fas fa-undo-alt"></i>
-                Reset Filter
+            {{-- Tombol Cari + Reset --}}
+            <button type="submit" class="btn-verify" style="height:40px;padding:0 1.1rem;">
+                <i class="fas fa-search"></i> Cari
             </button>
-        </div>
+            <a href="{{ route('fenomena.verification.index') }}" class="btn-reset" style="height:40px;">
+                <i class="fas fa-undo-alt"></i> Reset
+            </a>
+
+        </form>
 
         {{-- ════════════════════ RESULTS BAR ════════════════════ --}}
         <div class="results-bar">
             <div class="results-count">
-                Menampilkan <strong id="result-count">{{ $fenomenas->count() }}</strong> fenomena
+                Menampilkan
+                <strong>{{ $fenomenas->firstItem() ?? 0 }}–{{ $fenomenas->lastItem() ?? 0 }}</strong>
+                dari <strong>{{ $totalFiltered }}</strong> fenomena
+                @if(request()->hasAny(['search','sektor','indikator','sumber','date_from','date_to']))
+                    <span style="color:var(--vf-warning);font-size:.78rem;margin-left:.4rem;">
+                        <i class="fas fa-filter"></i> Filter aktif
+                    </span>
+                @endif
+            </div>
+            <div style="font-size:.8rem;color:var(--vf-muted);">
+                Halaman {{ $fenomenas->currentPage() }} / {{ $fenomenas->lastPage() }}
             </div>
         </div>
 
@@ -759,10 +983,13 @@
                     $initials = collect(explode(' ', $creatorName))->take(2)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('');
                 @endphp
 
-                <div class="fenomena-card" data-search="{{ strtolower($fenomena->judul . ' ' . $fenomena->penjelasan) }}"
-                    data-sumber="{{ $sumberClass }}" data-sektor="{{ $fenomena->sektors->pluck('kode')->implode(',') }}"
+                <div class="fenomena-card"
+                    data-search="{{ strtolower($fenomena->judul . ' ' . $fenomena->penjelasan) }}"
+                    data-sumber="{{ $fenomena->sumber_berita_id }}"
+                    data-sektor="{{ $fenomena->sektors->pluck('kode')->implode(',') }}"
                     data-indikator="{{ $fenomena->indikators->pluck('kode')->implode(',') }}"
-                    data-tanggal="{{ $fenomena->tanggal_berita }}">
+                    data-tanggal-berita="{{ $fenomena->tanggal_berita }}"
+                    data-created-at="{{ $fenomena->created_at->toDateString() }}">
 
                     {{-- Top Row: Source Badge | Status Badge --}}
                     <div class="card-top-row">
@@ -828,7 +1055,7 @@
 
                         {{-- Action Buttons --}}
                         <div class="action-group">
-                            <a href="{{ route('fenomena.verification.show', $fenomena->id) }}" class="btn-detail">
+                            <a href="{{ route('fenomena.show', [$fenomena->id, 'from' => 'verification']) }}" class="btn-detail">
                                 <i class="fas fa-eye"></i> Detail
                             </a>
                             <a href="{{ route('fenomena.verification.show', $fenomena->id) }}" class="btn-verify">
@@ -850,14 +1077,235 @@
             @endforelse
         </div>
 
-        {{-- Empty state saat filter tidak ada hasil --}}
-        <div class="empty-state" id="no-results-state" style="display:none;">
-            <div class="empty-state-icon">
-                <i class="fas fa-search"></i>
+        {{-- ════════════════════ PAGINATION (pending) ════════════════════ --}}
+        @if($fenomenas->hasPages())
+            <div class="vf-pagination">
+                {{-- Prev --}}
+                @if($fenomenas->onFirstPage())
+                    <span class="page-link disabled"><i class="fas fa-chevron-left"></i></span>
+                @else
+                    <a class="page-link" href="{{ $fenomenas->previousPageUrl() }}"><i class="fas fa-chevron-left"></i></a>
+                @endif
+
+                {{-- Page Numbers --}}
+                @foreach($fenomenas->getUrlRange(max(1, $fenomenas->currentPage()-2), min($fenomenas->lastPage(), $fenomenas->currentPage()+2)) as $page => $url)
+                    @if($page == $fenomenas->currentPage())
+                        <span class="page-link active">{{ $page }}</span>
+                    @else
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    @endif
+                @endforeach
+
+                {{-- Next --}}
+                @if($fenomenas->hasMorePages())
+                    <a class="page-link" href="{{ $fenomenas->nextPageUrl() }}"><i class="fas fa-chevron-right"></i></a>
+                @else
+                    <span class="page-link disabled"><i class="fas fa-chevron-right"></i></span>
+                @endif
             </div>
-            <h5>Tidak Ditemukan</h5>
-            <p>Tidak ada fenomena yang cocok dengan filter yang diterapkan.<br>Coba ubah kriteria pencarian Anda.</p>
+        @endif
+
+        @else
+        {{-- ═══════════════════ TAB RIWAYAT ═══════════════════ --}}
+
+        {{-- Filter ringkas riwayat --}}
+        <form method="GET" action="{{ route('fenomena.verification.index') }}" id="filter-form" class="vf-filter-bar">
+            <input type="hidden" name="tab" value="riwayat">
+
+            {{-- Search --}}
+            <div class="search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" id="filter-search"
+                       placeholder="Cari judul fenomena..." autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+
+            {{-- Filter status: Y / T / semua --}}
+            <select class="vf-select" name="status_riwayat" id="filter-status-riwayat" style="min-width:165px;">
+                <option value="">&#x1F4CB; Semua Status</option>
+                <option value="Y" @selected(request('status_riwayat') === 'Y')>&#x2705; Diverifikasi</option>
+                <option value="T" @selected(request('status_riwayat') === 'T')>&#x274C; Ditolak</option>
+            </select>
+
+            {{-- Sumber --}}
+            <select class="vf-select" name="sumber" id="filter-sumber" style="min-width:155px;">
+                <option value="">&#x1F4F0; Semua Sumber</option>
+                @foreach($sumberBeritas ?? [] as $sb)
+                    <option value="{{ $sb->id }}" @selected(request('sumber') == $sb->id)>
+                        &#x1F4F0; {{ $sb->nama }}
+                    </option>
+                @endforeach
+            </select>
+
+            {{-- Sektor --}}
+            <select class="vf-select" name="sektor" id="filter-sektor" style="min-width:140px;">
+                <option value="">&#x1F3E2; Semua Sektor</option>
+                @foreach($sektors ?? [] as $sektor)
+                    <option value="{{ $sektor->kode }}" @selected(request('sektor') == $sektor->kode)>
+                        {{ $sektor->nama }}
+                    </option>
+                @endforeach
+            </select>
+
+            <button type="submit" class="btn-verify" style="height:40px;padding:0 1.1rem;">
+                <i class="fas fa-search"></i> Cari
+            </button>
+            <a href="{{ route('fenomena.verification.index', ['tab'=>'riwayat']) }}" class="btn-reset" style="height:40px;">
+                <i class="fas fa-undo-alt"></i> Reset
+            </a>
+        </form>
+
+        {{-- Results bar riwayat --}}
+        <div class="results-bar">
+            <div class="results-count">
+                Menampilkan <strong>{{ $riwayat->firstItem() ?? 0 }}&ndash;{{ $riwayat->lastItem() ?? 0 }}</strong>
+                dari <strong>{{ $totalFiltered }}</strong> riwayat
+            </div>
+            <div style="font-size:.8rem;color:var(--vf-muted);">
+                Halaman {{ $riwayat->currentPage() }} / {{ $riwayat->lastPage() }}
+            </div>
         </div>
+
+        {{-- Riwayat Card List --}}
+        <div class="fenomena-list">
+            @forelse($riwayat as $item)
+                @php
+                    $isVerified  = $item->status_verifikasi === 'Y';
+                    $sumberNamaR = $item->sumberBerita->nama ?? 'Tidak diketahui';
+                    $sumberLowerR = strtolower($sumberNamaR);
+                    if (str_contains($sumberLowerR, 'koran') || str_contains($sumberLowerR, 'cetak'))
+                        $sumberClassR = 'koran';
+                    elseif (str_contains($sumberLowerR, 'sosial'))
+                        $sumberClassR = 'media-sosial';
+                    elseif (str_contains($sumberLowerR, 'laporan'))
+                        $sumberClassR = 'laporan';
+                    else
+                        $sumberClassR = 'berita-online';
+                    $sumberEmojiR = match($sumberClassR) {
+                        'koran'       => '&#x1F5DE;&#xFE0F;',
+                        'media-sosial'=> '&#x1F4F1;',
+                        'laporan'     => '&#x1F4CA;',
+                        default       => '&#x1F4F0;',
+                    };
+                    $verifierName   = $item->verifier->name ?? 'Sistem';
+              
+                    $verifierInit   = collect(explode(' ', $verifierName))->take(2)->map(fn($w) => strtoupper(substr($w,0,1)))->implode('');
+                    $creatorNameR   = $item->creator->name ?? 'System';
+                    $creatorInitR   = collect(explode(' ', $creatorNameR))->take(2)->map(fn($w) => strtoupper(substr($w,0,1)))->implode('');
+                @endphp
+                
+                <div class="fenomena-card">
+
+                    {{-- Top Row --}}
+                    <div class="card-top-row">
+                        <span class="badge-source {{ $sumberClassR }}">
+                            {!! $sumberEmojiR !!} {{ $sumberNamaR }}
+                        </span>
+                        @if($isVerified)
+                            <span class="badge-status diverifikasi">
+                                <i class="fas fa-check-circle"></i> Diverifikasi
+                            </span>
+                        @else
+                            <span class="badge-status ditolak">
+                                <i class="fas fa-times-circle"></i> Ditolak
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Title --}}
+                    <h2 class="fenomena-title">{{ $item->judul }}</h2>
+
+                    {{-- Preview --}}
+                    <p class="fenomena-preview">{{ $item->penjelasan }}</p>
+
+                    {{-- Meta --}}
+                    <div class="meta-row">
+                        <span class="meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            {{ \Carbon\Carbon::parse($item->tanggal_berita)->translatedFormat('d F Y') }}
+                        </span>
+                        @foreach($item->sektors->take(2) as $sek)
+                            <span class="badge-sektor">&#x1F3E2; [{{ $sek->kode }}] {{ Str::limit($sek->nama, 20) }}</span>
+                        @endforeach
+                        @if($item->sektors->count() > 2)
+                            <span class="badge-sektor">+{{ $item->sektors->count() - 2 }} lagi</span>
+                        @endif
+                    </div>
+
+                    {{-- Verifier Info --}}
+                    <div class="verified-by-row {{ $isVerified ? '' : 'rejected' }}">
+                        <div class="verified-avatar {{ $isVerified ? 'success' : 'danger' }}">{{ $verifierInit }}</div>
+                        <div class="verified-meta">
+                            <div class="verified-label">{{ $isVerified ? 'Diverifikasi oleh' : 'Ditolak oleh' }}</div>
+                            <div class="verified-name">{{ $verifierName }}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="verified-time">
+                                <i class="fas fa-clock" style="margin-right:.25rem;"></i>
+                                @if($item->verified_at)
+                                    {{ \Carbon\Carbon::parse($item->verified_at)->translatedFormat('d F Y, H:i') }}
+                                @else
+                                    &mdash;
+                                @endif
+                            </div>
+                            <div class="verified-time" style="margin-top:.15rem;color:#94a3b8;">
+                                @if($item->verified_at)
+                                    {{ \Carbon\Carbon::parse($item->verified_at)->diffForHumans() }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Footer: Creator --}}
+                    <div class="card-footer-row">
+                        <div class="creator-info">
+                            <div class="creator-avatar">{{ $creatorInitR }}</div>
+                            <div>
+                                <div class="creator-name">&#x1F464; {{ $creatorNameR }}</div>
+                                <div class="creator-time">Diinput {{ $item->created_at->diffForHumans() }}</div>
+                            </div>
+                        </div>
+                        <div class="action-group">
+                            <a href="{{ route('fenomena.show', [$item->id, 'from' => 'verification']) }}" class="btn-detail">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            @empty
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-history"></i></div>
+                    <h5>Belum Ada Riwayat</h5>
+                    <p>Belum ada fenomena yang sudah diverifikasi atau ditolak.</p>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- Pagination riwayat --}}
+        @if($riwayat->hasPages())
+            <div class="vf-pagination">
+                @if($riwayat->onFirstPage())
+                    <span class="page-link disabled"><i class="fas fa-chevron-left"></i></span>
+                @else
+                    <a class="page-link" href="{{ $riwayat->previousPageUrl() }}"><i class="fas fa-chevron-left"></i></a>
+                @endif
+                @foreach($riwayat->getUrlRange(max(1,$riwayat->currentPage()-2), min($riwayat->lastPage(),$riwayat->currentPage()+2)) as $page => $url)
+                    @if($page == $riwayat->currentPage())
+                        <span class="page-link active">{{ $page }}</span>
+                    @else
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    @endif
+                @endforeach
+                @if($riwayat->hasMorePages())
+                    <a class="page-link" href="{{ $riwayat->nextPageUrl() }}"><i class="fas fa-chevron-right"></i></a>
+                @else
+                    <span class="page-link disabled"><i class="fas fa-chevron-right"></i></span>
+                @endif
+            </div>
+        @endif
+
+        @endif {{-- end tab --}}
 
     </div>
 @endsection
@@ -865,58 +1313,17 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const cards = document.querySelectorAll('.fenomena-card');
-            const searchInput = document.getElementById('filter-search');
-            const sektorSel = document.getElementById('filter-sektor');
-            const indikSel = document.getElementById('filter-indikator');
-            const sumberSel = document.getElementById('filter-sumber');
-            const dateFrom = document.getElementById('filter-date-from');
-            const dateTo = document.getElementById('filter-date-to');
-            const btnReset = document.getElementById('btn-reset-filter');
-            const countEl = document.getElementById('result-count');
-            const noResults = document.getElementById('no-results-state');
-            const list = document.getElementById('fenomena-list');
+            const form     = document.getElementById('filter-form');
+            const selects  = form.querySelectorAll('select');
 
-            function filterCards() {
-                const q = searchInput.value.trim().toLowerCase();
-                const sektor = sektorSel.value.trim();
-                const ind = indikSel.value.trim();
-                const sumber = sumberSel.value.trim();   // e.g. 'berita-online', 'koran', etc.
-                const from = dateFrom.value;
-                const to = dateTo.value;
-
-                let visible = 0;
-                cards.forEach(card => {
-                    const text = card.dataset.search || '';
-                    const cardSek = card.dataset.sektor || '';
-                    const cardInd = card.dataset.indikator || '';
-                    const cardSub = card.dataset.sumber || '';   // CSS class name
-                    const cardDate = card.dataset.tanggal || '';
-
-                    let show = true;
-                    if (q && !text.includes(q)) show = false;
-                    if (sektor && !cardSek.includes(sektor)) show = false;
-                    if (ind && !cardInd.includes(ind)) show = false;
-                    if (sumber && cardSub !== sumber) show = false;
-                    if (from && cardDate < from) show = false;
-                    if (to && cardDate > to) show = false;
-
-                    card.style.display = show ? '' : 'none';
-                    if (show) visible++;
-                });
-
-                countEl.textContent = visible;
-                noResults.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
-                list.style.display = (visible === 0) ? 'none' : '';
-            }
-
-            [searchInput, sektorSel, indikSel, sumberSel, dateFrom, dateTo].forEach(el => {
-                el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', filterCards);
+            // Auto-submit on dropdown change (except date type — user may want to set dates first)
+            selects.forEach(sel => {
+                sel.addEventListener('change', () => form.submit());
             });
 
-            btnReset.addEventListener('click', function () {
-                searchInput.value = sektorSel.value = indikSel.value = sumberSel.value = dateFrom.value = dateTo.value = '';
-                filterCards();
+            // Submit on Enter in search box
+            document.getElementById('filter-search').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); form.submit(); }
             });
         });
     </script>

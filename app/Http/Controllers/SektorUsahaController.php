@@ -52,6 +52,13 @@ class SektorUsahaController extends Controller
     public function destroy($id)
     {
         $sektorUsaha = SektorUsaha::findOrFail($id);
+
+        if ($sektorUsaha->fenomenas()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Tidak dapat menghapus Kode Lapangan Usaha ini karena sudah digunakan dalam data fenomena.')
+                ->with('active_tab', 'lap-usaha');
+        }
+
         $sektorUsaha->delete();
 
         return redirect()->back()->with('success', 'Data Kode Lapangan Usaha berhasil dihapus.')->with('active_tab', 'lap-usaha');

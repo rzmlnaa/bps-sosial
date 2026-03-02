@@ -74,6 +74,13 @@ class IndikatorController extends Controller
     public function destroy($id)
     {
         $indikator = Indikator::findOrFail($id);
+
+        if ($indikator->fenomenas()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Tidak dapat menghapus Kode Indikator ini karena sudah digunakan dalam data fenomena.')
+                ->with('active_tab', 'indikator');
+        }
+
         $indikator->delete();
 
         return redirect()->back()->with('success', 'Data Kode Indikator berhasil dihapus.')->with('active_tab', 'indikator');

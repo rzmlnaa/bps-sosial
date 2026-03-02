@@ -65,6 +65,13 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             @if($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <ul class="mb-0">
@@ -126,6 +133,11 @@
                                                                 class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
                                                         </div>
                                                     @endif
+                                                    <div class="mt-1 border-top pt-1 text-info">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        Digunakan: <span class="fw-bold">{{ $item->fenomenas_count }}</span>
+                                                        data fenomena
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">
@@ -135,7 +147,8 @@
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger mb-1"
                                                     onclick="confirmDelete('{{ url('/sektor-usaha/' . $item->id) }}', '{{ $item->nama }}')"
-                                                    title="Hapus">
+                                                    title="{{ $item->fenomenas_count > 0 ? 'Tidak dapat dihapus karena sudah digunakan' : 'Hapus' }}"
+                                                    {{ $item->fenomenas_count > 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -312,6 +325,11 @@
                                                                 class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
                                                         </div>
                                                     @endif
+                                                    <div class="mt-1 border-top pt-1 text-info">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        Digunakan: <span class="fw-bold">{{ $item->fenomenas_count }}</span>
+                                                        data fenomena
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">
@@ -321,7 +339,8 @@
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger mb-1"
                                                     onclick="confirmDelete('{{ url('/indikator/' . $item->id) }}', '{{ $item->nama }}')"
-                                                    title="Hapus">
+                                                    title="{{ $item->fenomenas_count > 0 ? 'Tidak dapat dihapus karena sudah digunakan' : 'Hapus' }}"
+                                                    {{ $item->fenomenas_count > 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -499,6 +518,11 @@
                                                                 class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
                                                         </div>
                                                     @endif
+                                                    <div class="mt-1 border-top pt-1 text-info">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        Digunakan: <span class="fw-bold">{{ $item->fenomenas_count }}</span>
+                                                        data fenomena
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">
@@ -508,7 +532,8 @@
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger mb-1"
                                                     onclick="confirmDelete('{{ url('/jenis-fenomena/' . $item->id) }}', '{{ $item->nama }}')"
-                                                    title="Hapus">
+                                                    title="{{ $item->fenomenas_count > 0 ? 'Tidak dapat dihapus karena sudah digunakan' : 'Hapus' }}"
+                                                    {{ $item->fenomenas_count > 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -651,6 +676,11 @@
                                                                 class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
                                                         </div>
                                                     @endif
+                                                    <div class="mt-1 border-top pt-1 text-info">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        Digunakan: <span class="fw-bold">{{ $item->fenomenas_count }}</span>
+                                                        data fenomena
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">
@@ -660,7 +690,8 @@
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger mb-1"
                                                     onclick="confirmDelete('{{ url('/sumber-berita/' . $item->id) }}', '{{ $item->nama }}')"
-                                                    title="Hapus">
+                                                    title="{{ $item->fenomenas_count > 0 ? 'Tidak dapat dihapus karena sudah digunakan' : 'Hapus' }}"
+                                                    {{ $item->fenomenas_count > 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -734,10 +765,10 @@
                                                 <div class="mb-3">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
-                                                            name="is_online" id="isOnlineEdit{{ $item->id }}"
-                                                            {{ $item->is_online ? 'checked' : '' }} value="1">
+                                                            name="is_online" id="isOnlineEdit{{ $item->id }}" {{ $item->is_online ? 'checked' : '' }} value="1">
                                                         <label class="form-check-label fw-bold"
-                                                            for="isOnlineEdit{{ $item->id }}">Sumber Online (Wajibkan Link)</label>
+                                                            for="isOnlineEdit{{ $item->id }}">Sumber Online (Wajibkan
+                                                            Link)</label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -885,7 +916,8 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" name="is_online"
                                     id="isOnlineAdd" value="1">
-                                <label class="form-check-label fw-bold" for="isOnlineAdd">Sumber Online (Wajibkan Link)</label>
+                                <label class="form-check-label fw-bold" for="isOnlineAdd">Sumber Online (Wajibkan
+                                    Link)</label>
                             </div>
                         </div>
                     </div>
