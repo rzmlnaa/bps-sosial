@@ -190,6 +190,16 @@ class DynamicMenuController extends Controller
                 return $embedUrl . (!empty($queryParams) ? "?" . implode("&", $queryParams) : "");
             }
         } elseif ($type === 'drive') {
+            // Google Drive Folders
+            if (preg_match('/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9-_]+)/', $url, $matches)) {
+                return "https://drive.google.com/embeddedfolderview?id={$matches[1]}#list";
+            }
+
+            // Google Drive Files
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $url, $matches)) {
+                return "https://drive.google.com/file/d/{$matches[1]}/preview";
+            }
+
             if (str_contains($url, 'view?usp=sharing')) {
                 return str_replace('view?usp=sharing', 'preview', $url);
             }

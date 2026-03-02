@@ -63,10 +63,14 @@
                             <option value="" {{ !old('type') ? 'selected' : '' }}>Pilih Tipe Konten</option>
                             <option value="spreadsheet" {{ old('type') == 'spreadsheet' ? 'selected' : '' }}>Google
                                 Spreadsheet</option>
-                            <option value="youtube" {{ old('type') == 'youtube' ? 'selected' : '' }}>YouTube Video</option>
-                            <option value="drive" {{ old('type') == 'drive' ? 'selected' : '' }}>Google Drive (View/Embed)
+                            <option value="youtube" {{ old('type') == 'youtube' ? 'selected' : '' }} disabled>YouTube Video
+                                (DALAM PENGEMBANGAN)
                             </option>
-                            <option value="external" {{ old('type') == 'external' ? 'selected' : '' }}>Link Eksternal Lainnya
+                            <option value="drive" {{ old('type') == 'drive' ? 'selected' : '' }} disabled>Google Drive
+                                (View/Embed) (DALAM PENGEMBANGAN)
+                            </option>
+                            <option value="external" {{ old('type') == 'external' ? 'selected' : '' }} disabled>Link Eksternal
+                                Lainnya (DALAM PENGEMBANGAN)
                             </option>
                         </select>
                     </div>
