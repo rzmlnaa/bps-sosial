@@ -185,6 +185,119 @@ class FenomenaController extends Controller
         return view('fenomena.kelola', compact('sektorUsahas', 'indikators', 'jenisFenomenas', 'sumberBeritas'));
     }
 
+    public function visualisasi(Request $request)
+    {
+        $tahun = $request->get('tahun', date('Y'));
+
+        $query = Fenomena::query();
+        if ($tahun) {
+            $query->where('tahun', $tahun);
+        }
+
+        // Summary Cards
+        $totalVerified = (clone $query)->where('status_verifikasi', 'Y')->count();
+        $totalPending = (clone $query)->where('status_verifikasi', 'P')->count();
+        $totalRejected = (clone $query)->where('status_verifikasi', 'T')->count();
+
+        // --- Rekap Bulanan (Line Chart) ---
+        $bulanLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $bulanCounts = array_fill(1, 12, 0);
+        $rekapBulanan = (clone $query)->where('status_verifikasi', 'Y')
+            ->selectRaw('bulan, count(*) as total')
+            ->groupBy('bulan')
+            ->get();
+        foreach ($rekapBulanan as $rb) {
+            $bulanCounts[$rb->bulan] = $rb->total;
+        }
+
+        // --- Rekap Sektor (Top 10 Vertical Bar) ---
+        $rekapSektor = SektorUsaha::withCount([
+            'fenomenas' => function ($q) use ($tahun) {
+                $q->where('status_verifikasi', 'Y');
+                if ($tahun)
+                    $q->where('tahun', $tahun);
+            }
+        ])
+            ->orderBy('fenomenas_count', 'desc')
+            ->take(10)
+            ->get();
+
+        // --- Rekap Indikator Utama (Top 10 Vertical Bar) ---
+        $rekapIndikatorUtama = Indikator::where('is_active', true)
+            ->where('kelompok', 'utama')
+            ->withCount([
+                'fenomenas' => function ($q) use ($tahun) {
+                    $q->where('status_verifikasi', 'Y');
+                    if ($tahun)
+                        $q->where('tahun', $tahun);
+                }
+            ])
+            ->orderBy('fenomenas_count', 'desc')
+            ->take(10)
+            ->get();
+
+        // --- Rekap Indikator Dampak (Top 10 Vertical Bar) ---
+        $rekapIndikatorDampak = Indikator::where('is_active', true)
+            ->where('kelompok', 'dampak')
+            ->withCount([
+                'fenomenas' => function ($q) use ($tahun) {
+                    $q->where('status_verifikasi', 'Y');
+                    if ($tahun)
+                        $q->where('tahun', $tahun);
+                }
+            ])
+            ->orderBy('fenomenas_count', 'desc')
+            ->take(10)
+            ->get();
+
+        // --- Rekap Sumber (Bar Chart) ---
+        $rekapSumber = SumberBerita::withCount([
+            'fenomenas' => function ($q) use ($tahun) {
+                $q->where('status_verifikasi', 'Y');
+                if ($tahun)
+                    $q->where('tahun', $tahun);
+            }
+        ])
+            ->orderBy('fenomenas_count', 'desc')
+            ->get();
+
+        // --- Rekap Jenis (Bar Chart) ---
+        $rekapJenis = JenisFenomena::withCount([
+            'fenomenas' => function ($q) use ($tahun) {
+                $q->where('status_verifikasi', 'Y');
+                if ($tahun)
+                    $q->where('tahun', $tahun);
+            }
+        ])
+            ->orderBy('fenomenas_count', 'desc')
+            ->get();
+
+        // --- Rekap Pemeriksaan (Donut) ---
+        $pemeriksaanData = [
+            'Verified' => $totalVerified,
+            'Pending' => $totalPending,
+            'Rejected' => $totalRejected
+        ];
+
+        $availableTahun = Fenomena::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
+
+        return view('fenomena.visualisasi', compact(
+            'tahun',
+            'availableTahun',
+            'totalVerified',
+            'totalPending',
+            'totalRejected',
+            'bulanCounts',
+            'bulanLabels',
+            'rekapSektor',
+            'rekapIndikatorUtama',
+            'rekapIndikatorDampak',
+            'rekapSumber',
+            'rekapJenis',
+            'pemeriksaanData'
+        ));
+    }
+
     public function show($id)
     {
         $fenomena = Fenomena::with([

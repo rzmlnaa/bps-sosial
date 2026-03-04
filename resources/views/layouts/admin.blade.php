@@ -106,7 +106,7 @@
 
                 <a href="{{ route('admin.dashboard') }}"
                     class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i>
+                    <i class="fa fa-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
 
@@ -138,7 +138,7 @@
                     style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
 
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i>
+                    <i class="fas fa-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
 
@@ -205,19 +205,34 @@
                     id="submenu3">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
-                            <a href="{{ route('fenomena.index') }}"
-                                class="nav-link {{ request()->is('fenomena*') ? 'active' : '' }}">
+                            <a href="{{ route('fenomena.visualisasi') }}"
+                                class="nav-link {{ request()->routeIs('fenomena.visualisasi') ? 'active' : '' }}">
                                 <i class="fas fa-chart-line"></i>
                                 <span>Visualisasi</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.index') }}"
+                                class="nav-link {{ request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') ? 'active' : '' }}">
+                                <i class="far fa-newspaper"></i>
+                                <span>Informasi</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.contributor') }}"
+                                class="nav-link {{ request()->routeIs('fenomena.contributor') ? 'active' : '' }}">
+                                <i class="fas fa-trophy"></i>
+                                <span>Kontributor</span>
+                            </a>
+                        </li>
+
                         @if (auth()->check() == true)
                             @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('fenomena.verification.index') }}"
                                         class="nav-link {{ request()->routeIs('fenomena.verification.*') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
-                                        <span>Verifikasi Fenomena</span>
+                                        <span>Verifikasi</span>
                                     </a>
                                 </li>
                             @endif

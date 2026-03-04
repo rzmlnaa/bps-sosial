@@ -208,6 +208,8 @@ Route::middleware(['check.status'])->group(function () {
 
     // Menu Fenomena
     Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
+    Route::get('/fenomena-visualisasi', [FenomenaController::class, 'visualisasi'])->name('fenomena.visualisasi');
+    Route::get('/fenomena-contributor', [\App\Http\Controllers\FenomenaContributorController::class, 'index'])->name('fenomena.contributor');
 });
 
 
@@ -292,7 +294,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     // Kelola Fenomena
     Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
     // Detail Fenomena (setelah /kelola agar route statis tidak tertangkap oleh {id})
-    Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
+    //Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
 
     // Sektor Usaha
     Route::post('/sektor-usaha', [SektorUsahaController::class, 'store'])->name('sektor-usaha.store');
@@ -319,6 +321,12 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
     Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
     Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
+});
+
+// Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 
+// tapi di bawah route spesifik agar tidak terangkap oleh {id})
+Route::middleware(['check.status'])->group(function () {
+    Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
 });
 
 

@@ -263,7 +263,7 @@
         {{-- ══ HEADER ══ --}}
         <div class="fi-header">
             <div>
-                <h1 class="fi-title">FENOMENA</h1>
+                <h1 class="fi-title">INFORMASI FENOMENA</h1>
                 <p class="fi-subtitle">Fenomena sosial ekonomi yang telah diverifikasi</p>
             </div>
             @auth

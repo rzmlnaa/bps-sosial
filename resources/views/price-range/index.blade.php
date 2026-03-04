@@ -16,6 +16,7 @@
             background-color: var(--bps-blue) !important;
             color: #fff !important;
         }
+        
     </style>
 @endpush
 @push('scripts')
@@ -149,9 +150,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                                                                                                        style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                                                                                                    </a> -->
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                                                                                                </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -177,25 +178,33 @@
             <!-- Analisis Insight Section -->
             <div class="card border-0 shadow-sm mb-4" id="analysis-section" style="border-radius: 12px;">
                 <div class="card-header bg-white py-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h5 class="fw-bold mb-0 text-dark">
-                            <i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten
-                            {{ $activeYear->tahun }}
-                        </h5>
-                        <div class="d-flex flex-column align-items-end gap-1" style="min-width: 250px;">
-                            <div class="d-flex align-items-center gap-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 col-12 mb-2 mb-md-0">
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten
+                                {{ $activeYear->tahun }}
+                            </h5>
+                        </div>
+                        <div class="col-md-4 col-12 text-md-end">
+                            <div class="d-inline-flex align-items-center gap-2">
                                 <label class="small fw-bold text-muted mb-0">BATAS</label>
-                                <div class="input-group input-group-sm" style="width: 100px;">
+                                <div class="input-group input-group-sm" style="max-width: 120px;">
                                     <input type="number" name="threshold" id="thresholdInput"
-                                        class="form-control text-center fw-bold" value="{{ request('threshold') }}" form="filter-form" oninput="validateThresholdInput(this)"
+                                        class="form-control text-center fw-bold" value="{{ request('threshold') }}"
+                                        form="filter-form" oninput="validateThresholdInput(this)"
                                         onchange="submitThreshold(this)">
                                     <span class="input-group-text fw-bold">%</span>
                                 </div>
                             </div>
                             <input type="hidden" name="active_tab" id="activeTabInput"
                                 value="{{ request('active_tab', array_key_first($outliers ?? [])) }}" form="filter-form">
-                            <small id="thresholdError" class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
-                                style="font-size: 0.7rem;">Masukan angka 1-100</small>
+                            <div class="mt-1">
+                                <small id="thresholdError"
+                                    class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
+                                    style="font-size: 0.75rem;">
+                                    Masukan angka 1-100
+                                </small>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3 row g-2">
@@ -942,69 +951,69 @@
 
         // Dynamic Height Calculation for Table
         let isAdjusting = false;
-            function adjustTableHeight() {
-                if (isAdjusting) return;
+        function adjustTableHeight() {
+            if (isAdjusting) return;
 
-                const tableContainer = document.getElementById('mainTableContainer');
-                if (!tableContainer) return;
+            const tableContainer = document.getElementById('mainTableContainer');
+            if (!tableContainer) return;
 
-                const mainContent = document.querySelector('.main-content');
-                if (!mainContent) return;
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
 
-                if (window.innerWidth < 992) {
-                    tableContainer.style.removeProperty('--table-height');
-                    document.body.style.overflow = 'auto';
-                    mainContent.style.overflow = 'auto';
-                    return;
-                }
-
-                isAdjusting = true;
-
-                // Temporary allow scrolling to measure natural positions
-                const prevOverflow = mainContent.style.overflow;
+            if (window.innerWidth < 992) {
+                tableContainer.style.removeProperty('--table-height');
+                document.body.style.overflow = 'auto';
                 mainContent.style.overflow = 'auto';
-
-                const windowHeight = window.innerHeight;
-                const footer = document.querySelector('footer');
-                const footerHeight = footer ? footer.offsetHeight : 60;
-
-                // Get position relative to main-content
-                const rect = tableContainer.getBoundingClientRect();
-                const scrollTop = mainContent.scrollTop;
-                const absoluteTop = rect.top + scrollTop;
-
-                // Available space from natural position to bottom of screen
-                // We want the height to be (Window - AbsoluteTop - Footer - Padding)
-                const availableHeight = windowHeight - absoluteTop - footerHeight - 30;
-
-                if (availableHeight > 250) { 
-                    tableContainer.style.setProperty('--table-height', availableHeight + 'px');
-                    document.body.style.overflow = 'hidden';
-                    mainContent.style.overflow = 'hidden';
-                    // Reset scroll to top to ensure the dashboard fits perfectly
-                    mainContent.scrollTop = 0;
-                } else {
-                    tableContainer.style.removeProperty('--table-height');
-                    document.body.style.overflow = 'auto';
-                    mainContent.style.overflow = 'auto';
-                }
-
-                isAdjusting = false;
+                return;
             }
 
-                window.addEventListener('load', adjustTableHeight);
-                window.addEventListener('resize', adjustTableHeight);
+            isAdjusting = true;
 
-                // Also trigger after tab changes
-                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-                    tab.addEventListener('shown.bs.tab', adjustTableHeight);
-                });
+            // Temporary allow scrolling to measure natural positions
+            const prevOverflow = mainContent.style.overflow;
+            mainContent.style.overflow = 'auto';
 
-                // Trigger when analysis content/filters might change layout
-                const observer = new MutationObserver(adjustTableHeight);
-                const analysisSection = document.getElementById('analysis-section');
-                const filterSection = document.getElementById('filter-section');
-                if (analysisSection) observer.observe(analysisSection, { attributes: true, childList: true });
-                if (filterSection) observer.observe(filterSection, { attributes: true, childList: true });
-            </script>
+            const windowHeight = window.innerHeight;
+            const footer = document.querySelector('footer');
+            const footerHeight = footer ? footer.offsetHeight : 60;
+
+            // Get position relative to main-content
+            const rect = tableContainer.getBoundingClientRect();
+            const scrollTop = mainContent.scrollTop;
+            const absoluteTop = rect.top + scrollTop;
+
+            // Available space from natural position to bottom of screen
+            // We want the height to be (Window - AbsoluteTop - Footer - Padding)
+            const availableHeight = windowHeight - absoluteTop - footerHeight - 30;
+
+            if (availableHeight > 250) {
+                tableContainer.style.setProperty('--table-height', availableHeight + 'px');
+                document.body.style.overflow = 'hidden';
+                mainContent.style.overflow = 'hidden';
+                // Reset scroll to top to ensure the dashboard fits perfectly
+                mainContent.scrollTop = 0;
+            } else {
+                tableContainer.style.removeProperty('--table-height');
+                document.body.style.overflow = 'auto';
+                mainContent.style.overflow = 'auto';
+            }
+
+            isAdjusting = false;
+        }
+
+        window.addEventListener('load', adjustTableHeight);
+        window.addEventListener('resize', adjustTableHeight);
+
+        // Also trigger after tab changes
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', adjustTableHeight);
+        });
+
+        // Trigger when analysis content/filters might change layout
+        const observer = new MutationObserver(adjustTableHeight);
+        const analysisSection = document.getElementById('analysis-section');
+        const filterSection = document.getElementById('filter-section');
+        if (analysisSection) observer.observe(analysisSection, { attributes: true, childList: true });
+        if (filterSection) observer.observe(filterSection, { attributes: true, childList: true });
+    </script>
 @endsection

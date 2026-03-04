@@ -2,6 +2,72 @@
 
 @section('title', 'Verifikasi Rentang Harga')
 
+@push('styles')
+    <style>
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .08);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.warning {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .stat-icon.success {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .stat-icon.danger {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .stat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #1e293b;
+        }
+
+        .stat-label {
+            font-size: .85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
@@ -10,6 +76,49 @@
                 <p class="text-muted mb-0">Daftar Kabupaten/Kota dengan data rentang harga yang perlu diverifikasi.</p>
             </div>
         </div>
+
+        {{-- Verification Stats --}}
+        <div class="row g-3 mb-4">
+            {{-- Total Menunggu --}}
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-menunggu">{{ number_format($totalMenunggu) }}</div>
+                        <div class="stat-label">Total Menunggu</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Total Diverifikasi --}}
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-verified">{{ number_format($totalDiverifikasi) }}</div>
+                        <div class="stat-label">Total Diverifikasi</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Total Ditolak --}}
+            <div class="col-12 col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-rejected">{{ number_format($totalDitolak) }}</div>
+                        <div class="stat-label">Total Ditolak</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
                 <div class="table-responsive">

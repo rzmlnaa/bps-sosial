@@ -65,9 +65,8 @@
                             <option value="drive" {{ old('type', $dynamicMenu->type) == 'drive' ? 'selected' : '' }} disabled>
                                 Google
                                 Drive (View/Embed) (DALAM PENGEMBANGAN)</option>
-                            <option value="external" {{ old('type', $dynamicMenu->type) == 'external' ? 'selected' : '' }}
-                                disabled>
-                                Link Eksternal Lainnya (DALAM PENGEMBANGAN)</option>
+                            <option value="external" {{ old('type', $dynamicMenu->type) == 'external' ? 'selected' : '' }}>
+                                Link Eksternal Lainnya</option>
                         </select>
                     </div>
                 </div>
