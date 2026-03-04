@@ -77,47 +77,6 @@
             </div>
         </div>
 
-        {{-- Verification Stats --}}
-        <div class="row g-3 mb-4">
-            {{-- Total Menunggu --}}
-            <div class="col-12 col-sm-6 col-md-4">
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-menunggu">{{ number_format($totalMenunggu) }}</div>
-                        <div class="stat-label">Total Menunggu</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Total Diverifikasi --}}
-            <div class="col-12 col-sm-6 col-md-4">
-                <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-check-double"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-verified">{{ number_format($totalDiverifikasi) }}</div>
-                        <div class="stat-label">Total Diverifikasi</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Total Ditolak --}}
-            <div class="col-12 col-md-4">
-                <div class="stat-card">
-                    <div class="stat-icon danger">
-                        <i class="fas fa-times-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-rejected">{{ number_format($totalDitolak) }}</div>
-                        <div class="stat-label">Total Ditolak</div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">

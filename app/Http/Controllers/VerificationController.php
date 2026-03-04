@@ -14,11 +14,6 @@ class VerificationController extends Controller
 {
     public function index()
     {
-        // Global Stats
-        $totalMenunggu = RhPerubahanDetail::where('verification_status', 'pending')->count();
-        $totalDiverifikasi = RhPerubahanDetail::where('verification_status', 'verified')->count();
-        $totalDitolak = RhPerubahanDetail::where('verification_status', 'rejected')->count();
-
         // Get Kabupaten IDs that have pending/rejected verifications
 
         // Pending
@@ -84,10 +79,7 @@ class VerificationController extends Controller
         }
 
         return view('verification.index', compact(
-            'kabupatens',
-            'totalMenunggu',
-            'totalDiverifikasi',
-            'totalDitolak'
+            'kabupatens'
         ));
     }
 

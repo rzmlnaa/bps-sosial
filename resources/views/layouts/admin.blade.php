@@ -213,7 +213,7 @@
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('fenomena.index') }}"
-                                class="nav-link {{ request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') || (request()->routeIs('fenomena.show') && request()->query('from') != 'verification') ? 'active' : '' }}">
+                                class="nav-link {{ request()->has('creator') || request()->has('search') || request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') || (request()->routeIs('fenomena.show') && request()->query('from') != 'verification') ? 'active' : '' }}">
                                 <i class="far fa-newspaper"></i>
                                 <span>Informasi</span>
                             </a>
@@ -369,6 +369,16 @@
                 showConfirmButton: false,
                 timer: 2000,
                 timerProgressBar: true
+            });
+        </script>
+    @endif
+
+    @if(session('warning'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian!',
+                html: '{{ session('warning') }}',
             });
         </script>
     @endif
