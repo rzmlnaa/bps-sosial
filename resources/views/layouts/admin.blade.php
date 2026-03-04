@@ -213,7 +213,7 @@
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('fenomena.index') }}"
-                                class="nav-link {{ request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') ? 'active' : '' }}">
+                                class="nav-link {{ request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') || (request()->routeIs('fenomena.show') && request()->query('from') != 'verification') ? 'active' : '' }}">
                                 <i class="far fa-newspaper"></i>
                                 <span>Informasi</span>
                             </a>
@@ -230,7 +230,7 @@
                             @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('fenomena.verification.index') }}"
-                                        class="nav-link {{ request()->routeIs('fenomena.verification.*') ? 'active' : '' }}">
+                                        class="nav-link {{ request()->routeIs('fenomena.verification.*') || (request()->routeIs('fenomena.show') && request()->query('from') == 'verification') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
                                         <span>Verifikasi</span>
                                     </a>

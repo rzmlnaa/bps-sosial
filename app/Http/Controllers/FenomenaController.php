@@ -100,6 +100,7 @@ class FenomenaController extends Controller
     {
         $sektorUsahas = SektorUsaha::orderBy('kode', 'asc')->get();
         $indikators = Indikator::where('kelompok', 'utama')
+            ->where('is_active', true)
             ->orderBy('kode', 'asc')
             ->get();
         $jenisFenomenas = JenisFenomena::orderBy('nama', 'asc')->get();
@@ -117,7 +118,7 @@ class FenomenaController extends Controller
             'judul' => 'required|string|max:255|unique:fenomenas,judul',
             'penjelasan' => 'required|string',
             'sektor_usaha_id' => 'required|exists:sektor_usahas,id',
-            'indikator_id' => 'required|exists:indikators,id',
+            'indikator_id' => 'required|exists:indikators,id,is_active,1',
             'jenis_fenomena_ids' => 'required|array',
             'jenis_fenomena_ids.*' => 'exists:jenis_fenomenas,id',
             'sumber_berita_id' => 'required|exists:sumber_beritas,id',

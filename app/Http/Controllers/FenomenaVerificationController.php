@@ -113,8 +113,14 @@ class FenomenaVerificationController extends Controller
 
     public function show($id)
     {
-        $fenomena = Fenomena::with(['creator', 'sumberBerita', 'sektors', 'indikators', 'jenisFenomenas'])
-            ->findOrFail($id);
+        $fenomena = Fenomena::where('status_verifikasi', 'P')
+            ->with(['creator', 'sumberBerita', 'sektors', 'indikators', 'jenisFenomenas'])
+            ->find($id);
+
+        if (!$fenomena) {
+            return redirect()->route('fenomena.verification.index')
+                ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
+        }
 
         $impactIndikators = Indikator::where('kelompok', 'dampak')
             ->where('is_active', true)
@@ -132,7 +138,12 @@ class FenomenaVerificationController extends Controller
             'impact_directions' => 'array',
         ]);
 
-        $fenomena = Fenomena::findOrFail($id);
+        $fenomena = Fenomena::where('status_verifikasi', 'P')->find($id);
+
+        if (!$fenomena) {
+            return redirect()->route('fenomena.verification.index')
+                ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
+        }
 
         DB::transaction(function () use ($request, $fenomena) {
             $status = $request->status_verifikasi;
@@ -157,8 +168,14 @@ class FenomenaVerificationController extends Controller
                 // Sync impact indicators
                 if ($request->has('impact_directions')) {
                     $impactsToSync = [];
+
+                    // Filter: only process impact indicators that are active
+                    $activeImpactIds = Indikator::where('is_active', true)
+                        ->whereIn('id', array_keys($request->impact_directions))
+                        ->pluck('id')->toArray();
+
                     foreach ($request->impact_directions as $indikatorId => $arah) {
-                        if ($arah) {
+                        if (in_array($indikatorId, $activeImpactIds) && $arah) {
                             $impactsToSync[$indikatorId] = [
                                 'arah' => $arah,
                                 'ditetapkan_oleh' => Auth::id(),
