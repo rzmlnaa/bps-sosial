@@ -16,7 +16,6 @@
             background-color: var(--bps-blue) !important;
             color: #fff !important;
         }
-        
     </style>
 @endpush
 @push('scripts')
@@ -150,9 +149,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                                                                                                                </a> -->
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -199,8 +198,7 @@
                             <input type="hidden" name="active_tab" id="activeTabInput"
                                 value="{{ request('active_tab', array_key_first($outliers ?? [])) }}" form="filter-form">
                             <div class="mt-1">
-                                <small id="thresholdError"
-                                    class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
+                                <small id="thresholdError" class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
                                     style="font-size: 0.75rem;">
                                     Masukan angka 1-100
                                 </small>
@@ -623,6 +621,11 @@
                                             $currentMin = $master ? $master->min_nilai : null;
                                             $currentMax = $master ? $master->max_nilai : null;
                                             $currentAlasan = $master ? $master->alasan : null;
+
+                                            // Apply within-range reset logic
+                                            if ($masterDiff <= $limit) {
+                                                $currentAlasan = null;
+                                            }
                                         @endphp
 
                                         <!-- Revision Data -->
@@ -665,6 +668,11 @@
                                                 $currentDiff = ($currentMax !== null && $currentMin !== null) ? ($currentMax - $currentMin) : 0;
                                                 $limit = $komo->batas_selisih_harga ?? 0;
                                                 $isDiffExceeded = $currentDiff > $limit;
+
+                                                // Additional check: If now within range after edit, reset reason
+                                                if ($currentDiff <= $limit) {
+                                                    $currentAlasan = null;
+                                                }
 
                                                 // Check if there was an edit in this revision
                                                 $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));

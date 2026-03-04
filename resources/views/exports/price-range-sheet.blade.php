@@ -58,6 +58,13 @@
                     $currentAlasan = $master ? $master->alasan : null;
 
                     // Comparison Logic for Master
+                    $limit = $komo->batas_selisih_harga ?? 0;
+                    $masterDiff = ($currentMax !== null && $currentMin !== null) ? abs($currentMax - $currentMin) : 0;
+
+                    // User request: Clear reason if within range
+                    if ($masterDiff <= $limit) {
+                        $currentAlasan = null;
+                    }
                     $prevData = isset($prevYearValues) ? ($prevYearValues[$komo->id] ?? null) : null;
                     $prevMin = $prevData['min'] ?? null;
                     $prevMax = $prevData['max'] ?? null;
@@ -78,9 +85,9 @@
                     <td style="border: 1px solid #000000;">{{ $komo->satuan ?? 'Kg' }}</td>
 
                     <!-- Master Data -->
-                    <td style="border: 1px solid #000000; {{ $styleMinMaster }}">{{ $master ? $master->min_nilai : '-' }}</td>
-                    <td style="border: 1px solid #000000; {{ $styleMaxMaster }}">{{ $master ? $master->max_nilai : '-' }}</td>
-                    <td style="border: 1px solid #000000;">{{ $master ? $master->alasan : '-' }}</td>
+                    <td style="border: 1px solid #000000; {{ $styleMinMaster }}">{{ $currentMin ?? '-' }}</td>
+                    <td style="border: 1px solid #000000; {{ $styleMaxMaster }}">{{ $currentMax ?? '-' }}</td>
+                    <td style="border: 1px solid #000000;">{{ $currentAlasan ?? '-' }}</td>
 
                     <!-- Revisions -->
                     @foreach($revisions as $rev)
@@ -126,8 +133,16 @@
                             }
 
                             // Alasan Logic
-                            if ($revData && $revData->alasan !== null) {
-                                $currentAlasan = $revData->alasan;
+                            if ($revData) {
+                                if ($revData->alasan !== null) {
+                                    $currentAlasan = $revData->alasan;
+                                }
+
+                                // User request: Clear reason if now within range after edit
+                                $revDiff = ($currentMax !== null && $currentMin !== null) ? abs($currentMax - $currentMin) : 0;
+                                if ($revDiff <= $limit) {
+                                    $currentAlasan = null;
+                                }
                             }
                         @endphp
 
