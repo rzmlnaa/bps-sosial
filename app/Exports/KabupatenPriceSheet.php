@@ -31,7 +31,11 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
         $year = RhTahun::findOrFail($this->yearId);
         $kabupaten = $this->kabupaten;
 
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        $categories = KategoriKomoditas::with([
+            'komoditas' => function ($query) {
+                $query->orderBy('order_number', 'asc');
+            }
+        ])->get();
 
         // --- 1. Calculate Effective Master State (Recursive) ---
         // A. Get Final State of PREVIOUS Year
@@ -49,7 +53,7 @@ class KabupatenPriceSheet implements FromView, WithTitle, ShouldAutoSize, WithSt
 
         // C. Merge (Effective Master = Explicit Master OR Previous Final)
         $finalMasterData = [];
-        $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
+        $allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
 
         // Helper to check if master has data
         foreach ($allKomoditasIds as $komId) {

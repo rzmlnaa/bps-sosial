@@ -156,7 +156,7 @@
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
-                    class="nav-link {{ request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'active' : '' }}"
+                    class="nav-link {{ request()->is('price-range*') || request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-tags"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -165,7 +165,7 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'show' : '' }}"
+                <div class="collapse {{ request()->is('price-range*') || request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'show' : '' }}"
                     id="submenu2">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">

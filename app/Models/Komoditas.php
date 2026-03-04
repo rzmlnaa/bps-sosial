@@ -13,6 +13,7 @@ class Komoditas extends Model
         'nama_komoditas',
         'satuan',
         'batas_selisih_harga',
+        'order_number',
         'user_id_add',
         'user_id_update',
     ];

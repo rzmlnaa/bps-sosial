@@ -18,7 +18,7 @@ class PriceRangeController extends Controller
         $years = RhTahun::orderBy('tahun', 'desc')->get();
 
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
-        $allKomoditas = \App\Models\Komoditas::all(); // Needed for full mapping
+        $allKomoditas = \App\Models\Komoditas::orderBy('order_number', 'asc')->get(); // Needed for full mapping
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
@@ -32,14 +32,18 @@ class PriceRangeController extends Controller
         // if ($activeYear == null) {
         //     return back()->with('error', 'Tahun RH tidak ditemukan');
         // }
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        $categories = KategoriKomoditas::with([
+            'komoditas' => function ($query) {
+                $query->orderBy('order_number', 'asc');
+            }
+        ])->get();
 
         // Fetch commodities filtered by categories for the dropdown
         $availableKomoditas = \App\Models\Komoditas::query()
             ->when(!empty($selectedCategoryIds), function ($q) use ($selectedCategoryIds) {
                 return $q->whereIn('kategori_id', $selectedCategoryIds);
             })
-            ->orderBy('nama_komoditas', 'asc')
+            ->orderBy('order_number', 'asc')
             ->get();
 
         // 1. Fetch Current View Data (Specific Kabupaten)
@@ -77,7 +81,7 @@ class PriceRangeController extends Controller
             $finalMasterData = [];
 
             // We need to iterate all possible commodities to ensure we show full list state
-            $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
+            $allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
 
             foreach ($allKomoditasIds as $komId) {
                 $m = $actualMaster->get($komId);

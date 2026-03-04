@@ -180,7 +180,11 @@ class RhNilaiController extends Controller
             }
         }
 
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        $categories = KategoriKomoditas::with([
+            'komoditas' => function ($query) {
+                $query->orderBy('order_number', 'asc');
+            }
+        ])->get();
         // Rename $allRevisions to $revisions to match view variable expectation
         $revisions = $allRevisions;
 

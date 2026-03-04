@@ -42,7 +42,7 @@ class KomoditasController extends Controller
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
                 } else {
-                    Komoditas::create([
+                    $newKomoditas = Komoditas::create([
                         'kategori_id' => $kategori_id,
                         'nama_komoditas' => $name,
                         'satuan' => $satuan,
@@ -50,6 +50,7 @@ class KomoditasController extends Controller
                         'user_id_add' => Auth::id() ?? 1,
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
+                    $newKomoditas->update(['order_number' => $newKomoditas->id]);
                 }
 
                 $processedNames[] = $name;
@@ -65,6 +66,7 @@ class KomoditasController extends Controller
                 ->get();
 
             foreach ($toDelete as $item) {
+                /** @var \App\Models\Komoditas $item */
                 $isInUse = RhPerubahanDetail::where('komoditas_id', $item->id)
                     ->where(function ($query) {
                         $query->whereNotNull('min_edit')
@@ -146,9 +148,24 @@ class KomoditasController extends Controller
     {
         $data = Komoditas::where('kategori_id', $kategori_id)
             ->with(['userAdd', 'userUpdate'])
+            ->orderBy('order_number', 'asc')
             ->get();
 
         return response()->json($data);
+    }
+
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tb_komoditas,id',
+        ]);
+
+        foreach ($request->ids as $index => $id) {
+            Komoditas::where('id', $id)->update(['order_number' => $index + 1]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function clearData(Request $request)
@@ -162,6 +179,7 @@ class KomoditasController extends Controller
         $skippedCount = 0;
 
         foreach ($komoditasList as $item) {
+            /** @var \App\Models\Komoditas $item */
             $isInUse = RhPerubahanDetail::where('komoditas_id', $item->id)
                 ->where(function ($query) {
                     $query->whereNotNull('min_edit')

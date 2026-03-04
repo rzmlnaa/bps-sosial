@@ -309,7 +309,8 @@
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="bg-light sticky-top" style="z-index: 1;">
                                         <tr>
-                                            <th class="ps-4 border-0" style="width: 60px;">No</th>
+                                            <th class="ps-4 border-0" style="width: 40px;"></th>
+                                            <th class="border-0" style="width: 50px;">No</th>
                                             <th class="border-0">Nama Komoditas</th>
                                             <th class="border-0 text-center">Satuan</th>
                                             <th class="border-0 text-center">Batas Selisih</th>
@@ -806,13 +807,14 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         // Store latest dates for each RH year to restrict new header dat       es
         window.latestRhDates = {
             @foreach($rhTahun as $t)
                 "{{ $t->id }}": "{{ $t->perubahanHeaders->last()->tanggal_perubahan ?? '' }}",
             @endforeach
-                                    };
+                                        };
 
         document.addEventListener("DOMContentLoaded", function () {
             // Edit Kategori Modal Populating
@@ -866,11 +868,11 @@
                 const tr = document.createElement('tr');
                 tr.className = 'manual-row';
                 tr.innerHTML = `
-                                                                                                                    <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
-                                                                                                                    <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
-                                                                                                                    <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
-                                                                                                                    <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
-                                                                                                                `;
+                                                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-name" placeholder="Nama Komoditas" value="${name}"></td>
+                                                                                                                        <td><input type="text" class="form-control form-control-sm bg-light border-0 manual-unit" placeholder="Satuan (e.g. Kg)" value="${unit}"></td>
+                                                                                                                        <td><input type="number" class="form-control form-control-sm bg-light border-0 manual-batas" placeholder="Batas Selisih (Rp)" value="${batas}"></td>
+                                                                                                                        <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger btn-remove-row p-0"><i class="fas fa-times"></i></button></td>
+                                                                                                                    `;
                 manualInputBody.appendChild(tr);
             }
 
@@ -995,56 +997,57 @@
                                 data.forEach((item, index) => {
                                     // Add to table
                                     html += `
-                                                                                                                                        <tr>
-                                                                                                                                            <td class="ps-4 text-muted">${index + 1}</td>
-                                                                                                                                            <td class="fw-medium">${item.nama_komoditas}</td>
-                                                                                                                                            <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
-                                                                                                                                            <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
-                                                                                                                                            <td>
-                                                                                                                                                <div class="mb-1">
-                                                                                                                                                    <span class="badge bg-light text-dark border w-100 text-start" style="padding: 0.4rem 0.6rem;">
-                                                                                                                                                        <i class="fas fa-user-edit me-1 text-primary"></i>
-                                                                                                                                                        ${item.user_add?.name || 'Admin'}
-                                                                                                                                                        <br>
-                                                                                                                                                        <small class="text-muted fw-normal" style="font-size: 0.75rem;">
-                                                                                                                                                            ${new Date(item.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                                                                                                        </small>
-                                                                                                                                                    </span>
-                                                                                                                                                </div>
-                                                                                                                                                ${item.user_update ? `
-                                                                                                                                                <div class="mt-1">
-                                                                                                                                                    <span class="badge bg-light text-dark border w-100 text-start" style="padding: 0.4rem 0.6rem;">
-                                                                                                                                                        <i class="fas fa-user-check me-1 text-success"></i>
-                                                                                                                                                        ${item.user_update.name}
-                                                                                                                                                        <br>
-                                                                                                                                                        <small class="text-muted fw-normal" style="font-size: 0.75rem;">
-                                                                                                                                                            ${new Date(item.updated_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                                                                                                        </small>
-                                                                                                                                                    </span>
-                                                                                                                                                </div>
-                                                                                                                                                ` : ''}
-                                                                                                                                            </td>
-                                                                                                                                            <td class="text-center">
-                                                                                                                                                <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
-                                                                                                                                                    data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
-                                                                                                                                                    data-id="${item.id}"
-                                                                                                                                                    data-nama="${item.nama_komoditas}"
-                                                                                                                                                    data-satuan="${item.satuan}"
-                                                                                                                                                    data-batas="${item.batas_selisih_harga || ''}">
-                                                                                                                                                    <i class="fas fa-edit"></i>
-                                                                                                                                                </button>
-                                                                                                                                                <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
-                                                                                                                                                    @csrf
-                                                                                                                                                    @method('DELETE')
-                                                                                                                                                    <input type="hidden" name="active_tab" value="pills-input-tab">
-                                                                                                                                                    <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
-                                                                                                                                                    <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
-                                                                                                                                                        <i class="fas fa-trash-alt"></i>
+                                                                                                                                            <tr data-id="${item.id}" class="sortable-row">
+                                                                                                                                             <td class="ps-3 text-muted" style="cursor: move;"><i class="fas fa-grip-vertical opacity-50"></i></td>
+                                                                                                                                             <td class="text-muted">${index + 1}</td>
+                                                                                                                                             <td class="fw-medium">${item.nama_komoditas}</td>
+                                                                                                                                                <td class="text-center"><span class="badge bg-blue-faded text-blue border">${item.satuan || '-'}</span></td>
+                                                                                                                                                <td class="text-center">${item.batas_selisih_harga ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.batas_selisih_harga) : '-'}</td>
+                                                                                                                                                <td>
+                                                                                                                                                    <div class="mb-1">
+                                                                                                                                                        <span class="badge bg-light text-dark border w-100 text-start" style="padding: 0.4rem 0.6rem;">
+                                                                                                                                                            <i class="fas fa-user-edit me-1 text-primary"></i>
+                                                                                                                                                            ${item.user_add?.name || 'Admin'}
+                                                                                                                                                            <br>
+                                                                                                                                                            <small class="text-muted fw-normal" style="font-size: 0.75rem;">
+                                                                                                                                                                ${new Date(item.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                                                                                                            </small>
+                                                                                                                                                        </span>
+                                                                                                                                                    </div>
+                                                                                                                                                    ${item.user_update ? `
+                                                                                                                                                    <div class="mt-1">
+                                                                                                                                                        <span class="badge bg-light text-dark border w-100 text-start" style="padding: 0.4rem 0.6rem;">
+                                                                                                                                                            <i class="fas fa-user-check me-1 text-success"></i>
+                                                                                                                                                            ${item.user_update.name}
+                                                                                                                                                            <br>
+                                                                                                                                                            <small class="text-muted fw-normal" style="font-size: 0.75rem;">
+                                                                                                                                                                ${new Date(item.updated_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                                                                                                            </small>
+                                                                                                                                                        </span>
+                                                                                                                                                    </div>
+                                                                                                                                                    ` : ''}
+                                                                                                                                                </td>
+                                                                                                                                                <td class="text-center">
+                                                                                                                                                    <button class="btn btn-sm btn-outline-warning border-0 btn-edit-komoditas"
+                                                                                                                                                        data-bs-toggle="modal" data-bs-target="#modalEditKomoditas"
+                                                                                                                                                        data-id="${item.id}"
+                                                                                                                                                        data-nama="${item.nama_komoditas}"
+                                                                                                                                                        data-satuan="${item.satuan}"
+                                                                                                                                                        data-batas="${item.batas_selisih_harga || ''}">
+                                                                                                                                                        <i class="fas fa-edit"></i>
                                                                                                                                                     </button>
-                                                                                                                                                </form>
-                                                                                                                                            </td>
-                                                                                                                                        </tr>
-                                                                                                                                    `;
+                                                                                                                                                    <form action="/komoditas/${item.id}" method="POST" class="form-delete d-inline">
+                                                                                                                                                        @csrf
+                                                                                                                                                        @method('DELETE')
+                                                                                                                                                        <input type="hidden" name="active_tab" value="pills-input-tab">
+                                                                                                                                                        <input type="hidden" name="input_mode" value="${document.getElementById('input_mode_input').value}">
+                                                                                                                                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete">
+                                                                                                                                                            <i class="fas fa-trash-alt"></i>
+                                                                                                                                                        </button>
+                                                                                                                                                    </form>
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                        `;
 
                                     // Add to manual input
                                     addManualRow(item.nama_komoditas, item.satuan || 'Kg', item.batas_selisih_harga || '');
@@ -1198,6 +1201,47 @@
 
                     // Show a small toast or notification if needed (optional)
                     console.log('Sorted revisions:', sortDesc ? 'Descending' : 'Ascending');
+                });
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const el = document.getElementById('table_body_komoditas');
+            if (el) {
+                Sortable.create(el, {
+                    animation: 150,
+                    handle: '.fa-grip-vertical',
+                    ghostClass: 'bg-light',
+                    onEnd: function () {
+                        const ids = [];
+                        el.querySelectorAll('tr[data-id]').forEach(tr => {
+                            ids.push(tr.getAttribute('data-id'));
+                        });
+
+                        // Show minimal loading or indication if needed
+                        fetch("/komoditas/reorder", {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ ids: ids })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Optional: simple toast notification
+                                    console.log('Reorder success');
+                                    // Update row numbers visually
+                                    el.querySelectorAll('tr').forEach((tr, idx) => {
+                                        const noTd = tr.querySelector('td:nth-child(2)');
+                                        if (noTd) noTd.innerText = idx + 1;
+                                    });
+                                }
+                            });
+                    }
                 });
             }
         });
