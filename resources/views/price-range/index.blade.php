@@ -149,9 +149,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            </a> -->
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -577,7 +577,8 @@
                                             $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
                                                 && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
 
-                                            $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
+                                            // Highlight red ONLY if it's the final state (no revisions) AND missing reason
+                                            $isMasterExceeded = ($masterDiff > $limit) && empty($master->alasan) && ($revisions->count() == 0);
                                         @endphp
 
                                         <!-- Previous Year Columns (Hidden by Default) -->
@@ -622,10 +623,9 @@
                                             $currentMax = $master ? $master->max_nilai : null;
                                             $currentAlasan = $master ? $master->alasan : null;
 
-                                            // Apply within-range reset logic
-                                            if ($masterDiff <= $limit) {
-                                                $currentAlasan = null;
-                                            }
+                                            // REMOVED: Apply within-range reset logic for Master
+                                            // We keep it so it can be carried forward to revisions
+                                            // only the final state (last revision) will be subject to auto-reset
                                         @endphp
 
                                         <!-- Revision Data -->
@@ -669,16 +669,16 @@
                                                 $limit = $komo->batas_selisih_harga ?? 0;
                                                 $isDiffExceeded = $currentDiff > $limit;
 
-                                                // Additional check: If now within range after edit, reset reason
-                                                if ($currentDiff <= $limit) {
+                                                // Additional check: If now within range after edit, reset reason ONLY for the last revision
+                                                if ($currentDiff <= $limit && $loop->last) {
                                                     $currentAlasan = null;
                                                 }
 
                                                 // Check if there was an edit in this revision
                                                 $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));
 
-                                                // Red only if exceeded AND edited in this period
-                                                $isExceeded = $isDiffExceeded && $hasEdit;
+                                                // Highlight red ONLY if it's the final state (last revision) AND missing reason
+                                                $isExceeded = $isDiffExceeded && empty($currentAlasan) && $loop->last;
 
                                                 // Approved Logic: Must be approved AND have Min, Max, Alasan in THIS revision
                                                 $revIsApproved = ($revData->verification_status ?? '') === 'approved'

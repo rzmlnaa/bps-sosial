@@ -133,13 +133,13 @@
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
                                 <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
-                                                                                                                        onchange="this.form.submit()">
-                                                                                                                        @foreach($kabupatens as $kab)
-                                                                                                                            <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                                                                                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                                                                                                            </option>
-                                                                                                                        @endforeach
-                                                                                                                    </select> -->
+                                                                                                                            onchange="this.form.submit()">
+                                                                                                                            @foreach($kabupatens as $kab)
+                                                                                                                                <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                                                                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                                                                                                </option>
+                                                                                                                            @endforeach
+                                                                                                                        </select> -->
 
 
                                 @if (auth()->user()->kabupaten->kode_kab == '6100')
@@ -359,17 +359,31 @@
                                                     $mReason = $master->rejection_reason ?? '';
                                                 @endphp
                                                 <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @php
+                                                        $mMinVal = isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '';
+                                                        $mMaxVal = isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '';
+
+                                                        // Fallback logic for empty Master check Prev Year
+                                                        if (!$hasMasterData && !empty($prevYearFinal[$komo->id])) {
+                                                            $pData = $prevYearFinal[$komo->id];
+                                                            $pDiff = ($pData['max'] ?? 0) - ($pData['min'] ?? 0);
+                                                            $pHasAlasan = !empty(trim($pData['alasan'] ?? ''));
+                                                            $limit = $komo->batas_selisih_harga ?? 0;
+                                                            if ($pDiff > $limit && !$pHasAlasan) {
+                                                                $mMinVal = number_format($pData['min'], 0, ',', '.');
+                                                                $mMaxVal = number_format($pData['max'], 0, ',', '.');
+                                                            }
+                                                        }
+                                                    @endphp
                                                     <input type="text" name="master[{{ $komo->id }}][min]"
                                                         class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                        placeholder="Min"
-                                                        value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
+                                                        placeholder="Min" value="{{ $mMinVal }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="master[{{ $komo->id }}][max]"
                                                         class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                        placeholder="Max"
-                                                        value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
+                                                        placeholder="Max" value="{{ $mMaxVal }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
@@ -428,17 +442,42 @@
                                                     $revReason = $rawRevData->rejection_reason ?? '';
                                                 @endphp
                                                 <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @php
+                                                        $displayMin = is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin;
+                                                        $displayMax = is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax;
+
+                                                        // Fallback logic for empty Revision check Previous State
+                                                        if (($valMin === '' || $valMin === null) && ($valMax === '' || $valMax === null)) {
+                                                            // Find previous state
+                                                            $revIndex = $revisions->search(fn($r) => $r->id == $rev->id);
+                                                            $prevState = null;
+                                                            if ($revIndex > 0) {
+                                                                $prevId = $revisions[$revIndex - 1]->id;
+                                                                $prevState = $effectiveValues->get($prevId)[$komo->id] ?? null;
+                                                            } else {
+                                                                $prevState = $initialState[$komo->id] ?? null;
+                                                            }
+
+                                                            if ($prevState) {
+                                                                $pDiff = ($prevState['max'] ?? 0) - ($prevState['min'] ?? 0);
+                                                                $pHasAlasan = !empty(trim($prevState['alasan'] ?? ''));
+                                                                $limit = $komo->batas_selisih_harga ?? 0;
+                                                                if ($pDiff > $limit && !$pHasAlasan) {
+                                                                    $displayMin = number_format($prevState['min'], 0, ',', '.');
+                                                                    $displayMax = number_format($prevState['max'], 0, ',', '.');
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
                                                         class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                        placeholder="Edit Min"
-                                                        value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
+                                                        placeholder="Edit Min" value="{{ $displayMin }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
                                                     <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
                                                         class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                        placeholder="Edit Max"
-                                                        value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
+                                                        placeholder="Edit Max" value="{{ $displayMax }}"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
                                                 </td>
                                                 <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">

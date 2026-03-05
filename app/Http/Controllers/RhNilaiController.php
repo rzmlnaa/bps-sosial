@@ -116,6 +116,7 @@ class RhNilaiController extends Controller
                 ];
             }
         }
+        $initialState = $currentState;
 
         foreach ($allRevisions as $rev) {
             $details = $allDetailsRaw->get($rev->id);
@@ -242,6 +243,7 @@ class RhNilaiController extends Controller
             'effectiveValues', // Calculated State
             'allRevisionNilai', // Raw Values for inputs
             'latestRevisionId', // To determine readonly status
+            'initialState',
             'prevYearFinal',
             'prevYearLabel',
             'rejectedSummary'

@@ -83,7 +83,8 @@ class PriceRangeController extends Controller
             $finalMasterData = [];
 
             // We need to iterate all possible commodities to ensure we show full list state
-            $allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
+            //$allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
+            $allKomoditasIds = $allKomoditas->pluck('id')->toArray();
 
             foreach ($allKomoditasIds as $komId) {
                 $m = $actualMaster->get($komId);
