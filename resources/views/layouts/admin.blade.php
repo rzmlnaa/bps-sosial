@@ -106,7 +106,7 @@
 
                 <a href="{{ route('admin.dashboard') }}"
                     class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i>
+                    <i class="fa fa-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
 
@@ -127,12 +127,18 @@
                     <i class="fas fa-map-marked-alt"></i>
                     <span>Master Wilayah</span>
                 </a>
+
+                <a href="{{ route('admin.dynamic-menus.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.dynamic-menus.*') ? 'active' : '' }}">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Menu Dinamis</span>
+                </a>
             @else
                 <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mb-2"
                     style="font-size: 0.75rem; letter-spacing: 0.05em;">Menu Utama</h6>
 
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i>
+                    <i class="fas fa-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
 
@@ -150,7 +156,7 @@
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
-                    class="nav-link {{ request()->is('price-range*') || request()->is('verification*') ? 'active' : '' }}"
+                    class="nav-link {{ request()->is('price-range*') || request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-tags"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -159,23 +165,23 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->is('price-range*') || request()->is('verification*') ? 'show' : '' }}"
+                <div class="collapse {{ request()->is('price-range*') || request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'show' : '' }}"
                     id="submenu2">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
                             <a href="{{ route('price-range.index') }}"
                                 class="nav-link {{ request()->is('price-range*') ? 'active' : '' }}">
                                 <i class="fas fa-table"></i>
-                                <span>Visualisasi RH</span>
+                                <span>Visualisasi</span>
                             </a>
                         </li>
                         @if (auth()->check() == true)
                             @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
                                 <li class="nav-item">
                                     <a href="{{ route('verification.index') }}"
-                                        class="nav-link {{ request()->is('verification*') ? 'active' : '' }}">
+                                        class="nav-link {{ request()->routeIs('verification.*') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
-                                        <span>Verifikasi Harga</span>
+                                        <span>Verifikasi</span>
                                     </a>
                                 </li>
                             @endif
@@ -185,13 +191,109 @@
                 </div>
 
 
-
-
-
-                <a href="#" class="nav-link">
-                    <i class="fas fa-search-dollar"></i>
-                    <span>Fenomena</span>
+                <a href="#submenu3" id="menu-fenomena"
+                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') ? 'active' : '' }}"
+                    data-bs-toggle="collapse" aria-expanded="true">
+                    <i class="fas fa-newspaper"></i>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Fenomena</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                    </div>
                 </a>
+
+                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') ? 'show' : '' }}"
+                    id="submenu3">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.visualisasi') }}"
+                                class="nav-link {{ request()->routeIs('fenomena.visualisasi') ? 'active' : '' }}">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Visualisasi</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.index') }}"
+                                class="nav-link {{ request()->has('creator') || request()->has('search') || request()->routeIs('fenomena.kelola') || request()->routeIs('fenomena.create') || request()->routeIs('fenomena.index') && !request()->has('creator') || (request()->routeIs('fenomena.show') && request()->query('from') != 'verification') ? 'active' : '' }}">
+                                <i class="far fa-newspaper"></i>
+                                <span>Informasi</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('fenomena.contributor') }}"
+                                class="nav-link {{ request()->routeIs('fenomena.contributor') ? 'active' : '' }}">
+                                <i class="fas fa-trophy"></i>
+                                <span>Kontributor</span>
+                            </a>
+                        </li>
+
+                        @if (auth()->check() == true)
+                            @if(auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab == '6100')
+                                <li class="nav-item">
+                                    <a href="{{ route('fenomena.verification.index') }}"
+                                        class="nav-link {{ request()->routeIs('fenomena.verification.*') || (request()->routeIs('fenomena.show') && request()->query('from') == 'verification') ? 'active' : '' }}">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <span>Verifikasi</span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+                    </ul>
+                </div>
+
+
+
+
+                @php
+                    $dynamicMenus = \App\Models\DynamicMenu::whereNull('parent_id')
+                        ->where('is_active', true)
+                        ->with([
+                            'children' => function ($q) {
+                                $q->where('is_active', true)->orderBy('order_number');
+                            }
+                        ])
+                        ->orderBy('order_number')
+                        ->get();
+                @endphp
+
+                @foreach($dynamicMenus as $menu)
+                    @if($menu->children->count() > 0)
+                        @php
+                            $childPatterns = $menu->children->pluck('slug')->map(function ($slug) {
+                                return 'menu/' . $slug;
+                            })->toArray();
+                            $isDropdownActive = request()->is($childPatterns);
+                        @endphp
+                        <a href="#dynamicSubmenu{{ $menu->id }}" id="menu-dynamic-{{ $menu->id }}"
+                            class="nav-link {{ $isDropdownActive ? 'active' : '' }}" data-bs-toggle="collapse"
+                            aria-expanded="{{ $isDropdownActive ? 'true' : 'false' }}">
+                            <i class="fas fa-folder"></i>
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <span>{{ $menu->name }}</span>
+                                <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                            </div>
+                        </a>
+                        <div class="collapse {{ $isDropdownActive ? 'show' : '' }}" id="dynamicSubmenu{{ $menu->id }}">
+                            <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+
+                                @foreach($menu->children as $child)
+                                    <li class="nav-item">
+                                        <a href="{{ route('dynamic-menu.show', $child->slug) }}"
+                                            class="nav-link {{ request()->is('menu/' . $child->slug) ? 'active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <span>{{ $child->name }}</span>
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @else
+                        <a href="{{ route('dynamic-menu.show', $menu->slug) }}"
+                            class="nav-link {{ request()->is('menu/' . $menu->slug) ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span>{{ $menu->name }}</span>
+                        </a>
+                    @endif
+                @endforeach
             @endif
 
         </div>
@@ -233,11 +335,11 @@
 
     <!-- Main Content -->
     <main class="main-content d-flex flex-column min-vh-100">
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 mb-2">
             @yield('content')
         </div>
 
-        <footer class="mt-auto pt-4 border-top text-center text-muted pb-4">
+        <footer class="mt-auto pt-4 border-top text-center text-muted pb-0">
             <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
                 rights reserved.</small>
             <small>
@@ -267,6 +369,16 @@
                 showConfirmButton: false,
                 timer: 2000,
                 timerProgressBar: true
+            });
+        </script>
+    @endif
+
+    @if(session('warning'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian!',
+                html: '{{ session('warning') }}',
             });
         </script>
     @endif

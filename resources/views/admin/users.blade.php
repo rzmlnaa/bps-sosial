@@ -3,75 +3,98 @@
 @section('title', 'Akun Pengguna')
 
 @section('content')
-    <div class="container-fluid py-4">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-            <h2 class="fw-bold text-navy mb-0">Akun Pengguna</h2>
-        </div>
+    <style>
+        .hover-elevate {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
 
-        <!-- Filters -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body p-3">
-                <form action="{{ route('admin.users') }}" method="GET" class="row g-3">
-                    <div class="col-md-4">
-                        <input type="text" name="search" class="form-control" placeholder="Cari Nama / Email..."
-                            value="{{ request('search') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <select name="kabupaten_id" class="form-select">
-                            <option value="">-- Semua Kabupaten --</option>
-                            @foreach($kabupatens as $kab)
-                                <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
-                                    {{ $kab->nama_kabupaten }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="status" class="form-select">
-                            <option value="">-- Semua Status --</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-grid">
-                        <button type="submit" class="btn btn-primary bg-navy border-0">
-                            <i class="fas fa-filter me-1"></i> Filter
-                        </button>
-                    </div>
-                </form>
-            </div>
+        .hover-elevate:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
+        }
+    </style>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Akun Pengguna</h2>
+            <p class="text-muted mb-0">Manajemen Akun Pengguna Kab/Kot</p>
         </div>
+    </div>
 
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="px-4 py-3 border-0">Nama Lengkap</th>
-                                <th class="px-4 py-3 border-0">Email</th>
-                                <th class="px-4 py-3 border-0">Tim / Asal</th>
-                                <th class="px-4 py-3 border-0">Status</th>
-                                <th class="px-4 py-3 border-0 text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($users as $user)
-                                <tr>
-                                    <td class="px-4 py-3">
-                                        <div class="fw-bold text-dark">{{ $user->name }}</div>
-                                        <small class="text-muted">{{ $user->no_hp ?? '-' }}</small>
-                                    </td>
-                                    <td class="px-4 py-3 text-muted">{{ $user->email }}</td>
-                                    <td class="px-4 py-3">
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3">
+            <form action="{{ route('admin.users') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Cari Nama / Email..."
+                        value="{{ request('search') }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="kabupaten_id" class="form-select">
+                        <option value="">-- Semua Kabupaten --</option>
+                        @foreach($kabupatens as $kab)
+                            <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
+                                {{ $kab->nama_kabupaten }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">-- Semua Status --</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary bg-navy border-0">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        @forelse($users as $user)
+            <div class="col-12">
+                <div class="card h-100 shadow-sm border-0 rounded-4 hover-elevate">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center gy-3">
+                            <!-- Info Kiri -->
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                        style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user text-navy fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">{{ $user->name }}</h5>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-phone-alt me-1 fa-xs"></i>
+                                            {{ $user->no_hp ?? '-' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Info Tengah -->
+                            <div class="col-md-5">
+                                <div class="d-flex flex-column gap-2 border-start ps-md-4 border-light">
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-envelope me-2 fa-fw"></i>
+                                        {{ $user->email }}
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-building me-2 fa-fw"></i>
                                         @if($user->kabupaten)
                                             {{ $user->kabupaten->nama_kabupaten }}
                                         @else
                                             {{ $user->team ?? '-' }}
                                         @endif
-                                    </td>
-                                    <td class="px-4 py-3">
+                                    </div>
+                                    <div class="mt-1">
                                         @if($user->status === 'active')
                                             <span
                                                 class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span>
@@ -79,128 +102,153 @@
                                             <span
                                                 class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
                                             @if($user->otp_code != null)
-                                                <br><span
-                                                    class="badge bg-danger mt-2 bg-opacity-10 text-danger px-3 py-2 rounded-pill">Sedang
-                                                    Verifikasi WA</span>
+                                                <span
+                                                    class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill ms-1">Verif
+                                                    WA</span>
                                             @endif
                                         @elseif($user->status === 'rejected')
                                             <span
                                                 class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Rejected</span>
-                                            @if($user->otp_code != null)
-                                                <br><span
-                                                    class="badge bg-danger mt-2 bg-opacity-10 text-danger px-3 py-2 rounded-pill">Sedang
-                                                    Verifikasi WA</span>
-                                            @endif
                                         @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            @if($user->status === 'pending' && $user->otp_code == null)
-                                                <form action="{{ route('admin.approve', $user->id) }}" method="POST"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"
-                                                        title="Terima">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.reject', $user->id) }}" method="POST"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3"
-                                                        title="Tolak">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
-                                            @elseif($user->status === 'active')
-                                                <form action="{{ route('admin.make-pending', $user->id) }}" method="POST"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        class="btn btn-sm btn-warning rounded-pill px-3 text-white"
-                                                        title="Jadikan Pending">
-                                                        <i class="fas fa-clock me-1"></i> Pending-kan
-                                                    </button>
-                                                </form>
-                                            @endif
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.');">
+                            <!-- Info Kanan & Aksi -->
+                            <div class="col-md-3">
+                                <div
+                                    class="d-flex flex-column align-items-md-end justify-content-center h-100 ps-md-4 border-start border-light">
+                                    <div class="text-muted small mb-3 text-end">
+                                        Login: <span
+                                            class="fw-medium text-dark">{{ $user->last_login_at?->format('d M Y H:i') ?? '-' }}</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        @if($user->status === 'pending' && $user->otp_code == null)
+                                            <form action="{{ route('admin.approve', $user->id) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                    title="Hapus Pengguna">
-                                                    <i class="fas fa-trash-alt"></i>
+                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"
+                                                    title="Terima">
+                                                    <i class="fas fa-check"></i>
                                                 </button>
                                             </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">
-                                        <div class="mb-2"><i class="fas fa-users-slash fa-3x opacity-25"></i></div>
-                                        Tidak ada data pengguna yang ditemukan.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3 mt-5">
-            <h2 class="fw-bold text-navy mb-0">Profil Pengguna Belum Diselesaikan</h2>
-        </div>
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="px-4 py-3 border-0">Nama Lengkap</th>
-                                <th class="px-4 py-3 border-0">Email</th>
-                                <th class="px-4 py-3 border-0 text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($userTidakFinalPofile as $user)
-                                <tr>
-                                    <td class="px-4 py-3">
-                                        <div class="fw-bold text-dark">{{ $user->name }}</div>
-                                        <small class="text-muted">{{ $user->no_hp ?? '-' }}</small>
-                                    </td>
-                                    <td class="px-4 py-3 text-muted">{{ $user->email }}</td>
-                                    <td class="px-4 py-3 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.');">
+                                            <form action="{{ route('admin.reject', $user->id) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                    title="Hapus Pengguna">
-                                                    <i class="fas fa-trash-alt"></i>
+                                                <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3" title="Tolak">
+                                                    <i class="fas fa-times"></i>
                                                 </button>
                                             </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">
-                                        <div class="mb-2"><i class="fas fa-users-slash fa-3x opacity-25"></i></div>
-                                        Tidak ada data pengguna yang ditemukan.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                        @elseif($user->status === 'active')
+                                            <form action="{{ route('admin.make-pending', $user->id) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-warning rounded-pill px-3 text-white"
+                                                    title="Jadikan Pending">
+                                                    <i class="fas fa-clock"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                            class="d-inline"
+                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
+                                                style="width: 32px; height: 32px;" title="Hapus Pengguna">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        @empty
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-5 text-center text-muted">
+                        <div class="mb-3"><i class="fas fa-users-slash fa-3x opacity-25"></i></div>
+                        Tidak ada data pengguna yang ditemukan.
+                    </div>
+                </div>
+            </div>
+        @endforelse
     </div>
+
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3 mt-5">
+        <h2 class="fw-bold text-navy mb-0">Profil Pengguna Belum Diselesaikan</h2>
+    </div>
+    <div class="row g-3">
+        @forelse($userTidakFinalPofile as $user)
+            <div class="col-12">
+                <div class="card h-100 shadow-sm border-0 rounded-4 hover-elevate">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center gy-3">
+                            <!-- Info Kiri -->
+                            <div class="col-md-5">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                        style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user-clock text-warning fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">{{ $user->name }}</h5>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-phone-alt me-1 fa-xs"></i>
+                                            {{ $user->no_hp ?? '-' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Info Tengah -->
+                            <div class="col-md-4">
+                                <div class="d-flex flex-column gap-1 border-start ps-md-4 border-light">
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-envelope me-2 fa-fw"></i>
+                                        {{ $user->email }}
+                                    </div>
+                                    <div class="mt-1">
+                                        <span
+                                            class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill">Belum
+                                            Selesai</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aksi -->
+                            <div class="col-md-3">
+                                <div
+                                    class="d-flex flex-column align-items-md-end justify-content-center h-100 ps-md-4 border-start border-light">
+                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-4 py-2"
+                                            title="Hapus Pengguna">
+                                            <i class="fas fa-trash-alt me-2"></i> Hapus
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-5 text-center text-muted">
+                        <div class="mb-3"><i class="fas fa-users-slash fa-3x opacity-25"></i></div>
+                        Tidak ada data pengguna yang ditemukan.
+                    </div>
+                </div>
+            </div>
+        @endforelse
+    </div>
+
 @endsection

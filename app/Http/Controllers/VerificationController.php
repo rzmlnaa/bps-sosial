@@ -14,7 +14,6 @@ class VerificationController extends Controller
 {
     public function index()
     {
-
         // Get Kabupaten IDs that have pending/rejected verifications
 
         // Pending
@@ -79,7 +78,9 @@ class VerificationController extends Controller
             $kab->rejected_count = $kabupatenStats[$kab->id]['rejected'];
         }
 
-        return view('verification.index', compact('kabupatens'));
+        return view('verification.index', compact(
+            'kabupatens'
+        ));
     }
 
     public function show($kabupatenId)

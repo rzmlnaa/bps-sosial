@@ -10,35 +10,42 @@ use App\Models\KategoriKomoditas;
 use App\Models\RhPerubahanHeader;
 use App\Models\RhPerubahanDetail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Traits\HandlesRhStates;
 
 class PriceRangeController extends Controller
 {
+    use HandlesRhStates;
     public function index(Request $request)
     {
         $years = RhTahun::orderBy('tahun', 'desc')->get();
 
         $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
-        $allKomoditas = \App\Models\Komoditas::all(); // Needed for full mapping
+        $allKomoditas = \App\Models\Komoditas::orderBy('order_number', 'asc')->get(); // Needed for full mapping
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);
         $selectedKabupatenId = $request->kabupaten_id ?? ($kabupatens->first()->id ?? null);
         $thresholdPercent = $request->threshold ? ($request->threshold / 100) : null;
         $selectedCategoryIds = $request->category_ids ?? [];
-        $selectedKomoditasIds = $request->komoditas_ids ?? [];
+        $selectedCommodityIds = $request->commodity_ids ?? [];
+        $selectedAnalysisKabupatenIds = $request->analysis_kabupaten_ids ?? [];
 
         $activeYear = $years->where('id', $selectedYearId)->first();
 
         // if ($activeYear == null) {
         //     return back()->with('error', 'Tahun RH tidak ditemukan');
         // }
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        $categories = KategoriKomoditas::with([
+            'komoditas' => function ($query) {
+                $query->orderBy('order_number', 'asc');
+            }
+        ])->get();
 
         // Fetch commodities filtered by categories for the dropdown
         $availableKomoditas = \App\Models\Komoditas::query()
             ->when(!empty($selectedCategoryIds), function ($q) use ($selectedCategoryIds) {
                 return $q->whereIn('kategori_id', $selectedCategoryIds);
             })
-            ->orderBy('nama_komoditas', 'asc')
+            ->orderBy('order_number', 'asc')
             ->get();
 
         // 1. Fetch Current View Data (Specific Kabupaten)
@@ -76,7 +83,8 @@ class PriceRangeController extends Controller
             $finalMasterData = [];
 
             // We need to iterate all possible commodities to ensure we show full list state
-            $allKomoditasIds = \App\Models\Komoditas::pluck('id')->toArray();
+            //$allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
+            $allKomoditasIds = $allKomoditas->pluck('id')->toArray();
 
             foreach ($allKomoditasIds as $komId) {
                 $m = $actualMaster->get($komId);
@@ -150,8 +158,8 @@ class PriceRangeController extends Controller
         // 2. Outlier Analysis (Global Context for Selected Year)
         $outliers = [];
         if ($selectedYearId && $thresholdPercent !== null) {
-            $revisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)->orderBy('id', 'asc')->get();
-            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds, $selectedKomoditasIds);
+            $analysisRevisions = RhPerubahanHeader::where('rh_tahun_id', $selectedYearId)->orderBy('tanggal_perubahan', 'asc')->get();
+            $outliers = $this->calculateOutliers($selectedYearId, $kabupatens, $allKomoditas, $analysisRevisions, $thresholdPercent, $selectedCategoryIds, $selectedAnalysisKabupatenIds, $selectedCommodityIds);
         }
 
         $idMaxRHPerubahan = null;
@@ -182,11 +190,14 @@ class PriceRangeController extends Controller
             'thresholdPercent',
             'selectedCategoryIds',
             'availableKomoditas',
-            'selectedKomoditasIds'
+            'selectedCategoryIds',
+            'availableKomoditas',
+            'selectedAnalysisKabupatenIds',
+            'selectedCommodityIds'
         ));
     }
 
-    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedKomoditasIds = [])
+    private function calculateOutliers($yearId, $kabupatens, $allKomoditas, $revisions, $thresholdPercent, $selectedCategoryIds = [], $selectedAnalysisKabupatenIds = [], $selectedCommodityIds = [])
     {
         $activeYear = RhTahun::find($yearId);
         if (!$activeYear) {
@@ -199,16 +210,19 @@ class PriceRangeController extends Controller
             $allKomoditas = $allKomoditas->whereIn('kategori_id', $selectedCategoryIds);
         }
 
-        if (!empty($selectedKomoditasIds)) {
-            $allKomoditas = $allKomoditas->whereIn('id', $selectedKomoditasIds);
+        // Filter by specific commodities if provided
+        if (!empty($selectedCommodityIds)) {
+            $allKomoditas = $allKomoditas->whereIn('id', $selectedCommodityIds);
         }
         // Initial State: Load all Master Data (Carrying over from previous year)
-        $dataState = []; // [kab_id][kom_id] => ['min' => val, 'max' => val]
+        // Optimization: Use getBulkStates to get all kabupatens' final states of the previous year
+        $dataState = $this->getBulkStates($activeYear->tahun - 1, $kabupatens->pluck('id')->toArray());
 
+        // Ensure every kabupaten exists in dataState even if no history
         foreach ($kabupatens as $kab) {
-            // Get final state of previous year as base
-            $prevYearFinal = $this->getFinalStateForYear($activeYear->tahun - 1, $kab->id);
-            $dataState[$kab->id] = $prevYearFinal;
+            if (!isset($dataState[$kab->id])) {
+                $dataState[$kab->id] = [];
+            }
         }
 
         // Overlay current year's Master Data (explicit edits for this year)
@@ -226,7 +240,7 @@ class PriceRangeController extends Controller
         }
 
         // --- Analyze Master Period ---
-        $results['Master Data'] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent);
+        $results['Master Data'] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent, $selectedAnalysisKabupatenIds);
 
         // --- Analyze Each Revision ---
         foreach ($revisions as $rev) {
@@ -255,13 +269,13 @@ class PriceRangeController extends Controller
                 }
             }
 
-            $results[strtoupper($rev->label)] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent);
+            $results[strtoupper($rev->label)] = $this->analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $thresholdPercent, $selectedAnalysisKabupatenIds);
         }
 
         return $results;
     }
 
-    private function analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $threshold)
+    private function analyzeSnapshot($dataState, $kabupatens, $allKomoditas, $threshold, $selectedAnalysisKabupatenIds = [])
     {
         $snapshotOutliers = [];
 
@@ -293,10 +307,16 @@ class PriceRangeController extends Controller
             // Check Min Outliers (Low)
             if ($avgMin > 0) {
                 foreach ($pricesMin as $kid => $p) {
+                    // Filter: Only include if no filter selected OR if this kab is in selected list
+                    if (!empty($selectedAnalysisKabupatenIds) && !in_array($kid, $selectedAnalysisKabupatenIds)) {
+                        continue;
+                    }
+
                     if ($p < $avgMin * (1 - $threshold)) {
+                        $kab = $kabupatens->firstWhere('id', $kid);
                         $itemOutliers['below'][] = [
-                            'kode_kab' => $kabupatens->find($kid)->kode_kab,
-                            'kab' => $kabupatens->find($kid)->nama_kabupaten,
+                            'kode_kab' => $kab->kode_kab ?? '??',
+                            'kab' => $kab->nama_kabupaten ?? 'Unknown',
                             'type' => 'MIN',
                             'val' => $p,
                             'avg' => $avgMin,
@@ -310,10 +330,16 @@ class PriceRangeController extends Controller
             // Check Max Outliers (High)
             if ($avgMax > 0) {
                 foreach ($pricesMax as $kid => $p) {
+                    // Filter: Only include if no filter selected OR if this kab is in selected list
+                    if (!empty($selectedAnalysisKabupatenIds) && !in_array($kid, $selectedAnalysisKabupatenIds)) {
+                        continue;
+                    }
+
                     if ($p > $avgMax * (1 + $threshold)) {
+                        $kab = $kabupatens->firstWhere('id', $kid);
                         $itemOutliers['above'][] = [
-                            'kode_kab' => $kabupatens->find($kid)->kode_kab,
-                            'kab' => $kabupatens->find($kid)->nama_kabupaten,
+                            'kode_kab' => $kab->kode_kab ?? '??',
+                            'kab' => $kab->nama_kabupaten ?? 'Unknown',
                             'type' => 'MAX',
                             'val' => $p,
                             'avg' => $avgMax,
@@ -344,69 +370,5 @@ class PriceRangeController extends Controller
         $fileName = "RH_{$year->tahun}.xlsx";
 
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PriceRangeExport($yearId), $fileName);
-    }
-
-    private function getFinalStateForYear($year, $kabupatenId)
-    {
-        if ($year < 2020)
-            return []; // Safety break
-
-        // Always start with previous year's state (Recursive)
-        $baseState = $this->getFinalStateForYear($year - 1, $kabupatenId);
-
-        $rhTahun = RhTahun::where('tahun', $year)->first();
-
-        // If current year not defined in DB, return previous data
-        if (!$rhTahun)
-            return $baseState;
-
-        // 1. Overlay Master Values
-        $masterNilai = RhPerubahanDetail::where('rh_tahun_id', $rhTahun->id)
-            ->whereNull('rh_perubahan_header_id')
-            ->where('kabupaten_id', $kabupatenId)
-            ->get();
-
-        foreach ($masterNilai as $m) {
-            if ($m->min_edit !== null || $m->max_edit !== null) {
-                $baseState[$m->komoditas_id] = [
-                    'min' => $m->min_edit,
-                    'max' => $m->max_edit,
-                    'alasan' => $m->alasan,
-                ];
-            }
-        }
-
-        // 2. Apply Revisions for this year
-        $revisions = RhPerubahanHeader::where('rh_tahun_id', $rhTahun->id)
-            ->orderBy('tanggal_perubahan', 'asc')
-            ->get();
-
-        if ($revisions->isNotEmpty()) {
-            $details = RhPerubahanDetail::whereIn('rh_perubahan_header_id', $revisions->pluck('id'))
-                ->where('kabupaten_id', $kabupatenId)
-                ->get()
-                ->groupBy('rh_perubahan_header_id');
-
-            foreach ($revisions as $rev) {
-                if (isset($details[$rev->id])) {
-                    foreach ($details[$rev->id] as $det) {
-                        $komId = $det->komoditas_id;
-                        if (!isset($baseState[$komId])) {
-                            $baseState[$komId] = ['min' => null, 'max' => null, 'alasan' => null];
-                        }
-                        if ($det->min_edit !== null)
-                            $baseState[$komId]['min'] = $det->min_edit;
-                        if ($det->max_edit !== null)
-                            $baseState[$komId]['max'] = $det->max_edit;
-                        if ($det->alasan !== null)
-                            $baseState[$komId]['alasan'] = $det->alasan;
-                        elseif ($det->min_edit !== null || $det->max_edit !== null)
-                            $baseState[$komId]['alasan'] = null;
-                    }
-                }
-            }
-        }
-
-        return $baseState;
     }
 }

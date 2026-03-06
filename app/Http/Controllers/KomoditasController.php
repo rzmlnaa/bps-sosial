@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Komoditas;
+use App\Models\RhPerubahanDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -41,7 +42,7 @@ class KomoditasController extends Controller
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
                 } else {
-                    Komoditas::create([
+                    $newKomoditas = Komoditas::create([
                         'kategori_id' => $kategori_id,
                         'nama_komoditas' => $name,
                         'satuan' => $satuan,
@@ -49,6 +50,7 @@ class KomoditasController extends Controller
                         'user_id_add' => Auth::id() ?? 1,
                         'user_id_update' => Auth::id() ?? 1,
                     ]);
+                    $newKomoditas->update(['order_number' => $newKomoditas->id]);
                 }
 
                 $processedNames[] = $name;
@@ -57,10 +59,24 @@ class KomoditasController extends Controller
         }
 
         // Delete commodities that were in this category but are no longer in the provided list
+        // PROTECTION: Only delete if not in use in tb_rh_perubahan_detail with min_edit/max_edit not null
         if (!empty($processedNames)) {
-            Komoditas::where('kategori_id', $kategori_id)
+            $toDelete = Komoditas::where('kategori_id', $kategori_id)
                 ->whereNotIn('nama_komoditas', $processedNames)
-                ->delete();
+                ->get();
+
+            foreach ($toDelete as $item) {
+                /** @var \App\Models\Komoditas $item */
+                $isInUse = RhPerubahanDetail::where('komoditas_id', $item->id)
+                    ->where(function ($query) {
+                        $query->whereNotNull('min_edit')
+                            ->orWhereNotNull('max_edit');
+                    })->exists();
+
+                if (!$isInUse) {
+                    $item->delete();
+                }
+            }
         }
 
         // Save state to session
@@ -103,6 +119,18 @@ class KomoditasController extends Controller
     public function destroy(Request $request, $id)
     {
         $komoditas = Komoditas::findOrFail($id);
+
+        // Check if in use
+        $isInUse = RhPerubahanDetail::where('komoditas_id', $id)
+            ->where(function ($query) {
+                $query->whereNotNull('min_edit')
+                    ->orWhereNotNull('max_edit');
+            })->exists();
+
+        if ($isInUse) {
+            return redirect()->back()->with('error', 'Komoditas ' . $komoditas->nama_komoditas . ' tidak dapat dihapus karena sudah memiliki data rincian perubahan harga.');
+        }
+
         $kategori_id = $komoditas->kategori_id;
         $komoditas->delete();
 
@@ -120,9 +148,24 @@ class KomoditasController extends Controller
     {
         $data = Komoditas::where('kategori_id', $kategori_id)
             ->with(['userAdd', 'userUpdate'])
+            ->orderBy('order_number', 'asc')
             ->get();
 
         return response()->json($data);
+    }
+
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tb_komoditas,id',
+        ]);
+
+        foreach ($request->ids as $index => $id) {
+            Komoditas::where('id', $id)->update(['order_number' => $index + 1]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function clearData(Request $request)
@@ -131,7 +174,25 @@ class KomoditasController extends Controller
             'kategori_id' => 'required|exists:tb_kategori_komoditas,id',
         ]);
 
-        Komoditas::where('kategori_id', $request->kategori_id)->delete();
+        $komoditasList = Komoditas::where('kategori_id', $request->kategori_id)->get();
+        $deletedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($komoditasList as $item) {
+            /** @var \App\Models\Komoditas $item */
+            $isInUse = RhPerubahanDetail::where('komoditas_id', $item->id)
+                ->where(function ($query) {
+                    $query->whereNotNull('min_edit')
+                        ->orWhereNotNull('max_edit');
+                })->exists();
+
+            if (!$isInUse) {
+                $item->delete();
+                $deletedCount++;
+            } else {
+                $skippedCount++;
+            }
+        }
 
         // Save state to session
         session([
@@ -139,6 +200,10 @@ class KomoditasController extends Controller
             'active_tab' => $request->active_tab ?? 'pills-input-tab',
             'input_mode' => $request->input_mode ?? 'mode-paste'
         ]);
+
+        if ($skippedCount > 0) {
+            return redirect()->back()->with('warning', $deletedCount . ' komoditas dihapus. ' . $skippedCount . ' komoditas dilewati karena sudah memiliki data rincian perubahan harga.');
+        }
 
         return redirect()->back()->with('success', 'Data komoditas untuk kategori tersebut telah dikosongkan.');
     }

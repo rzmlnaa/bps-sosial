@@ -34,8 +34,20 @@
                 }
             });
 
-            // Initialize Tom Select for Commodity Filter
-            new TomSelect('#komoditasFilter', {
+            // Initialize Tom Select for Kabupaten Filter (Analysis)
+            new TomSelect('#kabupatenFilter', {
+                plugins: ['remove_button'],
+                maxOptions: null,
+                placeholder: 'Cari kabupaten...',
+                render: {
+                    no_results: function (data, escape) {
+                        return '<div class="no-results">Kabupaten "' + escape(data.input) + '" tidak ditemukan</div>';
+                    },
+                }
+            });
+
+            // Initialize Tom Select for Commodity Filter (Analysis)
+            new TomSelect('#commodityFilter', {
                 plugins: ['remove_button'],
                 maxOptions: null,
                 placeholder: 'Cari komoditas...',
@@ -46,6 +58,82 @@
                 }
             });
         });
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        function confirmExport(e, btn, year) {
+            e.preventDefault();
+            const url = btn.getAttribute('href');
+            // Store original content to revert later
+            const originalContent = btn.innerHTML;
+
+            Swal.fire({
+                title: `Apakah yakin export RH Tahun ${year} ini?`,
+                html: 'Ketika proses mengekspor data. Mohon jangan meninggalkan halaman sampai proses selesai hingga terlihat "<i class="fas fa-check me-2"></i>Berhasil!"',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754', // Match success btn color
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Export',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Disable button and show loading state
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none'; // Prevent double clicks
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sedang mengunduh..';
+
+                    // Use fetch to handle the download and know when it starts/finishes
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+
+                            // Try to get filename from headers
+                            let filename = 'data_export.xlsx';
+                            const disposition = response.headers.get('Content-Disposition');
+                            if (disposition && disposition.indexOf('attachment') !== -1) {
+                                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                                const matches = filenameRegex.exec(disposition);
+                                if (matches != null && matches[1]) {
+                                    filename = matches[1].replace(/['"]/g, '');
+                                }
+                            }
+
+                            return response.blob().then(blob => ({ blob, filename }));
+                        })
+                        .then(({ blob, filename }) => {
+                            // Create download link
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+
+                            // Success State
+                            btn.innerHTML = '<i class="fas fa-check me-2"></i> Berhasil!';
+
+                            // Revert after delay
+                            setTimeout(() => {
+                                btn.classList.remove('disabled');
+                                btn.style.pointerEvents = 'auto';
+                                btn.innerHTML = originalContent;
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.error('Download failed:', error);
+                            btn.classList.remove('disabled');
+                            btn.style.pointerEvents = 'auto';
+                            btn.innerHTML = originalContent;
+                            Swal.fire('Error', 'Gagal mengunduh file.', 'error');
+                        });
+                }
+            });
+        }
     </script>
 @endpush
 
@@ -61,9 +149,9 @@
                     @if (auth()->user()->status == 'active' && auth()->user()->kabupaten->kode_kab != '6100')
 
                         <!-- <a href="{{ route('rh-nilai.index') }}" class="btn fw-bold shadow-sm"
-                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
-                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
-                                                                                                                                                                                                                                                                                                                                                </a> -->
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fas fa-edit me-1"></i> Input Nilai RH Kabupaten
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a> -->
                         <a href="/price-range/input-nilai?rh_tahun_id=&kabupaten_id={{ auth()->user()->kabupaten->id }}&revision_id={{ $idMaxRHPerubahan }}"
                             class="btn fw-bold shadow-sm"
                             style="background-color: #fff; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
@@ -79,7 +167,7 @@
                         </a>
                         <a href="{{ route('price-range.input') }}" class="btn text-white fw-bold shadow-sm"
                             style="background-color: var(--bps-blue);">
-                            <i class="fas fa-plus-circle me-1"></i> Input Komoditas
+                            <i class="fas fa-cog me-1 fa-spin"></i> Kelola Komoditas
                         </a>
                     @endif
                 @endif
@@ -89,30 +177,36 @@
             <!-- Analisis Insight Section -->
             <div class="card border-0 shadow-sm mb-4" id="analysis-section" style="border-radius: 12px;">
                 <div class="card-header bg-white py-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h5 class="fw-bold mb-0 text-dark">
-                            <i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten
-                            {{ $activeYear->tahun }}
-                        </h5>
-                        <div class="d-flex flex-column align-items-end gap-1" style="min-width: 250px;">
-                            <div class="d-flex align-items-center gap-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 col-12 mb-2 mb-md-0">
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-search-dollar me-2 text-primary"></i>Analisis Harga Antar Kabupaten
+                                {{ $activeYear->tahun }}
+                            </h5>
+                        </div>
+                        <div class="col-md-4 col-12 text-md-end">
+                            <div class="d-inline-flex align-items-center gap-2">
                                 <label class="small fw-bold text-muted mb-0">BATAS</label>
-                                <div class="input-group input-group-sm" style="width: 100px;">
+                                <div class="input-group input-group-sm" style="max-width: 120px;">
                                     <input type="number" name="threshold" id="thresholdInput"
-                                        class="form-control text-center fw-bold" value="{{ request('threshold') }}" min="1"
-                                        max="100" form="filter-form" oninput="validateThresholdInput(this)"
+                                        class="form-control text-center fw-bold" value="{{ request('threshold') }}"
+                                        form="filter-form" oninput="validateThresholdInput(this)"
                                         onchange="submitThreshold(this)">
                                     <span class="input-group-text fw-bold">%</span>
                                 </div>
                             </div>
                             <input type="hidden" name="active_tab" id="activeTabInput"
                                 value="{{ request('active_tab', array_key_first($outliers ?? [])) }}" form="filter-form">
-                            <small id="thresholdError" class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
-                                style="font-size: 0.7rem;">Masukan angka 1-100</small>
+                            <div class="mt-1">
+                                <small id="thresholdError" class="text-danger {{ request('threshold') ? 'd-none' : '' }}"
+                                    style="font-size: 0.75rem;">
+                                    Masukan angka 1-100
+                                </small>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3 row g-2">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Filter Kategori
                                 (Analisis)</label>
                             <select name="category_ids[]" id="categoryFilter" class="form-select form-select-sm" multiple
@@ -125,16 +219,26 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Pilih Komoditas
-                                (Analisis)</label>
-                            <select name="komoditas_ids[]" id="komoditasFilter" class="form-select form-select-sm" multiple
-                                form="filter-form"
-                                placeholder="{{ empty($selectedCategoryIds) ? 'Pilih kategori dulu...' : 'Cari komoditas...' }}"
-                                onchange="this.form.submit()">
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">PILIH KOMODITAS
+                                (ANALISIS)</label>
+                            <select name="commodity_ids[]" id="commodityFilter" class="form-select form-select-sm" multiple
+                                form="filter-form" placeholder="Cari komoditas..." onchange="this.form.submit()">
                                 @foreach($availableKomoditas as $kom)
-                                    <option value="{{ $kom->id }}" {{ in_array($kom->id, $selectedKomoditasIds) ? 'selected' : '' }}>
+                                    <option value="{{ $kom->id }}" {{ in_array($kom->id, $selectedCommodityIds) ? 'selected' : '' }}>
                                         {{ $kom->nama_komoditas }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted text-uppercase mb-2 d-block">PILIH KABUPATEN
+                                (ANALISIS)</label>
+                            <select name="analysis_kabupaten_ids[]" id="kabupatenFilter" class="form-select form-select-sm"
+                                multiple form="filter-form" placeholder="Cari kabupaten..." onchange="this.form.submit()">
+                                @foreach($kabupatens as $kab)
+                                    <option value="{{ $kab->id }}" {{ in_array($kab->id, $selectedAnalysisKabupatenIds) ? 'selected' : '' }}>
+                                        {{ $kab->nama_kabupaten }}
                                     </option>
                                 @endforeach
                             </select>
@@ -377,6 +481,7 @@
                     @if($selectedYearId && $selectedKabupatenId)
                         <div class="ms-md-auto">
                             <a href="{{ route('price-range.export', ['year_id' => $selectedYearId, 'kabupaten_id' => $selectedKabupatenId]) }}"
+                                onclick="confirmExport(event, this, '{{ $activeYear->tahun }}')"
                                 class="btn btn-success fw-bold px-4 shadow-sm h-100 d-flex align-items-center">
                                 <i class="fas fa-file-excel me-2"></i> Export Excel
                             </a>
@@ -390,13 +495,14 @@
 
             <!-- Data Table -->
             <div id="commodity-table" class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
-                <div class="table-responsive">
+                <div class="table-responsive" id="mainTableContainer"
+                    style="max-height: var(--table-height, 80vh); overflow-y: auto;">
                     <table class="table table-bordered align-middle mb-0">
-                        <thead class="bg-light text-center align-middle">
+                        <thead class="bg-light text-center align-middle sticky-header">
                             <tr>
-                                <th rowspan="2" class="ps-4" style="min-width: 200px;">KOMODITAS</th>
-                                <th rowspan="2" style="width: 80px;">SATUAN</th>
-                                <th rowspan="2" style="width: 100px;">BATAS HARGA</th>
+                                <th rowspan="2" class="ps-4 sticky-col-1">KOMODITAS</th>
+                                <th rowspan="2" class="sticky-col-2">SATUAN</th>
+                                <th rowspan="2" class="sticky-col-3">BATAS HARGA</th>
                                 <th colspan="3" class="bg-light text-muted prev-year-col d-none">AKHIR
                                     {{ $activeYear->tahun - 1 }}
                                 </th>
@@ -429,8 +535,10 @@
                                         $colspan = 6 + ($revisions->count() * 3);
                                     @endphp
                                     <td colspan="{{ $colspan }}"
-                                        class="ps-4 fw-bold text-muted small text-uppercase py-2category-header-cell">
-                                        <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
+                                        class="ps-4 fw-bold text-muted small text-uppercase py-2 category-header-cell sticky-col-category">
+                                        <div class="sticky-category-name">
+                                            <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
+                                        </div>
                                     </td>
                                 </tr>
                                 @foreach($category->komoditas as $komo)
@@ -439,11 +547,11 @@
                                     @endphp
 
                                     <tr>
-                                        <td class="ps-4">{{ $komo->nama_komoditas }}</td>
-                                        <td class="text-center">
+                                        <td class="ps-4 sticky-col-1 bg-white">{{ $komo->nama_komoditas }}</td>
+                                        <td class="text-center sticky-col-2 bg-white">
                                             <span class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center sticky-col-3 bg-white">
                                             {{ number_format($komo->batas_selisih_harga ?? 0, 0, ',', '.') }}
                                         </td>
 
@@ -469,7 +577,8 @@
                                             $isInherited = ($prevMin !== null && $master && $master->min_nilai == $prevMin)
                                                 && ($prevMax !== null && $master && $master->max_nilai == $prevMax);
 
-                                            $isMasterExceeded = ($masterDiff > $limit) && !$isInherited;
+                                            // Highlight red ONLY if it's the final state (no revisions) AND missing reason
+                                            $isMasterExceeded = ($masterDiff > $limit) && empty($master->alasan) && ($revisions->count() == 0);
                                         @endphp
 
                                         <!-- Previous Year Columns (Hidden by Default) -->
@@ -513,6 +622,10 @@
                                             $currentMin = $master ? $master->min_nilai : null;
                                             $currentMax = $master ? $master->max_nilai : null;
                                             $currentAlasan = $master ? $master->alasan : null;
+
+                                            // REMOVED: Apply within-range reset logic for Master
+                                            // We keep it so it can be carried forward to revisions
+                                            // only the final state (last revision) will be subject to auto-reset
                                         @endphp
 
                                         <!-- Revision Data -->
@@ -556,11 +669,16 @@
                                                 $limit = $komo->batas_selisih_harga ?? 0;
                                                 $isDiffExceeded = $currentDiff > $limit;
 
+                                                // Additional check: If now within range after edit, reset reason ONLY for the last revision
+                                                if ($currentDiff <= $limit && $loop->last) {
+                                                    $currentAlasan = null;
+                                                }
+
                                                 // Check if there was an edit in this revision
                                                 $hasEdit = ($revData && ($revData->min_edit !== null || $revData->max_edit !== null));
 
-                                                // Red only if exceeded AND edited in this period
-                                                $isExceeded = $isDiffExceeded && $hasEdit;
+                                                // Highlight red ONLY if it's the final state (last revision) AND missing reason
+                                                $isExceeded = $isDiffExceeded && empty($currentAlasan) && $loop->last;
 
                                                 // Approved Logic: Must be approved AND have Min, Max, Alasan in THIS revision
                                                 $revIsApproved = ($revData->verification_status ?? '') === 'approved'
@@ -653,6 +771,95 @@
         .table-bordered> :not(caption)>*>* {
             border-width: 1px;
             border-color: #f1f5f9;
+        }
+
+        @media (min-width: 992px) {
+            .sticky-header {
+                position: sticky;
+                top: 0;
+                z-index: 4;
+            }
+
+            /* Sticky Columns for Rentang Harga Table */
+            .sticky-col-1 {
+                position: sticky !important;
+                left: 0;
+                z-index: 2;
+                min-width: 250px;
+                max-width: 250px;
+                /* use box-shadow to simulate right border without breaking sticky layout */
+                box-shadow: inset -1px 0 0 #f1f5f9;
+            }
+
+            .sticky-col-2 {
+                position: sticky !important;
+                left: 250px;
+                z-index: 2;
+                min-width: 100px;
+                max-width: 100px;
+                box-shadow: inset -1px 0 0 #f1f5f9;
+            }
+
+            .sticky-col-3 {
+                position: sticky !important;
+                left: 350px;
+                z-index: 2;
+                min-width: 130px;
+                max-width: 130px;
+                border-right: 2px solid #dee2e6 !important;
+            }
+
+            .sticky-col-category {
+                position: sticky !important;
+                left: 0;
+                z-index: 3;
+                /* Lower than main headers */
+                background-color: #f8f9fa !important;
+            }
+
+            .sticky-category-name {
+                position: sticky;
+                left: 1.5rem;
+                /* Match ps-4 padding-start */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Ensure Table Headers stay above scrolling content */
+            thead .sticky-col-1,
+            thead .sticky-col-2,
+            thead .sticky-col-3 {
+                z-index: 5 !important;
+                background-color: #f8f9fa !important;
+            }
+
+            /* Apply solid background to td so they hide scrolling behind them */
+            tbody .sticky-col-1,
+            tbody .sticky-col-2,
+            tbody .sticky-col-3 {
+                background-color: #fff !important;
+            }
+
+            /* Fix the row coloring overlapping */
+            table tbody tr:hover .sticky-col-1,
+            table tbody tr:hover .sticky-col-2,
+            table tbody tr:hover .sticky-col-3 {
+                background-color: #f8f9fa !important;
+            }
+        }
+
+        /* Custom Adjustments for Full Height Mode */
+        @media (min-width: 992px) {
+            .main-content {
+                height: 100vh;
+            }
+
+            .sticky-header {
+                position: sticky;
+                top: 0;
+                z-index: 4;
+            }
+        }
     </style>
 
     <script>
@@ -749,5 +956,72 @@
                 input.value = tabName;
             }
         }
+
+        // Dynamic Height Calculation for Table
+        let isAdjusting = false;
+        function adjustTableHeight() {
+            if (isAdjusting) return;
+
+            const tableContainer = document.getElementById('mainTableContainer');
+            if (!tableContainer) return;
+
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+
+            if (window.innerWidth < 992) {
+                tableContainer.style.removeProperty('--table-height');
+                document.body.style.overflow = 'auto';
+                mainContent.style.overflow = 'auto';
+                return;
+            }
+
+            isAdjusting = true;
+
+            // Temporary allow scrolling to measure natural positions
+            const prevOverflow = mainContent.style.overflow;
+            mainContent.style.overflow = 'auto';
+
+            const windowHeight = window.innerHeight;
+            const footer = document.querySelector('footer');
+            const footerHeight = footer ? footer.offsetHeight : 60;
+
+            // Get position relative to main-content
+            const rect = tableContainer.getBoundingClientRect();
+            const scrollTop = mainContent.scrollTop;
+            const absoluteTop = rect.top + scrollTop;
+
+            // Available space from natural position to bottom of screen
+            // We want the height to be (Window - AbsoluteTop - Footer - Padding)
+            const availableHeight = windowHeight - absoluteTop - footerHeight - 30;
+
+            if (availableHeight > 250) {
+                tableContainer.style.setProperty('--table-height', availableHeight + 'px');
+                document.body.style.overflow = 'hidden';
+                mainContent.style.overflow = 'hidden';
+                // Reset scroll to top to ensure the dashboard fits perfectly
+                mainContent.scrollTop = 0;
+            } else {
+                tableContainer.style.removeProperty('--table-height');
+                document.body.style.overflow = 'auto';
+                mainContent.style.overflow = 'auto';
+            }
+
+            isAdjusting = false;
+        }
+
+        window.addEventListener('load', adjustTableHeight);
+        window.addEventListener('resize', adjustTableHeight);
+
+        // Also trigger after tab changes
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', adjustTableHeight);
+        });
+
+        // Trigger when analysis content/filters might change layout
+        const observer = new MutationObserver(adjustTableHeight);
+        const analysisSection = document.getElementById('analysis-section');
+        const filterSection = document.getElementById('filter-section');
+        if (analysisSection) observer.observe(analysisSection, { attributes: true, childList: true });
+        if (filterSection) observer.observe(filterSection, { attributes: true, childList: true });
     </script>
 @endsection

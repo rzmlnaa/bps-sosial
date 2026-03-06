@@ -3,6 +3,46 @@
 @section('title', 'Input Nilai RH Kabupaten - BPS Kalbar')
 
 @section('content')
+    <style>
+        .table-responsive {
+            max-height: 80vh;
+            /* Limit height to enable scrolling within container if needed, or stick to viewport */
+            overflow-y: auto;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background-color: #f8fafc;
+            /* Match bg-light */
+        }
+
+        thead tr:nth-child(1) th {
+            position: sticky;
+            top: 0;
+            z-index: 1021;
+            background-color: #f8fafc !important;
+            box-shadow: inset 0 -1px 0 #f1f5f9;
+        }
+
+        thead tr:nth-child(2) th {
+            position: sticky;
+            top: 45px;
+            /* Adjust based on Row 1 height */
+            z-index: 1021;
+            background-color: #f8fafc !important;
+            box-shadow: inset 0 -1px 0 #f1f5f9;
+        }
+
+        /* Ensure category rows also look good if they are sticky (optional, but requested behavior usually implies headers) */
+        .bg-light.category-header {
+            position: sticky;
+            top: 90px;
+            /* Adjust based on Row 1 + Row 2 height */
+            z-index: 1010;
+        }
+    </style>
     <div class="fade-in-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
@@ -13,11 +53,8 @@
                 <a href="{{ route('price-range.index') }}" class="btn btn-outline-secondary fw-bold shadow-sm">
                     <i class="fas fa-arrow-left me-1"></i> Kembali
                 </a>
-                <button type="submit" form="form-save-nilai" class="btn text-white fw-bold shadow-sm"
-                    style="background-color: var(--bps-blue);">
-                    <i class="fas fa-save me-1"></i> Simpan Data
-                </button>
             </div>
+
         </div>
 
         @if(session('success'))
@@ -40,7 +77,8 @@
                     <i class="fas fa-exclamation-circle text-danger fs-4 me-2"></i>
                     <div>
                         <h5 class="alert-heading fw-bold mb-0 text-danger">Perhatian: Terdapat Data Ditolak!</h5>
-                        <p class="mb-0 small text-muted">Beberapa data yang Anda ajukan telah ditolak oleh Verifikator. Mohon perbaiki data berikut:</p>
+                        <p class="mb-0 small text-muted">Beberapa data yang Anda ajukan telah ditolak oleh Verifikator. Mohon
+                            perbaiki data berikut:</p>
                     </div>
                 </div>
                 <hr class="text-danger opacity-25 my-2">
@@ -74,413 +112,468 @@
             </div>
         @endif
 
-            <!-- Filters & Info -->
-            <div class="row g-3 mb-4">
-                <div class="col-lg-8">
-                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                        <div class="card-body p-4">
-                            <form action="{{ route('rh-nilai.index') }}" method="GET" class="row g-3 align-items-end"
-                                id="filter-form">
-                                <div class="col-md-4">
-                                    <label class="form-label small fw-bold text-muted text-uppercase">Tahun RH Aktif</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-0"><i
-                                                class="fas fa-calendar-alt text-muted"></i></span>
-                                        <input type="text" class="form-control bg-light border-0 fw-bold"
-                                            value="{{ $activeYear->tahun }}" readonly>
-                                        <input type="hidden" name="rh_tahun_id" value="{{ $activeYear->id }}">
-                                    </div>
+        <!-- Filters & Info -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-body p-4">
+                        <form action="{{ route('rh-nilai.index') }}" method="GET" class="row g-3 align-items-end"
+                            id="filter-form">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Tahun RH Aktif</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i
+                                            class="fas fa-calendar-alt text-muted"></i></span>
+                                    <input type="text" class="form-control bg-light border-0 fw-bold"
+                                        value="{{ $activeYear->tahun }}" readonly>
+                                    <input type="hidden" name="rh_tahun_id" value="{{ $activeYear->id }}">
                                 </div>
+                            </div>
 
-                                <div class="col-md-4">
-                                    <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
-                                    <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
+                                <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
+                                                                                                                            onchange="this.form.submit()">
+                                                                                                                            @foreach($kabupatens as $kab)
+                                                                                                                                <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                                                                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                                                                                                </option>
+                                                                                                                            @endforeach
+                                                                                                                        </select> -->
+
+
+                                @if (auth()->user()->kabupaten->kode_kab == '6100')
+                                    <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
                                         onchange="this.form.submit()">
                                         @foreach($kabupatens as $kab)
+
                                             <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
                                                 [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                             </option>
                                         @endforeach
-                                    </select> -->
-
-                                   
-                                    @if (auth()->user()->kabupaten->kode_kab == '6100')
-                                        <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none" onchange="this.form.submit()">
-                                            @foreach($kabupatens as $kab)
-                                                
-                                                <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                            
-                                    @else
-                                         <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none" onchange="this.form.submit()">
-                                            <option value="{{ auth()->user()->kabupaten->id }}">[{{ auth()->user()->kabupaten->kode_kab }}] {{ auth()->user()->kabupaten->nama_kabupaten }}</option>
-                                            </select>
-                                        @endif
-                                    
-                                    
-                                    
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label small fw-bold text-muted text-uppercase">Pilih Header Perubahan
-                                        (Optional)</label>
-                                    <select name="revision_id" class="form-select border-0 bg-light shadow-none"
-                                        onchange="this.form.submit()">
-                                        <option value="">-- Master Nilai (Input Utama) --</option>
-                                        @if($revisions->count() > 0)
-                                            <option value="all" {{ $selectedRevisionId == 'all' ? 'selected' : '' }}>-- Semua
-                                                Perubahan --
-                                            </option>
-                                        @endif
-                                        @foreach($revisions as $rev)
-                                            <option value="{{ $rev->id }}" {{ $selectedRevisionId == $rev->id ? 'selected' : '' }}>
-                                                {{ $rev->label }}
-                                            </option>
-                                        @endforeach
                                     </select>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card border-0 shadow-sm h-100"
-                        style="border-radius: 12px; background: linear-gradient(135deg, var(--bps-blue), #007bbd);">
-                        <div class="card-body p-4 text-white d-flex flex-column justify-content-center">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
-                                    <i class="fas fa-info-circle fa-lg"></i>
-                                </div>
-                                <h6 class="mb-0 fw-bold">Panduan Admin Kabupaten/Kota</h6>
+
+                                @else
+                                    <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
+                                        onchange="this.form.submit()">
+                                        <option value="{{ auth()->user()->kabupaten->id }}">
+                                            [{{ auth()->user()->kabupaten->kode_kab }}]
+                                            {{ auth()->user()->kabupaten->nama_kabupaten }}
+                                        </option>
+                                    </select>
+                                @endif
+
+
+
                             </div>
-                            <p class="small mb-0 opacity-75">Jika tidak terdapat perubahan RH, kolom tidak perlu diisi. Sistem akan menampilkan nilai RH terakhir pada periode atau tahun sebelumnya</p>
-                        </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Pilih Header Perubahan
+                                    (Optional)</label>
+                                <select name="revision_id" class="form-select border-0 bg-light shadow-none"
+                                    onchange="this.form.submit()">
+                                    <option value="">-- Master Nilai (Input Utama) --</option>
+                                    @if($revisions->count() > 0)
+                                        <option value="all" {{ $selectedRevisionId == 'all' ? 'selected' : '' }}>-- Semua
+                                            Perubahan --
+                                        </option>
+                                    @endif
+                                    @foreach($revisions as $rev)
+                                        <option value="{{ $rev->id }}" {{ $selectedRevisionId == $rev->id ? 'selected' : '' }}>
+                                            {{ $rev->label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
-
-            <!-- Data Table -->
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
-                <form action="{{ route('rh-nilai.save') }}" method="POST" id="form-save-nilai">
-                    @csrf
-                    <input type="hidden" name="rh_tahun_id" value="{{ $activeYear->id }}">
-                    <input type="hidden" name="kabupaten_id" value="{{ $selectedKabupatenId }}">
-                    <input type="hidden" name="revision_id" value="{{ $selectedRevisionId }}">
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle mb-0">
-                            <thead class="bg-light text-center align-middle">
-                                @php
-                                    // Show Master if:
-                                    // 1. "All" is selected.
-                                    // 2. No specific revision is selected (Default view, or Revision ID empty).
-                                    // 3. A specific revision is selected BUT it is the first one (count < 2, so comparisons need Master).
-                                    $latestRevisionId = $latestRevisionId ?? null; // Ensure variable exists
-                                    $isMasterEditable = empty($latestRevisionId);
-
-                                    $showMaster = ($selectedRevisionId === 'all' || !$selectedRevisionId || $displayRevisions->count() < 2);
-                                    // Only show Prev Year if:
-                                    // 1. Master is selected (Input Utama) OR
-                                    // 2. All Revisions are selected.
-                                    // (If a specific revision is selected, we hide Prev Year to save space/reduce redundancy as per Step 23).
-                                    $showPrev = !empty($prevYearFinal) && (
-                                        $selectedRevisionId === 'all' ||
-                                        !$selectedRevisionId
-                                    );
-                                @endphp
-                                <tr>
-                                    <th rowspan="2" class="ps-4" style="min-width: 250px;">NAMA</th>
-                                    <th rowspan="2" style="width: 100px;">SATUAN</th>
-                                    <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
-                                    @if($showPrev)
-                                        <th colspan="3" class="bg-secondary bg-opacity-10 text-secondary border-secondary">
-                                            {{ strtoupper($prevYearLabel) }}
-                                        </th>
-                                    @endif
-                                    @if($showMaster)
-                                        <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
-                                            ({{ substr($activeYear->tahun, -2) }})</th>
-                                    @endif
-
-                                    @foreach($displayRevisions as $rev)
-                                        <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    @if($showPrev)
-                                        <th style="width: 120px;"
-                                            class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MIN</th>
-                                        <th style="width: 120px;"
-                                            class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MAX</th>
-                                        <th style="width: 200px;"
-                                            class="bg-secondary bg-opacity-10 text-secondary small border-secondary">ALASAN</th>
-                                    @endif
-                                    @if($showMaster)
-                                        <th style="width: 120px;" class="bg-blue-light text-blue small">
-                                            MIN_{{ substr($activeYear->tahun, -2) }}</th>
-                                        <th style="width: 120px;" class="bg-blue-light text-blue small">
-                                            MAX_{{ substr($activeYear->tahun, -2) }}</th>
-                                        <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
-                                    @endif
-
-                                    @foreach($displayRevisions as $rev)
-                                        <th style="width: 120px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
-                                        <th style="width: 120px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
-                                        <th style="width: 200px;" class="bg-orange-light text-orange small">ALASAN</th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($categories as $category)
-                                    <tr class="bg-light">
-                                        @php
-                                            // 3 Fixed columns + (3 if Prev Shown) + (3 if Master shown) + (3 per Revision)
-                                            $colspan = 3 + ($showPrev ? 3 : 0) + ($showMaster ? 3 : 0) + ($displayRevisions->count() * 3);
-                                        @endphp
-                                        <td colspan="{{ $colspan }}" class="ps-4 fw-bold text-muted small text-uppercase py-2">
-                                            <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
-                                        </td>
-                                    </tr>
-                                    @foreach($category->komoditas as $komo)
-                                        @php
-                                            $master = $masterNilai->get($komo->id);
-
-                                            // Check if Master has explicit values (Min OR Max is set)
-                                            $hasMasterData = $master && (($master->min_nilai ?? null) !== null || ($master->max_nilai ?? null) !== null);
-
-                                            if ($hasMasterData) {
-                                                // Use explicit Master values (even if reason is null, do NOT fallback)
-                                                $mMin = $master->min_nilai;
-                                                $mMax = $master->max_nilai;
-                                                $mAlasan = $master->alasan;
-                                            } else {
-                                                // Master is empty
-                                                $mMin = null;
-                                                $mMax = null;
-                                                $mAlasan = null;
-
-                                                // If Read-Only mode (Revisions exist), Fallback to Prev Year used as Baseline
-                                                if (!$isMasterEditable) {
-                                                    $prevData = $prevYearFinal[$komo->id] ?? [];
-                                                    $mMin = $prevData['min'] ?? null;
-                                                    $mMax = $prevData['max'] ?? null;
-                                                    $mAlasan = $prevData['alasan'] ?? null;
-                                                }
-                                            }
-                                        @endphp
-                                        <tr>
-                                            <td class="ps-4">{{ $komo->nama_komoditas }}</td>
-                                            <td class="text-center"><span
-                                                    class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-light text-dark border fw-normal">
-                                                    {{ $komo->batas_selisih_harga ? number_format($komo->batas_selisih_harga, 0, ',', '.') : '-' }}
-                                                </span>
-                                            </td>
-
-                                            <!-- Prev Year Values -->
-                                            @if($showPrev)
-                                                @php
-                                                    $prevData = $prevYearFinal[$komo->id] ?? [];
-                                                @endphp
-                                                <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
-                                                    {{ isset($prevData['min']) ? number_format($prevData['min'], 0, ',', '.') : '-' }}
-                                                </td>
-                                                <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
-                                                    {{ isset($prevData['max']) ? number_format($prevData['max'], 0, ',', '.') : '-' }}
-                                                </td>
-                                                <td
-                                                    class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary small fst-italic">
-                                                    {{ $prevData['alasan'] ?? '-' }}
-                                                </td>
-                                            @endif
-
-                                            <!-- Master Inputs -->
-                                            @if($showMaster)
-                                                @if($isMasterEditable)
-                                                    @php
-                                                        $mStatus = $master->verification_status ?? 'pending';
-                                                        $mIsRejected = $mStatus === 'rejected';
-                                                        $mReason = $master->rejection_reason ?? '';
-                                                    @endphp
-                                                    <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        <input type="text" name="master[{{ $komo->id }}][min]"
-                                                            class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                            placeholder="Min"
-                                                            value="{{ isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '' }}"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                                    </td>
-                                                    <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        <input type="text" name="master[{{ $komo->id }}][max]"
-                                                            class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                            placeholder="Max"
-                                                            value="{{ isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '' }}"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                                    </td>
-                                                    <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        @if($mIsRejected)
-                                                            <div class="text-danger x-small fw-bold mb-1" style="font-size: 0.7rem; line-height: 1.1;">
-                                                                <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $mReason }}
-                                                            </div>
-                                                        @endif
-                                                        <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
-                                                            class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
-                                                            placeholder="Berikan alasan"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
-                                                    </td>
-                                                @else
-                                                    <td class="p-1 text-center align-middle bg-light text-muted">
-                                                        {{ isset($mMin) ? number_format($mMin, 0, ',', '.') : '-' }}
-                                                    </td>
-                                                    <td class="p-1 text-center align-middle bg-light text-muted">
-                                                        {{ isset($mMax) ? number_format($mMax, 0, ',', '.') : '-' }}
-                                                    </td>
-                                                    <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
-                                                        {{ $mAlasan ?? '-' }}
-                                                    </td>
-                                                @endif
-                                            @endif
-
-                                            <!-- Revision Inputs -->
-                                            @foreach($displayRevisions as $rev)
-                                                @php
-                                                    // Check if this is the Latest Revision
-                                                    $isRevEditable = ($rev->id == $latestRevisionId);
-
-                                                    // For Editable: Use RAW values (from allRevisionNilai)
-                                                    // For Read-Only: Use EFFECTIVE values (from effectiveValues)
-
-                                                    if ($isRevEditable) {
-                                                        $rawRevData = $allRevisionNilai->get($rev->id)?->get($komo->id);
-                                                        $valMin = $rawRevData->min_edit ?? '';
-                                                        $valMax = $rawRevData->max_edit ?? '';
-                                                        $valAlasan = $rawRevData->alasan ?? '';
-                                                    } else {
-                                                        $effData = $effectiveValues->get($rev->id)[$komo->id] ?? null;
-                                                        $valMin = $effData['min'] ?? '-';
-                                                        $valMax = $effData['max'] ?? '-';
-                                                        $valAlasan = '-'; // We don't track historical reasons strictly in effective array, usually shown if relevant or just skip for readonly summary.
-                                                        // Note: You might want to fetch reason if needed, but for "Price Range" view style, usually just numbers.
-                                                        // Let's stick to numbers for Read-Only as per request "view readonly but values same as Price Range".
-                                                    }
-                                                @endphp
-
-                                                @if($isRevEditable)
-                                                    @php
-                                                        $revStatus = $rawRevData->verification_status ?? 'pending';
-                                                        $revIsRejected = $revStatus === 'rejected';
-                                                        $revReason = $rawRevData->rejection_reason ?? '';
-                                                    @endphp
-                                                    <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
-                                                            class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                            placeholder="Edit Min"
-                                                            value="{{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin }}"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                                    </td>
-                                                    <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
-                                                            class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
-                                                            placeholder="Edit Max"
-                                                            value="{{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax }}"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
-                                                    </td>
-                                                    <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
-                                                        @if($revIsRejected)
-                                                            <div class="text-danger x-small fw-bold mb-1" style="font-size: 0.7rem; line-height: 1.1;">
-                                                                <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $revReason }}
-                                                            </div>
-                                                        @endif
-                                                        <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
-                                                            class="form-control form-control-sm border-0 bg-orange-faded {{ ((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
-                                                            placeholder="Berikan alasan"
-                                                            data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
-                                                    </td>
-                                                @else
-                                                    <td class="p-1 text-center align-middle bg-light text-muted">
-                                                        {{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : '-' }}
-                                                    </td>
-                                                    <td class="p-1 text-center align-middle bg-light text-muted">
-                                                        {{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : '-' }}
-                                                    </td>
-                                                    <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
-                                                        {{ $effData['alasan'] ?? '-' }}
-                                                    </td>
-                                                @endif
-                                            @endforeach
-                                        </tr>
-                                    @endforeach
-                                @endforeach
-                            </tbody>
-                        </table>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100"
+                    style="border-radius: 12px; background: linear-gradient(135deg, var(--bps-orange), #007bbd);">
+                    <div class="card-body p-4 text-white d-flex flex-column justify-content-center">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                                <i class="fas fa-info-circle fa-lg"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold">Panduan Admin Kabupaten/Kota</h6>
+                        </div>
+                        <p class="small mb-0 opacity-75">Jika tidak terdapat perubahan RH, kolom tidak perlu diisi. Sistem
+                            akan menampilkan nilai RH terakhir pada periode atau tahun sebelumnya</p>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
 
-        <style>
-            .bg-blue-light {
-                background-color: rgba(0, 147, 221, 0.05);
-            }
+        <!-- Data Table -->
+        <div class="text-end mb-2">
+            <button type="submit" form="form-save-nilai" class="btn text-white fw-bold shadow-sm"
+                style="background-color: var(--bps-blue);">
+                <i class="fas fa-save me-1"></i> Simpan Data
+            </button>
+        </div>
 
-            .bg-blue-faded {
-                background-color: rgba(0, 147, 221, 0.03);
-            }
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+            <form action="{{ route('rh-nilai.save') }}" method="POST" id="form-save-nilai">
+                @csrf
+                <input type="hidden" name="rh_tahun_id" value="{{ $activeYear->id }}">
+                <input type="hidden" name="kabupaten_id" value="{{ $selectedKabupatenId }}">
+                <input type="hidden" name="revision_id" value="{{ $selectedRevisionId }}">
 
-            .text-blue {
-                color: var(--bps-blue);
-            }
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead class="bg-light text-center align-middle">
+                            @php
+                                // Show Master if:
+                                // 1. "All" is selected.
+                                // 2. No specific revision is selected (Default view, or Revision ID empty).
+                                // 3. A specific revision is selected BUT it is the first one (count < 2, so comparisons need Master).
+                                $latestRevisionId = $latestRevisionId ?? null; // Ensure variable exists
+                                $isMasterEditable = empty($latestRevisionId);
 
-            .bg-orange-light {
-                background-color: rgba(255, 140, 0, 0.05);
-            }
+                                $showMaster = ($selectedRevisionId === 'all' || !$selectedRevisionId || $displayRevisions->count() < 2);
+                                // Only show Prev Year if:
+                                // 1. Master is selected (Input Utama) OR
+                                // 2. All Revisions are selected.
+                                // (If a specific revision is selected, we hide Prev Year to save space/reduce redundancy as per Step 23).
+                                $showPrev = !empty($prevYearFinal) && (
+                                    $selectedRevisionId === 'all' ||
+                                    !$selectedRevisionId
+                                );
+                            @endphp
+                            <tr>
+                                <th rowspan="2" class="ps-4" style="min-width: 250px;">NAMA</th>
+                                <th rowspan="2" style="width: 100px;">SATUAN</th>
+                                <th rowspan="2" style="width: 100px;">BATAS SELISIH</th>
+                                @if($showPrev)
+                                    <th colspan="3" class="bg-secondary bg-opacity-10 text-secondary border-secondary">
+                                        {{ strtoupper($prevYearLabel) }}
+                                    </th>
+                                @endif
+                                @if($showMaster)
+                                    <th colspan="3" class="bg-blue-light text-blue">MASTER NILAI
+                                        ({{ substr($activeYear->tahun, -2) }})</th>
+                                @endif
 
-            .bg-orange-faded {
-                background-color: rgba(255, 140, 0, 0.03);
-            }
+                                @foreach($displayRevisions as $rev)
+                                    <th colspan="3" class="bg-orange-light text-orange">{{ strtoupper($rev->label) }}</th>
+                                @endforeach
+                            </tr>
+                            <tr>
+                                @if($showPrev)
+                                    <th style="width: 120px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MIN</th>
+                                    <th style="width: 120px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">MAX</th>
+                                    <th style="width: 200px;"
+                                        class="bg-secondary bg-opacity-10 text-secondary small border-secondary">ALASAN</th>
+                                @endif
+                                @if($showMaster)
+                                    <th style="width: 120px;" class="bg-blue-light text-blue small">
+                                        MIN_{{ substr($activeYear->tahun, -2) }}</th>
+                                    <th style="width: 120px;" class="bg-blue-light text-blue small">
+                                        MAX_{{ substr($activeYear->tahun, -2) }}</th>
+                                    <th style="width: 200px;" class="bg-blue-light text-blue small">ALASAN</th>
+                                @endif
 
-            .text-orange {
-                color: var(--bps-orange);
-            }
+                                @foreach($displayRevisions as $rev)
+                                    <th style="width: 120px;" class="bg-orange-light text-orange small">MIN_EDIT</th>
+                                    <th style="width: 120px;" class="bg-orange-light text-orange small">MAX_EDIT</th>
+                                    <th style="width: 200px;" class="bg-orange-light text-orange small">ALASAN</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($categories as $category)
+                                <tr class="bg-light">
+                                    @php
+                                        // 3 Fixed columns + (3 if Prev Shown) + (3 if Master shown) + (3 per Revision)
+                                        $colspan = 3 + ($showPrev ? 3 : 0) + ($showMaster ? 3 : 0) + ($displayRevisions->count() * 3);
+                                    @endphp
+                                    <td colspan="{{ $colspan }}"
+                                        class="ps-4 fw-bold text-muted small text-uppercase py-2 category-header">
+                                        <i class="fas fa-folder-open me-1"></i> {{ $category->nama_kategori }}
+                                    </td>
+                                </tr>
+                                @foreach($category->komoditas as $komo)
+                                    @php
+                                        $master = $masterNilai->get($komo->id);
 
-            .bg-danger-faded {
-                background-color: rgba(220, 53, 69, 0.1);
-            }
+                                        // Check if Master has explicit values (Min OR Max is set)
+                                        $hasMasterData = $master && (($master->min_nilai ?? null) !== null || ($master->max_nilai ?? null) !== null);
 
-            .border-danger-custom {
-                border: 1px solid #dc3545 !important;
-            }
+                                        if ($hasMasterData) {
+                                            // Use explicit Master values (even if reason is null, do NOT fallback)
+                                            $mMin = $master->min_nilai;
+                                            $mMax = $master->max_nilai;
+                                            $mAlasan = $master->alasan;
+                                        } else {
+                                            // Master is empty
+                                            $mMin = null;
+                                            $mMax = null;
+                                            $mAlasan = null;
 
-            .form-control:focus {
-                background-color: #fff !important;
-                box-shadow: none;
-                outline: 1px solid var(--bps-blue);
-            }
+                                            // If Read-Only mode (Revisions exist), Fallback to Prev Year used as Baseline
+                                            if (!$isMasterEditable) {
+                                                $prevData = $prevYearFinal[$komo->id] ?? [];
+                                                $mMin = $prevData['min'] ?? null;
+                                                $mMax = $prevData['max'] ?? null;
+                                                $mAlasan = $prevData['alasan'] ?? null;
+                                            }
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td class="ps-4">{{ $komo->nama_komoditas }}</td>
+                                        <td class="text-center"><span
+                                                class="badge bg-light text-dark border fw-normal">{{ $komo->satuan ?? 'Kg' }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border fw-normal">
+                                                {{ $komo->batas_selisih_harga ? number_format($komo->batas_selisih_harga, 0, ',', '.') : '-' }}
+                                            </span>
+                                        </td>
 
-            .form-control-sm {
-                height: 38px;
-                font-size: 0.9rem;
-            }
+                                        <!-- Prev Year Values -->
+                                        @if($showPrev)
+                                            @php
+                                                $prevData = $prevYearFinal[$komo->id] ?? [];
+                                            @endphp
+                                            <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
+                                                {{ isset($prevData['min']) ? number_format($prevData['min'], 0, ',', '.') : '-' }}
+                                            </td>
+                                            <td class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary">
+                                                {{ isset($prevData['max']) ? number_format($prevData['max'], 0, ',', '.') : '-' }}
+                                            </td>
+                                            <td
+                                                class="p-1 text-center align-middle bg-secondary bg-opacity-10 text-secondary small fst-italic">
+                                                {{ $prevData['alasan'] ?? '-' }}
+                                            </td>
+                                        @endif
 
-            table th {
-                font-weight: 700;
-                font-size: 0.75rem;
-                letter-spacing: 0.5px;
-            }
+                                        <!-- Master Inputs -->
+                                        @if($showMaster)
+                                            @if($isMasterEditable)
+                                                @php
+                                                    $mStatus = $master->verification_status ?? 'pending';
+                                                    $mIsRejected = $mStatus === 'rejected';
+                                                    $mReason = $master->rejection_reason ?? '';
+                                                @endphp
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @php
+                                                        $mMinVal = isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '';
+                                                        $mMaxVal = isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '';
 
-            .table-bordered> :not(caption)>*>* {
-                border-width: 1px;
-                border-color: #f1f5f9;
-            }
+                                                        // Fallback logic for empty Master check Prev Year
+                                                        if (!$hasMasterData && !empty($prevYearFinal[$komo->id])) {
+                                                            $pData = $prevYearFinal[$komo->id];
+                                                            $pDiff = ($pData['max'] ?? 0) - ($pData['min'] ?? 0);
+                                                            $pHasAlasan = !empty(trim($pData['alasan'] ?? ''));
+                                                            $limit = $komo->batas_selisih_harga ?? 0;
+                                                            if ($pDiff > $limit && !$pHasAlasan) {
+                                                                $mMinVal = number_format($pData['min'], 0, ',', '.');
+                                                                $mMaxVal = number_format($pData['max'], 0, ',', '.');
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <input type="text" name="master[{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
+                                                        placeholder="Min" value="{{ $mMinVal }}"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    <input type="text" name="master[{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded text-center format-ribuan {{ $mIsRejected ? 'text-danger fw-bold' : '' }}"
+                                                        placeholder="Max" value="{{ $mMaxVal }}"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1 {{ $mIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @if($mIsRejected)
+                                                        <div class="text-danger x-small fw-bold mb-1"
+                                                            style="font-size: 0.7rem; line-height: 1.1;">
+                                                            <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $mReason }}
+                                                        </div>
+                                                    @endif
+                                                    <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                        placeholder="Berikan alasan"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
+                                                </td>
+                                            @else
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ isset($mMin) ? number_format($mMin, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ isset($mMax) ? number_format($mMax, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
+                                                    {{ $mAlasan ?? '-' }}
+                                                </td>
+                                            @endif
+                                        @endif
 
-            .is-invalid-custom {
-                border: 2px solid #dc3545 !important;
-                background-color: #fff5f5 !important;
-            }
-        </style>
+                                        <!-- Revision Inputs -->
+                                        @foreach($displayRevisions as $rev)
+                                            @php
+                                                // Check if this is the Latest Revision
+                                                $isRevEditable = ($rev->id == $latestRevisionId);
+
+                                                // For Editable: Use RAW values (from allRevisionNilai)
+                                                // For Read-Only: Use EFFECTIVE values (from effectiveValues)
+
+                                                if ($isRevEditable) {
+                                                    $rawRevData = $allRevisionNilai->get($rev->id)?->get($komo->id);
+                                                    $valMin = $rawRevData->min_edit ?? '';
+                                                    $valMax = $rawRevData->max_edit ?? '';
+                                                    $valAlasan = $rawRevData->alasan ?? '';
+                                                } else {
+                                                    $effData = $effectiveValues->get($rev->id)[$komo->id] ?? null;
+                                                    $valMin = $effData['min'] ?? '-';
+                                                    $valMax = $effData['max'] ?? '-';
+                                                    $valAlasan = '-'; // We don't track historical reasons strictly in effective array, usually shown if relevant or just skip for readonly summary.
+                                                    // Note: You might want to fetch reason if needed, but for "Price Range" view style, usually just numbers.
+                                                    // Let's stick to numbers for Read-Only as per request "view readonly but values same as Price Range".
+                                                }
+                                            @endphp
+
+                                            @if($isRevEditable)
+                                                @php
+                                                    $revStatus = $rawRevData->verification_status ?? 'pending';
+                                                    $revIsRejected = $revStatus === 'rejected';
+                                                    $revReason = $rawRevData->rejection_reason ?? '';
+                                                @endphp
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @php
+                                                        $displayMin = is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin;
+                                                        $displayMax = is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax;
+
+                                                        // Fallback logic for empty Revision check Previous State
+                                                        if (($valMin === '' || $valMin === null) && ($valMax === '' || $valMax === null)) {
+                                                            // Find previous state
+                                                            $revIndex = $revisions->search(fn($r) => $r->id == $rev->id);
+                                                            $prevState = null;
+                                                            if ($revIndex > 0) {
+                                                                $prevId = $revisions[$revIndex - 1]->id;
+                                                                $prevState = $effectiveValues->get($prevId)[$komo->id] ?? null;
+                                                            } else {
+                                                                $prevState = $initialState[$komo->id] ?? null;
+                                                            }
+
+                                                            if ($prevState) {
+                                                                $pDiff = ($prevState['max'] ?? 0) - ($prevState['min'] ?? 0);
+                                                                $pHasAlasan = !empty(trim($prevState['alasan'] ?? ''));
+                                                                $limit = $komo->batas_selisih_harga ?? 0;
+                                                                if ($pDiff > $limit && !$pHasAlasan) {
+                                                                    $displayMin = number_format($prevState['min'], 0, ',', '.');
+                                                                    $displayMax = number_format($prevState['max'], 0, ',', '.');
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][min]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
+                                                        placeholder="Edit Min" value="{{ $displayMin }}"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    <input type="text" name="revision[{{ $rev->id }}][{{ $komo->id }}][max]"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded text-center format-ribuan {{ $revIsRejected ? 'text-danger fw-bold' : '' }}"
+                                                        placeholder="Edit Max" value="{{ $displayMax }}"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">
+                                                </td>
+                                                <td class="p-1 {{ $revIsRejected ? 'bg-danger-faded' : '' }}">
+                                                    @if($revIsRejected)
+                                                        <div class="text-danger x-small fw-bold mb-1"
+                                                            style="font-size: 0.7rem; line-height: 1.1;">
+                                                            <i class="fas fa-times-circle me-1"></i>Ditolak: {{ $revReason }}
+                                                        </div>
+                                                    @endif
+                                                    <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
+                                                        placeholder="Berikan alasan"
+                                                        data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
+                                                </td>
+                                            @else
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted">
+                                                    {{ is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : '-' }}
+                                                </td>
+                                                <td class="p-1 text-center align-middle bg-light text-muted small fst-italic">
+                                                    {{ $effData['alasan'] ?? '-' }}
+                                                </td>
+                                            @endif
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .bg-blue-light {
+            background-color: rgba(0, 147, 221, 0.05);
+        }
+
+        .bg-blue-faded {
+            background-color: rgba(0, 147, 221, 0.03);
+        }
+
+        .text-blue {
+            color: var(--bps-blue);
+        }
+
+        .bg-orange-light {
+            background-color: rgba(255, 140, 0, 0.05);
+        }
+
+        .bg-orange-faded {
+            background-color: rgba(255, 140, 0, 0.03);
+        }
+
+        .text-orange {
+            color: var(--bps-orange);
+        }
+
+        .bg-danger-faded {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .border-danger-custom {
+            border: 1px solid #dc3545 !important;
+        }
+
+        .form-control:focus {
+            background-color: #fff !important;
+            box-shadow: none;
+            outline: 1px solid var(--bps-blue);
+        }
+
+        .form-control-sm {
+            height: 38px;
+            font-size: 0.9rem;
+        }
+
+        table th {
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table-bordered> :not(caption)>*>* {
+            border-width: 1px;
+            border-color: #f1f5f9;
+        }
+
+        .is-invalid-custom {
+            border: 2px solid #dc3545 !important;
+            background-color: #fff5f5 !important;
+        }
+    </style>
 @endsection
 
 @push('scripts')

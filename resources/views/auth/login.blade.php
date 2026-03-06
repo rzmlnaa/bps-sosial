@@ -13,10 +13,12 @@
                 </div>
             @endif
 
-            <dotlottie-player src="{{ asset('statistik-animasi.json') }}" background="transparent" speed="1"
-                style="display:block; margin:0 auto; width:100%; max-width:500px;" loop autoplay>
-            </dotlottie-player>
-
+            <!-- <dotlottie-player src="{{ asset('statistik-animasi.json') }}" background="transparent" speed="1"
+                                            style="display:block; margin:0 auto; width:100%; max-width:500px;" loop autoplay>
+                        </dotlottie-player> -->
+            <img src="https://blog.educationnest.com/wp-content/uploads/2023/04/c99172c17b83d3c620b997858351b2a5.gif" alt=""
+                style="display:block; margin:0 auto; width:100%; max-width:500px; mix-blend-mode: multiply; filter: brightness(1.05) contrast(1.1);"
+                background="transparent">
 
             <h2 class="fw-bold mb-2 text-center">
                 Sistem Informasi Statistik Sosial
@@ -31,9 +33,9 @@
 
 
             <!-- <button class="btn btn-google-login mb-2" data-bs-toggle="modal" data-bs-target="#loginModal">
-                                                    <i class="fas fa-sign-in-alt"></i>
-                                                    <span>Login</span>
-                                                </button> -->
+                                                                                        <i class="fas fa-sign-in-alt"></i>
+                                                                                        <span>Login</span>
+                                                                                    </button> -->
 
             <a href="{{ url('/auth/google') }}" class="btn btn-google-login py-3 mb-3">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/960px-Google_%22G%22_logo.svg.png"

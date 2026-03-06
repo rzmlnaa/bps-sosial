@@ -116,6 +116,7 @@ class RhNilaiController extends Controller
                 ];
             }
         }
+        $initialState = $currentState;
 
         foreach ($allRevisions as $rev) {
             $details = $allDetailsRaw->get($rev->id);
@@ -147,7 +148,12 @@ class RhNilaiController extends Controller
 
         // 5. Viewing Logic
         $displayRevisions = collect();
-        $selectedRevisionId = $request->revision_id;
+        $selectedRevisionId = $request->query('revision_id');
+
+        // Default to latest revision if not specified
+        if (!$request->has('revision_id') && $allRevisions->isNotEmpty()) {
+            $selectedRevisionId = (string) $allRevisions->last()->id;
+        }
 
         if ($selectedRevisionId === 'all') {
             $displayRevisions = $allRevisions;
@@ -175,7 +181,11 @@ class RhNilaiController extends Controller
             }
         }
 
-        $categories = KategoriKomoditas::with(['komoditas'])->get();
+        $categories = KategoriKomoditas::with([
+            'komoditas' => function ($query) {
+                $query->orderBy('order_number', 'asc');
+            }
+        ])->get();
         // Rename $allRevisions to $revisions to match view variable expectation
         $revisions = $allRevisions;
 
@@ -233,6 +243,7 @@ class RhNilaiController extends Controller
             'effectiveValues', // Calculated State
             'allRevisionNilai', // Raw Values for inputs
             'latestRevisionId', // To determine readonly status
+            'initialState',
             'prevYearFinal',
             'prevYearLabel',
             'rejectedSummary'

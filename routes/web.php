@@ -19,6 +19,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ProfileCompletionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SerutiController;
+use App\Http\Controllers\FenomenaController;
+use App\Http\Controllers\FenomenaVerificationController;
+use App\Http\Controllers\DynamicMenuController;
+use App\Http\Controllers\FrontendMenuController;
+use App\Http\Controllers\SektorUsahaController;
+use App\Http\Controllers\IndikatorController;
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -52,6 +58,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kabupaten', [KabupatenController::class, 'store'])->name('kabupaten.store');
         Route::put('/kabupaten/{id}', [KabupatenController::class, 'update'])->name('kabupaten.update');
         Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
+
+        // Dynamic Menus Admin
+        Route::resource('dynamic-menus', DynamicMenuController::class)->except(['show']);
     });
 
     Route::post('/logout', function (Request $request) {
@@ -79,6 +88,11 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // RH Price Range Values
     Route::get('/price-range/input-nilai', [RhNilaiController::class, 'index'])->name('rh-nilai.index');
     Route::post('/price-range/input-nilai/save', [RhNilaiController::class, 'save'])->name('rh-nilai.save');
+
+    // Fenomena Values
+    Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
+    Route::get('/fenomena/check-uniqueness', [FenomenaController::class, 'checkUniqueness'])->name('fenomena.check-uniqueness');
+    Route::post('/fenomena', [FenomenaController::class, 'store'])->name('fenomena.store');
 });
 
 
@@ -189,6 +203,13 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/seruti', [SerutiController::class, 'index'])->name('seruti.index');
     Route::get('/seruti/chart-data', [SerutiController::class, 'getChartData'])->name('seruti.chart-data');
 
+    // Dynamic Menu Frontend
+    Route::get('/menu/{slug}', [FrontendMenuController::class, 'show'])->name('dynamic-menu.show');
+
+    // Menu Fenomena
+    Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
+    Route::get('/fenomena-visualisasi', [FenomenaController::class, 'visualisasi'])->name('fenomena.visualisasi');
+    Route::get('/fenomena-contributor', [\App\Http\Controllers\FenomenaContributorController::class, 'index'])->name('fenomena.contributor');
 });
 
 
@@ -218,6 +239,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::delete('/komoditas/clear', [KomoditasController::class, 'clearData'])->name('komoditas.clear');
     Route::delete('/komoditas/{id}', [KomoditasController::class, 'destroy'])->name('komoditas.destroy');
     Route::get('/komoditas/get-by-category/{kategori_id}', [KomoditasController::class, 'getByCategory']);
+    Route::patch('/komoditas/reorder', [KomoditasController::class, 'reorder'])->name('komoditas.reorder');
 
     // RH Year & Revision Management
     Route::post('/rh-tahun', [RhTahunController::class, 'storeTahun'])->name('rh-tahun.store');
@@ -268,4 +290,44 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/seruti/store-coicop', [SerutiController::class, 'storeCoicop'])->name('seruti.store-coicop');
     Route::delete('/seruti/coicop/{id}', [SerutiController::class, 'destroyCoicop'])->name('seruti.destroy-coicop');
     Route::delete('/seruti/clear-consumption', [SerutiController::class, 'destroyConsumption'])->name('seruti.destroy-consumption');
+
+
+    // Kelola Fenomena
+    Route::get('/fenomena/kelola', [FenomenaController::class, 'kelola'])->name('fenomena.kelola');
+    // Detail Fenomena (setelah /kelola agar route statis tidak tertangkap oleh {id})
+    //Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
+
+    // Sektor Usaha
+    Route::post('/sektor-usaha', [SektorUsahaController::class, 'store'])->name('sektor-usaha.store');
+    Route::put('/sektor-usaha/{id}', [SektorUsahaController::class, 'update'])->name('sektor-usaha.update');
+    Route::delete('/sektor-usaha/{id}', [SektorUsahaController::class, 'destroy'])->name('sektor-usaha.destroy');
+
+    // Kode Indikator
+    Route::post('/indikator', [IndikatorController::class, 'store'])->name('indikator.store');
+    Route::put('/indikator/{id}', [IndikatorController::class, 'update'])->name('indikator.update');
+    Route::patch('/indikator/{id}/toggle-active', [IndikatorController::class, 'toggleActive'])->name('indikator.toggle-active');
+    Route::delete('/indikator/{id}', [IndikatorController::class, 'destroy'])->name('indikator.destroy');
+
+    // Jenis Fenomena
+    Route::post('/jenis-fenomena', [\App\Http\Controllers\JenisFenomenaController::class, 'store'])->name('jenis-fenomena.store');
+    Route::put('/jenis-fenomena/{id}', [\App\Http\Controllers\JenisFenomenaController::class, 'update'])->name('jenis-fenomena.update');
+    Route::delete('/jenis-fenomena/{id}', [\App\Http\Controllers\JenisFenomenaController::class, 'destroy'])->name('jenis-fenomena.destroy');
+
+    // Sumber Berita
+    Route::post('/sumber-berita', [\App\Http\Controllers\SumberBeritaController::class, 'store'])->name('sumber-berita.store');
+    Route::put('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'update'])->name('sumber-berita.update');
+    Route::delete('/sumber-berita/{id}', [\App\Http\Controllers\SumberBeritaController::class, 'destroy'])->name('sumber-berita.destroy');
+
+    // Fenomena Verification
+    Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
+    Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
+    Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
 });
+
+// Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 
+// tapi di bawah route spesifik agar tidak terangkap oleh {id})
+Route::middleware(['check.status'])->group(function () {
+    Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
+});
+
+
