@@ -50,12 +50,14 @@
                                             if ($parent->type === 'spreadsheet') { $icon = 'fas fa-file-excel'; $color = 'success'; }
                                             elseif ($parent->type === 'youtube') { $icon = 'fab fa-youtube'; $color = 'danger'; }
                                             elseif ($parent->type === 'drive') { $icon = 'fab fa-google-drive'; $color = 'primary'; }
+                                            elseif ($parent->type === 'external') { $icon = 'fas fa-external-link-alt'; $color = 'secondary'; }
+                                            elseif ($parent->type === 'main_menu') { $icon = 'fas fa-bars'; $color = 'secondary'; }
 
                                             $hasChildren = $menus->where('parent_id', $parent->id)->count() > 0;
                                         @endphp
 
                                         @if($hasChildren)
-                                            <span class="badge bg-navy bg-opacity-10 text-navy px-3 py-2 rounded-pill">
+                                            <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
                                                 <i class="fas fa-folder me-1"></i> Parent (Dropdown)
                                             </span>
                                         @else

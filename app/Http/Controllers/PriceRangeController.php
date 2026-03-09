@@ -53,15 +53,6 @@ class PriceRangeController extends Controller
         $prevYearValues = [];
         if ($selectedYearId && $selectedKabupatenId) {
 
-            // A. Get Final State of PREVIOUS Year (Recursive Fallback)
-            // Even though we are mostly looking at "Current Master", the logic is:
-            // "Master Nilai (current year)" should show carried-over values if explicit Master is empty.
-            // So we actually want getFinalStateForYear(CURRENT_YEAR, ...) BUT WITHOUT revisions of current year?
-            // No, strictly speacking "Master Nilai" column usually represents the STARTING point of the year.
-            // Which is: (Final of Prev Year) + (Explicit Master Edits of Current Year).
-            // Revisions of Current Year are separate columns.
-
-            // So: 
             // 1. Base = Final of Prev Year
             // 2. Overlay = Explicit Master of Current Year
 
@@ -82,7 +73,6 @@ class PriceRangeController extends Controller
             // 4. Merge
             $finalMasterData = [];
 
-            // We need to iterate all possible commodities to ensure we show full list state
             //$allKomoditasIds = \App\Models\Komoditas::orderBy('order_number', 'asc')->pluck('id')->toArray();
             $allKomoditasIds = $allKomoditas->pluck('id')->toArray();
 
@@ -248,11 +238,6 @@ class PriceRangeController extends Controller
             $details = RhPerubahanDetail::where('rh_perubahan_header_id', $rev->id)->get();
 
             foreach ($details as $dt) {
-                // If value is edited (not null), update state
-                // Note: Logic in view assumes if null, carry forward.
-                // But in DB, a record exists only if touched? 
-                // Wait, if a record exists in DB with null, it means explicitly set to null? 
-                // Usually edit forms submit values. Assuming non-null replaces.
 
                 if (!isset($dataState[$dt->kabupaten_id]))
                     $dataState[$dt->kabupaten_id] = [];
@@ -261,8 +246,6 @@ class PriceRangeController extends Controller
                 if ($dt->min_edit !== null) {
                     $dataState[$dt->kabupaten_id][$dt->komoditas_id]['min'] = $dt->min_edit;
                 }
-                // If record exists but val is null, we assume it keeps previous value (Carry Forward), so DO NOTHING.
-
                 // Update Max
                 if ($dt->max_edit !== null) {
                     $dataState[$dt->kabupaten_id][$dt->komoditas_id]['max'] = $dt->max_edit;

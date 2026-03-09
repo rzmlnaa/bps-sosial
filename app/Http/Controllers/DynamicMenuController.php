@@ -31,24 +31,31 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus',
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => 'required|string|in:youtube,drive,spreadsheet,external',
-            'url' => 'required|string',
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
+            'url' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string'],
             'embed_url' => 'nullable|string',
             'order_number' => 'required|integer',
         ]);
 
-        // Strict YouTube/Spreadsheet/Drive URL Validation
-        if ($validated['type'] === 'youtube') {
-            if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/||.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
-                return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
-            }
-        } elseif ($validated['type'] === 'spreadsheet') {
-            if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
-                return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
-            }
-        } elseif ($validated['type'] === 'drive') {
-            if (!str_contains($validated['url'], 'drive.google.com')) {
-                return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
+        // If parent_id is null and type is empty, set type to 'main_menu'
+        if (empty($validated['parent_id']) && empty($validated['type'])) {
+            $validated['type'] = 'main_menu';
+        }
+
+        // Strict YouTube/Spreadsheet/Drive URL Validation (Only if URL is provided)
+        if (!empty($validated['url'])) {
+            if ($validated['type'] === 'youtube') {
+                if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/||.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
+                    return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
+                }
+            } elseif ($validated['type'] === 'spreadsheet') {
+                if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
+                    return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
+                }
+            } elseif ($validated['type'] === 'drive') {
+                if (!str_contains($validated['url'], 'drive.google.com')) {
+                    return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
+                }
             }
         }
 
@@ -57,7 +64,7 @@ class DynamicMenuController extends Controller
 
         // Handle meta based on type
         $meta = [];
-        if ($validated['type'] === 'spreadsheet') {
+        if (!empty($validated['url']) && $validated['type'] === 'spreadsheet') {
             $meta['gid'] = $request->gid;
             $meta['sheet_mode'] = $request->sheet_mode;
 
@@ -67,22 +74,24 @@ class DynamicMenuController extends Controller
         }
         $validated['meta'] = $meta;
 
-        // Custom Validation for Duplicate URL
-        $existing = DynamicMenu::where('url', $validated['url'])->get();
-        foreach ($existing as $item) {
-            if ($validated['type'] !== 'spreadsheet' || $item->type !== 'spreadsheet') {
-                return back()->withErrors(['url' => 'URL ini sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
-            }
+        // Custom Validation for Duplicate URL (Only if URL is provided)
+        if (!empty($validated['url'])) {
+            $existing = DynamicMenu::where('url', $validated['url'])->get();
+            foreach ($existing as $item) {
+                if ($validated['type'] !== 'spreadsheet' || $item->type !== 'spreadsheet') {
+                    return back()->withErrors(['url' => 'URL ini sudah digunakan oleh menu ' . $item->name . '.'])->withInput();
+                }
 
-            // Both are spreadsheets, check GID
-            $existingMeta = is_array($item->meta) ? $item->meta : json_decode($item->meta ?? '[]', true);
-            if (($existingMeta['gid'] ?? '') == ($meta['gid'] ?? '')) {
-                return back()->withErrors(['url' => 'URL Spreadsheet dengan GID yang sama sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
+                // Both are spreadsheets, check GID
+                $existingMeta = is_array($item->meta) ? $item->meta : json_decode($item->meta ?? '[]', true);
+                if (($existingMeta['gid'] ?? '') == ($meta['gid'] ?? '')) {
+                    return back()->withErrors(['url' => 'URL Spreadsheet dengan GID yang sama sudah digunakan oleh menu ' . $item->name . '.'])->withInput();
+                }
             }
         }
 
-        // Auto-generate embed_url if empty
-        if (empty($validated['embed_url'])) {
+        // Auto-generate embed_url if empty (Only if URL is provided)
+        if (!empty($validated['url']) && empty($validated['embed_url'])) {
             $validated['embed_url'] = $this->generateEmbedUrl($validated['type'], $validated['url'], $meta);
         }
 
@@ -107,24 +116,31 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus,slug,' . $dynamicMenu->id,
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => 'required|string|in:youtube,drive,spreadsheet,external',
-            'url' => 'required|string',
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
+            'url' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string'],
             'embed_url' => 'nullable|string',
             'order_number' => 'required|integer',
         ]);
 
-        // Strict YouTube/Spreadsheet/Drive URL Validation
-        if ($validated['type'] === 'youtube') {
-            if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
-                return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
-            }
-        } elseif ($validated['type'] === 'spreadsheet') {
-            if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
-                return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
-            }
-        } elseif ($validated['type'] === 'drive') {
-            if (!str_contains($validated['url'], 'drive.google.com')) {
-                return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
+        // If parent_id is null and type is empty, set type to 'main_menu'
+        if (empty($validated['parent_id']) && empty($validated['type'])) {
+            $validated['type'] = 'main_menu';
+        }
+
+        // Strict YouTube/Spreadsheet/Drive URL Validation (Only if URL is provided)
+        if (!empty($validated['url'])) {
+            if ($validated['type'] === 'youtube') {
+                if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
+                    return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
+                }
+            } elseif ($validated['type'] === 'spreadsheet') {
+                if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
+                    return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
+                }
+            } elseif ($validated['type'] === 'drive') {
+                if (!str_contains($validated['url'], 'drive.google.com')) {
+                    return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
+                }
             }
         }
 
@@ -132,7 +148,7 @@ class DynamicMenuController extends Controller
 
         // Handle meta based on type
         $meta = [];
-        if ($validated['type'] === 'spreadsheet') {
+        if (!empty($validated['url']) && $validated['type'] === 'spreadsheet') {
             $meta['gid'] = $request->gid;
             $meta['sheet_mode'] = $request->sheet_mode;
 
@@ -142,26 +158,32 @@ class DynamicMenuController extends Controller
         }
         $validated['meta'] = $meta;
 
-        // Custom Validation for Duplicate URL
-        $existing = DynamicMenu::where('url', $validated['url'])
-            ->where('id', '!=', $dynamicMenu->id)
-            ->get();
-        foreach ($existing as $item) {
-            if ($validated['type'] !== 'spreadsheet' || $item->type !== 'spreadsheet') {
-                return back()->withErrors(['url' => 'URL ini sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
-            }
+        // Custom Validation for Duplicate URL (Only if URL is provided)
+        if (!empty($validated['url'])) {
+            $existing = DynamicMenu::where('url', $validated['url'])
+                ->where('id', '!=', $dynamicMenu->id)
+                ->get();
+            foreach ($existing as $item) {
+                if ($validated['type'] !== 'spreadsheet' || $item->type !== 'spreadsheet') {
+                    return back()->withErrors(['url' => 'URL ini sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
+                }
 
-            // Both are spreadsheets, check GID
-            $existingMeta = is_array($item->meta) ? $item->meta : json_decode($item->meta ?? '[]', true);
-            if (($existingMeta['gid'] ?? '') == ($meta['gid'] ?? '')) {
-                return back()->withErrors(['url' => 'URL Spreadsheet dengan GID yang sama sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
+                // Both are spreadsheets, check GID
+                $existingMeta = is_array($item->meta) ? $item->meta : json_decode($item->meta ?? '[]', true);
+                if (($existingMeta['gid'] ?? '') == ($meta['gid'] ?? '')) {
+                    return back()->withErrors(['url' => 'URL Spreadsheet dengan GID yang sama sudah digunakan oleh menu "' . $item->name . '".'])->withInput();
+                }
             }
         }
 
-        // Auto-generate embed_url if empty or if url changed
-        if (empty($validated['embed_url']) || $validated['url'] !== $dynamicMenu->url || $validated['type'] !== $dynamicMenu->type || $validated['type'] === 'spreadsheet') {
-            // For spreadsheet we always regenerate to catch gid/mode changes
-            $validated['embed_url'] = $this->generateEmbedUrl($validated['type'], $validated['url'], $meta);
+        // Auto-generate embed_url if empty or if url changed (Only if URL is provided)
+        if (!empty($validated['url'])) {
+            if (empty($validated['embed_url']) || $validated['url'] !== $dynamicMenu->url || $validated['type'] !== $dynamicMenu->type || $validated['type'] === 'spreadsheet') {
+                // For spreadsheet we always regenerate to catch gid/mode changes
+                $validated['embed_url'] = $this->generateEmbedUrl($validated['type'], $validated['url'], $meta);
+            }
+        } else {
+            $validated['embed_url'] = null;
         }
 
         $dynamicMenu->update($validated);

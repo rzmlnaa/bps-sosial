@@ -39,6 +39,10 @@ Route::get('/login', function () {
 Route::get('auth/google', [LoginController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback']);
 
+Route::get('/developer', function () {
+    return redirect()->away('https://kostapp.reservasiaja.com/portofolio');
+});
+
 Route::middleware(['auth'])->group(function () {
     // Admin Routes
     Route::middleware(['can:access-admin'])->prefix('admin')->name('admin.')->group(function () {

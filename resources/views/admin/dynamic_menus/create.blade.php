@@ -35,7 +35,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-medium">Parent Menu</label>
-                        <select name="parent_id" class="form-select">
+                        <select name="parent_id" id="parentSelect" class="form-select">
                             <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
                             @foreach($parents as $parent)
                                 <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
@@ -58,16 +58,17 @@
 
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium">Tipe Konten <span class="text-danger">*</span></label>
-                        <select name="type" class="form-select" id="typeSelect" required>
+                        <label class="form-label fw-medium">Tipe Konten <span class="text-danger"
+                                id="typeRequiredStar">*</span></label>
+                        <select name="type" class="form-select" id="typeSelect">
                             <option value="" {{ !old('type') ? 'selected' : '' }}>Pilih Tipe Konten</option>
                             <option value="spreadsheet" {{ old('type') == 'spreadsheet' ? 'selected' : '' }}>Google
                                 Spreadsheet</option>
-                            <option value="youtube" {{ old('type') == 'youtube' ? 'selected' : '' }} disabled>YouTube Video
-                                (DALAM PENGEMBANGAN)
+                            <option value="youtube" {{ old('type') == 'youtube' ? 'selected' : '' }}>YouTube Video
+
                             </option>
-                            <option value="drive" {{ old('type') == 'drive' ? 'selected' : '' }} disabled>Google Drive
-                                (View/Embed) (DALAM PENGEMBANGAN)
+                            <option value="drive" {{ old('type') == 'drive' ? 'selected' : '' }}>Google Drive
+                                (View/Embed)
                             </option>
                             <option value="external" {{ old('type') == 'external' ? 'selected' : '' }}>Link Eksternal
                                 Lainnya
@@ -78,10 +79,10 @@
 
                 <div class="row" id="urlSection" style="display: none;">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium" id="urlLabel">Link / URL <span
-                                class="text-danger">*</span></label>
+                        <label class="form-label fw-medium" id="urlLabel">Link / URL <span class="text-danger"
+                                id="urlRequiredStar">*</span></label>
                         <input type="text" name="url" id="urlInput" class="form-control @error('url') is-invalid @enderror"
-                            required placeholder="Paste link di sini..." value="{{ old('url') }}">
+                            placeholder="Paste link di sini..." value="{{ old('url') }}">
                         @error('url')
                             <div class="invalid-feedback" id="urlError">{{ $message }}</div>
                         @enderror
@@ -207,9 +208,39 @@
                 return url.includes('drive.google.com');
             }
 
-            function updateUI() {
+            const parentSelect = document.getElementById('parentSelect');
+
+            function updateUI(event) {
                 const type = typeSelect.value;
+                const parentId = parentSelect.value;
                 const urlSection = document.getElementById('urlSection');
+
+                // Conditional Required Logic
+                const typeRequiredStar = document.getElementById('typeRequiredStar');
+                const urlRequiredStar = document.getElementById('urlRequiredStar');
+
+                if (parentId === "") {
+                    // It's a Top Level Menu (Dropdown), Content Type is NOT required
+                    typeSelect.required = false;
+                    urlInput.required = false;
+                    typeRequiredStar.style.display = 'none';
+                    urlRequiredStar.style.display = 'none';
+
+                    // NEW: Automatically reset values when switched to Menu Utama
+                    // We check if this change was triggered by the user interaction on parentSelect
+                    // In many cases, it's safer to just clear it if parentId is empty to enforce the main_menu logic
+                    if (event && event.target === parentSelect) {
+                        typeSelect.value = "";
+                        urlInput.value = "";
+                    }
+                } else {
+                    // It's a Submenu, Content Type IS required
+                    typeSelect.required = true;
+                    urlInput.required = true;
+                    typeRequiredStar.style.display = 'inline';
+                    urlRequiredStar.style.display = 'inline';
+                }
+
                 urlSection.style.display = type ? 'block' : 'none';
                 spreadsheetExtra.style.display = type === 'spreadsheet' ? 'block' : 'none';
 
@@ -269,7 +300,15 @@
                     }
                 }
 
-                submitBtn.disabled = !isValid;
+                // submitBtn.disabled = !isValid; 
+                // Don't disable button automatically, let HTML5 validation or backend handle it
+                // Only use JavaScript to prevent submission if there's a format error (invalid YouTube URL etc)
+                const hasError = urlInput.classList.contains('is-invalid');
+                if (hasError) {
+                    submitBtn.disabled = true;
+                } else {
+                    submitBtn.disabled = false;
+                }
             }
 
             function extractSpreadsheetInfo(url) {
@@ -371,6 +410,7 @@
             }
 
             typeSelect.addEventListener('change', updateUI);
+            parentSelect.addEventListener('change', updateUI);
             urlInput.addEventListener('input', function () {
                 extractSpreadsheetInfo(this.value);
                 validateForm();
