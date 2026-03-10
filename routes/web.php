@@ -25,6 +25,8 @@ use App\Http\Controllers\DynamicMenuController;
 use App\Http\Controllers\FrontendMenuController;
 use App\Http\Controllers\SektorUsahaController;
 use App\Http\Controllers\IndikatorController;
+use App\Http\Controllers\MyTeamController;
+
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -97,6 +99,9 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
     Route::get('/fenomena/check-uniqueness', [FenomenaController::class, 'checkUniqueness'])->name('fenomena.check-uniqueness');
     Route::post('/fenomena', [FenomenaController::class, 'store'])->name('fenomena.store');
+
+    // My Team Route
+    Route::get('/my-team', [MyTeamController::class, 'index'])->name('my-team.index');
 });
 
 
@@ -214,7 +219,10 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
     Route::get('/fenomena-visualisasi', [FenomenaController::class, 'visualisasi'])->name('fenomena.visualisasi');
     Route::get('/fenomena-contributor', [\App\Http\Controllers\FenomenaContributorController::class, 'index'])->name('fenomena.contributor');
+
+
 });
+
 
 
 Route::middleware(['auth', 'check.status', 'only.province'])->group(function () {

@@ -142,6 +142,14 @@
                     <span>Dashboard</span>
                 </a>
 
+                @if(auth()->check() && auth()->user()->role === 'user')
+                    <a href="{{ route('my-team.index') }}"
+                        class="nav-link {{ request()->routeIs('my-team.index') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i>
+                        <span>Anggota Tim</span>
+                    </a>
+                @endif
+
 
                 <a href="{{ route('poverty') }}"
                     class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
