@@ -235,7 +235,7 @@
 @endpush
 
 @section('content')
-    <div class="mt-2">
+    <div class="mt-2 fade-in-up">
         <!-- Page Header -->
         <div class="page-header">
             <h1>Anggota Tim</h1>

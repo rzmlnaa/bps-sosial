@@ -20,14 +20,17 @@ class FrontendMenuController extends Controller
             $response = Http::get($menu->url);
 
             if ($response->successful()) {
-                preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches);
-                $title = $matches[1] ?? null;
-                if ($title) {
-                    $title = str_replace([' - Google Sheets', ' - Google Spreadshet'], '', $title);
+                if (preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches)) {
+                    $title = $matches[1] ?? null;
+
+                    if ($title) {
+                        $title = str_replace([' - Google Sheets', ' - Google Spreadshet'], '', $title);
+                    }
+                } else {
+                    $title = null;
                 }
             }
         }
-
         return view('dynamic_menus.show', compact('menu', 'title'));
     }
 }
