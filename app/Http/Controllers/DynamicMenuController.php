@@ -32,7 +32,18 @@ class DynamicMenuController extends Controller
             'slug' => 'required|string|max:255|unique:dynamic_menus',
             'parent_id' => 'nullable|exists:dynamic_menus,id',
             'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
-            'url' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string'],
+            'url' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->filled('parent_id') && $request->type !== 'external' && empty($value)) {
+                        $fail('URL wajib diisi jika bukan bertipe Link Eksternal.');
+                    }
+                    if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
+                        $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
+                    }
+                }
+            ],
             'embed_url' => 'nullable|string',
             'order_number' => 'required|integer',
         ]);
@@ -72,6 +83,11 @@ class DynamicMenuController extends Controller
                 $meta['spreadsheet_id'] = $matches[1];
             }
         }
+
+        if ($validated['type'] === 'external' && $request->has('links')) {
+            $meta['links'] = $request->links;
+        }
+
         $validated['meta'] = $meta;
 
         // Custom Validation for Duplicate URL (Only if URL is provided)
@@ -117,7 +133,18 @@ class DynamicMenuController extends Controller
             'slug' => 'required|string|max:255|unique:dynamic_menus,slug,' . $dynamicMenu->id,
             'parent_id' => 'nullable|exists:dynamic_menus,id',
             'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
-            'url' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string'],
+            'url' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->filled('parent_id') && $request->type !== 'external' && empty($value)) {
+                        $fail('URL wajib diisi jika bukan bertipe Link Eksternal.');
+                    }
+                    if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
+                        $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
+                    }
+                }
+            ],
             'embed_url' => 'nullable|string',
             'order_number' => 'required|integer',
         ]);
@@ -156,6 +183,11 @@ class DynamicMenuController extends Controller
                 $meta['spreadsheet_id'] = $matches[1];
             }
         }
+
+        if ($validated['type'] === 'external' && $request->has('links')) {
+            $meta['links'] = $request->links;
+        }
+
         $validated['meta'] = $meta;
 
         // Custom Validation for Duplicate URL (Only if URL is provided)

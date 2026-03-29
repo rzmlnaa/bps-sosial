@@ -11,27 +11,84 @@
                 <p class="text-muted mb-0">{{ $title }}</p>
             @endif
         </div>
-        <div class="mt-3 mt-md-0">
-            <button class="btn btn-outline-primary rounded-pill px-4 d-flex align-items-center" id="copyLinkBtn">
-                <i class="fas fa-share-alt me-2"></i> <span>Bagikan</span>
-            </button>
-        </div>
+        @if($menu->type !== 'external' && ($menu->url || $menu->embed_url))
+            <div class="mt-3 mt-md-0">
+                <button class="btn btn-outline-primary rounded-pill px-4 d-flex align-items-center copy-link-btn"
+                    data-url="{{ $menu->url ?: $menu->embed_url }}">
+                    <i class="fas fa-share-alt me-2"></i> <span>Bagikan</span>
+                </button>
+            </div>
+        @endif
     </div>
     <div class="fade-in-up ">
 
         <div class="card shadow-sm border-0 rounded-4 flex-grow-1 overflow-hidden" style="min-height: calc(100vh - 180px);">
             <div class="card-body p-0 d-flex flex-column">
-                @if($menu->type === 'external' && $menu->url)
+                @if($menu->type === 'external')
                     <div class="d-flex flex-grow-1 justify-content-center align-items-center text-muted p-5"
                         style="min-height: 50vh;">
-                        <div class="text-center">
+                        <div class="text-center w-100" style="max-width: 800px;">
                             <i class="fas fa-external-link-alt fa-4x mb-3 opacity-50" style="color: var(--bps-orange);"></i>
-                            <h4 class="fw-bold">Link Eksternal</h4>
-                            <p>Klik tombol di bawah untuk membuka halaman di tab baru.</p>
-                            <a href="{{ $menu->url }}" target="_blank"
-                                class="btn btn-primary bg-navy rounded-pill px-5 py-2 border-0">
-                                <i class="fas fa-external-link-alt me-2"></i>Buka {{ $menu->name }}
-                            </a>
+                            <h4 class="fw-bold mb-4">Link Eksternal</h4>
+
+                            @php
+                                $links = is_array($menu->meta) ? ($menu->meta['links'] ?? []) : (json_decode($menu->meta ?? '[]', true)['links'] ?? []);
+                            @endphp
+
+                            @if(!empty($links))
+                                <div class="row g-3 justify-content-center">
+                                    @foreach($links as $link)
+                                        @if(!empty($link['url']))
+                                            <div class="col-md-6 col-lg-4">
+                                                <div class="d-flex flex-column h-100">
+                                                    <a href="{{ $link['url'] }}" target="_blank"
+                                                        class="btn btn-outline-primary bg-navy-hover w-100 rounded-4 p-3 border-2 d-flex flex-column align-items-center justify-content-center transition-all shadow-sm flex-grow-1"
+                                                        style="min-height: 120px;">
+                                                        <i class="fas fa-link mb-2 fa-2x"></i>
+                                                        <span
+                                                            class="fw-bold text-wrap text-center">{{ $link['name'] ?: 'Buka Link' }}</span>
+                                                    </a>
+                                                    <button class="btn btn-light border shadow-sm rounded-pill mt-2 copy-link-btn"
+                                                        data-url="{{ $link['url'] }}">
+                                                        <i class="fas fa-share-alt me-2"></i>Bagikan Link
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+
+                                    @if($menu->url)
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="d-flex flex-column h-100">
+                                                <a href="{{ $menu->url }}" target="_blank"
+                                                    class="btn btn-primary bg-navy w-100 rounded-4 p-3 border-0 d-flex flex-column align-items-center justify-content-center transition-all shadow-sm flex-grow-1"
+                                                    style="min-height: 120px;">
+                                                    <i class="fas fa-external-link-alt mb-2 fa-2x"></i>
+                                                    <span class="fw-bold text-wrap text-center">Buka {{ $menu->name }}</span>
+                                                </a>
+                                                <button class="btn btn-light border shadow-sm rounded-pill mt-2 copy-link-btn"
+                                                    data-url="{{ $menu->url }}">
+                                                    <i class="fas fa-share-alt me-2"></i>Bagikan Link
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @elseif($menu->url)
+                                <p>Klik tombol di bawah untuk membuka halaman di tab baru.</p>
+                                <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 align-items-center">
+                                    <a href="{{ $menu->url }}" target="_blank"
+                                        class="btn btn-primary bg-navy rounded-pill px-5 py-2 border-0 shadow-sm">
+                                        <i class="fas fa-external-link-alt me-2"></i>Buka {{ $menu->name }}
+                                    </a>
+                                    <button class="btn btn-outline-secondary rounded-pill px-4 py-2 shadow-sm copy-link-btn"
+                                        data-url="{{ $menu->url }}">
+                                        <i class="fas fa-share-alt me-2"></i>Bagikan Link
+                                    </button>
+                                </div>
+                            @else
+                                <p>Belum ada link yang tersedia.</p>
+                            @endif
                         </div>
                     </div>
                 @elseif($menu->url || $menu->embed_url)
@@ -64,6 +121,25 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+    <style>
+        .bg-navy-hover:hover {
+            background-color: #1a365d !important;
+            color: white !important;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        .bg-navy {
+            background-color: #1a365d !important;
+        }
+    </style>
+@endpush
 
 @push('scripts')
     <script>
@@ -164,42 +240,54 @@
 
             initPreview();
 
-            document.getElementById('copyLinkBtn').addEventListener('click', function () {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(function () {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Link berhasil disalin ke clipboard',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
-                    });
-                }).catch(function (err) {
-                    console.error('Could not copy text: ', err);
-                    // Fallback for older browsers or non-HTTPS
-                    const textArea = document.createElement("textarea");
-                    textArea.value = url;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
+            document.querySelectorAll('.copy-link-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const url = this.getAttribute('data-url');
+
+                    if (!url) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Link tidak tersedia untuk dibagikan.',
+                        });
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(url).then(function () {
                         Swal.fire({
                             icon: 'success',
                             title: 'Berhasil!',
-                            text: 'Link berhasil disalin ke clipboard',
+                            text: 'Link konten berhasil disalin ke clipboard',
                             showConfirmButton: false,
                             timer: 2000,
                             timerProgressBar: true
                         });
-                    } catch (err) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal!',
-                            text: 'Gagal menyalin link.',
-                        });
-                    }
-                    document.body.removeChild(textArea);
+                    }).catch(function (err) {
+                        console.error('Could not copy text: ', err);
+                        // Fallback for older browsers or non-HTTPS
+                        const textArea = document.createElement("textarea");
+                        textArea.value = url;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Link konten berhasil disalin ke clipboard',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                        } catch (err) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: 'Gagal menyalin link.',
+                            });
+                        }
+                        document.body.removeChild(textArea);
+                    });
                 });
             });
         });

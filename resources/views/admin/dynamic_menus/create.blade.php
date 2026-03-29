@@ -115,7 +115,35 @@
                     </div>
                 </div>
 
-                <div class="row">
+                <div id="externalLinksSection" style="display: none;" class="mb-3">
+                    <label class="form-label fw-medium">Daftar Link (Opsional)</label>
+                    <div id="linksContainer">
+                        @if(old('links'))
+                            @foreach(old('links') as $index => $link)
+                                <div class="row mb-2 link-row">
+                                    <div class="col-md-5">
+                                        <input type="text" name="links[{{ $index }}][name]" class="form-control"
+                                            placeholder="Nama Link" value="{{ $link['name'] }}">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" name="links[{{ $index }}][url]" class="form-control"
+                                            placeholder="URL Link" value="{{ $link['url'] }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 remove-link-btn">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill mt-2" id="addLinkBtn">
+                        <i class="fas fa-plus me-1"></i> Tambah Link
+                    </button>
+                </div>
+
+                <div class="row" id="embedUrlSection">
                     <div class="col-md-12 mb-3">
                         <label class="form-label fw-medium">Embed URL (Opsional)</label>
                         <input type="text" name="embed_url" id="embedUrlInput" class="form-control"
@@ -236,13 +264,30 @@
                 } else {
                     // It's a Submenu, Content Type IS required
                     typeSelect.required = true;
-                    urlInput.required = true;
+                    // For external types, the main URL is optional if there are links in the list
+                    urlInput.required = type === 'external' ? false : true;
                     typeRequiredStar.style.display = 'inline';
-                    urlRequiredStar.style.display = 'inline';
+                    urlRequiredStar.style.display = type === 'external' ? 'none' : 'inline';
                 }
 
-                urlSection.style.display = type ? 'block' : 'none';
+                urlSection.style.display = (type && type !== 'external') ? 'block' : 'none';
                 spreadsheetExtra.style.display = type === 'spreadsheet' ? 'block' : 'none';
+
+                const embedUrlSection = document.getElementById('embedUrlSection');
+                if (embedUrlSection) {
+                    embedUrlSection.style.display = (type && type !== 'external') ? 'block' : 'none';
+                }
+
+                if (type === 'external') {
+                    urlInput.value = '';
+                    const embedInput = document.getElementById('embedUrlInput');
+                    if (embedInput) embedInput.value = '';
+                }
+
+                const externalLinksSection = document.getElementById('externalLinksSection');
+                if (externalLinksSection) {
+                    externalLinksSection.style.display = type === 'external' ? 'block' : 'none';
+                }
 
                 if (type === 'spreadsheet') {
                     urlHint.innerHTML = 'Paste link Google Spreadsheet lengkap. ID dan GID akan diekstrak otomatis.';
@@ -255,6 +300,40 @@
                 }
                 validateForm();
                 updatePreview();
+            }
+
+            // External Links Handling
+            const addLinkBtn = document.getElementById('addLinkBtn');
+            const linksContainer = document.getElementById('linksContainer');
+            let linkIndex = document.querySelectorAll('.link-row').length;
+
+            if (addLinkBtn) {
+                addLinkBtn.addEventListener('click', function () {
+                    const row = document.createElement('div');
+                    row.className = 'row mb-2 link-row';
+                    row.innerHTML = `
+                                        <div class="col-md-5">
+                                            <input type="text" name="links[${linkIndex}][name]" class="form-control" placeholder="Nama Link">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <input type="text" name="links[${linkIndex}][url]" class="form-control" placeholder="URL Link">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-outline-danger w-100 remove-link-btn">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    `;
+                    linksContainer.appendChild(row);
+                    linkIndex++;
+                });
+
+                linksContainer.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('remove-link-btn') || e.target.closest('.remove-link-btn')) {
+                        const row = e.target.closest('.link-row');
+                        row.remove();
+                    }
+                });
             }
 
             function validateForm() {
@@ -274,7 +353,12 @@
                 if (urlError) urlError.classList.remove('d-none');
 
                 if (url === '') {
-                    isValid = false;
+                    // For external types, it's valid if there's at least one link in the list
+                    if (type === 'external' && document.querySelectorAll('.link-row').length > 0) {
+                        isValid = true;
+                    } else {
+                        isValid = false;
+                    }
                 } else {
                     if (type === 'youtube') {
                         if (!isValidYoutubeUrl(url)) {
