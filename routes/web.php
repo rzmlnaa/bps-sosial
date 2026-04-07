@@ -334,6 +334,12 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
     Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
     Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
+
+    // Pra Ekspor
+    Route::get('/pra-ekspor', [\App\Http\Controllers\PraEksporController::class, 'index'])->name('pra-ekspor.index');
+    Route::post('/pra-ekspor/toggle', [\App\Http\Controllers\PraEksporController::class, 'toggleSelection'])->name('pra-ekspor.toggle');
+    Route::get('/pra-ekspor/preview', [\App\Http\Controllers\PraEksporController::class, 'preview'])->name('pra-ekspor.preview');
+    Route::get('/pra-ekspor/export-excel', [\App\Http\Controllers\PraEksporController::class, 'exportExcel'])->name('pra-ekspor.export-excel');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

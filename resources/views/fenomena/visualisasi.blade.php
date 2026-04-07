@@ -75,7 +75,7 @@
                             <div class="h4 mb-0 font-weight-bold text-dark">{{ $totalPending }}</div>
                         </div>
                         <div class="bg-orange-faded p-3 rounded-circle">
-                            <i class="fas fa-clock"></i>
+                            <i class="fas fa-clock fa-spin"></i>
                         </div>
                     </div>
                 </div>

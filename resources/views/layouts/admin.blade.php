@@ -200,7 +200,7 @@
 
 
                 <a href="#submenu3" id="menu-fenomena"
-                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') ? 'active' : '' }}"
+                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') || request()->routeIs('pra-ekspor.*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-newspaper"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -209,7 +209,7 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') ? 'show' : '' }}"
+                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') || request()->routeIs('pra-ekspor.*') ? 'show' : '' }}"
                     id="submenu3">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
@@ -241,6 +241,13 @@
                                         class="nav-link {{ request()->routeIs('fenomena.verification.*') || (request()->routeIs('fenomena.show') && request()->query('from') == 'verification') ? 'active' : '' }}">
                                         <i class="fas fa-clipboard-check"></i>
                                         <span>Verifikasi</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('pra-ekspor.index') }}"
+                                        class="nav-link {{ request()->routeIs('pra-ekspor.*') ? 'active' : '' }}">
+                                        <i class="fas fa-file-export"></i>
+                                        <span>Pra Ekspor</span>
                                     </a>
                                 </li>
                             @endif
