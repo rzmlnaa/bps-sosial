@@ -266,4 +266,166 @@ class PraEksporController extends Controller
             $filename
         );
     }
+
+    public function previewSemua(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+        $bulan = $request->input('bulan', date('n'));
+
+        $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators', 'fenomena.creator.kabupaten']);
+
+        if ($tahun !== 'all') {
+            $selectionsQuery->where('tahun', $tahun);
+        }
+
+        if ($bulan !== 'all') {
+            $selectionsQuery->where('bulan', $bulan);
+        }
+
+        $selections = $selectionsQuery->get();
+        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+
+        $dataPerKabupaten = [];
+        foreach ($kabupatens as $kab) {
+            $dataPerKabupaten[$kab->id] = [
+                'kabupaten' => $kab,
+                'groupedData' => [],
+                'unmatchedData' => []
+            ];
+        }
+
+        foreach ($selections as $sel) {
+            $fen = $sel->fenomena;
+            if (!$fen)
+                continue;
+
+            $kab_id = $sel->kabupaten_id;
+            if (!isset($dataPerKabupaten[$kab_id]))
+                continue;
+
+            if ($fen->indikators->isEmpty()) {
+                $dataPerKabupaten[$kab_id]['unmatchedData'][$fen->id] = $fen;
+                continue;
+            }
+
+            foreach ($fen->indikators as $ind) {
+                $ind_id = $ind->id;
+                if (!isset($dataPerKabupaten[$kab_id]['groupedData'][$ind_id])) {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id] = [
+                        'indikator' => $ind,
+                        'naik' => [],
+                        'turun' => [],
+                    ];
+                }
+
+                $arah = strtolower($ind->pivot->arah ?? '');
+                if ($arah === 'naik') {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id]['naik'][$fen->id] = $fen;
+                } elseif ($arah === 'turun') {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id]['turun'][$fen->id] = $fen;
+                }
+            }
+        }
+
+        foreach ($dataPerKabupaten as $kab_id => &$data) {
+            usort($data['groupedData'], function ($a, $b) {
+                return strcmp($a['indikator']->nama, $b['indikator']->nama);
+            });
+        }
+        unset($data);
+
+        return view('pra-ekspor.preview-semua', compact('tahun', 'bulan', 'dataPerKabupaten', 'kabupatens'));
+    }
+
+    public function exportExcelSemua(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+        $bulan = $request->input('bulan', date('n'));
+
+        $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators', 'fenomena.creator.kabupaten']);
+
+        if ($tahun !== 'all') {
+            $selectionsQuery->where('tahun', $tahun);
+        }
+
+        if ($bulan !== 'all') {
+            $selectionsQuery->where('bulan', $bulan);
+        }
+
+        $selections = $selectionsQuery->get();
+        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+
+        $dataPerKabupaten = [];
+        foreach ($kabupatens as $kab) {
+            $dataPerKabupaten[$kab->id] = [
+                'kabupaten' => $kab,
+                'groupedData' => [],
+                'unmatchedData' => []
+            ];
+        }
+
+        foreach ($selections as $sel) {
+            $fen = $sel->fenomena;
+            if (!$fen)
+                continue;
+
+            $kab_id = $sel->kabupaten_id;
+            if (!isset($dataPerKabupaten[$kab_id]))
+                continue;
+
+            if ($fen->indikators->isEmpty()) {
+                $dataPerKabupaten[$kab_id]['unmatchedData'][$fen->id] = $fen;
+                continue;
+            }
+
+            foreach ($fen->indikators as $ind) {
+                $ind_id = $ind->id;
+                if (!isset($dataPerKabupaten[$kab_id]['groupedData'][$ind_id])) {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id] = [
+                        'indikator' => $ind,
+                        'naik' => [],
+                        'turun' => [],
+                    ];
+                }
+
+                $arah = strtolower($ind->pivot->arah ?? '');
+                if ($arah === 'naik') {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id]['naik'][$fen->id] = $fen;
+                } elseif ($arah === 'turun') {
+                    $dataPerKabupaten[$kab_id]['groupedData'][$ind_id]['turun'][$fen->id] = $fen;
+                }
+            }
+        }
+
+        $filters = $request->input('filters', []);
+
+        foreach ($dataPerKabupaten as $kab_id => &$data) {
+            if (!empty($filters)) {
+                $filteredGroupedData = [];
+                foreach ($data['groupedData'] as $id => $row) {
+                    $kelompok = strtolower($row['indikator']->kelompok ?? 'lainnya');
+                    if (in_array($kelompok, $filters)) {
+                        $filteredGroupedData[$id] = $row;
+                    }
+                }
+                $data['groupedData'] = $filteredGroupedData;
+
+                if (!in_array('lainnya', $filters)) {
+                    $data['unmatchedData'] = [];
+                }
+            }
+
+            usort($data['groupedData'], function ($a, $b) {
+                return strcmp($a['indikator']->nama, $b['indikator']->nama);
+            });
+        }
+        unset($data);
+
+        $filename = "Rekap_Fenomena_Semua_Wilayah_" . ($tahun === 'all' ? 'Semua_Tahun' : $tahun) . ".xlsx";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\PraEksporFenomenaSemuaExport($tahun, $bulan, $dataPerKabupaten),
+            $filename
+        );
+    }
 }

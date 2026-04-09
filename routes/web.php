@@ -340,6 +340,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/pra-ekspor/toggle', [\App\Http\Controllers\PraEksporController::class, 'toggleSelection'])->name('pra-ekspor.toggle');
     Route::get('/pra-ekspor/preview', [\App\Http\Controllers\PraEksporController::class, 'preview'])->name('pra-ekspor.preview');
     Route::get('/pra-ekspor/export-excel', [\App\Http\Controllers\PraEksporController::class, 'exportExcel'])->name('pra-ekspor.export-excel');
+    Route::get('/pra-ekspor/preview-semua', [\App\Http\Controllers\PraEksporController::class, 'previewSemua'])->name('pra-ekspor.preview-semua');
+    Route::get('/pra-ekspor/export-excel-semua', [\App\Http\Controllers\PraEksporController::class, 'exportExcelSemua'])->name('pra-ekspor.export-excel-semua');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

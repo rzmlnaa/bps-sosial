@@ -273,10 +273,16 @@
 
             @if($selectedKabupatenId)
                 <a href="{{ route('pra-ekspor.preview', ['kabupaten_id' => $selectedKabupatenId, 'tahun' => $tahun, 'bulan' => $bulan]) }}"
-                    class="fi-btn-submit" style="background: #10b981; text-decoration: none; margin-left: auto;">
+                    id="btn-preview-sasaran" class="fi-btn-submit"
+                    style="background: #10b981; text-decoration: none; margin-left: auto;">
                     <i class="fas fa-table"></i> Lihat Tabel Ekspor
                 </a>
             @endif
+            <a href="{{ route('pra-ekspor.preview-semua', ['tahun' => $tahun, 'bulan' => $bulan]) }}" id="btn-preview-semua"
+                class="fi-btn-submit"
+                style="background: #0284c7; text-decoration: none; {{ !$selectedKabupatenId ? 'margin-left: auto;' : '' }}">
+                <i class="fas fa-globe"></i> Tabel Semua Wilayah
+            </a>
         </form>
 
         {{-- Results & Grid --}}
@@ -431,12 +437,44 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Update preview button links dynamically based on filter selects
+            const btnPreviewSasaran = document.getElementById('btn-preview-sasaran');
+            const btnPreviewSemua = document.getElementById('btn-preview-semua');
+            const selectKabupaten = document.querySelector('select[name="kabupaten_id"]');
+            const selectTahun = document.querySelector('select[name="tahun"]');
+            const selectBulan = document.querySelector('select[name="bulan"]');
+
+            function updatePreviewLinks() {
+                const tahun = selectTahun ? selectTahun.value : 'all';
+                const bulan = selectBulan ? selectBulan.value : 'all';
+                const kabupatenId = selectKabupaten ? selectKabupaten.value : '';
+
+                if (btnPreviewSasaran && kabupatenId) {
+                    const url = new URL(btnPreviewSasaran.href);
+                    url.searchParams.set('kabupaten_id', kabupatenId);
+                    url.searchParams.set('tahun', tahun);
+                    url.searchParams.set('bulan', bulan);
+                    btnPreviewSasaran.href = url.toString();
+                }
+
+                if (btnPreviewSemua) {
+                    const url = new URL(btnPreviewSemua.href);
+                    url.searchParams.set('tahun', tahun);
+                    url.searchParams.set('bulan', bulan);
+                    btnPreviewSemua.href = url.toString();
+                }
+            }
+
+            if (selectTahun) selectTahun.addEventListener('change', updatePreviewLinks);
+            if (selectBulan) selectBulan.addEventListener('change', updatePreviewLinks);
+            if (selectKabupaten) selectKabupaten.addEventListener('change', updatePreviewLinks);
+
             const toggleSwitches = document.querySelectorAll('.toggle-selection');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const kabupatenId = '{{ $selectedKabupatenId ?? '' }}';
-            const tahun = '{{ $tahun ?? date('Y') }}';
-            const bulan = '{{ $bulan ?? date('n') }}';
+            const tahunStr = '{{ $tahun ?? date('Y') }}';
+            const bulanStr = '{{ $bulan ?? date('n') }}';
 
             toggleSwitches.forEach(toggle => {
                 toggle.addEventListener('change', function () {
@@ -457,8 +495,8 @@
                         body: JSON.stringify({
                             kabupaten_id: kabupatenId,
                             fenomena_id: fenomenaId,
-                            tahun: tahun,
-                            bulan: bulan,
+                            tahun: tahunStr,
+                            bulan: bulanStr,
                             is_selected: isSelected
                         })
                     })
@@ -486,15 +524,15 @@
                 const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
 
                 const toastHTML = `
-                                                    <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-                                                        <div class="d-flex">
-                                                            <div class="toast-body">
-                                                                <strong>${title}:</strong> ${message}
+                                                            <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                                                                <div class="d-flex">
+                                                                    <div class="toast-body">
+                                                                        <strong>${title}:</strong> ${message}
+                                                                    </div>
+                                                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                </div>
                                                             </div>
-                                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                        </div>
-                                                    </div>
-                                                `;
+                                                        `;
 
                 toastContainer.insertAdjacentHTML('beforeend', toastHTML);
                 const newToast = toastContainer.lastElementChild;
