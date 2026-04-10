@@ -24,8 +24,19 @@ class PraEksporController extends Controller
             $kabupaten = \App\Models\Kabupaten::find($selectedKabupatenId);
             if ($kabupaten) {
                 // Extract keyword: remove 'kab.' 'kota' 'kabupaten' and trim
-                $kataKunci = str_ireplace(['kab.', 'kabupaten', 'kota'], '', strtolower($kabupaten->nama_kabupaten));
+                $kataKunci = str_ireplace(['kab.', 'kabupaten', 'kota', 'provinsi'], '', strtolower($kabupaten->nama_kabupaten));
                 $kataKunci = trim($kataKunci);
+
+                $allKabupatens = \App\Models\Kabupaten::pluck('nama_kabupaten', 'id')->toArray();
+                $otherKeywords = [];
+                foreach ($allKabupatens as $id => $nama) {
+                    if ($id == $selectedKabupatenId)
+                        continue;
+                    $kw = trim(str_ireplace(['kab.', 'kabupaten', 'kota', 'provinsi'], '', strtolower($nama)));
+                    if (!empty($kw) && $kw !== $kataKunci) {
+                        $otherKeywords[] = $kw;
+                    }
+                }
 
                 // Efficient Eager Loading 
                 $query = \App\Models\Fenomena::with(['sumberBerita', 'creator.kabupaten', 'indikators'])
@@ -33,6 +44,28 @@ class PraEksporController extends Controller
                         $q->where('judul', 'LIKE', '%' . $kataKunci . '%')
                             ->orWhere('penjelasan', 'LIKE', '%' . $kataKunci . '%');
                     });
+
+                $searchField = "LOWER(CONCAT(IFNULL(judul, ''), ' ', IFNULL(penjelasan, '')))";
+                $targetLen = strlen($kataKunci);
+
+                if ($targetLen > 0) {
+                    foreach (array_unique($otherKeywords) as $otherKw) {
+                        $otherLen = strlen($otherKw);
+                        if ($otherLen > 0) {
+                            $query->whereRaw("((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?) <= ((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?)", [
+                                $otherKw,
+                                $otherLen,
+                                $kataKunci,
+                                $targetLen
+                            ]);
+                        }
+                    }
+
+                    $query->orderByRaw("((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?) DESC", [
+                        $kataKunci,
+                        $targetLen
+                    ]);
+                }
 
                 if ($tahun !== 'all') {
                     $query->where('tahun', $tahun);
