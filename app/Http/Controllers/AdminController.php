@@ -4,12 +4,43 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Kabupaten;
+use App\Models\DynamicMenu;
 
 class AdminController extends Controller
 {
     public function index()
     {
-        return view('admin.dashboard');
+        $stats = [
+            'users_count' => User::where('role', '!=', 'admin')->count(),
+            'admins_count' => User::where('role', 'admin')->count(),
+            'kabupatens_count' => Kabupaten::count(),
+            'menus_count' => DynamicMenu::count(),
+        ];
+
+        // Eager loading to avoid N+1
+        $latestUsers = User::with('kabupaten')
+            ->where('role', '!=', 'admin')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $latestAdmins = User::where('role', 'admin')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])
+            ->orderBy('kode_kab', 'asc')
+            ->take(10)
+            ->get();
+
+        $latestMenus = DynamicMenu::with(['parent', 'creator'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('admin.dashboard', compact('stats', 'latestUsers', 'latestAdmins', 'kabupatens', 'latestMenus'));
     }
 
     public function users(Request $request)
