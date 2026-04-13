@@ -32,4 +32,9 @@ class Komoditas extends Model
     {
         return $this->belongsTo(User::class, 'user_id_update');
     }
+
+    public function rhPerubahanDetails()
+    {
+        return $this->hasMany(RhPerubahanDetail::class, 'komoditas_id');
+    }
 }

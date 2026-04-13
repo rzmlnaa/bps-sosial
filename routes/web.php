@@ -26,6 +26,7 @@ use App\Http\Controllers\FrontendMenuController;
 use App\Http\Controllers\SektorUsahaController;
 use App\Http\Controllers\IndikatorController;
 use App\Http\Controllers\MyTeamController;
+use App\Http\Controllers\DashboardController;
 
 
 
@@ -115,9 +116,7 @@ Route::middleware(['check.status'])->group(function () {
         return redirect('/dashboard');
     });
 
-    Route::get('/dashboard', function () {
-        return view('dashboard.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/layouts', function () {
         return view('layouts.admin');

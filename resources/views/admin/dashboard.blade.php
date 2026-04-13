@@ -15,7 +15,7 @@
                             </div>
                         </div>
                         <h6 class="text-muted fw-medium mb-1">Total Pengguna</h6>
-                        <h2 class="fw-bold mb-0">{{ $stats['users_count'] }}</h2>
+                        <h2 class="fw-bold mb-0 counter-value" data-target="{{ $stats['users_count'] }}">0</h2>
                     </div>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                             </div>
                         </div>
                         <h6 class="text-muted fw-medium mb-1">Total Admin</h6>
-                        <h2 class="fw-bold mb-0">{{ $stats['admins_count'] }}</h2>
+                        <h2 class="fw-bold mb-0 counter-value" data-target="{{ $stats['admins_count'] }}">0</h2>
                     </div>
                 </div>
             </div>
@@ -41,7 +41,7 @@
                             </div>
                         </div>
                         <h6 class="text-muted fw-medium mb-1">Master Wilayah</h6>
-                        <h2 class="fw-bold mb-0">{{ $stats['kabupatens_count'] }}</h2>
+                        <h2 class="fw-bold mb-0 counter-value" data-target="{{ $stats['kabupatens_count'] }}">0</h2>
                     </div>
                 </div>
             </div>
@@ -54,7 +54,7 @@
                             </div>
                         </div>
                         <h6 class="text-muted fw-medium mb-1">Menu Dinamis</h6>
-                        <h2 class="fw-bold mb-0">{{ $stats['menus_count'] }}</h2>
+                        <h2 class="fw-bold mb-0 counter-value" data-target="{{ $stats['menus_count'] }}">0</h2>
                     </div>
                 </div>
             </div>
@@ -254,4 +254,32 @@
             </div>
         </div>
     </div>
+
+    <script>
+         document.addEventListener('DOMContentLoaded', function () {
+            const counters = document.querySelectorAll('.counter-value');
+            const duration = 1000; // Total animation time in ms (2 seconds)
+
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-target');
+                if (target === 0) return;
+
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const currentCount = Math.floor(progress * target);
+
+                    counter.innerText = currentCount.toLocaleString('id-ID');
+
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        counter.innerText = target.toLocaleString('id-ID');
+                    }
+                };
+                window.requestAnimationFrame(step);
+            });
+        });
+    </script>
 @endsection
