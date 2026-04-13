@@ -419,10 +419,16 @@
             : null;
 
         /* ── Back URL ── */
-        $backUrl = $from === 'verification'
-            ? route('fenomena.verification.index', ['tab' => 'riwayat'])
-            : route('fenomena.index');
-        $backLabel = $from === 'verification' ? 'Kembali ke Verifikasi' : 'Kembali ke Daftar Fenomena';
+        $backUrl = match ($from) {
+            'verification' => route('fenomena.verification.index', ['tab' => request('tab', 'riwayat')]),
+            'dashboard' => route('dashboard'),
+            default => route('fenomena.index'),
+        };
+        $backLabel = match ($from) {
+            'verification' => request('tab') === 'pending' ? 'Kembali ke Antrean' : 'Kembali ke Riwayat',
+            'dashboard' => 'Kembali ke Dashboard',
+            default => 'Kembali ke Daftar Fenomena',
+        };
     @endphp
 
     <div class="df-page fade-in-up" style="padding: 1.5rem 0;">

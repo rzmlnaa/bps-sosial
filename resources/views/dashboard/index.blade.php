@@ -4,38 +4,38 @@
 
 @section('content')
     <!-- <style>
-                                                                                                                                                                                                                            .dev-wrapper {
-                                                                                                                                                                                                                                min-height: calc(100vh - 120px);
-                                                                                                                                                                                                                                /* sesuaikan tinggi navbar/header */
-                                                                                                                                                                                                                                display: flex;
-                                                                                                                                                                                                                                align-items: center;
-                                                                                                                                                                                                                                justify-content: center;
-                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                        </style>
+                                                                                                                                                                                                                                    .dev-wrapper {
+                                                                                                                                                                                                                                        min-height: calc(100vh - 120px);
+                                                                                                                                                                                                                                        /* sesuaikan tinggi navbar/header */
+                                                                                                                                                                                                                                        display: flex;
+                                                                                                                                                                                                                                        align-items: center;
+                                                                                                                                                                                                                                        justify-content: center;
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                </style>
 
-                                                                                                                                                                                                                        <div class="dev-wrapper">
-                                                                                                                                                                                                                            <div class="dev-box text-center">
+                                                                                                                                                                                                                                <div class="dev-wrapper">
+                                                                                                                                                                                                                                    <div class="dev-box text-center">
 
-                                                                                                                                                                                                                                <img src="https://i.pinimg.com/originals/48/e3/03/48e303bf57f8ad627c73a0e0e30f5f33.gif" width="300"
-                                                                                                                                                                                                                                    class="mb-1">
+                                                                                                                                                                                                                                        <img src="https://i.pinimg.com/originals/48/e3/03/48e303bf57f8ad627c73a0e0e30f5f33.gif" width="300"
+                                                                                                                                                                                                                                            class="mb-1">
 
-                                                                                                                                                                                                                                <h4 class="fw-bold text-warning mb-2">
-                                                                                                                                                                                                                                    🚧 Fitur Dalam Pengembangan
-                                                                                                                                                                                                                                </h4>
+                                                                                                                                                                                                                                        <h4 class="fw-bold text-warning mb-2">
+                                                                                                                                                                                                                                            🚧 Fitur Dalam Pengembangan
+                                                                                                                                                                                                                                        </h4>
 
-                                                                                                                                                                                                                                <p class="text-muted mb-0">
-                                                                                                                                                                                                                                    Halaman ini masih dalam tahap pengembangan. <br>
-                                                                                                                                                                                                                                    Beberapa fitur mungkin belum berjalan secara optimal.
-                                                                                                                                                                                                                                    <br><br>
-                                                                                                                                                                                                                                    © BPS Provinsi Kalimantan Barat
-                                                                                                                                                                                                                                    <br>
-                                                                                                                                                                                                                                    Dikembangkan oleh <a href="/developer" target="_blank" style="text-decoration: none;">Peserta Magang</a> –
-                                                                                                                                                                                                                                    Program
-                                                                                                                                                                                                                                    MagangHUB Kemnaker
-                                                                                                                                                                                                                                </p>
+                                                                                                                                                                                                                                        <p class="text-muted mb-0">
+                                                                                                                                                                                                                                            Halaman ini masih dalam tahap pengembangan. <br>
+                                                                                                                                                                                                                                            Beberapa fitur mungkin belum berjalan secara optimal.
+                                                                                                                                                                                                                                            <br><br>
+                                                                                                                                                                                                                                            © BPS Provinsi Kalimantan Barat
+                                                                                                                                                                                                                                            <br>
+                                                                                                                                                                                                                                            Dikembangkan oleh <a href="/developer" target="_blank" style="text-decoration: none;">Peserta Magang</a> –
+                                                                                                                                                                                                                                            Program
+                                                                                                                                                                                                                                            MagangHUB Kemnaker
+                                                                                                                                                                                                                                        </p>
 
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        </div> -->
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div> -->
 
 
     <div class="container-fluid px-4 py-4 fade-in-up">
@@ -485,7 +485,7 @@
                                         <tr>
                                             <td class="ps-4">
                                                 @if($f->status_verifikasi === 'Y')
-                                                    <a href="{{ route('fenomena.show', $f->id) }}"
+                                                    <a href="{{ route('fenomena.show', ['id' => $f->id, 'from' => 'dashboard']) }}"
                                                         class="text-decoration-none group">
                                                         <div class="fw-bold text-navy text-sm text-truncate transition-all"
                                                             style="max-width: 250px;" title="{{ $f->judul }}">
@@ -704,7 +704,7 @@
                     labels: {!! json_encode($priceLabels) !!},
                     datasets: [
                         @foreach($priceTrend as $index => $trend)
-                                                                                                                                                                                                                                                                                                                                                            {
+                                                                                                                                                                                                                                                                                                                                                                            {
                                 label: '{{ $trend["name"] }}',
                                 data: {!! json_encode($trend["data"]) !!},
                                 borderColor: colors[{{ $index }} % colors.length],
@@ -715,7 +715,7 @@
                                 fill: false
                             },
                         @endforeach
-                                                                                                                                                                                    ]
+                                                                                                                                                                                            ]
                 },
                 options: {
                     responsive: true,
