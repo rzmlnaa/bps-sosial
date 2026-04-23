@@ -36,4 +36,9 @@ class Kabupaten extends Model
     {
         return $this->hasMany(PraEksporFenomenaSelection::class, 'kabupaten_id');
     }
+
+    public function kecamatans()
+    {
+        return $this->hasMany(DescanKecamatan::class, 'kabupaten_id');
+    }
 }
