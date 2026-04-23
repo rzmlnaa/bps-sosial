@@ -4,6 +4,30 @@
 
 @section('content')
     <div class="container-fluid py-4">
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden" 
+                     style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
+                    <div class="card-body p-4 p-md-5 text-white position-relative">
+                        <div class="position-absolute top-0 end-0 p-4" style="opacity: 0.15;">
+                            <i class="fas fa-shield-halved fa-8x"></i>
+                        </div>
+                        <div class="row align-items-center position-relative" style="z-index: 1;">
+                            <div class="col-lg-12">
+                                <h3 class="fw-bold mb-1">Panel Admin SISOKA</h3>
+                                <p class="mb-4 opacity-75 fw-medium">Sistem Informasi Sosial Kalbar</p>
+                                
+                                <p class="mb-0 opacity-75 lead" style="max-width: 800px; font-size: 1rem; line-height: 1.6;">
+                                    Selamat datang di pusat kendali SISOKA. Kelola akun pengguna, master wilayah, dan menu dinamis untuk memastikan integritas data indikator sosial ekonomi Kalimantan Barat tetap terjaga dengan baik.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row g-4 mb-4">
             <!-- Stats Cards -->
             <div class="col-xl-3 col-md-6">

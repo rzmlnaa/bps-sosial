@@ -16,94 +16,50 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. KPI Stats with Deltas (Monthly Comparison)
+
         $now = now();
         $lastMonth = now()->subMonth();
 
         $stats = [
-            'poverty_data_count' => NilaiKemiskinan::count(),
-            'seruti_data_count' => ConsumptionValue::count(),
             'price_range_count' => RhPerubahanDetail::count(),
-            'menu_count' => DynamicMenu::count(),
+            'menu_count' => DynamicMenu::where('is_active', true)
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                        $q->whereNotNull('url')->where('url', '!=', '');
+                    })
+                        ->orWhere(function ($q) {
+                            $q->whereNotNull('embed_url')->where('embed_url', '!=', '');
+                        })
+                        ->orWhere(function ($q) {
+                            $q->whereJsonLength('meta', '>', 0);
+                        });
+                })->count(),
         ];
 
-        // Delta calculation (Current month entries vs Previous month)
+
         $deltas = [
-            'poverty' => $this->calculateDelta(NilaiKemiskinan::class, $now, $lastMonth),
-            'seruti' => $this->calculateDelta(ConsumptionValue::class, $now, $lastMonth),
             'price' => $this->calculateDelta(RhPerubahanDetail::class, $now, $lastMonth),
         ];
 
-        // ... existing code ...
-        // 3. Regional Poverty Distribution (For Bar Chart)
-        $latestVar = VariabelKemiskinan::latest()->first();
-        // ... (rest of the index method)
-
-
-
-
-
-        // 3. Regional Poverty Distribution (For Bar Chart)
-        $latestVar = VariabelKemiskinan::latest()->first();
-        $regionalPoverty = [];
-        if ($latestVar) {
-            $regionalPoverty = \App\Models\Kabupaten::with([
-                'nilaiKemiskinan' => function ($q) use ($latestVar) {
-                    $q->where('variabel_kemiskinan_id', $latestVar->id);
-                }
-            ])
-                ->get()
-                ->map(function ($kab) {
-                    return [
-                        'name' => $kab->nama_kabupaten,
-                        'value' => $kab->nilaiKemiskinan->avg('nilai') ?? 0
-                    ];
-                })
-                ->where('value', '>', 0)
-                ->values();
-        }
-
-        // 4. Existing Content Data
-        $latestPovertyData = NilaiKemiskinan::with(['kabupaten', 'variabelKemiskinan'])
-            ->select('kabupaten_id', 'variabel_kemiskinan_id', \Illuminate\Support\Facades\DB::raw('MAX(created_at) as last_update'))
-            ->groupBy('kabupaten_id', 'variabel_kemiskinan_id')
-            ->orderBy('last_update', 'desc')
-            ->take(5)
-            ->get()
-            ->map(function ($group) {
-                $stats = NilaiKemiskinan::where('kabupaten_id', $group->kabupaten_id)
-                    ->where('variabel_kemiskinan_id', $group->variabel_kemiskinan_id)
-                    ->selectRaw('AVG(nilai) as avg_nilai')
-                    ->first();
-                return (object) [
-                    'kabupaten_nama' => $group->kabupaten->nama_kabupaten ?? '-',
-                    'variabel_nama' => $group->variabelKemiskinan->nama_variabel ?? '-',
-                    'tahun' => $group->variabelKemiskinan->tahun ?? '-',
-                    'avg_nilai' => $stats->avg_nilai ?? 0,
-                ];
-            });
 
         $activeRhTahun = RhTahun::where('is_active', true)->first();
+        $allYears = RhTahun::orderBy('tahun', 'desc')->get();
+
+        $selectedYearId = request('year_id');
+        if ($selectedYearId === null) {
+
+            $defaultYear = $allYears->firstWhere('tahun', 2026) ?? $activeRhTahun;
+            $selectedYearId = $defaultYear->id ?? 'all';
+        }
+
         $latestPriceChanges = RhPerubahanDetail::with(['revisionHeader', 'komoditas', 'kabupaten'])
             ->whereNotNull('min_edit')
             ->orderBy('updated_at', 'desc')
             ->take(5)
             ->get();
 
-        // Poverty Trend (thicker line data)
-        $povertyTrend = VariabelKemiskinan::with(['nilaiKemiskinan'])
-            ->orderBy('tahun', 'asc')
-            ->orderBy('bulan', 'asc')
-            ->take(12)
-            ->get()
-            ->map(function ($v) {
-                return [
-                    'label' => ($v->bulan ? $v->bulan . '/' : '') . $v->tahun,
-                    'avg' => $v->nilaiKemiskinan->avg('nilai') ?? 0
-                ];
-            });
 
-        // Commodity Trend (More Contrast)
+
         $sampleKomoditas = Komoditas::whereHas('rhPerubahanDetails')
             ->withCount('rhPerubahanDetails')
             ->orderBy('rh_perubahan_details_count', 'desc')
@@ -112,22 +68,81 @@ class DashboardController extends Controller
 
         $priceTrend = [];
         $priceLabels = [];
-        if ($activeRhTahun) {
-            $revisions = \App\Models\RhPerubahanHeader::where('rh_tahun_id', $activeRhTahun->id)
-                ->orderBy('tanggal_perubahan', 'asc')
-                ->get();
-            $priceLabels = $revisions->pluck('label')->toArray();
+
+        $revisionsQuery = \App\Models\RhPerubahanHeader::with('rhTahun')
+            ->orderBy('tanggal_perubahan', 'desc');
+
+        if ($selectedYearId !== 'all') {
+            $revisionsQuery->where('rh_tahun_id', $selectedYearId);
+        }
+
+        $revisions = $revisionsQuery->take(12)
+            ->get()
+            ->reverse();
+
+
+        $yearsData = [];
+
+
+        if ($selectedYearId !== 'all') {
+            $selYear = $allYears->firstWhere('id', $selectedYearId);
+            if ($selYear) {
+                $yearsData[$selYear->id] = [
+                    'id' => $selYear->id,
+                    'year' => $selYear->tahun ?? '-',
+                    'revisions' => []
+                ];
+            }
+        }
+
+        foreach ($revisions as $rev) {
+            $yId = $rev->rh_tahun_id;
+            if (!isset($yearsData[$yId])) {
+                $yearsData[$yId] = [
+                    'id' => $yId,
+                    'year' => $rev->rhTahun->tahun ?? '-',
+                    'revisions' => []
+                ];
+            }
+            $yearsData[$yId]['revisions'][] = $rev;
+        }
+
+        uasort($yearsData, fn($a, $b) => $a['year'] <=> $b['year']);
+
+        if (!empty($yearsData)) {
+
+            foreach ($yearsData as $yData) {
+                $priceLabels[] = 'Master ' . $yData['year'];
+                foreach ($yData['revisions'] as $rev) {
+                    $priceLabels[] = $rev->label;
+                }
+            }
 
             foreach ($sampleKomoditas as $kom) {
                 $series = [];
-                foreach ($revisions as $rev) {
-                    $avgPrice = RhPerubahanDetail::where('rh_perubahan_header_id', $rev->id)
+
+                foreach ($yearsData as $yData) {
+
+                    $masterPrice = RhPerubahanDetail::whereNull('rh_perubahan_header_id')
+                        ->where('rh_tahun_id', $yData['id'])
                         ->where('komoditas_id', $kom->id)
                         ->selectRaw('AVG((min_edit + max_edit) / 2) as avg_price')
                         ->first()
                         ->avg_price;
-                    $series[] = $avgPrice ?? 0;
+                    $series[] = (float) ($masterPrice ?? 0);
+
+
+                    foreach ($yData['revisions'] as $rev) {
+                        $avgPrice = RhPerubahanDetail::where('rh_perubahan_header_id', $rev->id)
+                            ->where('komoditas_id', $kom->id)
+                            ->selectRaw('AVG((min_edit + max_edit) / 2) as avg_price')
+                            ->first()
+                            ->avg_price;
+
+                        $series[] = (float) ($avgPrice ?? 0);
+                    }
                 }
+
                 $priceTrend[] = [
                     'name' => $kom->nama_komoditas,
                     'data' => $series
@@ -135,30 +150,32 @@ class DashboardController extends Controller
             }
         }
 
-        $latestSeruti = \App\Models\ConsumptionValue::with(['kabupaten', 'period'])
-            ->select('kabupaten_id', 'period_id', \Illuminate\Support\Facades\DB::raw('MAX(updated_at) as last_update'), \Illuminate\Support\Facades\DB::raw('AVG(value) as avg_value'), \Illuminate\Support\Facades\DB::raw('COUNT(*) as total_items'))
-            ->groupBy('kabupaten_id', 'period_id')
-            ->orderBy('last_update', 'desc')
-            ->take(5)
-            ->get();
 
         $latestFenomena = \App\Models\Fenomena::with(['creator', 'sumberBerita'])
             ->latest()
             ->take(5)
             ->get();
 
+        $latestOnlineUsers = User::with('kabupaten')
+            ->whereNotNull('last_login_at')
+            ->whereNotNull('no_hp')
+            ->where('status', 'active')
+            ->where('role', 'user')
+            ->orderBy('last_login_at', 'desc')
+            ->take(6)
+            ->get();
+
         return view('dashboard.index', compact(
             'stats',
             'deltas',
-
-            'regionalPoverty',
-            'latestPovertyData',
+            'activeRhTahun',
+            'allYears',
+            'selectedYearId',
             'latestPriceChanges',
-            'povertyTrend',
             'priceTrend',
             'priceLabels',
-            'latestSeruti',
-            'latestFenomena'
+            'latestFenomena',
+            'latestOnlineUsers'
         ));
     }
 

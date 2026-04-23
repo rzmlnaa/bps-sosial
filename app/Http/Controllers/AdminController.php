@@ -15,7 +15,18 @@ class AdminController extends Controller
             'users_count' => User::where('role', '!=', 'admin')->count(),
             'admins_count' => User::where('role', 'admin')->count(),
             'kabupatens_count' => Kabupaten::count(),
-            'menus_count' => DynamicMenu::count(),
+            'menus_count' => DynamicMenu::where('is_active', true)
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                        $q->whereNotNull('url')->where('url', '!=', '');
+                    })
+                        ->orWhere(function ($q) {
+                            $q->whereNotNull('embed_url')->where('embed_url', '!=', '');
+                        })
+                        ->orWhere(function ($q) {
+                            $q->whereJsonLength('meta', '>', 0);
+                        });
+                })->count(),
         ];
 
         // Eager loading to avoid N+1
@@ -116,7 +127,6 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Check dependencies across multiple tables
         $hasDependencies = \App\Models\RhTahun::where('user_id_add', $id)->exists()
             || \App\Models\RhPerubahanDetail::where('user_id_add', $id)->orWhere('verified_by', $id)->exists()
             || \App\Models\Kabupaten::where('user_id_add', $id)->orWhere('user_id_update', $id)->exists()
@@ -156,7 +166,7 @@ class AdminController extends Controller
                     }
                 },
             ],
-            // Adding explicit password field or default could use 'nullable' + logic
+
         ]);
 
         User::create([
