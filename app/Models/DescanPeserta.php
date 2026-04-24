@@ -18,12 +18,12 @@ class DescanPeserta extends Model
 
     public function desa()
     {
-        return $this->belongsTo(DescanDesa::class, 'desa_id');
+        return $this->belongsTo(Desa::class, 'desa_id');
     }
 
     public function kecamatan()
     {
-        return $this->belongsTo(DescanKecamatan::class, 'kecamatan_id');
+        return $this->belongsTo(Kecamatan::class, 'kecamatan_id');
     }
 
     public function kabupaten()

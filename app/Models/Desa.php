@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DescanDesa extends Model
+class Desa extends Model
 {
-    protected $table = 'descan_desa';
+    protected $table = 'tb_desa';
 
     protected $fillable = [
         'kecamatan_id',
@@ -18,7 +18,7 @@ class DescanDesa extends Model
 
     public function kecamatan()
     {
-        return $this->belongsTo(DescanKecamatan::class, 'kecamatan_id');
+        return $this->belongsTo(Kecamatan::class, 'kecamatan_id');
     }
 
     public function creator()

@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DescanKecamatan extends Model
+class Kecamatan extends Model
 {
-    protected $table = 'descan_kecamatan';
+    protected $table = 'tb_kecamatan';
 
     protected $fillable = [
         'kabupaten_id',
@@ -23,7 +23,7 @@ class DescanKecamatan extends Model
 
     public function desas()
     {
-        return $this->hasMany(DescanDesa::class, 'kecamatan_id');
+        return $this->hasMany(Desa::class, 'kecamatan_id');
     }
 
     public function creator()
