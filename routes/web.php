@@ -27,6 +27,7 @@ use App\Http\Controllers\SektorUsahaController;
 use App\Http\Controllers\IndikatorController;
 use App\Http\Controllers\MyTeamController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WilayahController;
 
 
 
@@ -103,6 +104,16 @@ Route::middleware(['auth', 'check.status'])->group(function () {
 
     // My Team Route
     Route::get('/my-team', [MyTeamController::class, 'index'])->name('my-team.index');
+
+    // Wilayah (Kecamatan & Desa)
+    Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
+    Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
+    Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
+    Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
+    Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
+    Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
+    Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
 });
 
 

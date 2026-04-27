@@ -150,6 +150,13 @@
                     </a>
                 @endif
 
+                @if(auth()->check())
+                    <a href="{{ route('wilayah.index') }}"
+                        class="nav-link {{ request()->routeIs('wilayah.*') ? 'active' : '' }}">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Kelola Wilayah</span>
+                    </a>
+                @endif
 
                 <a href="{{ route('poverty') }}"
                     class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
