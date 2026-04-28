@@ -234,6 +234,16 @@ Route::middleware(['check.status'])->group(function () {
     // Menu Desa Cantik
     Route::get('/desa-cantik', [DescanController::class, 'index'])->name('desa-cantik.index');
 
+    // Peserta Desa Cantik (semua user login)
+    Route::get('/desa-cantik/peserta', [DescanController::class, 'peserta'])->name('desa-cantik.peserta');
+    Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
+    Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
+
+    // AJAX Dropdown
+    Route::get('/desa-cantik/ajax/kecamatan', [DescanController::class, 'ajaxKecamatan'])->name('desa-cantik.ajax.kecamatan');
+    Route::get('/desa-cantik/ajax/desa', [DescanController::class, 'ajaxDesa'])->name('desa-cantik.ajax.desa');
+    Route::get('/desa-cantik/ajax/kuota-info', [DescanController::class, 'ajaxKuotaInfo'])->name('desa-cantik.ajax.kuota-info');
+
 });
 
 
@@ -358,16 +368,16 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
 
     // Pengelolaan Desa Cantik (Province Only)
     Route::get('/desa-cantik/kelola', [DescanController::class, 'kelola'])->name('desa-cantik.kelola');
-    
+
     // Desa Cantik: Periode
     Route::post('/desa-cantik/periode', [DescanController::class, 'storePeriode'])->name('desa-cantik.periode.store');
     Route::delete('/desa-cantik/periode/{id}', [DescanController::class, 'destroyPeriode'])->name('desa-cantik.periode.destroy');
-    
+
     // Desa Cantik: Kuota
     Route::post('/desa-cantik/kuota', [DescanController::class, 'storeKuota'])->name('desa-cantik.kuota.store');
     Route::put('/desa-cantik/kuota/{id}', [DescanController::class, 'updateKuota'])->name('desa-cantik.kuota.update');
     Route::delete('/desa-cantik/kuota/{id}', [DescanController::class, 'destroyKuota'])->name('desa-cantik.kuota.destroy');
-    
+
     // Desa Cantik: Kegiatan
     Route::post('/desa-cantik/kegiatan', [DescanController::class, 'storeKegiatan'])->name('desa-cantik.kegiatan.store');
     Route::put('/desa-cantik/kegiatan/{id}', [DescanController::class, 'updateKegiatan'])->name('desa-cantik.kegiatan.update');

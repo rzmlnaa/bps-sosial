@@ -169,10 +169,34 @@
                     <span>SERUTI</span>
                 </a>
 
-                <a href="{{ route('desa-cantik.index') }}" class="nav-link {{ request()->routeIs('desa-cantik.*') ? 'active' : '' }}">
+                <a href="#submenuDescan" id="menu-descan"
+                    class="nav-link {{ request()->routeIs('desa-cantik.*') ? 'active' : '' }}" data-bs-toggle="collapse"
+                    aria-expanded="true">
                     <i class="fas fa-seedling"></i>
-                    <span>Desa Cantik</span>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Desa Cantik</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                    </div>
                 </a>
+
+                <div class="collapse {{ request()->routeIs('desa-cantik.*') ? 'show' : '' }}" id="submenuDescan">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="{{ route('desa-cantik.index') }}"
+                                class="nav-link {{ request()->routeIs('desa-cantik.kelola') || request()->routeIs('desa-cantik.index') ? 'active' : '' }}">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Visualisasi</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('desa-cantik.peserta') }}"
+                                class="nav-link {{ request()->routeIs('desa-cantik.peserta') ? 'active' : '' }}">
+                                <i class="fas fa-users"></i>
+                                <span>Peserta Desa</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
