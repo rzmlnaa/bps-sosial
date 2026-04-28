@@ -8,6 +8,9 @@ use App\Models\DescanKuota;
 use App\Models\DescanKegiatan;
 use App\Models\DescanPeserta;
 use App\Models\DescanProgressDesa;
+use App\Models\DescanJenisBuktiKegiatan;
+use App\Models\DescanJenisOutput;
+use App\Models\DescanJenisBuktiDukung;
 use Illuminate\Support\Facades\Auth;
 
 class DescanController extends Controller
@@ -26,7 +29,12 @@ class DescanController extends Controller
         // Mendapatkan kuota
         $kuotas = DescanKuota::with(['periode', 'creator', 'updater'])->paginate(10, ['*'], 'kuota_page');
 
-        return view('desa_cantik.kelola', compact('periodes', 'kegiatans', 'kuotas'));
+        // Mendapatkan Master Data Tambahan
+        $jenisBuktiKegiatans = DescanJenisBuktiKegiatan::paginate(10, ['*'], 'jbk_page');
+        $jenisOutputs = DescanJenisOutput::paginate(10, ['*'], 'output_page');
+        $jenisBuktiDukungs = DescanJenisBuktiDukung::paginate(10, ['*'], 'jbd_page');
+
+        return view('desa_cantik.kelola', compact('periodes', 'kegiatans', 'kuotas', 'jenisBuktiKegiatans', 'jenisOutputs', 'jenisBuktiDukungs'));
     }
 
     public function storePeriode(Request $request)
@@ -176,5 +184,80 @@ class DescanController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Urutan kegiatan berhasil diperbarui.']);
+    }
+
+    // --- Jenis Bukti Kegiatan ---
+    public function storeJenisBuktiKegiatan(Request $request)
+    {
+        $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_kegiatan,nama_bukti']);
+        DescanJenisBuktiKegiatan::create(['nama_bukti' => $request->nama_bukti]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil ditambahkan.');
+    }
+
+    public function updateJenisBuktiKegiatan(Request $request, $id)
+    {
+        $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_kegiatan,nama_bukti,' . $id]);
+        DescanJenisBuktiKegiatan::findOrFail($id)->update(['nama_bukti' => $request->nama_bukti]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil diperbarui.');
+    }
+
+    public function destroyJenisBuktiKegiatan($id)
+    {
+        try {
+            DescanJenisBuktiKegiatan::findOrFail($id)->delete();
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil dihapus.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+        }
+    }
+
+    // --- Jenis Output ---
+    public function storeJenisOutput(Request $request)
+    {
+        $request->validate(['nama_output' => 'required|string|max:255|unique:descan_jenis_output,nama_output']);
+        DescanJenisOutput::create(['nama_output' => $request->nama_output, 'is_wajib' => $request->has('is_wajib')]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil ditambahkan.');
+    }
+
+    public function updateJenisOutput(Request $request, $id)
+    {
+        $request->validate(['nama_output' => 'required|string|max:255|unique:descan_jenis_output,nama_output,' . $id]);
+        DescanJenisOutput::findOrFail($id)->update(['nama_output' => $request->nama_output, 'is_wajib' => $request->has('is_wajib')]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil diperbarui.');
+    }
+
+    public function destroyJenisOutput($id)
+    {
+        try {
+            DescanJenisOutput::findOrFail($id)->delete();
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil dihapus.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+        }
+    }
+
+    // --- Jenis Bukti Dukung ---
+    public function storeJenisBuktiDukung(Request $request)
+    {
+        $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_dukung,nama_bukti']);
+        DescanJenisBuktiDukung::create(['nama_bukti' => $request->nama_bukti, 'is_wajib' => $request->has('is_wajib')]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil ditambahkan.');
+    }
+
+    public function updateJenisBuktiDukung(Request $request, $id)
+    {
+        $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_dukung,nama_bukti,' . $id]);
+        DescanJenisBuktiDukung::findOrFail($id)->update(['nama_bukti' => $request->nama_bukti, 'is_wajib' => $request->has('is_wajib')]);
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil diperbarui.');
+    }
+
+    public function destroyJenisBuktiDukung($id)
+    {
+        try {
+            DescanJenisBuktiDukung::findOrFail($id)->delete();
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil dihapus.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+        }
     }
 }

@@ -373,6 +373,21 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::put('/desa-cantik/kegiatan/{id}', [DescanController::class, 'updateKegiatan'])->name('desa-cantik.kegiatan.update');
     Route::delete('/desa-cantik/kegiatan/{id}', [DescanController::class, 'destroyKegiatan'])->name('desa-cantik.kegiatan.destroy');
     Route::patch('/desa-cantik/kegiatan/reorder', [DescanController::class, 'reorderKegiatan'])->name('desa-cantik.kegiatan.reorder');
+
+    // Desa Cantik: Jenis Bukti Kegiatan
+    Route::post('/desa-cantik/jenis-bukti-kegiatan', [DescanController::class, 'storeJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.store');
+    Route::put('/desa-cantik/jenis-bukti-kegiatan/{id}', [DescanController::class, 'updateJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.update');
+    Route::delete('/desa-cantik/jenis-bukti-kegiatan/{id}', [DescanController::class, 'destroyJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.destroy');
+
+    // Desa Cantik: Jenis Output
+    Route::post('/desa-cantik/jenis-output', [DescanController::class, 'storeJenisOutput'])->name('desa-cantik.jenis-output.store');
+    Route::put('/desa-cantik/jenis-output/{id}', [DescanController::class, 'updateJenisOutput'])->name('desa-cantik.jenis-output.update');
+    Route::delete('/desa-cantik/jenis-output/{id}', [DescanController::class, 'destroyJenisOutput'])->name('desa-cantik.jenis-output.destroy');
+
+    // Desa Cantik: Jenis Bukti Dukung
+    Route::post('/desa-cantik/jenis-bukti-dukung', [DescanController::class, 'storeJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.store');
+    Route::put('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'updateJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.update');
+    Route::delete('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'destroyJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.destroy');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 
