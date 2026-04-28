@@ -28,6 +28,7 @@ use App\Http\Controllers\IndikatorController;
 use App\Http\Controllers\MyTeamController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WilayahController;
+use App\Http\Controllers\DescanController;
 
 
 
@@ -230,6 +231,8 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/fenomena-visualisasi', [FenomenaController::class, 'visualisasi'])->name('fenomena.visualisasi');
     Route::get('/fenomena-contributor', [\App\Http\Controllers\FenomenaContributorController::class, 'index'])->name('fenomena.contributor');
 
+    // Menu Desa Cantik
+    Route::get('/desa-cantik', [DescanController::class, 'index'])->name('desa-cantik.index');
 
 });
 
@@ -352,6 +355,24 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/pra-ekspor/export-excel', [\App\Http\Controllers\PraEksporController::class, 'exportExcel'])->name('pra-ekspor.export-excel');
     Route::get('/pra-ekspor/preview-semua', [\App\Http\Controllers\PraEksporController::class, 'previewSemua'])->name('pra-ekspor.preview-semua');
     Route::get('/pra-ekspor/export-excel-semua', [\App\Http\Controllers\PraEksporController::class, 'exportExcelSemua'])->name('pra-ekspor.export-excel-semua');
+
+    // Pengelolaan Desa Cantik (Province Only)
+    Route::get('/desa-cantik/kelola', [DescanController::class, 'kelola'])->name('desa-cantik.kelola');
+    
+    // Desa Cantik: Periode
+    Route::post('/desa-cantik/periode', [DescanController::class, 'storePeriode'])->name('desa-cantik.periode.store');
+    Route::delete('/desa-cantik/periode/{id}', [DescanController::class, 'destroyPeriode'])->name('desa-cantik.periode.destroy');
+    
+    // Desa Cantik: Kuota
+    Route::post('/desa-cantik/kuota', [DescanController::class, 'storeKuota'])->name('desa-cantik.kuota.store');
+    Route::put('/desa-cantik/kuota/{id}', [DescanController::class, 'updateKuota'])->name('desa-cantik.kuota.update');
+    Route::delete('/desa-cantik/kuota/{id}', [DescanController::class, 'destroyKuota'])->name('desa-cantik.kuota.destroy');
+    
+    // Desa Cantik: Kegiatan
+    Route::post('/desa-cantik/kegiatan', [DescanController::class, 'storeKegiatan'])->name('desa-cantik.kegiatan.store');
+    Route::put('/desa-cantik/kegiatan/{id}', [DescanController::class, 'updateKegiatan'])->name('desa-cantik.kegiatan.update');
+    Route::delete('/desa-cantik/kegiatan/{id}', [DescanController::class, 'destroyKegiatan'])->name('desa-cantik.kegiatan.destroy');
+    Route::patch('/desa-cantik/kegiatan/reorder', [DescanController::class, 'reorderKegiatan'])->name('desa-cantik.kegiatan.reorder');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

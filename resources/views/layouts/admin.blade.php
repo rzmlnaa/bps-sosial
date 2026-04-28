@@ -169,6 +169,11 @@
                     <span>SERUTI</span>
                 </a>
 
+                <a href="{{ route('desa-cantik.index') }}" class="nav-link {{ request()->routeIs('desa-cantik.*') ? 'active' : '' }}">
+                    <i class="fas fa-seedling"></i>
+                    <span>Desa Cantik</span>
+                </a>
+
 
                 <a href="#submenu2" id="menu-rentang-harga"
                     class="nav-link {{ request()->is('price-range*') || request()->routeIs('price-range.*') || request()->routeIs('verification.*') ? 'active' : '' }}"
