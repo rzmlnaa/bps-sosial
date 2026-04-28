@@ -10,5 +10,6 @@ class DescanJenisBuktiKegiatan extends Model
 
     protected $fillable = [
         'nama_bukti',
+        'is_wajib',
     ];
 }

@@ -47,11 +47,31 @@ class DescanController extends Controller
         ]);
 
         DescanPeriode::create([
-            'tahun' => $request->tahun
+            'tahun' => $request->tahun,
+            'is_active' => false // default false as requested
         ]);
 
         // Tetap di tab periode
         return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('success', 'Periode tahun berhasil ditambahkan.');
+    }
+
+    public function togglePeriodeActive($id)
+    {
+        $periode = DescanPeriode::findOrFail($id);
+        $newStatus = !$periode->is_active;
+
+        if ($newStatus) {
+            // Jika mau mengaktifkan, matikan yang lain dulu
+            DescanPeriode::where('id', '!=', $id)->update(['is_active' => false]);
+            $msg = 'Periode ' . $periode->tahun . ' telah diatur sebagai periode aktif.';
+        } else {
+            $msg = 'Periode ' . $periode->tahun . ' telah dinonaktifkan.';
+        }
+
+        $periode->is_active = $newStatus;
+        $periode->save();
+
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('success', $msg);
     }
 
     public function destroyPeriode($id)
@@ -139,10 +159,20 @@ class DescanController extends Controller
 
         DescanKegiatan::create([
             'nama_kegiatan' => $request->nama_kegiatan,
-            'urutan' => $maxUrutan + 1
+            'urutan' => $maxUrutan + 1,
+            'is_active' => true // default true as requested
         ]);
 
         return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Kegiatan berhasil ditambahkan.');
+    }
+
+    public function toggleKegiatanActive($id)
+    {
+        $keg = DescanKegiatan::findOrFail($id);
+        $keg->is_active = !$keg->is_active;
+        $keg->save();
+
+        return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Status kegiatan berhasil diubah.');
     }
 
     public function updateKegiatan(Request $request, $id)
@@ -193,14 +223,20 @@ class DescanController extends Controller
     public function storeJenisBuktiKegiatan(Request $request)
     {
         $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_kegiatan,nama_bukti']);
-        DescanJenisBuktiKegiatan::create(['nama_bukti' => $request->nama_bukti]);
+        DescanJenisBuktiKegiatan::create([
+            'nama_bukti' => $request->nama_bukti,
+            'is_wajib' => $request->has('is_wajib')
+        ]);
         return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil ditambahkan.');
     }
 
     public function updateJenisBuktiKegiatan(Request $request, $id)
     {
         $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_kegiatan,nama_bukti,' . $id]);
-        DescanJenisBuktiKegiatan::findOrFail($id)->update(['nama_bukti' => $request->nama_bukti]);
+        DescanJenisBuktiKegiatan::findOrFail($id)->update([
+            'nama_bukti' => $request->nama_bukti,
+            'is_wajib' => $request->has('is_wajib')
+        ]);
         return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil diperbarui.');
     }
 
@@ -323,6 +359,12 @@ class DescanController extends Controller
         // Paksa kabupaten_id sesuai user jika bukan provinsi
         $kabupatenId = $isProvinsi ? $request->kabupaten_id : $kabupaten->id;
 
+        // Cek apakah periode aktif
+        $periode = DescanPeriode::findOrFail($request->periode_id);
+        if (!$periode->is_active) {
+            return back()->with('error', 'Periode ini tidak aktif. Pendaftaran peserta hanya dapat dilakukan pada periode aktif.');
+        }
+
         // Cek duplikat
         $sudahAda = DescanPeserta::where('periode_id', $request->periode_id)
             ->where('desa_id', $request->desa_id)
@@ -372,12 +414,16 @@ class DescanController extends Controller
 
     public function destroyPeserta($id)
     {
-        $peserta = DescanPeserta::findOrFail($id);
+        $peserta = DescanPeserta::with('periode')->findOrFail($id);
+
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', 'Peserta tidak dapat dihapus karena periode ini tidak aktif.');
+        }
 
         // Cek apakah sudah ada progress
         $hasProgress = DescanProgressDesa::where('peserta_id', $id)->exists();
         if ($hasProgress) {
-            return back()->with('error', 'Peserta tidak dapat dihapus karena sudah memiliki data progress.');
+            return back()->with('error', 'Peserta tidak dapat dihapus because sudah memiliki data progress.');
         }
 
         $peserta->delete();
@@ -411,7 +457,8 @@ class DescanController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
-        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')->get();
+        // Hanya ambil kegiatan yang active
+        $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
 
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.kegiatan'])
             ->orderBy('created_at', 'desc');
@@ -432,7 +479,8 @@ class DescanController extends Controller
     public function progressDetail($peserta_id)
     {
         $peserta = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode'])->findOrFail($peserta_id);
-        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')->get();
+        // Hanya ambil kegiatan yang active
+        $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
         $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier'])
             ->where('peserta_id', $peserta_id)
             ->get()
@@ -458,6 +506,10 @@ class DescanController extends Controller
 
         $peserta = DescanPeserta::findOrFail($peserta_id);
         $kegiatan = DescanKegiatan::findOrFail($request->kegiatan_id);
+
+        if (!$kegiatan->is_active) {
+            return back()->with('error', 'Kegiatan ini tidak aktif.');
+        }
 
         // Cek Urutan: Tidak bisa lompat
         if ($kegiatan->urutan > 1) {

@@ -10,6 +10,7 @@ class DescanPeriode extends Model
 
     protected $fillable = [
         'tahun',
+        'is_active',
     ];
 
     public function kuota()

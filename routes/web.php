@@ -377,6 +377,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
 
     // Desa Cantik: Periode
     Route::post('/desa-cantik/periode', [DescanController::class, 'storePeriode'])->name('desa-cantik.periode.store');
+    Route::patch('/desa-cantik/periode/{id}/toggle-active', [DescanController::class, 'togglePeriodeActive'])->name('desa-cantik.periode.toggle-active');
     Route::delete('/desa-cantik/periode/{id}', [DescanController::class, 'destroyPeriode'])->name('desa-cantik.periode.destroy');
 
     // Desa Cantik: Kuota
@@ -387,6 +388,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     // Desa Cantik: Kegiatan
     Route::post('/desa-cantik/kegiatan', [DescanController::class, 'storeKegiatan'])->name('desa-cantik.kegiatan.store');
     Route::put('/desa-cantik/kegiatan/{id}', [DescanController::class, 'updateKegiatan'])->name('desa-cantik.kegiatan.update');
+    Route::patch('/desa-cantik/kegiatan/{id}/toggle-active', [DescanController::class, 'toggleKegiatanActive'])->name('desa-cantik.kegiatan.toggle-active');
     Route::delete('/desa-cantik/kegiatan/{id}', [DescanController::class, 'destroyKegiatan'])->name('desa-cantik.kegiatan.destroy');
     Route::patch('/desa-cantik/kegiatan/reorder', [DescanController::class, 'reorderKegiatan'])->name('desa-cantik.kegiatan.reorder');
 

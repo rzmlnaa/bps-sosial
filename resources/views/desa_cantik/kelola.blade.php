@@ -39,8 +39,8 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $activeTab == 'jbk' ? 'active' : '' }} px-4 py-3 rounded-top-3 border ms-2"
-                    id="jbk-tab" data-bs-toggle="tab" data-bs-target="#jbk" type="button" role="tab"
-                    aria-controls="jbk" aria-selected="false">
+                    id="jbk-tab" data-bs-toggle="tab" data-bs-target="#jbk" type="button" role="tab" aria-controls="jbk"
+                    aria-selected="false">
                     <i class="fas fa-file-invoice me-2"></i>Jenis Bukti Kegiatan
                 </button>
             </li>
@@ -53,8 +53,8 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $activeTab == 'jbd' ? 'active' : '' }} px-4 py-3 rounded-top-3 border ms-2"
-                    id="jbd-tab" data-bs-toggle="tab" data-bs-target="#jbd" type="button" role="tab"
-                    aria-controls="jbd" aria-selected="false">
+                    id="jbd-tab" data-bs-toggle="tab" data-bs-target="#jbd" type="button" role="tab" aria-controls="jbd"
+                    aria-selected="false">
                     <i class="fas fa-file-signature me-2"></i>Jenis Bukti Dukung
                 </button>
             </li>
@@ -87,6 +87,7 @@
                                         <tr>
                                             <th width="10%">No</th>
                                             <th>Tahun</th>
+                                            <th class="text-center">Status</th>
                                             <th>Jumlah Peserta (Desa)</th>
                                             <th class="text-end" width="15%">Aksi</th>
                                         </tr>
@@ -96,9 +97,34 @@
                                             <tr>
                                                 <td>{{ $index + 1 }}</td>
                                                 <td class="fw-bold">{{ $p->tahun }}</td>
+                                                <td class="text-center">
+                                                    @if($p->is_active)
+                                                        <span class="badge bg-success rounded-pill">Aktif</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Non-Aktif</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ $p->pesertas_count ?? 0 }} Desa</td>
                                                 <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                    <form action="{{ route('desa-cantik.periode.toggle-active', $p->id) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        @if($p->is_active)
+                                                            <button type="submit"
+                                                                class="btn btn-xs btn-outline-warning rounded-pill px-3 py-1 mb-1"
+                                                                style="font-size: 0.75rem; font-weight: 600;">
+                                                                Nonaktifkan
+                                                            </button>
+                                                        @else
+                                                            <button type="submit"
+                                                                class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 mb-1"
+                                                                style="font-size: 0.75rem; font-weight: 600;">
+                                                                Set Aktif
+                                                            </button>
+                                                        @endif
+                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete mb-1"
                                                         data-url="{{ route('desa-cantik.periode.destroy', $p->id) }}"
                                                         data-type="Periode Tahun" data-name="{{ $p->tahun }}">
                                                         <i class="fas fa-trash"></i>
@@ -284,6 +310,7 @@
                                             <th style="width: 50px;"></th>
                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                             <th>Nama Kegiatan</th>
+                                            <th class="text-center">Status</th>
                                             <th class="text-end" width="15%">Aksi</th>
                                         </tr>
                                     </thead>
@@ -295,12 +322,29 @@
                                                 </td>
                                                 <td class="text-center sortable-urutan fw-bold">{{ $keg->urutan }}</td>
                                                 <td>{{ $keg->nama_kegiatan }}</td>
+                                                <td class="text-center">
+                                                    @if($keg->is_active)
+                                                        <span class="badge bg-success rounded-pill">Aktif</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Non-Aktif</span>
+                                                    @endif
+                                                </td>
                                                 <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange"
+                                                    <form action="{{ route('desa-cantik.kegiatan.toggle-active', $keg->id) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit"
+                                                            class="btn btn-sm {{ $keg->is_active ? 'btn-outline-warning' : 'btn-outline-success' }} mb-1"
+                                                            title="{{ $keg->is_active ? 'Non-aktifkan' : 'Aktifkan' }}">
+                                                            <i class="fas fa-{{ $keg->is_active ? 'times' : 'check' }}"></i>
+                                                        </button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline-orange mb-1"
                                                         data-bs-toggle="modal" data-bs-target="#editKegiatanModal{{ $keg->id }}">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete mb-1"
                                                         data-url="{{ route('desa-cantik.kegiatan.destroy', $keg->id) }}"
                                                         data-type="Kegiatan" data-name="{{ $keg->nama_kegiatan }}">
                                                         <i class="fas fa-trash"></i>
@@ -357,356 +401,402 @@
                 </div>
             </div>
 
-        <!-- Tab Jenis Bukti Kegiatan -->
-        <div class="tab-pane fade {{ $activeTab == 'jbk' ? 'show active' : '' }}" id="jbk" role="tabpanel"
-            aria-labelledby="jbk-tab">
-            <div class="card border-0 shadow-sm rounded-4 bps-card ">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
-                            class="fas fa-file-invoice me-2"></i>Pengaturan Jenis Bukti Kegiatan</h6>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('desa-cantik.jenis-bukti-kegiatan.store') }}" method="POST" class="mb-4">
-                        @csrf
-                        <div class="row align-items-end">
-                            <div class="col-md-9 mb-3">
-                                <label class="form-label fw-bold small">Nama Bukti</label>
-                                <input type="text" class="form-control" name="nama_bukti" required
-                                    placeholder="Contoh: Laporan Kegiatan">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <hr class="my-4">
-
-                    @if($jenisBuktiKegiatans->count() > 0)
-                        <div class="table-responsive table-scrollable">
-                            <table class="table table-hover align-middle">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th width="10%">No</th>
-                                        <th>Nama Bukti</th>
-                                        <th class="text-end" width="15%">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($jenisBuktiKegiatans as $index => $item)
-                                        <tr>
-                                            <td>{{ ($jenisBuktiKegiatans->currentPage() - 1) * $jenisBuktiKegiatans->perPage() + $index + 1 }}</td>
-                                            <td>{{ $item->nama_bukti }}</td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-orange"
-                                                    data-bs-toggle="modal" data-bs-target="#editJbkModal{{ $item->id }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                    data-url="{{ route('desa-cantik.jenis-bukti-kegiatan.destroy', $item->id) }}"
-                                                    data-type="Jenis Bukti Kegiatan" data-name="{{ $item->nama_bukti }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-
-                                        <!-- Modal Edit -->
-                                        <div class="modal fade" id="editJbkModal{{ $item->id }}" tabindex="-1"
-                                            aria-hidden="true" style="text-align: left;">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title fw-bold">Edit Jenis Bukti Kegiatan</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                            aria-label="Close"></button>
-                                                    </div>
-                                                    <form action="{{ route('desa-cantik.jenis-bukti-kegiatan.update', $item->id) }}"
-                                                        method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label fw-medium">Nama Bukti <span
-                                                                        class="text-danger">*</span></label>
-                                                                <input type="text" name="nama_bukti" class="form-control"
-                                                                    value="{{ $item->nama_bukti }}" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer pb-2 border-0">
-                                                            <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                data-bs-dismiss="modal">Batal</button>
-                                                            <button type="submit"
-                                                                class="btn btn-orange rounded-pill px-4">Simpan Perubahan</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-3">
-                            {{ $jenisBuktiKegiatans->appends(['tab' => 'jbk'])->links('pagination::bootstrap-5') }}
-                        </div>
-                    @else
-                        <div class="text-center text-muted p-3 bg-light rounded">
-                            <small>Belum ada jenis bukti kegiatan didaftarkan.</small>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Jenis Output -->
-        <div class="tab-pane fade {{ $activeTab == 'output' ? 'show active' : '' }}" id="output" role="tabpanel"
-            aria-labelledby="output-tab">
-            <div class="card border-0 shadow-sm rounded-4 bps-card ">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
-                            class="fas fa-box-open me-2"></i>Pengaturan Jenis Output</h6>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('desa-cantik.jenis-output.store') }}" method="POST" class="mb-4">
-                        @csrf
-                        <div class="row align-items-end">
-                            <div class="col-md-7 mb-3">
-                                <label class="form-label fw-bold small">Nama Output <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="nama_output" required
-                                    placeholder="Contoh: Dokumen Publikasi">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <div class="form-check pt-2">
-                                    <input class="form-check-input" type="checkbox" name="is_wajib" value="1" id="isWajibOutput">
-                                    <label class="form-check-label fw-bold small" for="isWajibOutput">
-                                        Wajib?
-                                    </label>
+            <!-- Tab Jenis Bukti Kegiatan -->
+            <div class="tab-pane fade {{ $activeTab == 'jbk' ? 'show active' : '' }}" id="jbk" role="tabpanel"
+                aria-labelledby="jbk-tab">
+                <div class="card border-0 shadow-sm rounded-4 bps-card ">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
+                                class="fas fa-file-invoice me-2"></i>Pengaturan Jenis Bukti Kegiatan</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('desa-cantik.jenis-bukti-kegiatan.store') }}" method="POST" class="mb-4">
+                            @csrf
+                            <div class="row align-items-end">
+                                <div class="col-md-7 mb-3">
+                                    <label class="form-label fw-bold small">Nama Bukti</label>
+                                    <input type="text" class="form-control" name="nama_bukti" required
+                                        placeholder="Contoh: Laporan Kegiatan">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="form-check pt-2">
+                                        <input class="form-check-input" type="checkbox" name="is_wajib" value="1"
+                                            id="isWajibJbk">
+                                        <label class="form-check-label fw-bold small" for="isWajibJbk">
+                                            Wajib?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
                                 </div>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
 
-                    <hr class="my-4">
+                        <hr class="my-4">
 
-                    @if($jenisOutputs->count() > 0)
-                        <div class="table-responsive table-scrollable">
-                            <table class="table table-hover align-middle">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th width="10%">No</th>
-                                        <th>Nama Output</th>
-                                        <th class="text-center">Label</th>
-                                        <th class="text-end" width="15%">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($jenisOutputs as $index => $item)
+                        @if($jenisBuktiKegiatans->count() > 0)
+                            <div class="table-responsive table-scrollable">
+                                <table class="table table-hover align-middle">
+                                    <thead class="bg-light">
                                         <tr>
-                                            <td>{{ ($jenisOutputs->currentPage() - 1) * $jenisOutputs->perPage() + $index + 1 }}</td>
-                                            <td>{{ $item->nama_output }}</td>
-                                            <td class="text-center">
-                                                @if($item->is_wajib)
-                                                    <span class="badge bg-danger rounded-pill">Wajib</span>
-                                                @else
-                                                    <span class="badge bg-secondary rounded-pill">Opsional</span>
-                                                @endif
-                                            </td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-orange"
-                                                    data-bs-toggle="modal" data-bs-target="#editOutputModal{{ $item->id }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                    data-url="{{ route('desa-cantik.jenis-output.destroy', $item->id) }}"
-                                                    data-type="Jenis Output" data-name="{{ $item->nama_output }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
+                                            <th width="10%">No</th>
+                                            <th>Nama Bukti</th>
+                                            <th class="text-center">Label</th>
+                                            <th class="text-end" width="15%">Aksi</th>
                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($jenisBuktiKegiatans as $index => $item)
+                                            <tr>
+                                                <td>{{ ($jenisBuktiKegiatans->currentPage() - 1) * $jenisBuktiKegiatans->perPage() + $index + 1 }}
+                                                </td>
+                                                <td>{{ $item->nama_bukti }}</td>
+                                                <td class="text-center">
+                                                    @if($item->is_wajib)
+                                                        <span class="badge bg-danger rounded-pill">Wajib</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Opsional</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-orange"
+                                                        data-bs-toggle="modal" data-bs-target="#editJbkModal{{ $item->id }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        data-url="{{ route('desa-cantik.jenis-bukti-kegiatan.destroy', $item->id) }}"
+                                                        data-type="Jenis Bukti Kegiatan" data-name="{{ $item->nama_bukti }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
 
-                                        <!-- Modal Edit -->
-                                        <div class="modal fade" id="editOutputModal{{ $item->id }}" tabindex="-1"
-                                            aria-hidden="true" style="text-align: left;">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title fw-bold">Edit Jenis Output</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                            aria-label="Close"></button>
-                                                    </div>
-                                                    <form action="{{ route('desa-cantik.jenis-output.update', $item->id) }}"
-                                                        method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label fw-medium">Nama Output <span
-                                                                        class="text-danger">*</span></label>
-                                                                <input type="text" name="nama_output" class="form-control"
-                                                                    value="{{ $item->nama_output }}" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox" name="is_wajib" value="1" id="editIsWajibOutput{{ $item->id }}" {{ $item->is_wajib ? 'checked' : '' }}>
-                                                                    <label class="form-check-label fw-medium" for="editIsWajibOutput{{ $item->id }}">
-                                                                        Jadikan Wajib
-                                                                    </label>
+                                            <!-- Modal Edit -->
+                                            <div class="modal fade" id="editJbkModal{{ $item->id }}" tabindex="-1"
+                                                aria-hidden="true" style="text-align: left;">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">Edit Jenis Bukti Kegiatan</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                        </div>
+                                                        <form
+                                                            action="{{ route('desa-cantik.jenis-bukti-kegiatan.update', $item->id) }}"
+                                                            method="POST">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-medium">Nama Bukti <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="text" name="nama_bukti" class="form-control"
+                                                                        value="{{ $item->nama_bukti }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            name="is_wajib" value="1"
+                                                                            id="editIsWajibJbk{{ $item->id }}" {{ $item->is_wajib ? 'checked' : '' }}>
+                                                                        <label class="form-check-label fw-medium"
+                                                                            for="editIsWajibJbk{{ $item->id }}">
+                                                                            Jadikan Wajib
+                                                                        </label>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="modal-footer pb-2 border-0">
-                                                            <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                data-bs-dismiss="modal">Batal</button>
-                                                            <button type="submit"
-                                                                class="btn btn-orange rounded-pill px-4">Simpan Perubahan</button>
-                                                        </div>
-                                                    </form>
+                                                            <div class="modal-footer pb-2 border-0">
+                                                                <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                    data-bs-dismiss="modal">Batal</button>
+                                                                <button type="submit"
+                                                                    class="btn btn-orange rounded-pill px-4">Simpan
+                                                                    Perubahan</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-3">
-                            {{ $jenisOutputs->appends(['tab' => 'output'])->links('pagination::bootstrap-5') }}
-                        </div>
-                    @else
-                        <div class="text-center text-muted p-3 bg-light rounded">
-                            <small>Belum ada jenis output didaftarkan.</small>
-                        </div>
-                    @endif
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                {{ $jenisBuktiKegiatans->appends(['tab' => 'jbk'])->links('pagination::bootstrap-5') }}
+                            </div>
+                        @else
+                            <div class="text-center text-muted p-3 bg-light rounded">
+                                <small>Belum ada jenis bukti kegiatan didaftarkan.</small>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab Jenis Bukti Dukung -->
-        <div class="tab-pane fade {{ $activeTab == 'jbd' ? 'show active' : '' }}" id="jbd" role="tabpanel"
-            aria-labelledby="jbd-tab">
-            <div class="card border-0 shadow-sm rounded-4 bps-card ">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
-                            class="fas fa-file-signature me-2"></i>Pengaturan Jenis Bukti Dukung</h6>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('desa-cantik.jenis-bukti-dukung.store') }}" method="POST" class="mb-4">
-                        @csrf
-                        <div class="row align-items-end">
-                            <div class="col-md-7 mb-3">
-                                <label class="form-label fw-bold small">Nama Bukti <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="nama_bukti" required
-                                    placeholder="Contoh: SK Kades">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <div class="form-check pt-2">
-                                    <input class="form-check-input" type="checkbox" name="is_wajib" value="1" id="isWajibJbd">
-                                    <label class="form-check-label fw-bold small" for="isWajibJbd">
-                                        Wajib?
-                                    </label>
+            <!-- Tab Jenis Output -->
+            <div class="tab-pane fade {{ $activeTab == 'output' ? 'show active' : '' }}" id="output" role="tabpanel"
+                aria-labelledby="output-tab">
+                <div class="card border-0 shadow-sm rounded-4 bps-card ">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
+                                class="fas fa-box-open me-2"></i>Pengaturan Jenis Output</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('desa-cantik.jenis-output.store') }}" method="POST" class="mb-4">
+                            @csrf
+                            <div class="row align-items-end">
+                                <div class="col-md-7 mb-3">
+                                    <label class="form-label fw-bold small">Nama Output <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="nama_output" required
+                                        placeholder="Contoh: Dokumen Publikasi">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="form-check pt-2">
+                                        <input class="form-check-input" type="checkbox" name="is_wajib" value="1"
+                                            id="isWajibOutput">
+                                        <label class="form-check-label fw-bold small" for="isWajibOutput">
+                                            Wajib?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
                                 </div>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
 
-                    <hr class="my-4">
+                        <hr class="my-4">
 
-                    @if($jenisBuktiDukungs->count() > 0)
-                        <div class="table-responsive table-scrollable">
-                            <table class="table table-hover align-middle">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th width="10%">No</th>
-                                        <th>Nama Bukti</th>
-                                        <th class="text-center">Label</th>
-                                        <th class="text-end" width="15%">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($jenisBuktiDukungs as $index => $item)
+                        @if($jenisOutputs->count() > 0)
+                            <div class="table-responsive table-scrollable">
+                                <table class="table table-hover align-middle">
+                                    <thead class="bg-light">
                                         <tr>
-                                            <td>{{ ($jenisBuktiDukungs->currentPage() - 1) * $jenisBuktiDukungs->perPage() + $index + 1 }}</td>
-                                            <td>{{ $item->nama_bukti }}</td>
-                                            <td class="text-center">
-                                                @if($item->is_wajib)
-                                                    <span class="badge bg-danger rounded-pill">Wajib</span>
-                                                @else
-                                                    <span class="badge bg-secondary rounded-pill">Opsional</span>
-                                                @endif
-                                            </td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-orange"
-                                                    data-bs-toggle="modal" data-bs-target="#editJbdModal{{ $item->id }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                    data-url="{{ route('desa-cantik.jenis-bukti-dukung.destroy', $item->id) }}"
-                                                    data-type="Jenis Bukti Dukung" data-name="{{ $item->nama_bukti }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
+                                            <th width="10%">No</th>
+                                            <th>Nama Output</th>
+                                            <th class="text-center">Label</th>
+                                            <th class="text-end" width="15%">Aksi</th>
                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($jenisOutputs as $index => $item)
+                                            <tr>
+                                                <td>{{ ($jenisOutputs->currentPage() - 1) * $jenisOutputs->perPage() + $index + 1 }}
+                                                </td>
+                                                <td>{{ $item->nama_output }}</td>
+                                                <td class="text-center">
+                                                    @if($item->is_wajib)
+                                                        <span class="badge bg-danger rounded-pill">Wajib</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Opsional</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-orange"
+                                                        data-bs-toggle="modal" data-bs-target="#editOutputModal{{ $item->id }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        data-url="{{ route('desa-cantik.jenis-output.destroy', $item->id) }}"
+                                                        data-type="Jenis Output" data-name="{{ $item->nama_output }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
 
-                                        <!-- Modal Edit -->
-                                        <div class="modal fade" id="editJbdModal{{ $item->id }}" tabindex="-1"
-                                            aria-hidden="true" style="text-align: left;">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title fw-bold">Edit Jenis Bukti Dukung</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                            aria-label="Close"></button>
-                                                    </div>
-                                                    <form action="{{ route('desa-cantik.jenis-bukti-dukung.update', $item->id) }}"
-                                                        method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label fw-medium">Nama Bukti <span
-                                                                        class="text-danger">*</span></label>
-                                                                <input type="text" name="nama_bukti" class="form-control"
-                                                                    value="{{ $item->nama_bukti }}" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox" name="is_wajib" value="1" id="editIsWajibJbd{{ $item->id }}" {{ $item->is_wajib ? 'checked' : '' }}>
-                                                                    <label class="form-check-label fw-medium" for="editIsWajibJbd{{ $item->id }}">
-                                                                        Jadikan Wajib
-                                                                    </label>
+                                            <!-- Modal Edit -->
+                                            <div class="modal fade" id="editOutputModal{{ $item->id }}" tabindex="-1"
+                                                aria-hidden="true" style="text-align: left;">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">Edit Jenis Output</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                        </div>
+                                                        <form action="{{ route('desa-cantik.jenis-output.update', $item->id) }}"
+                                                            method="POST">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-medium">Nama Output <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="text" name="nama_output" class="form-control"
+                                                                        value="{{ $item->nama_output }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            name="is_wajib" value="1"
+                                                                            id="editIsWajibOutput{{ $item->id }}" {{ $item->is_wajib ? 'checked' : '' }}>
+                                                                        <label class="form-check-label fw-medium"
+                                                                            for="editIsWajibOutput{{ $item->id }}">
+                                                                            Jadikan Wajib
+                                                                        </label>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="modal-footer pb-2 border-0">
-                                                            <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                data-bs-dismiss="modal">Batal</button>
-                                                            <button type="submit"
-                                                                class="btn btn-orange rounded-pill px-4">Simpan Perubahan</button>
-                                                        </div>
-                                                    </form>
+                                                            <div class="modal-footer pb-2 border-0">
+                                                                <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                    data-bs-dismiss="modal">Batal</button>
+                                                                <button type="submit"
+                                                                    class="btn btn-orange rounded-pill px-4">Simpan
+                                                                    Perubahan</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-3">
-                            {{ $jenisBuktiDukungs->appends(['tab' => 'jbd'])->links('pagination::bootstrap-5') }}
-                        </div>
-                    @else
-                        <div class="text-center text-muted p-3 bg-light rounded">
-                            <small>Belum ada jenis bukti dukung didaftarkan.</small>
-                        </div>
-                    @endif
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                {{ $jenisOutputs->appends(['tab' => 'output'])->links('pagination::bootstrap-5') }}
+                            </div>
+                        @else
+                            <div class="text-center text-muted p-3 bg-light rounded">
+                                <small>Belum ada jenis output didaftarkan.</small>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Tab Jenis Bukti Dukung -->
+            <div class="tab-pane fade {{ $activeTab == 'jbd' ? 'show active' : '' }}" id="jbd" role="tabpanel"
+                aria-labelledby="jbd-tab">
+                <div class="card border-0 shadow-sm rounded-4 bps-card ">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
+                                class="fas fa-file-signature me-2"></i>Pengaturan Jenis Bukti Dukung</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('desa-cantik.jenis-bukti-dukung.store') }}" method="POST" class="mb-4">
+                            @csrf
+                            <div class="row align-items-end">
+                                <div class="col-md-7 mb-3">
+                                    <label class="form-label fw-bold small">Nama Bukti <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="nama_bukti" required
+                                        placeholder="Contoh: SK Kades">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <div class="form-check pt-2">
+                                        <input class="form-check-input" type="checkbox" name="is_wajib" value="1"
+                                            id="isWajibJbd">
+                                        <label class="form-check-label fw-bold small" for="isWajibJbd">
+                                            Wajib?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <hr class="my-4">
+
+                        @if($jenisBuktiDukungs->count() > 0)
+                            <div class="table-responsive table-scrollable">
+                                <table class="table table-hover align-middle">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th width="10%">No</th>
+                                            <th>Nama Bukti</th>
+                                            <th class="text-center">Label</th>
+                                            <th class="text-end" width="15%">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($jenisBuktiDukungs as $index => $item)
+                                            <tr>
+                                                <td>{{ ($jenisBuktiDukungs->currentPage() - 1) * $jenisBuktiDukungs->perPage() + $index + 1 }}
+                                                </td>
+                                                <td>{{ $item->nama_bukti }}</td>
+                                                <td class="text-center">
+                                                    @if($item->is_wajib)
+                                                        <span class="badge bg-danger rounded-pill">Wajib</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Opsional</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-orange"
+                                                        data-bs-toggle="modal" data-bs-target="#editJbdModal{{ $item->id }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        data-url="{{ route('desa-cantik.jenis-bukti-dukung.destroy', $item->id) }}"
+                                                        data-type="Jenis Bukti Dukung" data-name="{{ $item->nama_bukti }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Modal Edit -->
+                                            <div class="modal fade" id="editJbdModal{{ $item->id }}" tabindex="-1"
+                                                aria-hidden="true" style="text-align: left;">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">Edit Jenis Bukti Dukung</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                        </div>
+                                                        <form
+                                                            action="{{ route('desa-cantik.jenis-bukti-dukung.update', $item->id) }}"
+                                                            method="POST">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-medium">Nama Bukti <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="text" name="nama_bukti" class="form-control"
+                                                                        value="{{ $item->nama_bukti }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            name="is_wajib" value="1"
+                                                                            id="editIsWajibJbd{{ $item->id }}" {{ $item->is_wajib ? 'checked' : '' }}>
+                                                                        <label class="form-check-label fw-medium"
+                                                                            for="editIsWajibJbd{{ $item->id }}">
+                                                                            Jadikan Wajib
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer pb-2 border-0">
+                                                                <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                    data-bs-dismiss="modal">Batal</button>
+                                                                <button type="submit"
+                                                                    class="btn btn-orange rounded-pill px-4">Simpan
+                                                                    Perubahan</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                {{ $jenisBuktiDukungs->appends(['tab' => 'jbd'])->links('pagination::bootstrap-5') }}
+                            </div>
+                        @else
+                            <div class="text-center text-muted p-3 bg-light rounded">
+                                <small>Belum ada jenis bukti dukung didaftarkan.</small>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -838,36 +928,36 @@
                             });
 
                             // Send AJAX request
-                            fetch('{{ route('desa-cantik.kegiatan.reorder') }}', {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({ orders: orderData })
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        // Optional check success
-                                        /* Swal.fire({
-                                            icon: 'success',
-                                            title: 'Berhasil',
-                                            text: 'Urutan berhasil disimpan.',
-                                            timer: 1500,
-                                            showConfirmButton: false
-                                        }); */
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error reordering:', error);
-                                    Swal.fire('Error', 'Gagal menyimpan urutan baru', 'error');
-                                });
-                        }
-                    });
-                }
-            });
-        </script>
+                            fetch('/desa-cantik/kelola/kegiatan/reorder', {
+                                                method: 'PATCH',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                    'Accept': 'application/json'
+                                                },
+                                                body: JSON.stringify({ orders: orderData })
+                                            })
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    if (data.success) {
+                                                        // Optional check success
+                                                        /* Swal.fire({
+                                                            icon: 'success',
+                                                            title: 'Berhasil',
+                                                            text: 'Urutan berhasil disimpan.',
+                                                            timer: 1500,
+                                                            showConfirmButton: false
+                                                        }); */
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error reordering:', error);
+                                                    Swal.fire('Error', 'Gagal menyimpan urutan baru', 'error');
+                                                });
+                                        }
+                                    });
+                                }
+                            });
+                        </script>
     @endpush
 @endsection

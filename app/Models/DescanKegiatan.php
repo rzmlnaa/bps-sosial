@@ -11,5 +11,6 @@ class DescanKegiatan extends Model
     protected $fillable = [
         'nama_kegiatan',
         'urutan',
+        'is_active',
     ];
 }

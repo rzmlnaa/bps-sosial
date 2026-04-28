@@ -45,7 +45,10 @@
                                 <select class="form-select" name="periode_id" id="selectPeriode" required>
                                     <option value="">-- Pilih Periode --</option>
                                     @foreach($periodes as $p)
-                                        <option value="{{ $p->id }}" data-tahun="{{ $p->tahun }}">{{ $p->tahun }}</option>
+                                        <option value="{{ $p->id }}" data-tahun="{{ $p->tahun }}"
+                                            data-active="{{ $p->is_active ? 1 : 0 }}">
+                                            {{ $p->tahun }} {{ !$p->is_active ? '(Tidak Aktif)' : '' }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -191,12 +194,18 @@
                                                         class="badge bg-secondary rounded-pill">{{ $peserta->creator->name ?? '-' }}</span>
                                                 </td>
                                                 <td class="text-end pe-3">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                        data-url="{{ route('desa-cantik.peserta.destroy', $peserta->id) }}"
-                                                        data-type="Peserta Desa" data-name="{{ $peserta->desa->nama_desa ?? '' }}">
+                                                    @if($peserta->periode->is_active)
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                            data-url="{{ route('desa-cantik.peserta.destroy', $peserta->id) }}"
+                                                            data-type="Peserta Desa" data-name="{{ $peserta->desa->nama_desa ?? '' }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                     @else
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Periode tidak aktif">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                </td>
+                                                @endif
+                                                            </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -468,11 +477,23 @@
                 // ========================
                 $(selectPeriode).on('change select2:select', function () {
                     const val = $(this).val();
+                    const isActive = $(this).find(':selected').data('active') == 1;
+
                     fetchKuotaInfo(val);
                     $('#selectKecamatan').val(null).trigger('change');
                     resetDesa();
                     initKecamatan();
                     validateKuota();
+
+                    // Lock form if period is inactive
+                    const btn = document.getElementById('btnSubmit');
+                    if (val && !isActive) {
+                        kuotaText.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>Periode ini tidak aktif. Pendaftaran hanya bisa dilakukan pada periode aktif.`;
+                        kuotaMsg.classList.remove('d-none');
+                        btn.disabled = true;
+                    } else {
+                        btn.disabled = false;
+                    }
                 });
 
                 // ========================
