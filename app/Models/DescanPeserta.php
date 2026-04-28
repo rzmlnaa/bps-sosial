@@ -41,7 +41,7 @@ class DescanPeserta extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function progress()
+    public function progresses()
     {
         return $this->hasMany(DescanProgressDesa::class, 'peserta_id');
     }

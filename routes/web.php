@@ -239,6 +239,12 @@ Route::middleware(['check.status'])->group(function () {
     Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
     Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
 
+    Route::get('/desa-cantik/verifikasi', [DescanController::class, 'verifikasi'])->name('desa-cantik.verifikasi');
+    Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
+    Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
+    Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify/{progress_id}', [DescanController::class, 'verifyProgress'])->name('desa-cantik.progress.verify');
+
     // AJAX Dropdown
     Route::get('/desa-cantik/ajax/kecamatan', [DescanController::class, 'ajaxKecamatan'])->name('desa-cantik.ajax.kecamatan');
     Route::get('/desa-cantik/ajax/desa', [DescanController::class, 'ajaxDesa'])->name('desa-cantik.ajax.desa');

@@ -195,6 +195,22 @@
                                 <span>Peserta Desa</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('desa-cantik.progress') }}"
+                                class="nav-link {{ request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
+                                <i class="fas fa-tasks"></i>
+                                <span>Progress Kegiatan</span>
+                            </a>
+                        </li>
+                        @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.verifikasi') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.verifikasi') ? 'active' : '' }}">
+                                    <i class="fas fa-check-double"></i>
+                                    <span>Verifikasi (6100)</span>
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </div>
 

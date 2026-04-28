@@ -385,6 +385,154 @@ class DescanController extends Controller
     }
 
     // =========================================================
+    // PROGRESS KEGIATAN
+    // =========================================================
+
+    public function verifikasi(Request $request)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        if (!$isProvinsi) {
+            return redirect()->route('desa-cantik.index')->with('error', 'Akses ditolak.');
+        }
+
+        $query = DescanProgressDesa::with(['peserta.desa', 'peserta.kecamatan', 'peserta.kabupaten', 'kegiatan', 'buktis.jenisBukti'])
+            ->where('status', 1) // Menunggu Verifikasi
+            ->orderBy('updated_at', 'asc');
+
+        $pendingVerifications = $query->paginate(20);
+
+        return view('desa_cantik.verifikasi', compact('pendingVerifications'));
+    }
+
+    public function progress(Request $request)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+        $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
+        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')->get();
+
+        $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.kegiatan'])
+            ->orderBy('created_at', 'desc');
+
+        if (!$isProvinsi) {
+            $query->where('kabupaten_id', $user->kabupaten_id);
+        }
+
+        if ($request->filled('periode_id')) {
+            $query->where('periode_id', $request->periode_id);
+        }
+
+        $pesertas = $query->paginate(20);
+
+        return view('desa_cantik.progress', compact('pesertas', 'periodes', 'kegiatans', 'isProvinsi'));
+    }
+
+    public function progressDetail($peserta_id)
+    {
+        $peserta = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode'])->findOrFail($peserta_id);
+        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')->get();
+        $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier'])
+            ->where('peserta_id', $peserta_id)
+            ->get()
+            ->keyBy('kegiatan_id');
+
+        $isProvinsi = Auth::user()->kabupaten && Auth::user()->kabupaten->kode_kab == '6100';
+        $jenisBukti = DescanJenisBuktiKegiatan::orderBy('nama_bukti')->get();
+
+        return view('desa_cantik.progress_detail', compact('peserta', 'kegiatans', 'progresses', 'isProvinsi', 'jenisBukti'));
+    }
+
+    public function storeProgress(Request $request, $peserta_id)
+    {
+        $request->validate([
+            'kegiatan_id' => 'required|exists:descan_kegiatan,id',
+            'target_tanggal' => 'nullable|date',
+            'realisasi_tanggal' => 'nullable|date|after_or_equal:target_tanggal',
+            'bukti_link.*' => 'nullable|string',
+            'jenis_bukti_id.*' => 'nullable|exists:descan_jenis_bukti_kegiatan,id'
+        ], [
+            'realisasi_tanggal.after_or_equal' => 'Tanggal realisasi tidak boleh lebih kecil dari tanggal target.'
+        ]);
+
+        $peserta = DescanPeserta::findOrFail($peserta_id);
+        $kegiatan = DescanKegiatan::findOrFail($request->kegiatan_id);
+
+        // Cek Urutan: Tidak bisa lompat
+        if ($kegiatan->urutan > 1) {
+            $prevKegiatan = DescanKegiatan::where('urutan', $kegiatan->urutan - 1)->first();
+            if ($prevKegiatan) {
+                $prevProgress = DescanProgressDesa::where('peserta_id', $peserta_id)
+                    ->where('kegiatan_id', $prevKegiatan->id)
+                    ->first();
+
+                if (!$prevProgress || $prevProgress->status != 2) {
+                    return back()->with('error', 'Kegiatan sebelumnya (' . $prevKegiatan->nama_kegiatan . ') harus diselesaikan dan diverifikasi terlebih dahulu.');
+                }
+            }
+        }
+
+        $progress = DescanProgressDesa::updateOrCreate(
+            ['peserta_id' => $peserta_id, 'kegiatan_id' => $request->kegiatan_id],
+            [
+                'target_tanggal' => $request->target_tanggal,
+                'realisasi_tanggal' => $request->realisasi_tanggal,
+                'status' => 1, // Menunggu Verifikasi
+                'updated_by' => Auth::id()
+            ]
+        );
+
+        // Handle Bukti Links
+        if ($request->has('bukti_link')) {
+            foreach ($request->bukti_link as $index => $link) {
+                if (!empty($link) && isset($request->jenis_bukti_id[$index])) {
+                    \App\Models\DescanBuktiKegiatan::create([
+                        'progress_desa_id' => $progress->id,
+                        'jenis_bukti_id' => $request->jenis_bukti_id[$index],
+                        'link_file' => $link, // Menyimpan teks/link
+                        'created_by' => Auth::id()
+                    ]);
+                }
+            }
+        }
+
+        return back()->with('success', 'Progress berhasil disimpan dan diajukan untuk verifikasi.');
+    }
+
+    public function verifyProgress(Request $request, $peserta_id, $progress_id)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        if (!$isProvinsi) {
+            return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
+        }
+
+        $progress = DescanProgressDesa::findOrFail($progress_id);
+
+        $request->validate([
+            'action' => 'required|in:approve,reject'
+        ]);
+
+        if ($request->action == 'approve') {
+            $progress->update([
+                'status' => 2, // Terverifikasi
+                'verified_by' => Auth::id(),
+                'verified_at' => now()
+            ]);
+            $msg = 'Progress berhasil diverifikasi.';
+        } else {
+            $progress->update([
+                'status' => 3, // Ditolak
+            ]);
+            $msg = 'Progress ditolak.';
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    // =========================================================
     // AJAX ENDPOINTS (Dropdown bertingkat)
     // =========================================================
 
