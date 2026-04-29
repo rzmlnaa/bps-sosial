@@ -12,5 +12,6 @@ class DescanKegiatan extends Model
         'nama_kegiatan',
         'urutan',
         'is_active',
+        'is_wajib',
     ];
 }

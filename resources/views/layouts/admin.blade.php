@@ -166,7 +166,7 @@
 
                 <a href="{{ route('seruti.index') }}" class="nav-link {{ request()->routeIs('seruti.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-pie"></i>
-                    <span>SERUTI</span>
+                    <span>Seruti</span>
                 </a>
 
                 <a href="#submenuDescan" id="menu-descan"
@@ -188,20 +188,24 @@
                                 <span>Visualisasi</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('desa-cantik.peserta') }}"
-                                class="nav-link {{ request()->routeIs('desa-cantik.peserta') ? 'active' : '' }}">
-                                <i class="fas fa-users"></i>
-                                <span>Peserta Desa</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('desa-cantik.progress') }}"
-                                class="nav-link {{ request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
-                                <i class="fas fa-tasks"></i>
-                                <span>Progress Kegiatan</span>
-                            </a>
-                        </li>
+                        @if (auth()->check())
+
+
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.peserta') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.peserta') ? 'active' : '' }}">
+                                    <i class="fas fa-users"></i>
+                                    <span>Peserta Desa</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.progress') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
+                                    <i class="fas fa-tasks"></i>
+                                    <span>Progress Kegiatan</span>
+                                </a>
+                            </li>
+                        @endif
                         @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
                             <li class="nav-item">
                                 <a href="{{ route('desa-cantik.verifikasi') }}"

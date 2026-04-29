@@ -13,11 +13,6 @@ class DescanPeriode extends Model
         'is_active',
     ];
 
-    public function kuota()
-    {
-        return $this->hasOne(DescanKuota::class, 'periode_id');
-    }
-
     public function pesertas()
     {
         return $this->hasMany(DescanPeserta::class, 'periode_id');

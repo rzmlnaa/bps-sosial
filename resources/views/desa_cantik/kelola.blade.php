@@ -23,13 +23,7 @@
                     <i class="fas fa-calendar-alt me-2"></i>Periode Tahun
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $activeTab == 'kuota' ? 'active' : '' }} px-4 py-3 rounded-top-3 border ms-2"
-                    id="kuota-tab" data-bs-toggle="tab" data-bs-target="#kuota" type="button" role="tab"
-                    aria-controls="kuota" aria-selected="false">
-                    <i class="fas fa-chart-pie me-2"></i>Pengaturan Kuota
-                </button>
-            </li>
+
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $activeTab == 'kegiatan' ? 'active' : '' }} px-4 py-3 rounded-top-3 border ms-2"
                     id="kegiatan-tab" data-bs-toggle="tab" data-bs-target="#kegiatan" type="button" role="tab"
@@ -147,134 +141,7 @@
                 </div>
             </div>
 
-            <!-- Tab Kuota -->
-            <div class="tab-pane fade {{ $activeTab == 'kuota' ? 'show active' : '' }}" id="kuota" role="tabpanel"
-                aria-labelledby="kuota-tab">
-                <div class="card border-0 shadow-sm rounded-4 bps-card ">
-                    <div class="card-header bg-white border-bottom py-3">
-                        <h6 class="mb-0 fw-bold" style="color: var(--bps-orange);"><i
-                                class="fas fa-chart-pie me-2"></i>Pengaturan Alokasi Kuota</h6>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('desa-cantik.kuota.store') }}" method="POST" class="mb-4">
-                            @csrf
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small">Pilih Periode</label>
-                                    <select class="form-select" name="periode_id" required>
-                                        <option value="">-- Pilih Periode --</option>
-                                        @foreach($periodes as $p)
-                                            <option value="{{ $p->id }}">{{ $p->tahun }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small">Max Kecamatan</label>
-                                    <input type="number" class="form-control" name="max_kecamatan" required min="1">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small">Max Desa</label>
-                                    <input type="number" class="form-control" name="max_desa" required min="1">
-                                </div>
-                            </div>
-                            <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah / Update Kuota
-                                Baru</button>
-                        </form>
 
-                        <hr class="my-4">
-
-                        @if($kuotas->count() > 0)
-                            <h6 class="fw-bold text-muted small">Daftar Kuota Tersimpan:</h6>
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th>Tahun/Periode</th>
-                                            <th class="text-center">Max Kec</th>
-                                            <th class="text-center">Max Desa</th>
-                                            <th>Dibuat Oleh</th>
-                                            <th>Diubah Oleh</th>
-                                            <th class="text-end" width="15%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($kuotas as $k)
-                                            <tr>
-                                                <td class="fw-bold">{{ $k->periode->tahun ?? '-' }}</td>
-                                                <td class="text-center">{{ $k->max_kecamatan }}</td>
-                                                <td class="text-center">{{ $k->max_desa }}</td>
-                                                <td>{{ $k->creator->name ?? '-' }}</td>
-                                                <td>{{ $k->updater->name ?? '-' }}</td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange"
-                                                        data-bs-toggle="modal" data-bs-target="#editKuotaModal{{ $k->id }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                        data-url="{{ route('desa-cantik.kuota.destroy', $k->id) }}"
-                                                        data-type="Pengaturan Kuota"
-                                                        data-name="Periode {{ $k->periode->tahun ?? '' }}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-
-                                            <!-- Modal Edit Kuota -->
-                                            <div class="modal fade" id="editKuotaModal{{ $k->id }}" tabindex="-1" aria-hidden="true"
-                                                style="text-align: left;">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title fw-bold">Edit Kuota Periode
-                                                                {{ $k->periode->tahun ?? '' }}
-                                                            </h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="{{ route('desa-cantik.kuota.update', $k->id) }}"
-                                                            method="POST">
-                                                            @csrf
-                                                            @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Max Kecamatan <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="number" name="max_kecamatan" class="form-control"
-                                                                        value="{{ $k->max_kecamatan }}" required min="1">
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Max Desa <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="number" name="max_desa" class="form-control"
-                                                                        value="{{ $k->max_desa }}" required min="1">
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer pb-2 border-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Batal</button>
-                                                                <button type="submit"
-                                                                    class="btn btn-orange rounded-pill px-4">Simpan
-                                                                    Perubahan</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $kuotas->appends(['tab' => 'kuota'])->links('pagination::bootstrap-5') }}
-                            </div>
-                        @else
-                            <div class="text-center text-muted p-3 bg-light rounded">
-                                <small>Belum ada kuota didaftarkan.</small>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
 
             <!-- Tab Kegiatan -->
             <div class="tab-pane fade {{ $activeTab == 'kegiatan' ? 'show active' : '' }}" id="kegiatan" role="tabpanel"
@@ -288,12 +155,21 @@
                         <form action="{{ route('desa-cantik.kegiatan.store') }}" method="POST" class="mb-4">
                             @csrf
                             <div class="row align-items-end">
-                                <div class="col-md-10 mb-3">
+                                <div class="col-md-7 mb-3">
                                     <label class="form-label fw-bold small">Nama Kegiatan Baru</label>
                                     <input type="text" class="form-control" name="nama_kegiatan" required
                                         placeholder="Contoh: Bukti Sosialisasi">
                                 </div>
                                 <div class="col-md-2 mb-3">
+                                    <div class="form-check pt-2">
+                                        <input class="form-check-input" type="checkbox" name="is_wajib" value="1"
+                                            id="isWajibKeg">
+                                        <label class="form-check-label fw-bold small" for="isWajibKeg">
+                                            Wajib?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
                                     <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah</button>
                                 </div>
                             </div>
@@ -310,6 +186,7 @@
                                             <th style="width: 50px;"></th>
                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                             <th>Nama Kegiatan</th>
+                                            <th class="text-center">Wajib?</th>
                                             <th class="text-center">Status</th>
                                             <th class="text-end" width="15%">Aksi</th>
                                         </tr>
@@ -322,6 +199,13 @@
                                                 </td>
                                                 <td class="text-center sortable-urutan fw-bold">{{ $keg->urutan }}</td>
                                                 <td>{{ $keg->nama_kegiatan }}</td>
+                                                <td class="text-center">
+                                                    @if($keg->is_wajib)
+                                                        <span class="badge bg-danger rounded-pill">Wajib</span>
+                                                    @else
+                                                        <span class="badge bg-secondary rounded-pill">Opsional</span>
+                                                    @endif
+                                                </td>
                                                 <td class="text-center">
                                                     @if($keg->is_active)
                                                         <span class="badge bg-success rounded-pill">Aktif</span>
@@ -372,6 +256,17 @@
                                                                             class="text-danger">*</span></label>
                                                                     <input type="text" name="nama_kegiatan" class="form-control"
                                                                         value="{{ $keg->nama_kegiatan }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            name="is_wajib" value="1"
+                                                                            id="editIsWajibKeg{{ $keg->id }}" {{ $keg->is_wajib ? 'checked' : '' }}>
+                                                                        <label class="form-check-label fw-medium"
+                                                                            for="editIsWajibKeg{{ $keg->id }}">
+                                                                            Jadikan Wajib
+                                                                        </label>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div class="modal-footer pb-2 border-0">

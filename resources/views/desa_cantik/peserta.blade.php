@@ -53,30 +53,6 @@
                                 </select>
                             </div>
 
-                            {{-- Info Kuota (muncul setelah pilih periode) --}}
-                            <div id="infoKuota" class="mb-3 d-none">
-                                <div class="alert alert-info py-2 rounded-3 mb-0">
-                                    <div class="row text-center">
-                                        <div class="col-6 border-end">
-                                            <div class="small text-muted">Sisa Desa</div>
-                                            <div class="fw-bold fs-5" id="sisaDesa">-</div>
-                                            <div class="tiny text-muted" id="maxDesaInfo">dari ? max</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="small text-muted">Sisa Kecamatan</div>
-                                            <div class="fw-bold fs-5" id="sisaKecamatan">-</div>
-                                            <div class="tiny text-muted" id="maxKecInfo">dari ? max</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="noKuotaAlert" class="mb-3 d-none">
-                                <div class="alert alert-warning py-2 rounded-3 mb-0 small">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    Periode ini belum memiliki pengaturan kuota. Hubungi admin provinsi.
-                                </div>
-                            </div>
-
                             {{-- Pilih Kabupaten (HANYA untuk kode_kab = 6100) --}}
                             @if($isProvinsi)
                                 <div class="mb-3" id="wrapKabupaten">
@@ -114,10 +90,13 @@
                                     <option value="">-- Pilih Kecamatan dulu --</option>
                                 </select>
                             </div>
-
-                            {{-- Validasi kuota alert --}}
-                            <div id="kuotaValidationMsg" class="d-none mb-3">
-                                <div class="alert alert-danger py-2 rounded-3 mb-0 small" id="kuotaValidationText"></div>
+ 
+                            {{-- Warning for inactive period --}}
+                            <div id="inactivePeriodAlert" class="mb-3 d-none">
+                                <div class="alert alert-warning py-2 rounded-3 mb-0 small">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Periode ini tidak aktif. Pendaftaran hanya bisa dilakukan pada periode aktif.
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-orange rounded-pill w-100 fw-bold" id="btnSubmit">
@@ -195,17 +174,18 @@
                                                 </td>
                                                 <td class="text-end pe-3">
                                                     @if($peserta->periode->is_active)
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
                                                             data-url="{{ route('desa-cantik.peserta.destroy', $peserta->id) }}"
                                                             data-type="Peserta Desa" data-name="{{ $peserta->desa->nama_desa ?? '' }}">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
-                                                     @else
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Periode tidak aktif">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                @endif
-                                                            </td>
+                                                    @else
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+                                                            title="Periode tidak aktif">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -324,20 +304,11 @@
 
                 const urlKecamatan = '/desa-cantik/ajax/kecamatan';
                 const urlDesa = '/desa-cantik/ajax/desa';
-                const urlKuota = '/desa-cantik/ajax/kuota-info';
+
 
                 const selectPeriode = document.getElementById('selectPeriode');
                 const selectKabupaten = document.getElementById('selectKabupaten');
-                const infoKuota = document.getElementById('infoKuota');
-                const noKuotaAlert = document.getElementById('noKuotaAlert');
-                const sisaDesa = document.getElementById('sisaDesa');
-                const sisaKecamatan = document.getElementById('sisaKecamatan');
-                const maxDesaInfo = document.getElementById('maxDesaInfo');
-                const maxKecInfo = document.getElementById('maxKecInfo');
-                const kuotaMsg = document.getElementById('kuotaValidationMsg');
-                const kuotaText = document.getElementById('kuotaValidationText');
-
-                let kuotaData = null;
+                const inactiveAlert = document.getElementById('inactivePeriodAlert');
 
                 function getPeriodeId() { return $(selectPeriode).val() || ''; }
                 function getKabupatenId() { return $(selectKabupaten).val() || myKabupatenId; }
@@ -386,7 +357,6 @@
                         if (kecId && getPeriodeId()) {
                             initDesa();
                         }
-                        validateKuota();
                     });
                 }
 
@@ -429,8 +399,6 @@
                             cache: true,
                         }
                     }).prop('disabled', false);
-
-                    $sel.off('change.descan').on('change.descan', () => validateKuota());
                 }
 
                 function resetDesa() {
@@ -442,35 +410,7 @@
                 // Init awal
                 initKecamatan();
 
-                // ========================
-                // KUOTA INFO
-                // ========================
-                function fetchKuotaInfo(periodeId) {
-                    if (!periodeId) {
-                        infoKuota.classList.add('d-none');
-                        noKuotaAlert.classList.add('d-none');
-                        return;
-                    }
-                    fetch(`${urlKuota}?periode_id=${periodeId}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.has_kuota) {
-                                kuotaData = data;
-                                sisaDesa.textContent = data.sisa_desa;
-                                sisaKecamatan.textContent = data.sisa_kecamatan;
-                                maxDesaInfo.textContent = `dari ${data.max_desa} max`;
-                                maxKecInfo.textContent = `dari ${data.max_kecamatan} max`;
-                                infoKuota.classList.remove('d-none');
-                                noKuotaAlert.classList.add('d-none');
-                                sisaDesa.className = data.sisa_desa <= 0 ? 'fw-bold fs-5 text-danger' : 'fw-bold fs-5 text-success';
-                                sisaKecamatan.className = data.sisa_kecamatan <= 0 ? 'fw-bold fs-5 text-danger' : 'fw-bold fs-5 text-success';
-                            } else {
-                                kuotaData = null;
-                                infoKuota.classList.add('d-none');
-                                noKuotaAlert.classList.remove('d-none');
-                            }
-                        });
-                }
+
 
                 // ========================
                 // EVENT: PERIODE
@@ -479,19 +419,17 @@
                     const val = $(this).val();
                     const isActive = $(this).find(':selected').data('active') == 1;
 
-                    fetchKuotaInfo(val);
                     $('#selectKecamatan').val(null).trigger('change');
                     resetDesa();
                     initKecamatan();
-                    validateKuota();
 
                     // Lock form if period is inactive
                     const btn = document.getElementById('btnSubmit');
                     if (val && !isActive) {
-                        kuotaText.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>Periode ini tidak aktif. Pendaftaran hanya bisa dilakukan pada periode aktif.`;
-                        kuotaMsg.classList.remove('d-none');
+                        inactiveAlert.classList.remove('d-none');
                         btn.disabled = true;
                     } else {
+                        inactiveAlert.classList.add('d-none');
                         btn.disabled = false;
                     }
                 });
@@ -507,24 +445,7 @@
                     });
                 }
 
-                // ========================
-                // VALIDASI KUOTA
-                // ========================
-                function validateKuota() {
-                    kuotaMsg.classList.add('d-none');
-                    if (!kuotaData) return;
-                    if (kuotaData.sisa_desa <= 0) {
-                        kuotaText.innerHTML = `<i class="fas fa-times-circle me-1"></i>Kuota desa untuk periode ini sudah penuh (max ${kuotaData.max_desa} desa).`;
-                        kuotaMsg.classList.remove('d-none');
-                    }
-                }
 
-                document.getElementById('formTambahPeserta').addEventListener('submit', function (e) {
-                    if (kuotaData && kuotaData.sisa_desa <= 0) {
-                        e.preventDefault();
-                        Swal.fire('Kuota Penuh', `Kuota desa untuk periode ini sudah penuh (max ${kuotaData.max_desa} desa).`, 'error');
-                    }
-                });
 
                 // ========================
                 // SWEET ALERT DELETE
