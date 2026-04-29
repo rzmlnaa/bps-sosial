@@ -358,7 +358,7 @@ class DescanController extends Controller
         }
 
         $query = DescanProgressDesa::with(['peserta.desa', 'peserta.kecamatan', 'peserta.kabupaten', 'kegiatan', 'buktis.jenisBukti'])
-            ->where('status', 1) // Menunggu Verifikasi
+            ->where('status', 'menunggu_verifikasi')
             ->orderBy('updated_at', 'asc');
 
         $pendingVerifications = $query->paginate(20);
@@ -374,7 +374,7 @@ class DescanController extends Controller
         // Hanya ambil kegiatan yang active
         $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
 
-        $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.kegiatan'])
+        $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.buktis', 'outputs', 'buktiDukungs'])
             ->orderBy('created_at', 'desc');
 
         if (!$isProvinsi) {
@@ -386,13 +386,19 @@ class DescanController extends Controller
         }
 
         $pesertas = $query->paginate(20);
+        $mandatoryBuktiIds = DescanJenisBuktiKegiatan::where('is_wajib', true)->pluck('id')->toArray();
+        $mandatoryOutputIds = DescanJenisOutput::where('is_wajib', true)->pluck('id')->toArray();
+        $mandatoryDukungIds = DescanJenisBuktiDukung::where('is_wajib', true)->pluck('id')->toArray();
 
-        return view('desa_cantik.progress', compact('pesertas', 'periodes', 'kegiatans', 'isProvinsi'));
+        return view('desa_cantik.progress', compact(
+            'pesertas', 'periodes', 'kegiatans', 'isProvinsi', 
+            'mandatoryBuktiIds', 'mandatoryOutputIds', 'mandatoryDukungIds'
+        ));
     }
 
     public function progressDetail($peserta_id)
     {
-        $peserta = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode'])->findOrFail($peserta_id);
+        $peserta = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'outputs', 'buktiDukungs'])->findOrFail($peserta_id);
         // Hanya ambil kegiatan yang active
         $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
         $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier'])
@@ -401,69 +407,148 @@ class DescanController extends Controller
             ->keyBy('kegiatan_id');
 
         $isProvinsi = Auth::user()->kabupaten && Auth::user()->kabupaten->kode_kab == '6100';
-        $jenisBukti = DescanJenisBuktiKegiatan::orderBy('nama_bukti')->get();
+        
+        // Jenis Bukti Kegiatan
+        $jenisBuktiMandatory = DescanJenisBuktiKegiatan::where('is_wajib', true)->orderBy('nama_bukti')->get();
+        $jenisBuktiOptional = DescanJenisBuktiKegiatan::where('is_wajib', false)->orderBy('nama_bukti')->get();
 
-        return view('desa_cantik.progress_detail', compact('peserta', 'kegiatans', 'progresses', 'isProvinsi', 'jenisBukti'));
+        // Jenis Output
+        $jenisOutputMandatory = DescanJenisOutput::where('is_wajib', true)->orderBy('nama_output')->get();
+        $jenisOutputOptional = DescanJenisOutput::where('is_wajib', false)->orderBy('nama_output')->get();
+
+        // Jenis Bukti Dukung (Lainnya)
+        $jenisDukungMandatory = DescanJenisBuktiDukung::where('is_wajib', true)->orderBy('nama_bukti')->get();
+        $jenisDukungOptional = DescanJenisBuktiDukung::where('is_wajib', false)->orderBy('nama_bukti')->get();
+
+        return view('desa_cantik.progress_detail', compact(
+            'peserta', 'kegiatans', 'progresses', 'isProvinsi', 
+            'jenisBuktiMandatory', 'jenisBuktiOptional',
+            'jenisOutputMandatory', 'jenisOutputOptional',
+            'jenisDukungMandatory', 'jenisDukungOptional'
+        ));
     }
 
     public function storeProgress(Request $request, $peserta_id)
     {
         $request->validate([
-            'kegiatan_id' => 'required|exists:descan_kegiatan,id',
-            'target_tanggal' => 'nullable|date',
-            'realisasi_tanggal' => 'nullable|date|after_or_equal:target_tanggal',
-            'bukti_link.*' => 'nullable|string',
-            'jenis_bukti_id.*' => 'nullable|exists:descan_jenis_bukti_kegiatan,id'
+            'action_type' => 'required|in:draft,submit',
+            'progress' => 'nullable|array',
+            'progress.*.target_tanggal' => 'nullable|date',
+            'progress.*.realisasi_tanggal' => 'nullable|date|after_or_equal:progress.*.target_tanggal',
         ], [
-            'realisasi_tanggal.after_or_equal' => 'Tanggal realisasi tidak boleh lebih kecil dari tanggal target.'
+            'progress.*.realisasi_tanggal.after_or_equal' => 'Tanggal realisasi tidak boleh lebih kecil dari tanggal target.'
         ]);
 
         $peserta = DescanPeserta::findOrFail($peserta_id);
-        $kegiatan = DescanKegiatan::findOrFail($request->kegiatan_id);
+        $allKegiatans = DescanKegiatan::where('is_active', true)->get();
+        $status = ($request->action_type == 'submit') ? 'menunggu_verifikasi' : 'draft';
 
-        if (!$kegiatan->is_active) {
-            return back()->with('error', 'Kegiatan ini tidak aktif.');
-        }
+        // Jika Submit, validasi kegiatan wajib dan bukti wajib
+        if ($status == 'menunggu_verifikasi') {
+            $wajibKegiatans = $allKegiatans->where('is_wajib', true);
+            foreach ($wajibKegiatans as $wk) {
+                $data = $request->input("progress.{$wk->id}");
+                if (empty($data['target_tanggal']) || empty($data['realisasi_tanggal'])) {
+                    return back()->with('error', 'Kegiatan wajib "' . $wk->nama_kegiatan . '" harus diisi tanggal target dan realisasinya sebelum diajukan.');
+                }
+            }
 
-        // Cek Urutan: Tidak bisa lompat
-        if ($kegiatan->urutan > 1) {
-            $prevKegiatan = DescanKegiatan::where('urutan', $kegiatan->urutan - 1)->first();
-            if ($prevKegiatan) {
-                $prevProgress = DescanProgressDesa::where('peserta_id', $peserta_id)
-                    ->where('kegiatan_id', $prevKegiatan->id)
-                    ->first();
-
-                if (!$prevProgress || $prevProgress->status != 2) {
-                    return back()->with('error', 'Kegiatan sebelumnya (' . $prevKegiatan->nama_kegiatan . ') harus diselesaikan dan diverifikasi terlebih dahulu.');
+            // Validasi Bukti Wajib untuk setiap kegiatan yang sedang diproses
+            if ($request->has('progress')) {
+                $jenisBuktiMandatory = DescanJenisBuktiKegiatan::where('is_wajib', true)->get();
+                foreach ($request->progress as $keg_id => $data) {
+                    if (!empty($data['target_tanggal']) || !empty($data['realisasi_tanggal'])) {
+                        foreach ($jenisBuktiMandatory as $mb) {
+                            $linkFound = false;
+                            if ($request->has("bukti.{$keg_id}")) {
+                                foreach ($request->bukti[$keg_id]['jenis_id'] as $idx => $jid) {
+                                    if ($jid == $mb->id && !empty($request->bukti[$keg_id]['link'][$idx])) {
+                                        $linkFound = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (!$linkFound) {
+                                $keg = $allKegiatans->where('id', $keg_id)->first();
+                                return back()->with('error', 'Bukti wajib "' . $mb->nama_bukti . '" pada kegiatan "' . $keg->nama_kegiatan . '" harus diisi.');
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        $progress = DescanProgressDesa::updateOrCreate(
-            ['peserta_id' => $peserta_id, 'kegiatan_id' => $request->kegiatan_id],
-            [
-                'target_tanggal' => $request->target_tanggal,
-                'realisasi_tanggal' => $request->realisasi_tanggal,
-                'status' => 1, // Menunggu Verifikasi
-                'updated_by' => Auth::id()
-            ]
-        );
+        // Simpan data progress
+        if ($request->has('progress')) {
+            foreach ($request->progress as $keg_id => $data) {
+                if (!empty($data['target_tanggal']) || !empty($data['realisasi_tanggal'])) {
+                    $progress = DescanProgressDesa::updateOrCreate(
+                        ['peserta_id' => $peserta_id, 'kegiatan_id' => $keg_id],
+                        [
+                            'target_tanggal' => $data['target_tanggal'],
+                            'realisasi_tanggal' => $data['realisasi_tanggal'],
+                            'status' => $status,
+                            'updated_by' => Auth::id()
+                        ]
+                    );
 
-        // Handle Bukti Links
-        if ($request->has('bukti_link')) {
-            foreach ($request->bukti_link as $index => $link) {
-                if (!empty($link) && isset($request->jenis_bukti_id[$index])) {
-                    \App\Models\DescanBuktiKegiatan::create([
-                        'progress_desa_id' => $progress->id,
-                        'jenis_bukti_id' => $request->jenis_bukti_id[$index],
-                        'link_file' => $link, // Menyimpan teks/link
+                    // Sync Bukti Links: Hapus yang lama, simpan yang baru dari form
+                    if ($request->has("bukti.{$keg_id}")) {
+                        // Optional: Jika ingin lebih aman, hanya hapus yang ada di form
+                        \App\Models\DescanBuktiKegiatan::where('progress_desa_id', $progress->id)->delete();
+                        
+                        foreach ($request->bukti[$keg_id]['link'] as $idx => $link) {
+                            $jenisId = $request->bukti[$keg_id]['jenis_id'][$idx];
+                            if (!empty($link) && !empty($jenisId)) {
+                                \App\Models\DescanBuktiKegiatan::create([
+                                    'progress_desa_id' => $progress->id,
+                                    'jenis_bukti_id' => $jenisId,
+                                    'link_file' => $link,
+                                    'created_by' => Auth::id()
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Simpan data Output (Global untuk desa di periode ini)
+        if ($request->has('output_jenis_id')) {
+            \App\Models\DescanOutputDesa::where('peserta_id', $peserta_id)->delete();
+            foreach ($request->output_jenis_id as $idx => $j_id) {
+                $link = $request->output_link[$idx] ?? null;
+                if (!empty($j_id) && !empty($link)) {
+                    \App\Models\DescanOutputDesa::create([
+                        'peserta_id' => $peserta_id,
+                        'jenis_output_id' => $j_id,
+                        'link' => $link,
+                        'updated_by' => Auth::id(),
                         'created_by' => Auth::id()
                     ]);
                 }
             }
         }
 
-        return back()->with('success', 'Progress berhasil disimpan dan diajukan untuk verifikasi.');
+        // Simpan data Bukti Dukung / Lainnya (Global untuk desa di periode ini)
+        if ($request->has('dukung_jenis_id')) {
+            \App\Models\DescanBuktiDukungDesa::where('peserta_id', $peserta_id)->delete();
+            foreach ($request->dukung_jenis_id as $idx => $j_id) {
+                $link = $request->dukung_link[$idx] ?? null;
+                if (!empty($j_id) && !empty($link)) {
+                    \App\Models\DescanBuktiDukungDesa::create([
+                        'peserta_id' => $peserta_id,
+                        'jenis_bukti_id' => $j_id,
+                        'link_file' => $link,
+                        'created_by' => Auth::id()
+                    ]);
+                }
+            }
+        }
+
+        $msg = ($status == 'menunggu_verifikasi') ? 'Progress berhasil diajukan untuk verifikasi.' : 'Progress draf berhasil disimpan.';
+        return back()->with('success', $msg);
     }
 
     public function verifyProgress(Request $request, $peserta_id, $progress_id)
@@ -483,14 +568,14 @@ class DescanController extends Controller
 
         if ($request->action == 'approve') {
             $progress->update([
-                'status' => 2, // Terverifikasi
+                'status' => 'disetujui',
                 'verified_by' => Auth::id(),
                 'verified_at' => now()
             ]);
             $msg = 'Progress berhasil diverifikasi.';
         } else {
             $progress->update([
-                'status' => 3, // Ditolak
+                'status' => 'ditolak',
             ]);
             $msg = 'Progress ditolak.';
         }

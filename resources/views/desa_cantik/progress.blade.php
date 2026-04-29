@@ -54,9 +54,39 @@
                         <tbody>
                             @forelse($pesertas as $index => $p)
                                 @php
-                                    $completedCount = $p->progresses->where('status', 2)->count();
-                                    $totalKegiatan = $kegiatans->count();
-                                    $percent = $totalKegiatan > 0 ? round(($completedCount / $totalKegiatan) * 100) : 0;
+                                    $totalUnits = 0;
+                                    $filledUnits = 0;
+                                    
+                                    // 1. Kegiatan
+                                    $mandatoryBuktiCount = count($mandatoryBuktiIds);
+                                    foreach($kegiatans as $keg) {
+                                        $totalUnits += (2 + $mandatoryBuktiCount);
+                                        $prog = $p->progresses->where('kegiatan_id', $keg->id)->first();
+                                        if ($prog) {
+                                            if ($prog->target_tanggal) $filledUnits++;
+                                            if ($prog->realisasi_tanggal) $filledUnits++;
+                                            foreach($mandatoryBuktiIds as $mid) {
+                                                $bukti = $prog->buktis->where('jenis_bukti_id', $mid)->first();
+                                                if ($bukti && !empty($bukti->link_file)) $filledUnits++;
+                                            }
+                                        }
+                                    }
+
+                                    // 2. Output
+                                    $totalUnits += count($mandatoryOutputIds);
+                                    foreach($mandatoryOutputIds as $oid) {
+                                        $out = $p->outputs->where('jenis_output_id', $oid)->first();
+                                        if ($out && !empty($out->link)) $filledUnits++;
+                                    }
+
+                                    // 3. Bukti Dukung
+                                    $totalUnits += count($mandatoryDukungIds);
+                                    foreach($mandatoryDukungIds as $did) {
+                                        $duk = $p->buktiDukungs->where('jenis_bukti_id', $did)->first();
+                                        if ($duk && !empty($duk->link_file)) $filledUnits++;
+                                    }
+
+                                    $percent = $totalUnits > 0 ? round(($filledUnits / $totalUnits) * 100) : 0;
                                 @endphp
                                 <tr>
                                     <td class="px-4 py-3">{{ $pesertas->firstItem() + $index }}</td>
@@ -87,13 +117,14 @@
                                                     $prog = $p->progresses->where('kegiatan_id', $keg->id)->first();
                                                     $statusClass = 'bg-light text-muted';
                                                     if($prog) {
-                                                        if($prog->status == 1) $statusClass = 'bg-warning text-dark';
-                                                        elseif($prog->status == 2) $statusClass = 'bg-success text-white';
-                                                        elseif($prog->status == 3) $statusClass = 'bg-danger text-white';
+                                                        if($prog->status == 'draft') $statusClass = 'bg-info text-white';
+                                                        elseif($prog->status == 'menunggu_verifikasi') $statusClass = 'bg-warning text-dark';
+                                                        elseif($prog->status == 'disetujui') $statusClass = 'bg-success text-white';
+                                                        elseif($prog->status == 'ditolak') $statusClass = 'bg-danger text-white';
                                                     }
                                                 @endphp
                                                 <span class="badge {{ $statusClass }}" style="font-size: 0.6rem; opacity: 0.8;" 
-                                                      title="{{ $keg->nama_kegiatan }}: {{ $prog ? ($prog->status == 1 ? 'Menunggu Verifikasi' : ($prog->status == 2 ? 'Terverifikasi' : 'Ditolak')) : 'Belum' }}">
+                                                      title="{{ $keg->nama_kegiatan }}: {{ $prog ? ($prog->status == 'draft' ? 'Draf' : ($prog->status == 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ($prog->status == 'disetujui' ? 'Terverifikasi' : 'Ditolak'))) : 'Belum' }}">
                                                     {{ $loop->iteration }}
                                                 </span>
                                             @endforeach
@@ -127,6 +158,7 @@
             <div class="card-body p-3 small">
                 <span class="fw-bold me-2 text-navy">Keterangan Status Kegiatan:</span>
                 <span class="me-3"><span class="badge bg-light text-muted border me-1">1</span> Belum</span>
+                <span class="me-3"><span class="badge bg-info text-white me-1">1</span> Draf</span>
                 <span class="me-3"><span class="badge bg-warning text-dark me-1">1</span> Menunggu Verifikasi</span>
                 <span class="me-3"><span class="badge bg-success text-white me-1">1</span> Terverifikasi</span>
                 <span><span class="badge bg-danger text-white me-1">1</span> Ditolak / Perbaikan</span>
