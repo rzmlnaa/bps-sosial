@@ -19,7 +19,8 @@
             </div>
         </div>
 
-        <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST">
+        <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
+            <input type="hidden" name="action_type" id="action_type" value="draft">
             @csrf
             <div class="row">
                 <div class="col-lg-8">
@@ -84,9 +85,10 @@
                                                                 <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-orange">
                                                                     <label class="small fw-bold d-block mb-1 text-navy">{{ $mb->nama_bukti }} <span class="text-danger">*</span></label>
                                                                     <input type="hidden" name="bukti[{{ $keg->id }}][jenis_id][]" value="{{ $mb->id }}">
-                                                                    <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" 
-                                                                        value="{{ $existingMb ? $existingMb->link_file : '' }}" 
-                                                                        placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}...">
+                                                                     <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" 
+                                                                         value="{{ $existingMb ? $existingMb->link_file : '' }}" 
+                                                                         data-placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}..."
+                                                                         placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}...">
                                                                 </div>
                                                             @endforeach
 
@@ -101,7 +103,7 @@
                                                                                 </option>
                                                                             @endforeach
                                                                         </select>
-                                                                        <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" value="{{ $ob->link_file }}">
+                                                                        <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" value="{{ $ob->link_file }}" data-placeholder="Link folder atau deskripsi bukti...">
                                                                         <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
                                                                     </div>
                                                                 @endforeach
@@ -115,7 +117,9 @@
                                                                         <option value="{{ $jb->id }}">{{ $jb->nama_bukti }}</option>
                                                                     @endforeach
                                                                 </select>
-                                                                <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" placeholder="Link folder atau deskripsi bukti...">
+                                                                 <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" 
+                                                                     data-placeholder="Link folder atau deskripsi bukti..."
+                                                                     placeholder="Link folder atau deskripsi bukti...">
                                                             </div>
                                                         </div>
                                                         <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1" onclick="addFileField({{ $keg->id }})">
@@ -215,7 +219,6 @@
                                             @endforeach
                                         </select>
                                         <input type="text" name="output_link[]" class="form-control" value="{{ $out->link }}" placeholder="Link output...">
-                                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
                                     </div>
                                 @endforeach
 
@@ -227,8 +230,7 @@
                                             <option value="{{ $jo->id }}">{{ $jo->nama_output }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="text" name="output_link[]" class="form-control" placeholder="Link output...">
-                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                                     <input type="text" name="output_link[]" class="form-control" placeholder="Link output...">
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1" onclick="addGenericField('output-container')">
@@ -265,7 +267,6 @@
                                             @endforeach
                                         </select>
                                         <input type="text" name="dukung_link[]" class="form-control" value="{{ $duk->link_file }}" placeholder="Link bukti...">
-                                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
                                     </div>
                                 @endforeach
 
@@ -277,8 +278,7 @@
                                             <option value="{{ $jd->id }}">{{ $jd->nama_bukti }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="text" name="dukung_link[]" class="form-control" placeholder="Link bukti...">
-                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                                     <input type="text" name="dukung_link[]" class="form-control" placeholder="Link bukti...">
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1" onclick="addGenericField('dukung-container')">
@@ -364,10 +364,10 @@
                             </div>
 
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" name="action_type" value="draft" class="btn btn-light rounded-pill">
+                                <button type="submit" onclick="document.getElementById('action_type').value='draft'" class="btn btn-light rounded-pill">
                                     <i class="fas fa-save me-1"></i> Simpan Draf
                                 </button>
-                                <button type="submit" name="action_type" value="submit" class="btn btn-orange rounded-pill">
+                                <button type="button" onclick="confirmSubmit()" class="btn btn-orange rounded-pill">
                                     <i class="fas fa-paper-plane me-1"></i> Ajukan Verifikasi
                                 </button>
                             </div>
@@ -381,21 +381,39 @@
     <script>
         function addFileField(kegId) {
             const container = document.getElementById(`bukti-container-${kegId}`);
+            if (!container) return;
+            
             const optionalRows = container.querySelectorAll('.d-flex');
-            const firstRow = optionalRows[optionalRows.length - 1]; // Ambil baris terakhir (pasti opsional)
-            const newRow = firstRow.cloneNode(true);
+            if (optionalRows.length === 0) return;
+            
+            const lastRow = optionalRows[optionalRows.length - 1];
+            const newRow = lastRow.cloneNode(true);
             
             // Clear values
-            newRow.querySelector('select').value = '';
-            newRow.querySelector('input[type="text"]').value = '';
+            const select = newRow.querySelector('select');
+            const input = newRow.querySelector('input[type="text"]');
+            if (select) select.value = '';
+            if (input) {
+                input.value = '';
+                input.readOnly = false;
+                input.style.backgroundColor = '#fff';
+                input.style.cursor = 'text';
+            }
             
             // Tambahkan tombol hapus jika belum ada
-            if (!newRow.querySelector('.text-danger')) {
-                const btnCol = document.createElement('div');
-                btnCol.className = 'col-md-1';
-                btnCol.innerHTML = '<button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-trash"></i></button>';
-                newRow.appendChild(btnCol);
-                newRow.querySelector('.col-md-6').className = 'col-md-6'; // Ensure spacing
+            if (!newRow.querySelector('.fa-trash')) {
+                const btnTrash = document.createElement('button');
+                btnTrash.type = 'button';
+                btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
+                btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
+                btnTrash.onclick = function() { this.parentElement.remove(); };
+                newRow.appendChild(btnTrash);
+            } else {
+                // Pastikan fungsi hapus bekerja pada baris baru
+                const btn = newRow.querySelector('button');
+                if (btn) {
+                    btn.onclick = function() { this.parentElement.remove(); };
+                }
             }
 
             container.appendChild(newRow);
@@ -403,25 +421,106 @@
 
         function addGenericField(containerId) {
             const container = document.getElementById(containerId);
-            const optionalRows = container.querySelectorAll('.d-flex');
-            const firstRow = optionalRows[optionalRows.length - 1];
-            const newRow = firstRow.cloneNode(true);
+            if (!container) return;
             
-            newRow.querySelector('select').value = '';
-            newRow.querySelector('input[type="text"]').value = '';
+            const optionalRows = container.querySelectorAll('.d-flex');
+            if (optionalRows.length === 0) return;
+            
+            const lastRow = optionalRows[optionalRows.length - 1];
+            const newRow = lastRow.cloneNode(true);
+            
+            const select = newRow.querySelector('select');
+            const input = newRow.querySelector('input[type="text"]');
+            if (select) select.value = '';
+            if (input) input.value = '';
+            
+            // Tambahkan tombol hapus jika belum ada
+            if (!newRow.querySelector('.fa-trash')) {
+                const btnTrash = document.createElement('button');
+                btnTrash.type = 'button';
+                btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
+                btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
+                btnTrash.onclick = function() { this.parentElement.remove(); };
+                newRow.appendChild(btnTrash);
+            } else {
+                // Pastikan fungsi hapus bekerja pada baris baru
+                const btn = newRow.querySelector('button');
+                if (btn) {
+                    btn.onclick = function() { this.parentElement.remove(); };
+                }
+            }
             
             container.appendChild(newRow);
         }
 
         function updateMinDate(kegId) {
-            const targetVal = document.getElementById(`target_${kegId}`).value;
+            const targetInput = document.getElementById(`target_${kegId}`);
+            if (!targetInput) return;
+
+            const targetVal = targetInput.value;
             const realisasiInput = document.getElementById(`realisasi_${kegId}`);
-            realisasiInput.min = targetVal;
-            
-            // If current realisasi is before new target, clear it
-            if (realisasiInput.value && realisasiInput.value < targetVal) {
-                realisasiInput.value = '';
+            const container = document.getElementById(`bukti-container-${kegId}`);
+            const btnAdd = container.nextElementSibling; // Tombol "Tambah Baris Bukti"
+
+            if (realisasiInput) {
+                realisasiInput.min = targetVal;
+                if (!targetVal) {
+                    realisasiInput.value = '';
+                } else if (realisasiInput.value && realisasiInput.value < targetVal) {
+                    realisasiInput.value = '';
+                }
             }
+
+            // Toggle Bukti fields
+            const isNoDate = !targetVal;
+            if (container) {
+                const inputs = container.querySelectorAll('input[type="text"], select');
+                inputs.forEach(el => {
+                    if (el.tagName === 'SELECT') {
+                        el.disabled = isNoDate;
+                        if (isNoDate) el.value = '';
+                    } else {
+                        el.readOnly = isNoDate;
+                        el.style.backgroundColor = isNoDate ? '#f8f9fa' : '#fff';
+                        el.style.cursor = isNoDate ? 'not-allowed' : 'text';
+                        if (isNoDate) {
+                            el.value = '';
+                            el.placeholder = "Isi tanggal target terlebih dahulu...";
+                        } else {
+                            el.placeholder = el.getAttribute('data-placeholder') || el.placeholder;
+                        }
+                    }
+                });
+
+                if (btnAdd && btnAdd.classList.contains('btn-link')) {
+                    btnAdd.style.display = isNoDate ? 'none' : 'block';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            @foreach($kegiatans as $keg)
+                updateMinDate({{ $keg->id }});
+            @endforeach
+        });
+
+        function confirmSubmit() {
+            Swal.fire({
+                title: 'Ajukan Verifikasi?',
+                text: "Pastikan semua data mandatory telah terisi dengan benar. Data yang sudah diajukan tidak dapat diubah sampai diverifikasi/ditolak oleh admin provinsi.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--bps-orange)',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Ajukan!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('action_type').value = 'submit';
+                    document.getElementById('form-progress').submit();
+                }
+            });
         }
     </script>
 @endpush
