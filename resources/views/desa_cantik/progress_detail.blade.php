@@ -72,7 +72,7 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label small fw-bold">Realisasi Tanggal @if($keg->is_wajib)<span class="text-danger">*</span>@endif</label>
-                                                        <input type="date" name="progress[{{ $keg->id }}][realisasi_tanggal]" id="realisasi_{{ $keg->id }}" class="form-control" value="{{ $prog ? $prog->realisasi_tanggal : '' }}" min="{{ $prog ? $prog->target_tanggal : '' }}">
+                                                        <input type="date" name="progress[{{ $keg->id }}][realisasi_tanggal]" id="realisasi_{{ $keg->id }}" class="form-control" value="{{ $prog ? $prog->realisasi_tanggal : '' }}" min="{{ $prog ? $prog->target_tanggal : '' }}" onchange="checkMandatoryFilled()">
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form-label small fw-bold mb-2">Bukti Kegiatan</label>
@@ -85,10 +85,11 @@
                                                                 <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-orange">
                                                                     <label class="small fw-bold d-block mb-1 text-navy">{{ $mb->nama_bukti }} <span class="text-danger">*</span></label>
                                                                     <input type="hidden" name="bukti[{{ $keg->id }}][jenis_id][]" value="{{ $mb->id }}">
-                                                                     <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control" 
+                                                                     <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control mandatory-bukti-input-{{ $keg->id }}" 
                                                                          value="{{ $existingMb ? $existingMb->link_file : '' }}" 
                                                                          data-placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}..."
-                                                                         placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}...">
+                                                                         placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}..."
+                                                                         oninput="checkMandatoryFilled()">
                                                                 </div>
                                                             @endforeach
 
@@ -462,9 +463,14 @@
             const container = document.getElementById(`bukti-container-${kegId}`);
             const btnAdd = container.nextElementSibling; // Tombol "Tambah Baris Bukti"
 
+            const isNoDate = !targetVal;
             if (realisasiInput) {
                 realisasiInput.min = targetVal;
-                if (!targetVal) {
+                realisasiInput.readOnly = isNoDate;
+                realisasiInput.style.backgroundColor = isNoDate ? '#f8f9fa' : '#fff';
+                realisasiInput.style.cursor = isNoDate ? 'not-allowed' : 'text';
+
+                if (isNoDate) {
                     realisasiInput.value = '';
                 } else if (realisasiInput.value && realisasiInput.value < targetVal) {
                     realisasiInput.value = '';
@@ -472,7 +478,6 @@
             }
 
             // Toggle Bukti fields
-            const isNoDate = !targetVal;
             if (container) {
                 const inputs = container.querySelectorAll('input[type="text"], select');
                 inputs.forEach(el => {
@@ -496,12 +501,67 @@
                     btnAdd.style.display = isNoDate ? 'none' : 'block';
                 }
             }
+            checkMandatoryFilled();
+        }
+
+        const mandatoryKegiatanIds = @json($kegiatans->where('is_wajib', true)->pluck('id'));
+
+        function checkMandatoryFilled() {
+            let allFilled = true;
+
+            mandatoryKegiatanIds.forEach(id => {
+                const target = document.getElementById(`target_${id}`);
+                const realisasi = document.getElementById(`realisasi_${id}`);
+                
+                if (!target || !target.value) allFilled = false;
+                if (!realisasi || !realisasi.value) allFilled = false;
+
+                const mandatoryBuktis = document.querySelectorAll(`.mandatory-bukti-input-${id}`);
+                mandatoryBuktis.forEach(input => {
+                    if (!input.value.trim()) allFilled = false;
+                });
+            });
+
+            toggleAdditionalSections(allFilled);
+        }
+
+        function toggleAdditionalSections(enabled) {
+            const sections = ['output-container', 'dukung-container'];
+            sections.forEach(id => {
+                const container = document.getElementById(id);
+                if (!container) return;
+
+                const inputs = container.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.tagName === 'SELECT') {
+                        input.disabled = !enabled;
+                        if (!enabled) input.value = '';
+                    } else {
+                        input.readOnly = !enabled;
+                        input.style.backgroundColor = !enabled ? '#f8f9fa' : '#fff';
+                        input.style.cursor = !enabled ? 'not-allowed' : 'text';
+                        if (!enabled) {
+                            input.value = '';
+                            input.placeholder = "Selesaikan kegiatan & bukti wajib terlebih dahulu...";
+                        } else {
+                            // Reset placeholder to original if stored, or just let it be
+                        }
+                    }
+                });
+
+                const btnAdd = container.nextElementSibling;
+                if (btnAdd && btnAdd.tagName === 'BUTTON') {
+                    btnAdd.disabled = !enabled;
+                    btnAdd.style.opacity = !enabled ? '0.5' : '1';
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             @foreach($kegiatans as $keg)
                 updateMinDate({{ $keg->id }});
             @endforeach
+            checkMandatoryFilled();
         });
 
         function confirmSubmit() {

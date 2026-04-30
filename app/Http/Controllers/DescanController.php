@@ -482,7 +482,7 @@ class DescanController extends Controller
         // Simpan data progress
         if ($request->has('progress')) {
             foreach ($request->progress as $keg_id => $data) {
-                if (!empty($data['target_tanggal']) || !empty($data['realisasi_tanggal'])) {
+                if (!empty($data['target_tanggal'])) {
                     $progress = DescanProgressDesa::updateOrCreate(
                         ['peserta_id' => $peserta_id, 'kegiatan_id' => $keg_id],
                         [
@@ -495,7 +495,6 @@ class DescanController extends Controller
 
                     // Sync Bukti Links: Hapus yang lama, simpan yang baru dari form
                     if ($request->has("bukti.{$keg_id}")) {
-                        // Optional: Jika ingin lebih aman, hanya hapus yang ada di form
                         \App\Models\DescanBuktiKegiatan::where('progress_desa_id', $progress->id)->delete();
                         
                         foreach ($request->bukti[$keg_id]['link'] as $idx => $link) {
@@ -509,6 +508,17 @@ class DescanController extends Controller
                                 ]);
                             }
                         }
+                    }
+                } else {
+                    // Jika target_tanggal kosong, hapus record progress jika ada (untuk mereset ke Belum Dimulai)
+                    $existingProgress = DescanProgressDesa::where('peserta_id', $peserta_id)
+                        ->where('kegiatan_id', $keg_id)
+                        ->first();
+                    
+                    if ($existingProgress) {
+                        // Hapus bukti kegiatan terlebih dahulu (karena tidak ada cascade delete di migration)
+                        \App\Models\DescanBuktiKegiatan::where('progress_desa_id', $existingProgress->id)->delete();
+                        $existingProgress->delete();
                     }
                 }
             }
