@@ -13,6 +13,7 @@ class DescanOutputDesa extends Model
         'jenis_output_id',
         'link',
         'status',
+        'alasan_penolakan',
         'created_by',
         'updated_by',
     ];

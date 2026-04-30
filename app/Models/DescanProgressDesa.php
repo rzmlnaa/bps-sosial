@@ -14,6 +14,7 @@ class DescanProgressDesa extends Model
         'target_tanggal',
         'realisasi_tanggal',
         'status',
+        'alasan_penolakan',
         'created_by',
         'updated_by',
         'verified_by',

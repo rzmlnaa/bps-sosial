@@ -68,21 +68,14 @@
                                     </td>
                                     <td class="px-4 py-3 text-end">
                                         <div class="d-flex justify-content-end gap-2">
-                                            <form
-                                                action="{{ route('desa-cantik.progress.verify', [$item->peserta_id, $item->id]) }}"
-                                                method="POST">
+                                            <form id="verify-form-{{ $item->id }}" action="{{ route('desa-cantik.progress.verify', [$item->peserta_id, $item->id]) }}" method="POST">
                                                 @csrf
-                                                <input type="hidden" name="action" value="approve">
+                                                <input type="hidden" name="action" id="action-{{ $item->id }}" value="approve">
+                                                <input type="hidden" name="alasan_penolakan" id="alasan-{{ $item->id }}" value="">
                                                 <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
                                                     <i class="fas fa-check me-1"></i> Approve
                                                 </button>
-                                            </form>
-                                            <form
-                                                action="{{ route('desa-cantik.progress.verify', [$item->peserta_id, $item->id]) }}"
-                                                method="POST">
-                                                @csrf
-                                                <input type="hidden" name="action" value="reject">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <button type="button" onclick="rejectProgress({{ $item->id }})" class="btn btn-sm btn-outline-danger rounded-pill px-3">
                                                     <i class="fas fa-times me-1"></i> Reject
                                                 </button>
                                             </form>
@@ -114,6 +107,34 @@
 @endsection
 
 @push('styles')
+    <script>
+        function rejectProgress(progId) {
+            Swal.fire({
+                title: 'Tolak Progress?',
+                text: "Berikan alasan penolakan agar user dapat melakukan perbaikan.",
+                icon: 'warning',
+                input: 'textarea',
+                inputPlaceholder: 'Masukkan alasan penolakan di sini...',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Tolak',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Alasan penolakan wajib diisi!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('action-' + progId).value = 'reject';
+                    document.getElementById('alasan-' + progId).value = result.value;
+                    document.getElementById('verify-form-' + progId).submit();
+                }
+            });
+        }
+    </script>
     <style>
         .btn-xs {
             padding: 0.1rem 0.4rem;

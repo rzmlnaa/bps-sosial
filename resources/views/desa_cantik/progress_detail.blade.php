@@ -20,7 +20,7 @@
         </div>
 
         <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
-            <input type="hidden" name="action_type" id="action_type" value="draft">
+            <input type="hidden" name="action_type" id="action_type" value="draf">
             @csrf
             <div class="row">
                 <div class="col-lg-8">
@@ -34,10 +34,10 @@
                             $statusLabel = 'Belum Dimulai';
                             $statusColor = 'secondary';
                             if($prog) {
-                                if($prog->status == 'draft') { $statusLabel = 'Draf'; $statusColor = 'info'; }
+                                if($prog->status == 'draf') { $statusLabel = 'Draf'; $statusColor = 'info'; }
                                 elseif($prog->status == 'menunggu_verifikasi') { $statusLabel = 'Menunggu Verifikasi'; $statusColor = 'warning'; }
                                 elseif($prog->status == 'disetujui') { $statusLabel = 'Terverifikasi'; $statusColor = 'success'; }
-                                elseif($prog->status == 'ditolak') { $statusLabel = 'Perbaikan'; $statusColor = 'danger'; }
+                                elseif($prog->status == 'ditolak') { $statusLabel = 'Ditolak'; $statusColor = 'danger'; }
                             }
                         @endphp
                         
@@ -63,7 +63,7 @@
                                     </div>
                                     
                                     <div class="card-body px-4 pb-4">
-                                        @if(!$prog || $prog->status == 'draft' || $prog->status == 'ditolak')
+                                        @if(!$prog || $prog->status == 'draf' || $prog->status == 'ditolak')
                                             <div class="mt-3">
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
@@ -163,20 +163,24 @@
                                                     </div>
                                                 </div>
 
+                                                @if($prog->status == 'ditolak' && $prog->alasan_penolakan)
+                                                    <div class="alert alert-danger border-0 rounded-4 mt-3 small mb-0">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                                        <strong>Alasan Penolakan:</strong> {{ $prog->alasan_penolakan }}
+                                                    </div>
+                                                @endif
+
                                                 @if($isProvinsi && $prog->status == 'menunggu_verifikasi')
                                                     <div class="mt-4 pt-3 border-top">
                                                         <div class="d-flex gap-2">
-                                                            <form action="{{ route('desa-cantik.progress.verify', [$peserta->id, $prog->id]) }}" method="POST">
+                                                            <form id="verify-form-{{ $prog->id }}" action="{{ route('desa-cantik.progress.verify', [$peserta->id, $prog->id]) }}" method="POST">
                                                                 @csrf
-                                                                <input type="hidden" name="action" value="approve">
+                                                                <input type="hidden" name="action" id="action-{{ $prog->id }}" value="approve">
+                                                                <input type="hidden" name="alasan_penolakan" id="alasan-{{ $prog->id }}" value="">
                                                                 <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
                                                                     <i class="fas fa-check-circle me-1"></i> Setujui
                                                                 </button>
-                                                            </form>
-                                                            <form action="{{ route('desa-cantik.progress.verify', [$peserta->id, $prog->id]) }}" method="POST">
-                                                                @csrf
-                                                                <input type="hidden" name="action" value="reject">
-                                                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3">
+                                                                <button type="button" onclick="rejectProgress({{ $prog->id }})" class="btn btn-danger btn-sm rounded-pill px-3 ms-1">
                                                                     <i class="fas fa-times-circle me-1"></i> Tolak / Perbaikan
                                                                 </button>
                                                             </form>
@@ -365,7 +369,7 @@
                             </div>
 
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" onclick="document.getElementById('action_type').value='draft'" class="btn btn-light rounded-pill">
+                                <button type="submit" onclick="document.getElementById('action_type').value='draf'" class="btn btn-light rounded-pill">
                                     <i class="fas fa-save me-1"></i> Simpan Draf
                                 </button>
                                 <button type="button" onclick="confirmSubmit()" class="btn btn-orange rounded-pill">
@@ -579,6 +583,33 @@
                 if (result.isConfirmed) {
                     document.getElementById('action_type').value = 'submit';
                     document.getElementById('form-progress').submit();
+                }
+            });
+        }
+
+        function rejectProgress(progId) {
+            Swal.fire({
+                title: 'Tolak Progress?',
+                text: "Berikan alasan penolakan agar user dapat melakukan perbaikan.",
+                icon: 'warning',
+                input: 'textarea',
+                inputPlaceholder: 'Masukkan alasan penolakan di sini...',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Tolak',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Alasan penolakan wajib diisi!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('action-' + progId).value = 'reject';
+                    document.getElementById('alasan-' + progId).value = result.value;
+                    document.getElementById('verify-form-' + progId).submit();
                 }
             });
         }

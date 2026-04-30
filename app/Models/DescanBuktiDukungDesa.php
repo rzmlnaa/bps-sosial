@@ -12,7 +12,8 @@ class DescanBuktiDukungDesa extends Model
         'peserta_id',
         'jenis_bukti_id',
         'link_file',
-        'keterangan',
+        'status',
+        'alasan_penolakan',
         'created_by',
     ];
 

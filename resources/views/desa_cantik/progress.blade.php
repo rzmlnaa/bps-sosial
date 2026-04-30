@@ -117,14 +117,14 @@
                                                     $prog = $p->progresses->where('kegiatan_id', $keg->id)->first();
                                                     $statusClass = 'bg-light text-muted';
                                                     if($prog) {
-                                                        if($prog->status == 'draft') $statusClass = 'bg-info text-white';
+                                                        if($prog->status == 'draf') $statusClass = 'bg-info text-white';
                                                         elseif($prog->status == 'menunggu_verifikasi') $statusClass = 'bg-warning text-dark';
                                                         elseif($prog->status == 'disetujui') $statusClass = 'bg-success text-white';
                                                         elseif($prog->status == 'ditolak') $statusClass = 'bg-danger text-white';
                                                     }
                                                 @endphp
                                                 <span class="badge {{ $statusClass }}" style="font-size: 0.6rem; opacity: 0.8;" 
-                                                      title="{{ $keg->nama_kegiatan }}: {{ $prog ? ($prog->status == 'draft' ? 'Draf' : ($prog->status == 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ($prog->status == 'disetujui' ? 'Terverifikasi' : 'Ditolak'))) : 'Belum' }}">
+                                                      title="{{ $keg->nama_kegiatan }}: {{ $prog ? ($prog->status == 'draf' ? 'Draf' : ($prog->status == 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ($prog->status == 'disetujui' ? 'Terverifikasi' : 'Ditolak'))) : 'Belum' }}">
                                                     {{ $loop->iteration }}
                                                 </span>
                                             @endforeach

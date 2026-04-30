@@ -431,7 +431,7 @@ class DescanController extends Controller
     public function storeProgress(Request $request, $peserta_id)
     {
         $request->validate([
-            'action_type' => 'required|in:draft,submit',
+            'action_type' => 'required|in:draf,submit',
             'progress' => 'nullable|array',
             'progress.*.target_tanggal' => 'nullable|date',
             'progress.*.realisasi_tanggal' => 'nullable|date|after_or_equal:progress.*.target_tanggal',
@@ -441,7 +441,7 @@ class DescanController extends Controller
 
         $peserta = DescanPeserta::findOrFail($peserta_id);
         $allKegiatans = DescanKegiatan::where('is_active', true)->get();
-        $status = ($request->action_type == 'submit') ? 'menunggu_verifikasi' : 'draft';
+        $status = ($request->action_type == 'submit') ? 'menunggu_verifikasi' : 'draf';
 
         // Jika Submit, validasi kegiatan wajib dan bukti wajib
         if ($status == 'menunggu_verifikasi') {
@@ -573,19 +573,22 @@ class DescanController extends Controller
         $progress = DescanProgressDesa::findOrFail($progress_id);
 
         $request->validate([
-            'action' => 'required|in:approve,reject'
+            'action' => 'required|in:approve,reject',
+            'alasan_penolakan' => 'nullable|string'
         ]);
 
         if ($request->action == 'approve') {
             $progress->update([
                 'status' => 'disetujui',
                 'verified_by' => Auth::id(),
-                'verified_at' => now()
+                'verified_at' => now(),
+                'alasan_penolakan' => null
             ]);
             $msg = 'Progress berhasil diverifikasi.';
         } else {
             $progress->update([
                 'status' => 'ditolak',
+                'alasan_penolakan' => $request->alasan_penolakan
             ]);
             $msg = 'Progress ditolak.';
         }
