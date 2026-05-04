@@ -13,6 +13,8 @@ use App\Models\DescanJenisBuktiDukung;
 use App\Models\Kabupaten;
 use App\Models\Kecamatan;
 use App\Models\Desa;
+use App\Models\DescanOutputDesa;
+use App\Models\DescanBuktiDukungDesa;
 use Illuminate\Support\Facades\Auth;
 
 class DescanController extends Controller
@@ -390,6 +392,10 @@ class DescanController extends Controller
         $mandatoryOutputIds = DescanJenisOutput::where('is_wajib', true)->pluck('id')->toArray();
         $mandatoryDukungIds = DescanJenisBuktiDukung::where('is_wajib', true)->pluck('id')->toArray();
 
+        // Get all types for indicators
+        $allJenisOutputs = DescanJenisOutput::orderBy('is_wajib', 'desc')->orderBy('nama_output')->get();
+        $allJenisDukungs = DescanJenisBuktiDukung::orderBy('is_wajib', 'desc')->orderBy('nama_bukti')->get();
+
         return view('desa_cantik.progress', compact(
             'pesertas',
             'periodes',
@@ -397,13 +403,19 @@ class DescanController extends Controller
             'isProvinsi',
             'mandatoryBuktiIds',
             'mandatoryOutputIds',
-            'mandatoryDukungIds'
+            'mandatoryDukungIds',
+            'allJenisOutputs',
+            'allJenisDukungs'
         ));
     }
 
     public function progressDetail($peserta_id)
     {
-        $peserta = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'outputs', 'buktiDukungs'])->findOrFail($peserta_id);
+        $peserta = DescanPeserta::with([
+            'desa', 'kecamatan', 'kabupaten', 'periode', 
+            'outputs.creator', 'outputs.updater', 
+            'buktiDukungs.creator'
+        ])->findOrFail($peserta_id);
         $kegiatans = DescanKegiatan::where('is_active', true)
             ->leftJoin('descan_progress_desa', function($join) use ($peserta_id) {
                 $join->on('descan_kegiatan.id', '=', 'descan_progress_desa.kegiatan_id')
@@ -413,7 +425,7 @@ class DescanController extends Controller
             ->orderByRaw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
             ->get();
 
-        $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier'])
+        $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier', 'creator', 'updater'])
             ->where('peserta_id', $peserta_id)
             ->get()
             ->keyBy('kegiatan_id');
@@ -733,6 +745,57 @@ class DescanController extends Controller
             $msg = 'Progress ditolak.';
         }
 
+        return back()->with('success', $msg);
+    }
+
+    public function verifyAllProgress(Request $request, $peserta_id)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        if (!$isProvinsi) {
+            return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'alasan_penolakan' => 'required_if:action,reject'
+        ]);
+
+        $status = $request->action == 'approve' ? 'disetujui' : 'ditolak';
+        
+        $updateData = [
+            'status' => $status,
+        ];
+
+        if ($request->action == 'approve') {
+            $updateData['alasan_penolakan'] = null;
+        } else {
+            $updateData['alasan_penolakan'] = $request->alasan_penolakan;
+        }
+
+        // 1. Update Kegiatan (has verified_by and verified_at)
+        $progUpdate = $updateData;
+        if ($request->action == 'approve') {
+            $progUpdate['verified_by'] = Auth::id();
+            $progUpdate['verified_at'] = now();
+        }
+
+        DescanProgressDesa::where('peserta_id', $peserta_id)
+            ->where('status', 'menunggu_verifikasi')
+            ->update($progUpdate);
+
+        // 2. Update Output
+        DescanOutputDesa::where('peserta_id', $peserta_id)
+            ->where('status', 'menunggu_verifikasi')
+            ->update($updateData);
+
+        // 3. Update Bukti Dukung
+        DescanBuktiDukungDesa::where('peserta_id', $peserta_id)
+            ->where('status', 'menunggu_verifikasi')
+            ->update($updateData);
+
+        $msg = $request->action == 'approve' ? 'Seluruh progress berhasil disetujui.' : 'Seluruh progress berhasil ditolak.';
         return back()->with('success', $msg);
     }
 
