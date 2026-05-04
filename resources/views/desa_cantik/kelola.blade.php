@@ -823,7 +823,7 @@
                             });
 
                             // Send AJAX request
-                            fetch('/desa-cantik/kelola/kegiatan/reorder', {
+                            fetch('{{ route('desa-cantik.kegiatan.reorder') }}', {
                                                 method: 'PATCH',
                                                 headers: {
                                                     'Content-Type': 'application/json',

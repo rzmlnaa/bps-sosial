@@ -19,6 +19,11 @@
             </div>
         </div>
 
+        @php
+            $year = $peserta->periode->tahun;
+            $minYear = $year . '-01-01';
+            $maxYear = $year . '-12-31';
+        @endphp
         <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
             <input type="hidden" name="action_type" id="action_type" value="draf">
             @csrf
@@ -68,11 +73,22 @@
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label small fw-bold">Target Tanggal @if($keg->is_wajib)<span class="text-danger">*</span>@endif</label>
-                                                        <input type="date" name="progress[{{ $keg->id }}][target_tanggal]" id="target_{{ $keg->id }}" class="form-control" value="{{ $prog ? $prog->target_tanggal : '' }}" onchange="updateMinDate({{ $keg->id }})">
+                                                        <input type="date" name="progress[{{ $keg->id }}][target_tanggal]" id="target_{{ $keg->id }}" 
+                                                               class="form-control" value="{{ $prog ? $prog->target_tanggal : '' }}" 
+                                                               min="{{ $minYear }}" max="{{ $maxYear }}"
+                                                               onchange="updateMinDate({{ $keg->id }}); updateNextActivityMinDate({{ $keg->id }});">
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small fw-bold">Realisasi Tanggal @if($keg->is_wajib)<span class="text-danger">*</span>@endif</label>
-                                                        <input type="date" name="progress[{{ $keg->id }}][realisasi_tanggal]" id="realisasi_{{ $keg->id }}" class="form-control" value="{{ $prog ? $prog->realisasi_tanggal : '' }}" min="{{ $prog ? $prog->target_tanggal : '' }}" onchange="checkMandatoryFilled()">
+                                                        <label class="form-label small fw-bold">
+                                                            Realisasi Tanggal 
+                                                            <span class="text-danger mandatory-star-{{ $keg->id }}" 
+                                                                  data-is-keg-wajib="{{ $keg->is_wajib ? 'true' : 'false' }}"
+                                                                  style="{{ ($keg->is_wajib || ($prog && $prog->target_tanggal)) ? '' : 'display: none;' }}">*</span>
+                                                        </label>
+                                                        <input type="date" name="progress[{{ $keg->id }}][realisasi_tanggal]" id="realisasi_{{ $keg->id }}" 
+                                                               class="form-control" value="{{ $prog ? $prog->realisasi_tanggal : '' }}" 
+                                                               min="{{ $prog && $prog->target_tanggal ? $prog->target_tanggal : $minYear }}" max="{{ $maxYear }}"
+                                                               onchange="updateNextActivityMinDate({{ $keg->id }}); checkMandatoryFilled()">
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form-label small fw-bold mb-2">Bukti Kegiatan</label>
@@ -82,8 +98,13 @@
                                                                 @php
                                                                     $existingMb = $prog ? $prog->buktis->where('jenis_bukti_id', $mb->id)->first() : null;
                                                                 @endphp
-                                                                <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-orange">
-                                                                    <label class="small fw-bold d-block mb-1 text-navy">{{ $mb->nama_bukti }} <span class="text-danger">*</span></label>
+                                                                 <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-orange">
+                                                                    <label class="small fw-bold d-block mb-1 text-navy">
+                                                                        {{ $mb->nama_bukti }} 
+                                                                        <span class="text-danger mandatory-star-{{ $keg->id }}" 
+                                                                              data-is-keg-wajib="{{ $keg->is_wajib ? 'true' : 'false' }}"
+                                                                              style="{{ ($keg->is_wajib || ($prog && $prog->target_tanggal)) ? '' : 'display: none;' }}">*</span>
+                                                                    </label>
                                                                     <input type="hidden" name="bukti[{{ $keg->id }}][jenis_id][]" value="{{ $mb->id }}">
                                                                      <input type="text" name="bukti[{{ $keg->id }}][link][]" class="form-control mandatory-bukti-input-{{ $keg->id }}" 
                                                                          value="{{ $existingMb ? $existingMb->link_file : '' }}" 
@@ -207,35 +228,72 @@
                                 @foreach($jenisOutputMandatory as $jo)
                                     @php $out = $peserta->outputs->where('jenis_output_id', $jo->id)->first(); @endphp
                                     <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-primary">
-                                        <label class="small fw-bold d-block mb-1 text-navy">{{ $jo->nama_output }} <span class="text-danger">*</span></label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="small fw-bold text-navy mb-0">{{ $jo->nama_output }} <span class="text-danger">*</span></label>
+                                            @if($out && $out->status)
+                                                @php
+                                                    $sLabel = 'Draf'; $sColor = 'info';
+                                                    if($out->status == 'menunggu_verifikasi') { $sLabel = 'Menunggu Verifikasi'; $sColor = 'warning'; }
+                                                    elseif($out->status == 'disetujui') { $sLabel = 'Terverifikasi'; $sColor = 'success'; }
+                                                    elseif($out->status == 'ditolak') { $sLabel = 'Ditolak'; $sColor = 'danger'; }
+                                                @endphp
+                                                <span class="badge bg-{{ $sColor }} rounded-pill" style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                            @endif
+                                        </div>
                                         <input type="hidden" name="output_jenis_id[]" value="{{ $jo->id }}">
-                                        <input type="text" name="output_link[]" class="form-control" value="{{ $out ? $out->link : '' }}" placeholder="Link {{ $jo->nama_output }}...">
+                                        <input type="text" name="output_link[]" class="form-control mandatory-output-input" 
+                                               value="{{ $out ? $out->link : '' }}" placeholder="Link {{ $jo->nama_output }}..."
+                                               oninput="checkMandatoryFilled()">
+                                        @if($out && $out->status == 'ditolak' && $out->alasan_penolakan)
+                                            <small class="text-danger mt-1 d-block" style="font-size: 0.75rem;">
+                                                <i class="fas fa-exclamation-circle me-1"></i><strong>Alasan:</strong> {{ $out->alasan_penolakan }}
+                                            </small>
+                                        @endif
                                     </div>
                                 @endforeach
                                 
                                 <label class="small fw-bold d-block mb-2 text-muted mt-4">Output Lainnya (Opsional)</label>
                                 {{-- Existing Optional Output --}}
                                 @foreach($peserta->outputs->whereIn('jenis_output_id', $jenisOutputOptional->pluck('id')) as $out)
-                                    <div class="d-flex gap-2 mb-2 align-items-center">
-                                        <select name="output_jenis_id[]" class="form-select w-50">
-                                            <option value="">Pilih Jenis Output...</option>
-                                            @foreach($jenisOutputOptional as $jo)
-                                                <option value="{{ $jo->id }}" {{ $out->jenis_output_id == $jo->id ? 'selected' : '' }}>{{ $jo->nama_output }}</option>
-                                            @endforeach
-                                        </select>
-                                        <input type="text" name="output_link[]" class="form-control" value="{{ $out->link }}" placeholder="Link output...">
+                                    <div class="mb-3">
+                                        <div class="d-flex gap-2 mb-1 align-items-center">
+                                            <select name="output_jenis_id[]" class="form-select w-50">
+                                                <option value="">Pilih Jenis Output...</option>
+                                                @foreach($jenisOutputOptional as $jo)
+                                                    <option value="{{ $jo->id }}" {{ $out->jenis_output_id == $jo->id ? 'selected' : '' }}>{{ $jo->nama_output }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="text" name="output_link[]" class="form-control" value="{{ $out->link }}" placeholder="Link output...">
+                                            @if($out && $out->status)
+                                                @php
+                                                    $sLabel = 'Draf'; $sColor = 'info';
+                                                    if($out->status == 'menunggu_verifikasi') { $sLabel = 'Menunggu Verifikasi'; $sColor = 'warning'; }
+                                                    elseif($out->status == 'disetujui') { $sLabel = 'Terverifikasi'; $sColor = 'success'; }
+                                                    elseif($out->status == 'ditolak') { $sLabel = 'Ditolak'; $sColor = 'danger'; }
+                                                @endphp
+                                                <span class="badge bg-{{ $sColor }} rounded-pill" style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                            @endif
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                        @if($out && $out->status == 'ditolak' && $out->alasan_penolakan)
+                                            <small class="text-danger d-block" style="font-size: 0.75rem; margin-left: 2px;">
+                                                <i class="fas fa-exclamation-circle me-1"></i><strong>Alasan:</strong> {{ $out->alasan_penolakan }}
+                                            </small>
+                                        @endif
                                     </div>
                                 @endforeach
 
                                 {{-- Always show one empty optional row --}}
-                                <div class="d-flex gap-2 mb-2 align-items-center">
-                                    <select name="output_jenis_id[]" class="form-select w-50">
-                                        <option value="">Pilih Jenis Output...</option>
-                                        @foreach($jenisOutputOptional as $jo)
-                                            <option value="{{ $jo->id }}">{{ $jo->nama_output }}</option>
-                                        @endforeach
-                                    </select>
-                                     <input type="text" name="output_link[]" class="form-control" placeholder="Link output...">
+                                <div class="mb-3 generic-row">
+                                    <div class="d-flex gap-2 mb-1 align-items-center">
+                                        <select name="output_jenis_id[]" class="form-select w-50">
+                                            <option value="">Pilih Jenis Output...</option>
+                                            @foreach($jenisOutputOptional as $jo)
+                                                <option value="{{ $jo->id }}">{{ $jo->nama_output }}</option>
+                                            @endforeach
+                                        </select>
+                                         <input type="text" name="output_link[]" class="form-control" placeholder="Link output...">
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1" onclick="addGenericField('output-container')">
@@ -255,35 +313,72 @@
                                 @foreach($jenisDukungMandatory as $jd)
                                     @php $duk = $peserta->buktiDukungs->where('jenis_bukti_id', $jd->id)->first(); @endphp
                                     <div class="mb-3 p-3 bg-light rounded-4 border-start border-4 border-info">
-                                        <label class="small fw-bold d-block mb-1 text-navy">{{ $jd->nama_bukti }} <span class="text-danger">*</span></label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="small fw-bold text-navy mb-0">{{ $jd->nama_bukti }} <span class="text-danger">*</span></label>
+                                            @if($duk && $duk->status)
+                                                @php
+                                                    $sLabel = 'Draf'; $sColor = 'info';
+                                                    if($duk->status == 'menunggu_verifikasi') { $sLabel = 'Menunggu Verifikasi'; $sColor = 'warning'; }
+                                                    elseif($duk->status == 'disetujui') { $sLabel = 'Terverifikasi'; $sColor = 'success'; }
+                                                    elseif($duk->status == 'ditolak') { $sLabel = 'Ditolak'; $sColor = 'danger'; }
+                                                @endphp
+                                                <span class="badge bg-{{ $sColor }} rounded-pill" style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                            @endif
+                                        </div>
                                         <input type="hidden" name="dukung_jenis_id[]" value="{{ $jd->id }}">
-                                        <input type="text" name="dukung_link[]" class="form-control" value="{{ $duk ? $duk->link_file : '' }}" placeholder="Link {{ $jd->nama_bukti }}...">
+                                        <input type="text" name="dukung_link[]" class="form-control mandatory-dukung-input" 
+                                               value="{{ $duk ? $duk->link_file : '' }}" placeholder="Link {{ $jd->nama_bukti }}..."
+                                               oninput="checkMandatoryFilled()">
+                                        @if($duk && $duk->status == 'ditolak' && $duk->alasan_penolakan)
+                                            <small class="text-danger mt-1 d-block" style="font-size: 0.75rem;">
+                                                <i class="fas fa-exclamation-circle me-1"></i><strong>Alasan:</strong> {{ $duk->alasan_penolakan }}
+                                            </small>
+                                        @endif
                                     </div>
                                 @endforeach
 
                                 <label class="small fw-bold d-block mb-2 text-muted mt-4">Bukti Lainnya (Opsional)</label>
                                 {{-- Existing Optional Dukung --}}
                                 @foreach($peserta->buktiDukungs->whereIn('jenis_bukti_id', $jenisDukungOptional->pluck('id')) as $duk)
-                                    <div class="d-flex gap-2 mb-2 align-items-center">
-                                        <select name="dukung_jenis_id[]" class="form-select w-50">
-                                            <option value="">Pilih Jenis Bukti...</option>
-                                            @foreach($jenisDukungOptional as $jd)
-                                                <option value="{{ $jd->id }}" {{ $duk->jenis_bukti_id == $jd->id ? 'selected' : '' }}>{{ $jd->nama_bukti }}</option>
-                                            @endforeach
-                                        </select>
-                                        <input type="text" name="dukung_link[]" class="form-control" value="{{ $duk->link_file }}" placeholder="Link bukti...">
+                                    <div class="mb-3">
+                                        <div class="d-flex gap-2 mb-1 align-items-center">
+                                            <select name="dukung_jenis_id[]" class="form-select w-50">
+                                                <option value="">Pilih Jenis Bukti...</option>
+                                                @foreach($jenisDukungOptional as $jd)
+                                                    <option value="{{ $jd->id }}" {{ $duk->jenis_bukti_id == $jd->id ? 'selected' : '' }}>{{ $jd->nama_bukti }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="text" name="dukung_link[]" class="form-control" value="{{ $duk->link_file }}" placeholder="Link bukti...">
+                                            @if($duk && $duk->status)
+                                                @php
+                                                    $sLabel = 'Draf'; $sColor = 'info';
+                                                    if($duk->status == 'menunggu_verifikasi') { $sLabel = 'Menunggu Verifikasi'; $sColor = 'warning'; }
+                                                    elseif($duk->status == 'disetujui') { $sLabel = 'Terverifikasi'; $sColor = 'success'; }
+                                                    elseif($duk->status == 'ditolak') { $sLabel = 'Ditolak'; $sColor = 'danger'; }
+                                                @endphp
+                                                <span class="badge bg-{{ $sColor }} rounded-pill" style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                            @endif
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                        @if($duk && $duk->status == 'ditolak' && $duk->alasan_penolakan)
+                                            <small class="text-danger d-block" style="font-size: 0.75rem; margin-left: 2px;">
+                                                <i class="fas fa-exclamation-circle me-1"></i><strong>Alasan:</strong> {{ $duk->alasan_penolakan }}
+                                            </small>
+                                        @endif
                                     </div>
                                 @endforeach
 
                                 {{-- Always show one empty optional row --}}
-                                <div class="d-flex gap-2 mb-2 align-items-center">
-                                    <select name="dukung_jenis_id[]" class="form-select w-50">
-                                        <option value="">Pilih Jenis Bukti...</option>
-                                        @foreach($jenisDukungOptional as $jd)
-                                            <option value="{{ $jd->id }}">{{ $jd->nama_bukti }}</option>
-                                        @endforeach
-                                    </select>
-                                     <input type="text" name="dukung_link[]" class="form-control" placeholder="Link bukti...">
+                                <div class="mb-3 generic-row">
+                                    <div class="d-flex gap-2 mb-1 align-items-center">
+                                        <select name="dukung_jenis_id[]" class="form-select w-50">
+                                            <option value="">Pilih Jenis Bukti...</option>
+                                            @foreach($jenisDukungOptional as $jd)
+                                                <option value="{{ $jd->id }}">{{ $jd->nama_bukti }}</option>
+                                            @endforeach
+                                        </select>
+                                         <input type="text" name="dukung_link[]" class="form-control" placeholder="Link bukti...">
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1" onclick="addGenericField('dukung-container')">
@@ -362,6 +457,20 @@
                                     <small class="text-muted">({{ $peserta->created_at->format('d/m/Y') }})</small>
                                 </li>
                             </ul>
+
+                            <div class="mt-4 pt-3 border-top">
+                                <h6 class="fw-bold small text-navy mb-2"><i class="fas fa-info-circle me-1"></i> Informasi Pengisian</h6>
+                                <div class="small text-muted">
+                                    <div class="d-flex gap-2 mb-2">
+                                        <span class="text-danger fw-bold">*</span>
+                                        <span>Field dengan tanda bintang merah bersifat <strong>wajib</strong>. Seluruh field wajib harus dilengkapi sebelum dapat mengajukan verifikasi.</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <i class="fas fa-chart-line mt-1" style="color: var(--bps-orange);"></i>
+                                        <span><strong>Overall Progress</strong> dihitung berdasarkan persentase kelengkapan isian pada seluruh komponen yang ada.</span>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div class="alert alert-info border-0 small mt-4">
                                 <i class="fas fa-info-circle me-1"></i>
@@ -372,7 +481,7 @@
                                 <button type="submit" onclick="document.getElementById('action_type').value='draf'" class="btn btn-light rounded-pill">
                                     <i class="fas fa-save me-1"></i> Simpan Draf
                                 </button>
-                                <button type="button" onclick="confirmSubmit()" class="btn btn-orange rounded-pill">
+                                <button type="button" id="btn-submit-verifikasi" onclick="confirmSubmit()" class="btn btn-orange rounded-pill">
                                     <i class="fas fa-paper-plane me-1"></i> Ajukan Verifikasi
                                 </button>
                             </div>
@@ -428,16 +537,29 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            const optionalRows = container.querySelectorAll('.d-flex');
-            if (optionalRows.length === 0) return;
+            const rows = container.querySelectorAll('.mb-3');
+            if (rows.length === 0) return;
             
-            const lastRow = optionalRows[optionalRows.length - 1];
+            const lastRow = rows[rows.length - 1];
             const newRow = lastRow.cloneNode(true);
             
+            // Clear values and remove badges/reasons
             const select = newRow.querySelector('select');
             const input = newRow.querySelector('input[type="text"]');
             if (select) select.value = '';
-            if (input) input.value = '';
+            if (input) {
+                input.value = '';
+                input.readOnly = false;
+                input.style.backgroundColor = '#fff';
+                input.style.cursor = 'text';
+                input.placeholder = input.getAttribute('data-placeholder') || input.placeholder;
+            }
+            
+            const badge = newRow.querySelector('.badge');
+            if (badge) badge.remove();
+            
+            const reason = newRow.querySelector('small.text-danger');
+            if (reason) reason.remove();
             
             // Tambahkan tombol hapus jika belum ada
             if (!newRow.querySelector('.fa-trash')) {
@@ -445,13 +567,12 @@
                 btnTrash.type = 'button';
                 btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
                 btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
-                btnTrash.onclick = function() { this.parentElement.remove(); };
-                newRow.appendChild(btnTrash);
+                btnTrash.onclick = function() { this.closest('.mb-3').remove(); };
+                newRow.querySelector('.d-flex').appendChild(btnTrash);
             } else {
-                // Pastikan fungsi hapus bekerja pada baris baru
-                const btn = newRow.querySelector('button');
+                const btn = newRow.querySelector('.fa-trash').parentElement;
                 if (btn) {
-                    btn.onclick = function() { this.parentElement.remove(); };
+                    btn.onclick = function() { this.closest('.mb-3').remove(); };
                 }
             }
             
@@ -468,8 +589,19 @@
             const btnAdd = container.nextElementSibling; // Tombol "Tambah Baris Bukti"
 
             const isNoDate = !targetVal;
+            const minDate = targetVal || '{{ $minYear }}';
+
+            // Toggle mandatory stars for this activity if it's optional
+            const stars = document.querySelectorAll(`.mandatory-star-${kegId}`);
+            stars.forEach(star => {
+                const isKegWajib = star.getAttribute('data-is-keg-wajib') === 'true';
+                if (!isKegWajib) {
+                    star.style.display = isNoDate ? 'none' : 'inline';
+                }
+            });
+
             if (realisasiInput) {
-                realisasiInput.min = targetVal;
+                realisasiInput.min = minDate;
                 realisasiInput.readOnly = isNoDate;
                 realisasiInput.style.backgroundColor = isNoDate ? '#f8f9fa' : '#fff';
                 realisasiInput.style.cursor = isNoDate ? 'not-allowed' : 'text';
@@ -508,25 +640,103 @@
             checkMandatoryFilled();
         }
 
+        const allKegiatanIds = @json($kegiatans->pluck('id'));
+
+        function updateNextActivityMinDate(kegId) {
+            const currentIndex = allKegiatanIds.indexOf(parseInt(kegId));
+            if (currentIndex === -1 || currentIndex === allKegiatanIds.length - 1) return;
+
+            const nextKegId = allKegiatanIds[currentIndex + 1];
+            const nextTarget = document.getElementById(`target_${nextKegId}`);
+            
+            if (nextTarget) {
+                const currentTarget = document.getElementById(`target_${kegId}`);
+                const currentRealisasi = document.getElementById(`realisasi_${kegId}`);
+                
+                const targetVal = currentTarget ? currentTarget.value : null;
+                const realisasiVal = currentRealisasi ? currentRealisasi.value : null;
+
+                if (!targetVal) {
+                    // Jika target kegiatan sebelumnya kosong, matikan input target kegiatan ini
+                    nextTarget.disabled = true;
+                    nextTarget.value = '';
+                    nextTarget.style.backgroundColor = '#f8f9fa';
+                    nextTarget.style.cursor = 'not-allowed';
+                    // Trigger cascade clear untuk kegiatan setelahnya lagi
+                    updateMinDate(nextKegId);
+                    updateNextActivityMinDate(nextKegId);
+                } else {
+                    nextTarget.disabled = false;
+                    nextTarget.style.backgroundColor = '#fff';
+                    nextTarget.style.cursor = 'text';
+
+                    // Prioritas: Realisasi (jika ada), jika tidak ada pakai Target
+                    const effectiveMin = realisasiVal || targetVal;
+                    nextTarget.min = effectiveMin;
+
+                    if (nextTarget.value && nextTarget.value < effectiveMin) {
+                        nextTarget.value = '';
+                        updateMinDate(nextKegId);
+                        updateNextActivityMinDate(nextKegId);
+                    }
+                }
+            }
+        }
+
         const mandatoryKegiatanIds = @json($kegiatans->where('is_wajib', true)->pluck('id'));
 
         function checkMandatoryFilled() {
-            let allFilled = true;
+            let activityFilled = true;
 
-            mandatoryKegiatanIds.forEach(id => {
+            // 1. Check ALL activities (Mandatory + Optional that have target filled)
+            allKegiatanIds.forEach(id => {
                 const target = document.getElementById(`target_${id}`);
                 const realisasi = document.getElementById(`realisasi_${id}`);
-                
-                if (!target || !target.value) allFilled = false;
-                if (!realisasi || !realisasi.value) allFilled = false;
+                const isMandatory = mandatoryKegiatanIds.includes(parseInt(id));
 
-                const mandatoryBuktis = document.querySelectorAll(`.mandatory-bukti-input-${id}`);
-                mandatoryBuktis.forEach(input => {
-                    if (!input.value.trim()) allFilled = false;
-                });
+                if (isMandatory) {
+                    // Mandatory activity MUST have target and realisasi
+                    if (!target || !target.value) activityFilled = false;
+                    if (!realisasi || !realisasi.value) activityFilled = false;
+                } else {
+                    // Optional activity MUST have realisasi IF target is filled
+                    if (target && target.value && (!realisasi || !realisasi.value)) {
+                        activityFilled = false;
+                    }
+                }
+
+                // If target is filled (mandatory or optional), MUST check its mandatory bukti
+                if (target && target.value) {
+                    const mandatoryBuktis = document.querySelectorAll(`.mandatory-bukti-input-${id}`);
+                    mandatoryBuktis.forEach(input => {
+                        if (!input.value.trim()) activityFilled = false;
+                    });
+                }
             });
 
-            toggleAdditionalSections(allFilled);
+            toggleAdditionalSections(activityFilled);
+
+            let allMandatoryFilled = activityFilled;
+
+            if (activityFilled) {
+                // 2. Check Mandatory Output & Bukti Lainnya
+                const mandatoryOutputs = document.querySelectorAll('.mandatory-output-input');
+                mandatoryOutputs.forEach(input => {
+                    if (!input.value.trim()) allMandatoryFilled = false;
+                });
+
+                const mandatoryDukungs = document.querySelectorAll('.mandatory-dukung-input');
+                mandatoryDukungs.forEach(input => {
+                    if (!input.value.trim()) allMandatoryFilled = false;
+                });
+            }
+
+            const btnSubmit = document.getElementById('btn-submit-verifikasi');
+            if (btnSubmit) {
+                btnSubmit.disabled = !allMandatoryFilled;
+                btnSubmit.style.opacity = !allMandatoryFilled ? '0.5' : '1';
+                btnSubmit.title = !allMandatoryFilled ? 'Lengkapi semua inputan wajib terlebih dahulu' : 'Ajukan Verifikasi';
+            }
         }
 
         function toggleAdditionalSections(enabled) {
@@ -539,16 +749,16 @@
                 inputs.forEach(input => {
                     if (input.tagName === 'SELECT') {
                         input.disabled = !enabled;
-                        if (!enabled) input.value = '';
                     } else {
                         input.readOnly = !enabled;
                         input.style.backgroundColor = !enabled ? '#f8f9fa' : '#fff';
                         input.style.cursor = !enabled ? 'not-allowed' : 'text';
+                        
                         if (!enabled) {
-                            input.value = '';
                             input.placeholder = "Selesaikan kegiatan & bukti wajib terlebih dahulu...";
                         } else {
-                            // Reset placeholder to original if stored, or just let it be
+                            // Restore original placeholder if needed or just use default
+                            input.placeholder = input.getAttribute('data-placeholder') || input.placeholder;
                         }
                     }
                 });
@@ -564,6 +774,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             @foreach($kegiatans as $keg)
                 updateMinDate({{ $keg->id }});
+                updateNextActivityMinDate({{ $keg->id }});
             @endforeach
             checkMandatoryFilled();
         });

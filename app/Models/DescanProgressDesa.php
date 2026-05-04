@@ -11,6 +11,7 @@ class DescanProgressDesa extends Model
     protected $fillable = [
         'peserta_id',
         'kegiatan_id',
+        'urutan',
         'target_tanggal',
         'realisasi_tanggal',
         'status',

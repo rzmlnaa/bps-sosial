@@ -436,7 +436,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: '{{ session('success') }}',
+                text: @json(session('success')),
                 showConfirmButton: false,
                 timer: 2000,
                 timerProgressBar: true
@@ -449,7 +449,7 @@
             Swal.fire({
                 icon: 'warning',
                 title: 'Perhatian!',
-                html: '{{ session('warning') }}',
+                html: @json(session('warning')),
             });
         </script>
     @endif
@@ -459,7 +459,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: '{{ session('error') }}',
+                text: @json(session('error')),
             });
         </script>
     @endif
@@ -469,7 +469,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Validasi Gagal',
-                text: '{{ $errors->first() }}',
+                text: @json($errors->first()),
             });
         </script>
     @endif
