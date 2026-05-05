@@ -15,43 +15,48 @@ class WilayahController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->role === 'admin' || (isset($user->kabupaten) && $user->kabupaten->kode_kab == '6100');
 
-        $searchKecamatan = $request->input('search_kecamatan');
-        $searchDesa = $request->input('search_desa');
+        $search = $request->input('search');
 
-        $kQuery = Kecamatan::with(['kabupaten', 'creator.kabupaten', 'updater.kabupaten']);
-        $dQuery = Desa::with(['kecamatan.kabupaten', 'creator.kabupaten', 'updater.kabupaten']);
+        $query = Desa::with(['kecamatan.kabupaten', 'creator.kabupaten', 'updater.kabupaten'])
+            ->orderBy('created_at', 'desc');
 
         if (!$isProvinsi) {
-            $kQuery->where('kabupaten_id', $user->kabupaten_id);
-            $dQuery->whereHas('kecamatan', function ($q) use ($user) {
+            $query->whereHas('kecamatan', function ($q) use ($user) {
                 $q->where('kabupaten_id', $user->kabupaten_id);
             });
         }
 
-        if ($searchKecamatan) {
-            $kQuery->where(function ($q) use ($searchKecamatan) {
-                $q->where('nama_kecamatan', 'like', "%{$searchKecamatan}%")
-                    ->orWhere('kode_kecamatan', 'like', "%{$searchKecamatan}%");
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_desa', 'like', "%{$search}%")
+                    ->orWhere('kode_desa', 'like', "%{$search}%")
+                    ->orWhereHas('kecamatan', function ($sq) use ($search) {
+                        $sq->where('nama_kecamatan', 'like', "%{$search}%")
+                            ->orWhere('kode_kecamatan', 'like', "%{$search}%");
+                    });
             });
         }
 
-        if ($searchDesa) {
-            $dQuery->where(function ($q) use ($searchDesa) {
-                $q->where('nama_desa', 'like', "%{$searchDesa}%")
-                    ->orWhere('kode_desa', 'like', "%{$searchDesa}%");
-            });
-        }
-
-        $kecamatans = $kQuery->paginate(10, ['*'], 'kecamatan_page');
-        $desas = $dQuery->paginate(10, ['*'], 'desa_page');
+        $desas = $query->paginate(20)->withQueryString();
 
         if ($isProvinsi) {
-            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->get();
+            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get();
         } else {
             $kabupatens = Kabupaten::where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
         }
 
-        return view('wilayah.index', compact('kecamatans', 'desas', 'kabupatens', 'user', 'isProvinsi', 'searchKecamatan', 'searchDesa'));
+        // Hitung total untuk statistik
+        $totalKecamatan = Kecamatan::when(!$isProvinsi, function($q) use ($user) {
+            return $q->where('kabupaten_id', $user->kabupaten_id);
+        })->count();
+        
+        $totalDesa = Desa::when(!$isProvinsi, function($q) use ($user) {
+            return $q->whereHas('kecamatan', function($sq) use ($user) {
+                $sq->where('kabupaten_id', $user->kabupaten_id);
+            });
+        })->count();
+
+        return view('wilayah.index', compact('desas', 'kabupatens', 'user', 'isProvinsi', 'search', 'totalKecamatan', 'totalDesa'));
     }
 
     public function searchKecamatanAjax(Request $request)
@@ -86,6 +91,65 @@ class WilayahController extends Controller
         });
 
         return response()->json(['results' => $formatted]);
+    }
+
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->role === 'admin' || (isset($user->kabupaten) && $user->kabupaten->kode_kab == '6100');
+
+        $request->validate([
+            'kabupaten_id' => 'required|exists:tb_kabupaten,id',
+            'is_new_kecamatan' => 'nullable|string',
+            'kecamatan_id' => 'required_without:is_new_kecamatan|nullable',
+            'new_kode_kecamatan' => 'required_if:is_new_kecamatan,1|nullable|unique:tb_kecamatan,kode_kecamatan',
+            'new_nama_kecamatan' => 'required_if:is_new_kecamatan,1|nullable',
+            'kode_desa' => 'required|unique:tb_desa,kode_desa',
+            'nama_desa' => 'required',
+        ], [
+            'new_kode_kecamatan.unique' => 'Kode Kecamatan sudah digunakan.',
+            'kode_desa.unique' => 'Kode Desa sudah digunakan.',
+        ]);
+
+        if (!$isProvinsi && $request->kabupaten_id != $user->kabupaten_id) {
+            return back()->with('error', 'Akses ditolak: Anda tidak dapat memanipulasi data untuk kabupaten lain.');
+        }
+
+        $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
+        if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
+            return back()->with('error', 'Tidak dapat menambahkan wilayah untuk level Provinsi.');
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            $kecamatanId = $request->kecamatan_id;
+
+            // Jika kecamatan baru
+            if ($request->is_new_kecamatan == '1') {
+                $kecamatan = Kecamatan::create([
+                    'kabupaten_id' => $request->kabupaten_id,
+                    'kode_kecamatan' => $request->new_kode_kecamatan,
+                    'nama_kecamatan' => $request->new_nama_kecamatan,
+                    'created_by' => Auth::id()
+                ]);
+                $kecamatanId = $kecamatan->id;
+            }
+
+            // Tambah Desa
+            Desa::create([
+                'kecamatan_id' => $kecamatanId,
+                'kode_desa' => $request->kode_desa,
+                'nama_desa' => $request->nama_desa,
+                'created_by' => Auth::id()
+            ]);
+
+            \DB::commit();
+            return redirect()->back()->with('success', 'Data wilayah berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return back()->with('error', 'Gagal menambahkan data: ' . $e->getMessage());
+        }
     }
 
     public function storeKecamatan(Request $request)

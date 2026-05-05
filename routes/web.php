@@ -91,8 +91,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
     Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
     Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');
-    Route::post('/desa-cantik/progress/{peserta_id}/verify/{progress_id}', [DescanController::class, 'verifyProgress'])->name('desa-cantik.progress.verify');
-    Route::post('/desa-cantik/progress/{peserta_id}/verify-all', [DescanController::class, 'verifyAllProgress'])->name('desa-cantik.progress.verify-all');
+
 
     // AJAX Dropdown
     Route::get('/desa-cantik/ajax/kecamatan', [DescanController::class, 'ajaxKecamatan'])->name('desa-cantik.ajax.kecamatan');
@@ -125,6 +124,7 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // Wilayah (Kecamatan & Desa)
     Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
     Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
     Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
     Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
     Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
@@ -406,7 +406,10 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::put('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'updateJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.update');
     Route::delete('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'destroyJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.destroy');
 
-
+    Route::post('/desa-cantik/progress/{peserta_id}/verify/{progress_id}', [DescanController::class, 'verifyProgress'])->name('desa-cantik.progress.verify');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-output/{output_id}', [DescanController::class, 'verifyOutput'])->name('desa-cantik.progress.verify-output');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-dukung/{dukung_id}', [DescanController::class, 'verifyDukung'])->name('desa-cantik.progress.verify-dukung');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-all', [DescanController::class, 'verifyAllProgress'])->name('desa-cantik.progress.verify-all');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

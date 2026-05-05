@@ -724,6 +724,10 @@ class DescanController extends Controller
 
         $progress = DescanProgressDesa::findOrFail($progress_id);
 
+        if ($progress->status != 'menunggu_verifikasi') {
+            return back()->with('error', 'Komponen ini sudah pernah diverifikasi atau tidak dalam status menunggu verifikasi.');
+        }
+
         $request->validate([
             'action' => 'required|in:approve,reject',
             'alasan_penolakan' => 'nullable|string'
@@ -740,9 +744,87 @@ class DescanController extends Controller
         } else {
             $progress->update([
                 'status' => 'ditolak',
+                'verified_by' => Auth::id(),
+                'verified_at' => now(),
                 'alasan_penolakan' => $request->alasan_penolakan
             ]);
             $msg = 'Progress ditolak.';
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    public function verifyOutput(Request $request, $peserta_id, $output_id)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        if (!$isProvinsi) {
+            return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
+        }
+
+        $output = \App\Models\DescanOutputDesa::findOrFail($output_id);
+
+        if ($output->status != 'menunggu_verifikasi') {
+            return back()->with('error', 'Output ini sudah pernah diverifikasi atau tidak dalam status menunggu verifikasi.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'alasan_penolakan' => 'nullable|string'
+        ]);
+
+        if ($request->action == 'approve') {
+            $output->update([
+                'status' => 'disetujui',
+                'alasan_penolakan' => null,
+                'updated_by' => Auth::id()
+            ]);
+            $msg = 'Output berhasil diverifikasi.';
+        } else {
+            $output->update([
+                'status' => 'ditolak',
+                'alasan_penolakan' => $request->alasan_penolakan,
+                'updated_by' => Auth::id()
+            ]);
+            $msg = 'Output ditolak.';
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    public function verifyDukung(Request $request, $peserta_id, $dukung_id)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        if (!$isProvinsi) {
+            return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
+        }
+
+        $dukung = \App\Models\DescanBuktiDukungDesa::findOrFail($dukung_id);
+
+        if ($dukung->status != 'menunggu_verifikasi') {
+            return back()->with('error', 'Bukti dukung ini sudah pernah diverifikasi atau tidak dalam status menunggu verifikasi.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'alasan_penolakan' => 'nullable|string'
+        ]);
+
+        if ($request->action == 'approve') {
+            $dukung->update([
+                'status' => 'disetujui',
+                'alasan_penolakan' => null
+            ]);
+            $msg = 'Bukti dukung berhasil diverifikasi.';
+        } else {
+            $dukung->update([
+                'status' => 'ditolak',
+                'alasan_penolakan' => $request->alasan_penolakan
+            ]);
+            $msg = 'Bukti dukung ditolak.';
         }
 
         return back()->with('success', $msg);
@@ -762,7 +844,16 @@ class DescanController extends Controller
             'alasan_penolakan' => 'required_if:action,reject'
         ]);
 
-        $status = $request->action == 'approve' ? 'disetujui' : 'ditolak';
+        // Check if there's anything to verify
+        $countKeg = DescanProgressDesa::where('peserta_id', $peserta_id)->where('status', 'menunggu_verifikasi')->count();
+        $countOut = \App\Models\DescanOutputDesa::where('peserta_id', $peserta_id)->where('status', 'menunggu_verifikasi')->count();
+        $countDuk = \App\Models\DescanBuktiDukungDesa::where('peserta_id', $peserta_id)->where('status', 'menunggu_verifikasi')->count();
+
+        if ($countKeg == 0 && $countOut == 0 && $countDuk == 0) {
+            return back()->with('info', 'Tidak ada komponen yang dalam status menunggu verifikasi saat ini.');
+        }
+
+        $status = ($request->action == 'approve') ? 'disetujui' : 'ditolak';
         
         $updateData = [
             'status' => $status,
@@ -776,10 +867,8 @@ class DescanController extends Controller
 
         // 1. Update Kegiatan (has verified_by and verified_at)
         $progUpdate = $updateData;
-        if ($request->action == 'approve') {
-            $progUpdate['verified_by'] = Auth::id();
-            $progUpdate['verified_at'] = now();
-        }
+        $progUpdate['verified_by'] = Auth::id();
+        $progUpdate['verified_at'] = now();
 
         DescanProgressDesa::where('peserta_id', $peserta_id)
             ->where('status', 'menunggu_verifikasi')
