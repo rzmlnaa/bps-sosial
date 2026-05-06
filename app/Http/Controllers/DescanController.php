@@ -352,24 +352,88 @@ class DescanController extends Controller
 
     public function progress(Request $request)
     {
+
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
         // Hanya ambil kegiatan yang active
         $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
 
+        $myKabupatenId = $isProvinsi ? null : $user->kabupaten_id;
+        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get() : collect();
+
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.buktis', 'outputs', 'buktiDukungs'])
             ->orderBy('created_at', 'desc');
 
         if (!$isProvinsi) {
             $query->where('kabupaten_id', $user->kabupaten_id);
+        } else {
+            if ($request->filled('kabupaten_id')) {
+                $query->where('kabupaten_id', $request->kabupaten_id);
+            }
         }
 
         if ($request->filled('periode_id')) {
             $query->where('periode_id', $request->periode_id);
         }
 
-        $pesertas = $query->paginate(20);
+        if ($request->filled('kecamatan_id')) {
+            $query->where('kecamatan_id', $request->kecamatan_id);
+        }
+
+        if ($request->filled('desa_id')) {
+            $query->where('desa_id', $request->desa_id);
+        }
+
+        // Keep selected values for select2
+        $selectedKecamatan = $request->filled('kecamatan_id') ? Kecamatan::find($request->kecamatan_id) : null;
+        $selectedDesa = $request->filled('desa_id') ? Desa::find($request->desa_id) : null;
+
+        // Count action needed (menunggu_verifikasi for Provinsi, ditolak for Kabupaten)
+        $actionCondition = function ($q) use ($isProvinsi) {
+            $status = $isProvinsi ? 'menunggu_verifikasi' : 'ditolak';
+            $q->whereHas('progresses', fn($sq) => $sq->where('status', $status))
+                ->orWhereHas('outputs', fn($sq) => $sq->where('status', $status))
+                ->orWhereHas('buktiDukungs', fn($sq) => $sq->where('status', $status));
+        };
+
+        $countQuery = clone $query;
+        $countAction = $countQuery->where($actionCondition)->count();
+
+        // Count perbaikan for Provinsi
+        $countPerbaikan = 0;
+        if ($isProvinsi) {
+            $perbaikanCondition = function ($q) {
+                $q->whereHas('progresses', fn($sq) => $sq->where('status', 'ditolak'))
+                    ->orWhereHas('outputs', fn($sq) => $sq->where('status', 'ditolak'))
+                    ->orWhereHas('buktiDukungs', fn($sq) => $sq->where('status', 'ditolak'));
+            };
+            $countQueryPerbaikan = clone $query;
+            $countPerbaikan = $countQueryPerbaikan->where($perbaikanCondition)->count();
+
+            if ($request->input('action_needed') == 'perbaikan') {
+                $query->where($perbaikanCondition);
+            }
+        }
+
+        // Count draf
+        $drafCondition = function ($q) {
+            $q->whereHas('progresses', fn($sq) => $sq->where('status', 'draf'))
+                ->orWhereHas('outputs', fn($sq) => $sq->where('status', 'draf'))
+                ->orWhereHas('buktiDukungs', fn($sq) => $sq->where('status', 'draf'));
+        };
+        $countQueryDraf = clone $query;
+        $countDraf = $countQueryDraf->where($drafCondition)->count();
+
+        if ($request->input('action_needed') == 'draf') {
+            $query->where($drafCondition);
+        }
+
+        if ($request->input('action_needed') == '1') {
+            $query->where($actionCondition);
+        }
+
+        $pesertas = $query->paginate(10)->withQueryString();
         $mandatoryBuktiIds = DescanJenisBuktiKegiatan::where('is_wajib', true)->pluck('id')->toArray();
         $mandatoryOutputIds = DescanJenisOutput::where('is_wajib', true)->pluck('id')->toArray();
         $mandatoryDukungIds = DescanJenisBuktiDukung::where('is_wajib', true)->pluck('id')->toArray();
@@ -387,7 +451,14 @@ class DescanController extends Controller
             'mandatoryOutputIds',
             'mandatoryDukungIds',
             'allJenisOutputs',
-            'allJenisDukungs'
+            'allJenisDukungs',
+            'kabupatens',
+            'myKabupatenId',
+            'selectedKecamatan',
+            'selectedDesa',
+            'countAction',
+            'countPerbaikan',
+            'countDraf'
         ));
     }
 
@@ -944,17 +1015,34 @@ class DescanController extends Controller
             ->get()
             ->groupBy('desa_id');
 
-        $result = $desas->map(function ($d) use ($terdaftar, $previousPesertas) {
+        $result = $desas->map(function ($d) use ($terdaftar, $previousPesertas, $request) {
+            if ($request->get('is_filter') == '1') {
+                return [
+                    'id' => $d->id,
+                    'text' => $d->nama_desa,
+                    'disabled' => false
+                ];
+            }
+
             $terdaftarFlag = in_array($d->id, $terdaftar);
             $previous = $previousPesertas->get($d->id);
             $previousTahun = $previous ? $previous->map(fn($p) => $p->periode->tahun ?? '')->filter()->sort()->join(', ') : '';
-            
+
+            $isDisabled = $terdaftarFlag || !empty($previousTahun);
+
+            $text = $d->nama_desa;
+            if ($terdaftarFlag) {
+                $text .= ' ✓ terdaftar di periode ini';
+            } elseif (!empty($previousTahun)) {
+                $text .= ' (Pernah ikut: ' . $previousTahun . ')';
+            }
+
             return [
                 'id' => $d->id,
                 'nama_desa' => $d->nama_desa,
                 'sudah_terdaftar' => $terdaftarFlag,
-                'text' => $terdaftarFlag ? $d->nama_desa . ' ✓ terdaftar' : $d->nama_desa,
-                'disabled' => $terdaftarFlag,
+                'text' => $text,
+                'disabled' => $isDisabled,
                 'previous_tahun' => $previousTahun,
             ];
         });

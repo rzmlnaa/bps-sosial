@@ -823,36 +823,36 @@
                             });
 
                             // Send AJAX request
-                            fetch('{{ route('desa-cantik.kegiatan.reorder') }}', {
-                                                method: 'PATCH',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                                    'Accept': 'application/json'
-                                                },
-                                                body: JSON.stringify({ orders: orderData })
-                                            })
-                                                .then(response => response.json())
-                                                .then(data => {
-                                                    if (data.success) {
-                                                        // Optional check success
-                                                        /* Swal.fire({
-                                                            icon: 'success',
-                                                            title: 'Berhasil',
-                                                            text: 'Urutan berhasil disimpan.',
-                                                            timer: 1500,
-                                                            showConfirmButton: false
-                                                        }); */
-                                                    }
-                                                })
-                                                .catch(error => {
-                                                    console.error('Error reordering:', error);
-                                                    Swal.fire('Error', 'Gagal menyimpan urutan baru', 'error');
-                                                });
-                                        }
-                                    });
-                                }
-                            });
-                        </script>
+                            fetch('/desa-cantik/kegiatan/reorder', {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ orders: orderData })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // Optional check success
+                                        /* Swal.fire({
+                                            icon: 'success',
+                                            title: 'Berhasil',
+                                            text: 'Urutan berhasil disimpan.',
+                                            timer: 1500,
+                                            showConfirmButton: false
+                                        }); */
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error reordering:', error);
+                                    Swal.fire('Error', 'Gagal menyimpan urutan baru', 'error');
+                                });
+                        }
+                    });
+                }
+            });
+        </script>
     @endpush
 @endsection
