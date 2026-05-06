@@ -17,27 +17,31 @@ class WilayahController extends Controller
 
         $search = $request->input('search');
 
-        $query = Desa::with(['kecamatan.kabupaten', 'creator.kabupaten', 'updater.kabupaten'])
-            ->orderBy('created_at', 'desc');
+        $query = Kecamatan::with([
+            'kabupaten',
+            'creator',
+            'updater',
+            'desas' => function ($q) {
+                $q->with(['creator', 'updater'])->orderBy('kode_desa', 'asc');
+            }
+        ])->orderBy('kode_kecamatan', 'asc');
 
         if (!$isProvinsi) {
-            $query->whereHas('kecamatan', function ($q) use ($user) {
-                $q->where('kabupaten_id', $user->kabupaten_id);
-            });
+            $query->where('kabupaten_id', $user->kabupaten_id);
         }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nama_desa', 'like', "%{$search}%")
-                    ->orWhere('kode_desa', 'like', "%{$search}%")
-                    ->orWhereHas('kecamatan', function ($sq) use ($search) {
-                        $sq->where('nama_kecamatan', 'like', "%{$search}%")
-                            ->orWhere('kode_kecamatan', 'like', "%{$search}%");
+                $q->where('nama_kecamatan', 'like', "%{$search}%")
+                    ->orWhere('kode_kecamatan', 'like', "%{$search}%")
+                    ->orWhereHas('desas', function ($sq) use ($search) {
+                        $sq->where('nama_desa', 'like', "%{$search}%")
+                            ->orWhere('kode_desa', 'like', "%{$search}%");
                     });
             });
         }
 
-        $desas = $query->paginate(20)->withQueryString();
+        $kecamatans = $query->paginate(10)->withQueryString();
 
         if ($isProvinsi) {
             $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get();
@@ -46,17 +50,17 @@ class WilayahController extends Controller
         }
 
         // Hitung total untuk statistik
-        $totalKecamatan = Kecamatan::when(!$isProvinsi, function($q) use ($user) {
+        $totalKecamatan = Kecamatan::when(!$isProvinsi, function ($q) use ($user) {
             return $q->where('kabupaten_id', $user->kabupaten_id);
         })->count();
-        
-        $totalDesa = Desa::when(!$isProvinsi, function($q) use ($user) {
-            return $q->whereHas('kecamatan', function($sq) use ($user) {
+
+        $totalDesa = Desa::when(!$isProvinsi, function ($q) use ($user) {
+            return $q->whereHas('kecamatan', function ($sq) use ($user) {
                 $sq->where('kabupaten_id', $user->kabupaten_id);
             });
         })->count();
 
-        return view('wilayah.index', compact('desas', 'kabupatens', 'user', 'isProvinsi', 'search', 'totalKecamatan', 'totalDesa'));
+        return view('wilayah.index', compact('kecamatans', 'kabupatens', 'user', 'isProvinsi', 'search', 'totalKecamatan', 'totalDesa'));
     }
 
     public function searchKecamatanAjax(Request $request)
@@ -70,6 +74,8 @@ class WilayahController extends Controller
 
         if (!$isProvinsi) {
             $query->where('kabupaten_id', $user->kabupaten_id);
+        } elseif ($request->filled('kabupaten_id')) {
+            $query->where('kabupaten_id', $request->input('kabupaten_id'));
         }
 
         if ($search) {
@@ -294,6 +300,14 @@ class WilayahController extends Controller
 
         if (!$isProvinsi && $desa->kecamatan->kabupaten_id != $user->kabupaten_id) {
             return redirect()->back()->with('error', 'Akses ditolak: Anda tidak dapat menghapus data desa milik kabupaten lain.');
+        }
+
+        $peserta = \App\Models\DescanPeserta::where('desa_id', $id)->first();
+        if ($peserta) {
+            $hasProgress = \App\Models\DescanProgressDesa::where('peserta_id', $peserta->id)->exists();
+            if ($hasProgress) {
+                return redirect()->back()->with('error', 'Desa tidak dapat dihapus karena sudah memiliki data progress Desa Cantik.');
+            }
         }
 
         $desa->delete();

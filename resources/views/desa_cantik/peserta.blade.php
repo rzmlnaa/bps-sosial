@@ -394,11 +394,32 @@
                                     id: d.id,
                                     text: d.text,
                                     disabled: d.disabled,
+                                    previous_tahun: d.previous_tahun
                                 }))
                             }),
                             cache: true,
                         }
                     }).prop('disabled', false);
+
+                    $sel.off('select2:select.descan').on('select2:select.descan', function (e) {
+                        var data = e.params.data;
+                        if (data.previous_tahun) {
+                            Swal.fire({
+                                title: 'Perhatian!',
+                                html: `Desa <strong>${data.text}</strong> sudah pernah menjadi peserta Desa Cantik pada periode <strong>${data.previous_tahun}</strong>.<br><br>Apakah Anda yakin ingin mendaftarkannya kembali di periode ini?`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#f7921e',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: 'Ya, Lanjutkan',
+                                cancelButtonText: 'Batal'
+                            }).then((result) => {
+                                if (!result.isConfirmed) {
+                                    $sel.val(null).trigger('change');
+                                }
+                            });
+                        }
+                    });
                 }
 
                 function resetDesa() {

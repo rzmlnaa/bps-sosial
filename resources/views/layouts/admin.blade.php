@@ -206,15 +206,7 @@
                                 </a>
                             </li>
                         @endif
-                        @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
-                            <li class="nav-item">
-                                <a href="{{ route('desa-cantik.verifikasi') }}"
-                                    class="nav-link {{ request()->routeIs('desa-cantik.verifikasi') ? 'active' : '' }}">
-                                    <i class="fas fa-check-double"></i>
-                                    <span>Verifikasi (6100)</span>
-                                </a>
-                            </li>
-                        @endif
+
                     </ul>
                 </div>
 

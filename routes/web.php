@@ -87,7 +87,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
     Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
 
-    Route::get('/desa-cantik/verifikasi', [DescanController::class, 'verifikasi'])->name('desa-cantik.verifikasi');
     Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
     Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
     Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');

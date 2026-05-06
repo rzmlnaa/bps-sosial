@@ -42,13 +42,15 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-4 fade-in-up">
-            <div class="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div
+                class="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <h5 class="mb-0 fw-bold" style="color: var(--bps-orange);">Daftar Wilayah (Desa/Kelurahan)</h5>
                 <div class="d-flex flex-column flex-md-row gap-2">
                     <form action="{{ route('wilayah.index') }}" method="GET" class="d-flex">
                         <div class="input-group input-group-sm">
-                            <input type="text" name="search" class="form-control" placeholder="Cari Desa atau Kecamatan..." value="{{ $search }}">
+                            <input type="text" name="search" class="form-control" placeholder="Cari Desa atau Kecamatan..."
+                                value="{{ $search }}">
                             <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
                         </div>
                     </form>
@@ -71,34 +73,99 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($desas as $index => $desa)
-                                <tr>
-                                    <td class="px-4 py-3 text-muted">{{ $desas->firstItem() + $index }}</td>
+                            @php
+                                $globalNo = 1;
+                                // Predefined soft colors for group headers
+                                $groupColors = ['#f8fafc', '#f0fdf4', '#fefce8', '#fff7ed', '#faf5ff', '#fdf2f8'];
+                                $colorIndex = 0;
+                            @endphp
+                            
+                            @forelse($kecamatans as $kecamatan)
+                                @php
+                                    $bgColor = $groupColors[$colorIndex % count($groupColors)];
+                                    $colorIndex++;
+
+                                    $kecCreator = $kecamatan->creator->name ?? 'Sistem';
+                                    $kecCreatedAt = $kecamatan->created_at ? \Carbon\Carbon::parse($kecamatan->created_at)->format('d-m-Y') : '-';
+                                    $kecTooltip = "Dibuat oleh: {$kecCreator} pada {$kecCreatedAt}";
+                                    if ($kecamatan->updated_by) {
+                                        $kecUpdater = $kecamatan->updater->name ?? 'Sistem';
+                                        $kecUpdatedAt = $kecamatan->updated_at ? \Carbon\Carbon::parse($kecamatan->updated_at)->format('d-m-Y') : '-';
+                                        $kecTooltip .= " | Update oleh: {$kecUpdater} pada {$kecUpdatedAt}";
+                                    }
+                                @endphp
+
+                                <!-- Group Header -->
+                                <tr class="kecamatan-group-header" data-bs-toggle="collapse" data-bs-target=".desa-group-{{ $kecamatan->id }}" aria-expanded="true" style="cursor: pointer; background-color: {{ $bgColor }}; border-left: 4px solid var(--bps-orange);">
+                                    <td colspan="5" class="py-3 px-4">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <i class="fas fa-chevron-down text-secondary transition-transform toggle-icon"></i>
+                                                <div>
+                                                    <span class="fw-bold text-dark fs-6 mb-0 d-block" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $kecTooltip }}">
+                                                        Kecamatan {{ $kecamatan->nama_kecamatan }}
+                                                    </span>
+                                                    @if($isProvinsi)
+                                                        <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ $kecamatan->kabupaten->nama_kabupaten ?? '-' }}</small>
+                                                    @endif
+                                                </div>
+                                                <span class="badge bg-white text-dark border ms-2 shadow-sm rounded-pill px-3">{{ $kecamatan->desas->count() }} Desa</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-light text-secondary border">Kode: {{ $kecamatan->kode_kecamatan }}</span>
+                                                <button type="button" class="btn btn-sm btn-outline-orange ms-2"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editKecamatanModal{{ $kecamatan->id }}"
+                                                    title="Edit Kecamatan" onclick="event.stopPropagation();">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete ms-1"
+                                                    data-url="{{ route('wilayah.destroy-kecamatan', $kecamatan->id) }}" data-type="Kecamatan"
+                                                    data-name="{{ $kecamatan->nama_kecamatan }}" title="Hapus Kecamatan" onclick="event.stopPropagation();">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                @forelse($kecamatan->desas as $desa)
+                                @php
+                                    $desaCreator = $desa->creator->name ?? 'Sistem';
+                                    $desaCreatedAt = $desa->created_at ? \Carbon\Carbon::parse($desa->created_at)->format('d-m-Y') : '-';
+                                    $desaTooltip = "Dibuat oleh: {$desaCreator} pada {$desaCreatedAt}";
+                                    if ($desa->updated_by) {
+                                        $desaUpdater = $desa->updater->name ?? 'Sistem';
+                                        $desaUpdatedAt = $desa->updated_at ? \Carbon\Carbon::parse($desa->updated_at)->format('d-m-Y') : '-';
+                                        $desaTooltip .= " | Update oleh: {$desaUpdater} pada {$desaUpdatedAt}";
+                                    }
+                                @endphp
+                                <tr class="collapse show desa-group-{{ $kecamatan->id }} desa-row hover-effect">
+                                    <td class="px-4 py-3 text-muted border-start border-3 border-transparent ps-4">{{ $globalNo++ }}</td>
                                     <td class="py-3">
                                         <div class="d-flex flex-column">
-                                            <span class="fw-bold text-dark">[{{ $desa->kecamatan->kode_kecamatan }}] {{ $desa->kecamatan->nama_kecamatan }}</span>
-                                            @if($isProvinsi)
-                                                <small class="text-muted">[{{ $desa->kecamatan->kabupaten->kode_kab }}] {{ $desa->kecamatan->kabupaten->nama_kabupaten }}</small>
-                                            @endif
+                                            <span class="text-muted small"><i class="fas fa-level-up-alt fa-rotate-90 text-light me-2"></i>{{ $kecamatan->nama_kecamatan }}</span>
                                         </div>
                                     </td>
                                     <td class="py-3">
-                                        <span class="badge bg-light text-bps-orange border border-orange-light">{{ $desa->kode_desa }}</span>
+                                        <span class="badge bg-orange text-dark border border-orange px-3 py-2 rounded-pill fw-bold" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $desaTooltip }}" style="cursor: help;">
+                                            <i class="fas fa-hashtag me-1 opacity-75"></i> {{ $desa->kode_desa }}
+                                        </span>
                                     </td>
-                                    <td class="py-3 fw-medium text-dark">{{ $desa->nama_desa }}</td>
+                                    <td class="py-3 fw-semibold text-dark">
+                                        <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $desaTooltip }}" style="cursor: help;">
+                                            {{ $desa->nama_desa }}
+                                        </span>
+                                    </td>
                                     <td class="px-4 py-3">
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-orange"
-                                                data-bs-toggle="modal" data-bs-target="#editDesaModal{{ $desa->id }}" title="Edit Desa">
-                                                <i class="fas fa-edit"></i>
+                                        <div class="btn-group shadow-sm rounded">
+                                            <button type="button" class="btn btn-sm btn-light border" data-bs-toggle="modal"
+                                                data-bs-target="#editDesaModal{{ $desa->id }}" title="Edit Desa">
+                                                <i class="fas fa-edit text-orange"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-orange ms-1"
-                                                data-bs-toggle="modal" data-bs-target="#editKecamatanModal{{ $desa->kecamatan->id }}" title="Edit Kecamatan">
-                                                <i class="fas fa-map"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete ms-1"
-                                                data-url="{{ route('wilayah.destroy-desa', $desa->id) }}"
-                                                data-type="Desa" data-name="{{ $desa->nama_desa }}" title="Hapus Desa">
+                                            <button type="button" class="btn btn-sm btn-light border text-danger btn-delete"
+                                                data-url="{{ route('wilayah.destroy-desa', $desa->id) }}" data-type="Desa"
+                                                data-name="{{ $desa->nama_desa }}" title="Hapus Desa">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -111,68 +178,105 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title fw-bold">Edit Desa</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
                                             </div>
                                             <form action="{{ route('wilayah.update-desa', $desa->id) }}" method="POST">
                                                 @csrf
                                                 @method('PUT')
                                                 <div class="modal-body">
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Kecamatan <span class="text-danger">*</span></label>
-                                                        <select name="kecamatan_id" class="form-select select2-edit-kecamatan" required>
-                                                            <option value="{{ $desa->kecamatan_id }}" selected>[{{ $desa->kecamatan->kode_kecamatan }}] {{ $desa->kecamatan->nama_kecamatan }} @if($isProvinsi) ([{{ $desa->kecamatan->kabupaten->kode_kab }}] {{ $desa->kecamatan->kabupaten->nama_kabupaten }}) @endif</option>
+                                                        <label class="form-label fw-medium">Kecamatan <span
+                                                                class="text-danger">*</span></label>
+                                                        <select name="kecamatan_id" class="form-select select2-edit-kecamatan"
+                                                            required>
+                                                            <option value="{{ $desa->kecamatan_id }}" selected>
+                                                                [{{ $desa->kecamatan->kode_kecamatan }}]
+                                                                {{ $desa->kecamatan->nama_kecamatan }} @if($isProvinsi)
+                                                                    ([{{ $desa->kecamatan->kabupaten->kode_kab }}]
+                                                                {{ $desa->kecamatan->kabupaten->nama_kabupaten }}) @endif
+                                                            </option>
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Kode Desa <span class="text-danger">*</span></label>
-                                                        <input type="text" name="kode_desa" class="form-control" value="{{ $desa->kode_desa }}" required>
+                                                        <label class="form-label fw-medium">Kode Desa <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="kode_desa" class="form-control"
+                                                            value="{{ $desa->kode_desa }}" required>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Nama Desa <span class="text-danger">*</span></label>
-                                                        <input type="text" name="nama_desa" class="form-control" value="{{ $desa->nama_desa }}" required>
+                                                        <label class="form-label fw-medium">Nama Desa <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="nama_desa" class="form-control"
+                                                            value="{{ $desa->nama_desa }}" required>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer pb-2 border-0">
-                                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan Perubahan</button>
+                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                        data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                        Perubahan</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
                                                 </div>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
+                                @empty
+                                <tr class="collapse show desa-group-{{ $kecamatan->id }}">
+                                    <td colspan="5" class="text-center py-4 text-muted small border-start border-3 border-transparent ps-4" style="background-color: #fafafa;">
+                                        <i class="fas fa-info-circle me-1"></i> Belum ada desa di kecamatan ini.
+                                    </td>
+                                </tr>
+                                @endforelse
 
-                                <!-- Modal Edit Kecamatan (Inside Loop) -->
-                                <div class="modal fade" id="editKecamatanModal{{ $desa->kecamatan->id }}" tabindex="-1" aria-hidden="true">
+                                <!-- Modal Edit Kecamatan (Inside Kecamatan Loop) -->
+                                <div class="modal fade" id="editKecamatanModal{{ $kecamatan->id }}" tabindex="-1"
+                                    aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title fw-bold">Edit Kecamatan</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
                                             </div>
-                                            <form action="{{ route('wilayah.update-kecamatan', $desa->kecamatan->id) }}" method="POST">
+                                            <form action="{{ route('wilayah.update-kecamatan', $kecamatan->id) }}"
+                                                method="POST">
                                                 @csrf
                                                 @method('PUT')
                                                 <div class="modal-body">
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Kabupaten <span class="text-danger">*</span></label>
-                                                        <select name="kabupaten_id" class="form-select select2-edit-kabupaten" required>
+                                                        <label class="form-label fw-medium">Kabupaten <span
+                                                                class="text-danger">*</span></label>
+                                                        <select name="kabupaten_id" class="form-select select2-edit-kabupaten"
+                                                            required>
                                                             @foreach($kabupatens as $kab)
-                                                                <option value="{{ $kab->id }}" {{ $desa->kecamatan->kabupaten_id == $kab->id ? 'selected' : '' }}>[{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}</option>
+                                                                <option value="{{ $kab->id }}" {{ $kecamatan->kabupaten_id == $kab->id ? 'selected' : '' }}>
+                                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Kode Kecamatan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="kode_kecamatan" class="form-control" value="{{ $desa->kecamatan->kode_kecamatan }}" required>
+                                                        <label class="form-label fw-medium">Kode Kecamatan <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="kode_kecamatan" class="form-control"
+                                                            value="{{ $kecamatan->kode_kecamatan }}" required>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-medium">Nama Kecamatan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="nama_kecamatan" class="form-control" value="{{ $desa->kecamatan->nama_kecamatan }}" required>
+                                                        <label class="form-label fw-medium">Nama Kecamatan <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="nama_kecamatan" class="form-control"
+                                                            value="{{ $kecamatan->nama_kecamatan }}" required>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer pb-2 border-0">
-                                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan Perubahan</button>
+                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                        data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                        Perubahan</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -191,10 +295,11 @@
                 </div>
                 <div class="mt-4 px-4 pb-4 d-flex justify-content-between align-items-center">
                     <div class="text-muted small">
-                        Menampilkan {{ $desas->firstItem() ?? 0 }} sampai {{ $desas->lastItem() ?? 0 }} dari {{ $desas->total() }} wilayah
+                        Menampilkan {{ $kecamatans->firstItem() ?? 0 }} sampai {{ $kecamatans->lastItem() ?? 0 }} dari
+                        {{ $kecamatans->total() }} kecamatan
                     </div>
                     <div>
-                        {{ $desas->links('pagination::bootstrap-5') }}
+                        {{ $kecamatans->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -226,9 +331,11 @@
 
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-medium mb-0">Kecamatan <span class="text-danger">*</span></label>
+                                <label class="form-label fw-medium mb-0">Kecamatan <span
+                                        class="text-danger">*</span></label>
                                 <div class="form-check form-switch small">
-                                    <input class="form-check-input" type="checkbox" id="toggle_new_kecamatan" name="is_new_kecamatan" value="1">
+                                    <input class="form-check-input" type="checkbox" id="toggle_new_kecamatan"
+                                        name="is_new_kecamatan" value="1">
                                     <label class="form-check-label" for="toggle_new_kecamatan">Kecamatan Baru?</label>
                                 </div>
                             </div>
@@ -241,10 +348,12 @@
                             <div id="wrapper_new_kecamatan" style="display: none;">
                                 <div class="row g-2">
                                     <div class="col-4">
-                                        <input type="text" name="new_kode_kecamatan" class="form-control" placeholder="Kode">
+                                        <input type="text" name="new_kode_kecamatan" class="form-control"
+                                            placeholder="Kode">
                                     </div>
                                     <div class="col-8">
-                                        <input type="text" name="new_nama_kecamatan" class="form-control" placeholder="Nama Kecamatan Baru">
+                                        <input type="text" name="new_nama_kecamatan" class="form-control"
+                                            placeholder="Nama Kecamatan Baru">
                                     </div>
                                 </div>
                             </div>
@@ -259,7 +368,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-medium">Nama Desa <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_desa" class="form-control" required placeholder="Contoh: Kota Baru">
+                            <input type="text" name="nama_desa" class="form-control" required
+                                placeholder="Contoh: Kota Baru">
                         </div>
                     </div>
                     <div class="modal-footer pb-2 border-0">
@@ -341,6 +451,10 @@
                     placeholder: 'Pilih Kabupaten'
                 });
 
+                $('#kabupaten_id_unified').on('change', function() {
+                    $('#kecamatan_id_unified').val(null).trigger('change');
+                });
+
                 $('#kecamatan_id_unified').select2({
                     dropdownParent: $('#modalTambahWilayah'),
                     width: '100%',
@@ -351,7 +465,10 @@
                         dataType: 'json',
                         delay: 250,
                         data: function (params) {
-                            return { q: params.term };
+                            return { 
+                                q: params.term,
+                                kabupaten_id: $('#kabupaten_id_unified').val()
+                            };
                         },
                         processResults: function (data) {
                             return { results: data.results };
@@ -361,8 +478,8 @@
                 });
 
                 // Handle Toggle New Kecamatan
-                $('#toggle_new_kecamatan').on('change', function() {
-                    if($(this).is(':checked')) {
+                $('#toggle_new_kecamatan').on('change', function () {
+                    if ($(this).is(':checked')) {
                         $('#wrapper_select_kecamatan').hide();
                         $('#wrapper_new_kecamatan').show();
                         $('#kecamatan_id_unified').prop('required', false);
@@ -377,7 +494,7 @@
                     }
                 });
 
-                $('.select2-edit-kabupaten').each(function() {
+                $('.select2-edit-kabupaten').each(function () {
                     $(this).select2({
                         dropdownParent: $(this).closest('.modal'),
                         width: '100%',
@@ -385,7 +502,7 @@
                     });
                 });
 
-                $('.select2-edit-kecamatan').each(function() {
+                $('.select2-edit-kecamatan').each(function () {
                     $(this).select2({
                         dropdownParent: $(this).closest('.modal'),
                         width: '100%',

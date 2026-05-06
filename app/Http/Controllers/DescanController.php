@@ -350,24 +350,6 @@ class DescanController extends Controller
     // PROGRESS KEGIATAN
     // =========================================================
 
-    public function verifikasi(Request $request)
-    {
-        $user = Auth::user();
-        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
-
-        if (!$isProvinsi) {
-            return redirect()->route('desa-cantik.index')->with('error', 'Akses ditolak.');
-        }
-
-        $query = DescanProgressDesa::with(['peserta.desa', 'peserta.kecamatan', 'peserta.kabupaten', 'kegiatan', 'buktis.jenisBukti'])
-            ->where('status', 'menunggu_verifikasi')
-            ->orderBy('updated_at', 'asc');
-
-        $pendingVerifications = $query->paginate(20);
-
-        return view('desa_cantik.verifikasi', compact('pendingVerifications'));
-    }
-
     public function progress(Request $request)
     {
         $user = Auth::user();
@@ -426,7 +408,7 @@ class DescanController extends Controller
                     ->where('descan_progress_desa.peserta_id', '=', $peserta_id);
             })
             ->select('descan_kegiatan.*', \DB::raw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) as urutan'))
-            ->orderByRaw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
+            ->orderByRaw('(descan_progress_desa.id IS NOT NULL) DESC, COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
             ->get();
 
         $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier', 'creator', 'updater'])
@@ -475,7 +457,14 @@ class DescanController extends Controller
 
         $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
         $year = $peserta->periode->tahun;
-        $allKegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
+        $allKegiatans = DescanKegiatan::where('is_active', true)
+            ->leftJoin('descan_progress_desa', function ($join) use ($peserta_id) {
+                $join->on('descan_kegiatan.id', '=', 'descan_progress_desa.kegiatan_id')
+                    ->where('descan_progress_desa.peserta_id', '=', $peserta_id);
+            })
+            ->select('descan_kegiatan.*', \DB::raw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) as urutan'))
+            ->orderByRaw('(descan_progress_desa.id IS NOT NULL) DESC, COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
+            ->get();
         $status = ($request->action_type == 'submit') ? 'menunggu_verifikasi' : 'draf';
 
         // 1. Validasi Batasan Tahun & Urutan Tanggal antar kegiatan
@@ -563,7 +552,7 @@ class DescanController extends Controller
                             }
                         }
 
-                        // Check DB if not found in request (because approved items are rendered without name attribute)
+
                         if (!$linkFound && $dbProg) {
                             $dbBukti = $dbProg->buktis->where('jenis_bukti_id', $mb->id)->first();
                             if ($dbBukti && !empty($dbBukti->link_file)) {
@@ -948,14 +937,25 @@ class DescanController extends Controller
             ->pluck('desa_id')
             ->toArray();
 
-        $result = $desas->map(function ($d) use ($terdaftar) {
+        // Cari riwayat keikutsertaan di periode sebelumnya
+        $previousPesertas = DescanPeserta::with('periode')
+            ->whereIn('desa_id', $desas->pluck('id'))
+            ->where('periode_id', '!=', $periodeId)
+            ->get()
+            ->groupBy('desa_id');
+
+        $result = $desas->map(function ($d) use ($terdaftar, $previousPesertas) {
             $terdaftarFlag = in_array($d->id, $terdaftar);
+            $previous = $previousPesertas->get($d->id);
+            $previousTahun = $previous ? $previous->map(fn($p) => $p->periode->tahun ?? '')->filter()->sort()->join(', ') : '';
+            
             return [
                 'id' => $d->id,
                 'nama_desa' => $d->nama_desa,
                 'sudah_terdaftar' => $terdaftarFlag,
                 'text' => $terdaftarFlag ? $d->nama_desa . ' ✓ terdaftar' : $d->nama_desa,
                 'disabled' => $terdaftarFlag,
+                'previous_tahun' => $previousTahun,
             ];
         });
 
