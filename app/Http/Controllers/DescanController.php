@@ -19,9 +19,70 @@ use Illuminate\Support\Facades\Auth;
 
 class DescanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('desa_cantik.index');
+        $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
+        $selectedPeriodeId = $request->get('periode_id');
+        
+        if (!$selectedPeriodeId) {
+            $selectedPeriode = $periodes->where('is_active', true)->first();
+            $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
+        }
+
+        $queryPeserta = DescanPeserta::when($selectedPeriodeId, function($q) use ($selectedPeriodeId) {
+            $q->where('periode_id', $selectedPeriodeId);
+        });
+
+        $totalPeserta = $queryPeserta->count();
+        
+        $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab')->get();
+        
+        // Optimasi: Ambil jumlah peserta per kabupaten dalam 1 query (GROUP BY)
+        $pesertaCounts = DescanPeserta::selectRaw('kabupaten_id, count(*) as count')
+            ->when($selectedPeriodeId, function($q) use ($selectedPeriodeId) {
+                $q->where('periode_id', $selectedPeriodeId);
+            })
+            ->groupBy('kabupaten_id')
+            ->pluck('count', 'kabupaten_id');
+
+        $rekapKabupaten = collect();
+        foreach ($kabupatens as $kab) {
+            $rekapKabupaten->push([
+                'nama' => str_replace(['KABUPATEN ', 'KOTA '], '', strtoupper($kab->nama_kabupaten)),
+                'pesertas_count' => $pesertaCounts->get($kab->id, 0)
+            ]);
+        }
+
+        // Optimasi: Ambil rekap status dalam 1 query (GROUP BY status)
+        $statusCounts = DescanProgressDesa::whereHas('peserta', function($q) use ($selectedPeriodeId) {
+            if ($selectedPeriodeId) {
+                $q->where('periode_id', $selectedPeriodeId);
+            }
+        })
+        ->selectRaw('status, count(*) as count')
+        ->groupBy('status')
+        ->pluck('count', 'status');
+
+        $totalDisetujui = $statusCounts->get('disetujui', 0);
+        $totalMenunggu = $statusCounts->get('menunggu_verifikasi', 0);
+        $totalDitolak = $statusCounts->get('ditolak', 0);
+        $totalDraf = $statusCounts->get('draf', 0);
+
+        $trendPeriode = DescanPeriode::orderBy('tahun', 'asc')
+            ->withCount('pesertas')
+            ->get();
+
+        return view('desa_cantik.index', compact(
+            'periodes', 
+            'selectedPeriodeId', 
+            'totalPeserta',
+            'rekapKabupaten',
+            'totalDisetujui',
+            'totalMenunggu',
+            'totalDitolak',
+            'totalDraf',
+            'trendPeriode'
+        ));
     }
 
     public function kelola()
