@@ -23,23 +23,23 @@ class DescanController extends Controller
     {
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
         $selectedPeriodeId = $request->get('periode_id');
-        
+
         if (!$selectedPeriodeId) {
             $selectedPeriode = $periodes->where('is_active', true)->first();
             $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
         }
 
-        $queryPeserta = DescanPeserta::when($selectedPeriodeId, function($q) use ($selectedPeriodeId) {
+        $queryPeserta = DescanPeserta::when($selectedPeriodeId, function ($q) use ($selectedPeriodeId) {
             $q->where('periode_id', $selectedPeriodeId);
         });
 
         $totalPeserta = $queryPeserta->count();
-        
+
         $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab')->get();
-        
+
         // Optimasi: Ambil jumlah peserta per kabupaten dalam 1 query (GROUP BY)
         $pesertaCounts = DescanPeserta::selectRaw('kabupaten_id, count(*) as count')
-            ->when($selectedPeriodeId, function($q) use ($selectedPeriodeId) {
+            ->when($selectedPeriodeId, function ($q) use ($selectedPeriodeId) {
                 $q->where('periode_id', $selectedPeriodeId);
             })
             ->groupBy('kabupaten_id')
@@ -54,14 +54,14 @@ class DescanController extends Controller
         }
 
         // Optimasi: Ambil rekap status dalam 1 query (GROUP BY status)
-        $statusCounts = DescanProgressDesa::whereHas('peserta', function($q) use ($selectedPeriodeId) {
+        $statusCounts = DescanProgressDesa::whereHas('peserta', function ($q) use ($selectedPeriodeId) {
             if ($selectedPeriodeId) {
                 $q->where('periode_id', $selectedPeriodeId);
             }
         })
-        ->selectRaw('status, count(*) as count')
-        ->groupBy('status')
-        ->pluck('count', 'status');
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
 
         $totalDisetujui = $statusCounts->get('disetujui', 0);
         $totalMenunggu = $statusCounts->get('menunggu_verifikasi', 0);
@@ -73,8 +73,8 @@ class DescanController extends Controller
             ->get();
 
         return view('desa_cantik.index', compact(
-            'periodes', 
-            'selectedPeriodeId', 
+            'periodes',
+            'selectedPeriodeId',
             'totalPeserta',
             'rekapKabupaten',
             'totalDisetujui',
@@ -405,6 +405,80 @@ class DescanController extends Controller
 
         $peserta->delete();
         return back()->with('success', 'Peserta desa berhasil dihapus.');
+    }
+
+    // =========================================================
+    // PENILAIAN DESA
+    // =========================================================
+
+    public function penilaian(Request $request)
+    {
+        $user = Auth::user();
+        $kabupaten = $user->kabupaten;
+        $isProvinsi = $kabupaten && $kabupaten->kode_kab == '6100';
+
+        $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
+        $myKabupatenId = $isProvinsi ? null : $kabupaten?->id;
+        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get() : collect();
+
+        // Query peserta along with penilaian relation
+        $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'penilaian'])
+            ->orderBy('created_at', 'desc');
+
+        if (!$isProvinsi) {
+            $query->where('kabupaten_id', $myKabupatenId);
+        } else {
+            if ($request->filled('kabupaten_id')) {
+                $query->where('kabupaten_id', $request->kabupaten_id);
+            }
+        }
+
+        if ($request->filled('filter_periode')) {
+            $query->where('periode_id', $request->filter_periode);
+        }
+
+        $pesertas = $query->paginate(20)->withQueryString();
+
+        return view('desa_cantik.penilaian', compact(
+            'periodes',
+            'kabupatens',
+            'myKabupatenId',
+            'isProvinsi',
+            'pesertas'
+        ));
+    }
+
+    public function updatePenilaian(Request $request, $peserta_id)
+    {
+        $user = Auth::user();
+        $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        $peserta = DescanPeserta::findOrFail($peserta_id);
+
+        if (!$isProvinsi && $peserta->kabupaten_id != $user->kabupaten_id) {
+            return back()->with('error', 'Anda tidak memiliki akses ke peserta ini.');
+        }
+
+        $request->validate([
+            'catatan' => 'nullable|string'
+        ]);
+
+        $data = [];
+
+        if (!$isProvinsi) {
+            $data['penilaian_mandiri_desa'] = $request->has('penilaian_mandiri_desa');
+            $data['penilaian_mandiri_kab'] = $request->has('penilaian_mandiri_kab');
+        } else {
+            $data['verifikasi_provinsi'] = $request->has('verifikasi_provinsi');
+            $data['catatan'] = $request->input('catatan');
+        }
+
+        \App\Models\DescanPenilaian::updateOrCreate(
+            ['peserta_id' => $peserta_id],
+            $data
+        );
+
+        return back()->with('success', 'Data penilaian berhasil diperbarui.');
     }
 
     // =========================================================

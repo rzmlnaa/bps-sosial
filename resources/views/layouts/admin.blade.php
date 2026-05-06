@@ -200,9 +200,16 @@
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('desa-cantik.progress') }}"
-                                    class="nav-link {{ request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
+                                    class="nav-link {{ request()->routeIs('desa-cantik.progress.*') || request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
                                     <i class="fas fa-tasks"></i>
                                     <span>Progress Kegiatan</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.penilaian') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.penilaian.*') || request()->routeIs('desa-cantik.penilaian') ? 'active' : '' }}">
+                                    <i class="fas fa-star"></i>
+                                    <span>Penilaian</span>
                                 </a>
                             </li>
                         @endif
