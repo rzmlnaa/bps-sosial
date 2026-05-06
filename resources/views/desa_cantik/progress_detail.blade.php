@@ -24,6 +24,12 @@
         $year = $peserta->periode->tahun;
         $minYear = $year . '-01-01';
         $maxYear = $year . '-12-31';
+
+        $hasPending = $peserta->progresses->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
+            $peserta->outputs->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
+            $peserta->buktiDukungs->where('status', 'menunggu_verifikasi')->isNotEmpty();
+
+        $isReadonly = $hasPending;
     @endphp
     <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
         <input type="hidden" name="action_type" id="action_type" value="draf">
@@ -97,7 +103,8 @@
                                                             id="target_{{ $keg->id }}" class="form-control"
                                                             value="{{ $prog ? $prog->target_tanggal : '' }}" min="{{ $minYear }}"
                                                             max="{{ $maxYear }}"
-                                                            onchange="updateMinDate({{ $keg->id }}); updateNextActivityMinDate({{ $keg->id }});">
+                                                            onchange="updateMinDate({{ $keg->id }}); updateNextActivityMinDate({{ $keg->id }});"
+                                                            {{ $isReadonly ? 'readonly' : '' }}>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label small fw-bold">
@@ -111,7 +118,8 @@
                                                             value="{{ $prog ? $prog->realisasi_tanggal : '' }}"
                                                             min="{{ $prog && $prog->target_tanggal ? $prog->target_tanggal : $minYear }}"
                                                             max="{{ $maxYear }}"
-                                                            onchange="updateNextActivityMinDate({{ $keg->id }}); checkMandatoryFilled()">
+                                                            onchange="updateNextActivityMinDate({{ $keg->id }}); checkMandatoryFilled()"
+                                                            {{ $isReadonly ? 'readonly' : '' }}>
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form-label small fw-bold mb-2">Bukti Kegiatan</label>
@@ -137,7 +145,7 @@
                                                                             value="{{ $existingMb ? $existingMb->link_file : '' }}"
                                                                             data-placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}..."
                                                                             placeholder="Masukkan link folder atau deskripsi bukti {{ $mb->nama_bukti }}..."
-                                                                            oninput="checkMandatoryFilled()" {{ $isProvinsi ? 'readonly' : '' }}>
+                                                                            oninput="checkMandatoryFilled()" {{ $isReadonly ? 'readonly' : '' }}>
                                                                         @if($existingMb && filter_var($existingMb->link_file, FILTER_VALIDATE_URL))
                                                                             <a href="{{ $existingMb->link_file }}" target="_blank"
                                                                                 class="btn btn-outline-orange">
@@ -153,7 +161,8 @@
                                                                 @foreach($prog->buktis->whereIn('jenis_bukti_id', $jenisBuktiOptional->pluck('id')) as $ob)
                                                                     <div class="d-flex gap-2 mb-2">
                                                                         <select name="bukti[{{ $keg->id }}][jenis_id][]"
-                                                                            class="form-select w-50" {{ $isProvinsi ? 'disabled' : '' }}>
+                                                                            class="form-select w-50" {{ $isReadonly ? 'disabled' : '' }}>
+                                                                            <option value="">Pilih Jenis Bukti...</option>
                                                                             @foreach($jenisBuktiOptional as $jb)
                                                                                 <option value="{{ $jb->id }}" {{ $ob->jenis_bukti_id == $jb->id ? 'selected' : '' }}>
                                                                                     {{ $jb->nama_bukti }}
@@ -164,7 +173,7 @@
                                                                             <input type="text" name="bukti[{{ $keg->id }}][link][]"
                                                                                 class="form-control" value="{{ $ob->link_file }}"
                                                                                 data-placeholder="Link folder atau deskripsi bukti..."
-                                                                                placeholder="Link folder atau deskripsi bukti..." {{ $isProvinsi ? 'readonly' : '' }}>
+                                                                                placeholder="Link folder atau deskripsi bukti..." {{ $isReadonly ? 'readonly' : '' }}>
                                                                             @if(filter_var($ob->link_file, FILTER_VALIDATE_URL))
                                                                                 <a href="{{ $ob->link_file }}" target="_blank"
                                                                                     class="btn btn-outline-orange">
@@ -172,7 +181,7 @@
                                                                                 </a>
                                                                             @endif
                                                                         </div>
-                                                                        @if(!$isProvinsi)
+                                                                        @if(!$isReadonly)
                                                                             <button type="button" class="btn btn-sm btn-outline-danger border-0"
                                                                                 onclick="this.parentElement.remove()"><i
                                                                                     class="fas fa-trash"></i></button>
@@ -181,28 +190,32 @@
                                                                 @endforeach
                                                             @endif
 
-                                                            {{-- Input baru untuk Bukti Optional --}}
-                                                            <div class="d-flex gap-2 mb-2">
-                                                                <select name="bukti[{{ $keg->id }}][jenis_id][]"
-                                                                    class="form-select w-50">
-                                                                    <option value="">+ Tambah Bukti Lainnya</option>
-                                                                    @foreach($jenisBuktiOptional as $jb)
-                                                                        <option value="{{ $jb->id }}">{{ $jb->nama_bukti }}</option>
-                                                                    @endforeach
-                                                                </select>
-                                                                <input type="text" name="bukti[{{ $keg->id }}][link][]"
-                                                                    class="form-control"
-                                                                    data-placeholder="Link folder atau deskripsi bukti..."
-                                                                    placeholder="Link folder atau deskripsi bukti...">
-                                                            </div>
+                                                            @if(!$isReadonly)
+                                                                {{-- Input baru untuk Bukti Optional --}}
+                                                                <div class="d-flex gap-2 mb-2">
+                                                                    <select name="bukti[{{ $keg->id }}][jenis_id][]"
+                                                                        class="form-select w-50">
+                                                                        <option value="">Pilih Jenis Bukti...</option>
+                                                                        @foreach($jenisBuktiOptional as $jb)
+                                                                            <option value="{{ $jb->id }}">{{ $jb->nama_bukti }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <input type="text" name="bukti[{{ $keg->id }}][link][]"
+                                                                        class="form-control"
+                                                                        data-placeholder="Link folder atau deskripsi bukti..."
+                                                                        placeholder="Link folder atau deskripsi bukti...">
+                                                                </div>
+                                                            @endif
                                                         </div>
-                                                        @if(!$isProvinsi)
-                                                            <button type="button"
+
+                                                        @if(!$isReadonly)
+                                                            <button type="button" id="btn-add-bukti-{{ $keg->id }}"
                                                                 class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1"
                                                                 onclick="addFileField({{ $keg->id }})">
-                                                                <i class="fas fa-plus-circle me-1"></i> Tambah Baris Bukti
+                                                                <i class="fas fa-plus-circle me-1"></i> Tambah Bukti Kegiatan
                                                             </button>
                                                         @endif
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -345,7 +358,7 @@
                                     <div class="input-group">
                                         <input type="text" name="output_link[]" class="form-control mandatory-output-input"
                                             value="{{ $out ? $out->link : '' }}" placeholder="Link {{ $jo->nama_output }}..."
-                                            oninput="checkMandatoryFilled()" {{ ($isProvinsi || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                            oninput="checkMandatoryFilled()" {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                         @if($out && filter_var($out->link, FILTER_VALIDATE_URL))
                                             <a href="{{ $out->link }}" target="_blank" class="btn btn-outline-primary">
                                                 <i class="fas fa-external-link-alt"></i>
@@ -396,7 +409,7 @@
                             @foreach($peserta->outputs->whereIn('jenis_output_id', $jenisOutputOptional->pluck('id')) as $out)
                                 <div class="mb-3">
                                     <div class="d-flex gap-2 mb-1 align-items-center">
-                                        <select name="output_jenis_id[]" class="form-select w-50" {{ ($isProvinsi || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
+                                        <select name="output_jenis_id[]" class="form-select w-50" {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
                                             {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             <option value="">Pilih Jenis Output...</option>
                                             @foreach($jenisOutputOptional as $jo)
@@ -405,7 +418,7 @@
                                         </select>
                                         <div class="input-group flex-grow-1">
                                             <input type="text" name="output_link[]" class="form-control"
-                                                value="{{ $out->link }}" placeholder="Link output..." {{ ($isProvinsi || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                                value="{{ $out->link }}" placeholder="Link output..." {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             @if(filter_var($out->link, FILTER_VALIDATE_URL))
                                                 <a href="{{ $out->link }}" target="_blank" class="btn btn-outline-primary">
                                                     <i class="fas fa-external-link-alt"></i>
@@ -427,7 +440,7 @@
                                                 @endif
                                             </div>
                                         @endif
-                                        @if(!$isProvinsi)
+                                        @if(!$isReadonly)
                                             <button type="button" class="btn btn-sm btn-link text-danger p-0"
                                                 onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
                                         @endif
@@ -456,24 +469,28 @@
                                 </div>
                             @endforeach
 
-                            {{-- Always show one empty optional row --}}
-                            <div class="mb-3 generic-row">
-                                <div class="d-flex gap-2 mb-1 align-items-center">
-                                    <select name="output_jenis_id[]" class="form-select w-50">
-                                        <option value="">Pilih Jenis Output...</option>
-                                        @foreach($jenisOutputOptional as $jo)
-                                            <option value="{{ $jo->id }}">{{ $jo->nama_output }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="text" name="output_link[]" class="form-control"
-                                        placeholder="Link output...">
+                            @if(!$isReadonly)
+                                {{-- Always show one empty optional row --}}
+                                <div class="mb-3 generic-row">
+                                    <div class="d-flex gap-2 mb-1 align-items-center">
+                                        <select name="output_jenis_id[]" class="form-select w-50">
+                                            <option value="">Pilih Jenis Output...</option>
+                                            @foreach($jenisOutputOptional as $jo)
+                                                <option value="{{ $jo->id }}">{{ $jo->nama_output }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="text" name="output_link[]" class="form-control"
+                                            placeholder="Link output...">
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
-                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1"
-                            onclick="addGenericField('output-container')">
-                            <i class="fas fa-plus-circle me-1"></i> Tambah Output Lainnya
-                        </button>
+                        @if(!$isReadonly)
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1"
+                                onclick="addGenericField('output-container')">
+                                <i class="fas fa-plus-circle me-1"></i> Tambah Output Lainnya
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -514,7 +531,7 @@
                                     <div class="input-group">
                                         <input type="text" name="dukung_link[]" class="form-control mandatory-dukung-input"
                                             value="{{ $duk ? $duk->link_file : '' }}"
-                                            placeholder="Link {{ $jd->nama_bukti }}..." oninput="checkMandatoryFilled()" {{ ($isProvinsi || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                            placeholder="Link {{ $jd->nama_bukti }}..." oninput="checkMandatoryFilled()" {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                         @if($duk && filter_var($duk->link_file, FILTER_VALIDATE_URL))
                                             <a href="{{ $duk->link_file }}" target="_blank" class="btn btn-outline-info">
                                                 <i class="fas fa-external-link-alt"></i>
@@ -558,7 +575,7 @@
                             @foreach($peserta->buktiDukungs->whereIn('jenis_bukti_id', $jenisDukungOptional->pluck('id')) as $duk)
                                 <div class="mb-3">
                                     <div class="d-flex gap-2 mb-1 align-items-center">
-                                        <select name="dukung_jenis_id[]" class="form-select w-50" {{ ($isProvinsi || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
+                                        <select name="dukung_jenis_id[]" class="form-select w-50" {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
                                             {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             <option value="">Pilih Jenis Bukti...</option>
                                             @foreach($jenisDukungOptional as $jd)
@@ -569,7 +586,7 @@
                                         </select>
                                         <div class="input-group flex-grow-1">
                                             <input type="text" name="dukung_link[]" class="form-control"
-                                                value="{{ $duk->link_file }}" placeholder="Link bukti..." {{ ($isProvinsi || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                                value="{{ $duk->link_file }}" placeholder="Link bukti..." {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             @if(filter_var($duk->link_file, FILTER_VALIDATE_URL))
                                                 <a href="{{ $duk->link_file }}" target="_blank" class="btn btn-outline-info">
                                                     <i class="fas fa-external-link-alt"></i>
@@ -584,7 +601,7 @@
                                                 </div>
                                             </div>
                                         @endif
-                                        @if(!$isProvinsi)
+                                        @if(!$isReadonly)
                                             <button type="button" class="btn btn-sm btn-link text-danger p-0"
                                                 onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
                                         @endif
@@ -613,24 +630,28 @@
                                 </div>
                             @endforeach
 
-                            {{-- Always show one empty optional row --}}
-                            <div class="mb-3 generic-row">
-                                <div class="d-flex gap-2 mb-1 align-items-center">
-                                    <select name="dukung_jenis_id[]" class="form-select w-50">
-                                        <option value="">Pilih Jenis Bukti...</option>
-                                        @foreach($jenisDukungOptional as $jd)
-                                            <option value="{{ $jd->id }}">{{ $jd->nama_bukti }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="text" name="dukung_link[]" class="form-control"
-                                        placeholder="Link bukti...">
+                            @if(!$isReadonly)
+                                {{-- Always show one empty optional row --}}
+                                <div class="mb-3 generic-row">
+                                    <div class="d-flex gap-2 mb-1 align-items-center">
+                                        <select name="dukung_jenis_id[]" class="form-select w-50">
+                                            <option value="">Pilih Jenis Bukti...</option>
+                                            @foreach($jenisDukungOptional as $jd)
+                                                <option value="{{ $jd->id }}">{{ $jd->nama_bukti }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="text" name="dukung_link[]" class="form-control"
+                                            placeholder="Link bukti...">
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
-                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1"
-                            onclick="addGenericField('dukung-container')">
-                            <i class="fas fa-plus-circle me-1"></i> Tambah Bukti Lainnya
-                        </button>
+                        @if(!$isReadonly)
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-bps-orange mt-1"
+                                onclick="addGenericField('dukung-container')">
+                                <i class="fas fa-plus-circle me-1"></i> Tambah Bukti Lainnya
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div> {{-- End Col-lg-8 --}}
@@ -766,9 +787,9 @@
                         </div>
 
                         <!-- <div class="alert alert-info border-0 small mt-4">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Admin Provinsi akan melakukan verifikasi pada setiap tahapan kegiatan yang telah diajukan.
-                                    </div> -->
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Admin Provinsi akan melakukan verifikasi pada setiap tahapan kegiatan yang telah diajukan.
+                                                        </div> -->
 
                         @php
                             $hasPending = $peserta->progresses->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
@@ -820,6 +841,65 @@
     </div>
     @push('scripts')
         <script>
+            function updateSelectOptions(container) {
+                const selects = container.querySelectorAll('select');
+                if (selects.length === 0) return;
+
+                // Get all selected values
+                const selectedValues = Array.from(selects).map(s => s.value).filter(v => v !== '');
+
+                selects.forEach(select => {
+                    const options = select.querySelectorAll('option');
+                    options.forEach(option => {
+                        if (option.value === '') return;
+                        if (selectedValues.includes(option.value) && select.value !== option.value) {
+                            option.disabled = true;
+                            option.style.display = 'none';
+                        } else {
+                            option.disabled = false;
+                            option.style.display = '';
+                        }
+                    });
+                });
+
+                // Check if we can add more rows
+                const validOptionsCount = Array.from(selects[0].options).filter(o => o.value !== '').length;
+                let btnAdd;
+                if (container.id.startsWith('bukti-container-')) {
+                    const kegId = container.id.split('-')[2];
+                    btnAdd = document.getElementById(`btn-add-bukti-${kegId}`);
+                } else {
+                    btnAdd = container.parentElement.querySelector('button[onclick^="addGenericField"]');
+                }
+
+                if (btnAdd) {
+                    if (selects.length >= validOptionsCount) {
+                        btnAdd.style.display = 'none';
+                    } else {
+                        btnAdd.style.display = '';
+                    }
+                }
+            }
+
+            document.addEventListener('change', function (e) {
+                if (e.target.tagName === 'SELECT') {
+                    const container = e.target.closest('#output-container, #dukung-container, [id^="bukti-container-"]');
+                    if (container) {
+                        updateSelectOptions(container);
+                    }
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('button');
+                if (btn && btn.querySelector('.fa-trash')) {
+                    const container = btn.closest('#output-container, #dukung-container, [id^="bukti-container-"]');
+                    if (container) {
+                        setTimeout(() => updateSelectOptions(container), 50);
+                    }
+                }
+            });
+
             function addFileField(kegId) {
                 const container = document.getElementById(`bukti-container-${kegId}`);
                 if (!container) return;
@@ -847,17 +927,18 @@
                     btnTrash.type = 'button';
                     btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
                     btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
-                    btnTrash.onclick = function () { this.parentElement.remove(); };
+                    btnTrash.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); };
                     newRow.appendChild(btnTrash);
                 } else {
                     // Pastikan fungsi hapus bekerja pada baris baru
                     const btn = newRow.querySelector('button');
                     if (btn) {
-                        btn.onclick = function () { this.parentElement.remove(); };
+                        btn.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); };
                     }
                 }
 
                 container.appendChild(newRow);
+                updateSelectOptions(container);
             }
 
             function addGenericField(containerId) {
@@ -894,16 +975,17 @@
                     btnTrash.type = 'button';
                     btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
                     btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
-                    btnTrash.onclick = function () { this.closest('.mb-3').remove(); };
+                    btnTrash.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); };
                     newRow.querySelector('.d-flex').appendChild(btnTrash);
                 } else {
                     const btn = newRow.querySelector('.fa-trash').parentElement;
                     if (btn) {
-                        btn.onclick = function () { this.closest('.mb-3').remove(); };
+                        btn.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); };
                     }
                 }
 
                 container.appendChild(newRow);
+                updateSelectOptions(container);
             }
 
             function updateMinDate(kegId) {
@@ -913,7 +995,7 @@
                 const targetVal = targetInput.value;
                 const realisasiInput = document.getElementById(`realisasi_${kegId}`);
                 const container = document.getElementById(`bukti-container-${kegId}`);
-                const btnAdd = container.nextElementSibling; // Tombol "Tambah Baris Bukti"
+                const btnAdd = document.getElementById(`btn-add-bukti-${kegId}`);
 
                 const isNoDate = !targetVal;
                 const minDate = targetVal || '{{ $minYear }}';
@@ -961,7 +1043,11 @@
                     });
 
                     if (btnAdd && btnAdd.classList.contains('btn-link')) {
-                        btnAdd.style.display = isNoDate ? 'none' : 'block';
+                        btnAdd.disabled = isNoDate;
+                        btnAdd.style.opacity = isNoDate ? '0.5' : '1';
+                        btnAdd.style.cursor = isNoDate ? 'not-allowed' : 'pointer';
+                        // Also remove any display styling so it returns to its natural layout
+                        btnAdd.style.display = '';
                     }
                 }
                 checkMandatoryFilled();
@@ -1072,10 +1158,13 @@
                     const container = document.getElementById(id);
                     if (!container) return;
 
-                    const inputs = container.querySelectorAll('input, select');
+                    const inputs = container.querySelectorAll('input:not([type="hidden"]), select');
                     inputs.forEach(input => {
                         if (input.tagName === 'SELECT') {
                             input.disabled = !enabled || input.hasAttribute('data-locked');
+                            if (!enabled && !input.hasAttribute('data-locked')) {
+                                input.value = '';
+                            }
                         } else {
                             input.readOnly = !enabled || input.hasAttribute('data-locked');
                             input.style.backgroundColor = (!enabled || input.hasAttribute('data-locked')) ? '#f8f9fa' : '#fff';
@@ -1083,6 +1172,9 @@
 
                             if (!enabled) {
                                 input.placeholder = "Selesaikan kegiatan & bukti wajib terlebih dahulu...";
+                                if (!input.hasAttribute('data-locked') && input.type === 'text') {
+                                    input.value = '';
+                                }
                             } else {
                                 // Restore original placeholder if needed or just use default
                                 input.placeholder = input.getAttribute('data-placeholder') || input.placeholder;
@@ -1104,6 +1196,10 @@
                     updateNextActivityMinDate({{ $keg->id }});
                 @endforeach
                 checkMandatoryFilled();
+
+                // Initialize options and limits for all containers
+                const containers = document.querySelectorAll('#output-container, #dukung-container, [id^="bukti-container-"]');
+                containers.forEach(c => updateSelectOptions(c));
             });
 
             function confirmSubmit() {

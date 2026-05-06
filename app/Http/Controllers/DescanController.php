@@ -339,7 +339,7 @@ class DescanController extends Controller
         // Cek apakah sudah ada progress
         $hasProgress = DescanProgressDesa::where('peserta_id', $id)->exists();
         if ($hasProgress) {
-            return back()->with('error', 'Peserta tidak dapat dihapus because sudah memiliki data progress.');
+            return back()->with('error', 'Peserta tidak dapat dihapus karena sudah memiliki data progress.');
         }
 
         $peserta->delete();
@@ -412,16 +412,20 @@ class DescanController extends Controller
     public function progressDetail($peserta_id)
     {
         $peserta = DescanPeserta::with([
-            'desa', 'kecamatan', 'kabupaten', 'periode', 
-            'outputs.creator', 'outputs.updater', 
+            'desa',
+            'kecamatan',
+            'kabupaten',
+            'periode',
+            'outputs.creator',
+            'outputs.updater',
             'buktiDukungs.creator'
         ])->findOrFail($peserta_id);
         $kegiatans = DescanKegiatan::where('is_active', true)
-            ->leftJoin('descan_progress_desa', function($join) use ($peserta_id) {
+            ->leftJoin('descan_progress_desa', function ($join) use ($peserta_id) {
                 $join->on('descan_kegiatan.id', '=', 'descan_progress_desa.kegiatan_id')
-                     ->where('descan_progress_desa.peserta_id', '=', $peserta_id);
+                    ->where('descan_progress_desa.peserta_id', '=', $peserta_id);
             })
-            ->select('descan_kegiatan.*')
+            ->select('descan_kegiatan.*', \DB::raw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) as urutan'))
             ->orderByRaw('COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
             ->get();
 
@@ -519,7 +523,7 @@ class DescanController extends Controller
                     // Validasi internal: realisasi >= target (sudah divalidasi di validate() sebenarnya, tapi di sini untuk sequence)
                     $lastRealisasi = $realisasiVal;
                 }
-                
+
                 $lastTarget = $targetVal;
                 $lastKegiatanNama = $keg->nama_kegiatan;
             }
@@ -531,6 +535,15 @@ class DescanController extends Controller
             $jenisBuktiMandatory = \App\Models\DescanJenisBuktiKegiatan::where('is_wajib', true)->get();
             foreach ($allKegiatans as $keg) {
                 $data = $request->input("progress.{$keg->id}");
+                $dbProg = \App\Models\DescanProgressDesa::with('buktis')->where('peserta_id', $peserta_id)->where('kegiatan_id', $keg->id)->first();
+
+                if (!$data && $dbProg) {
+                    $data = [
+                        'target_tanggal' => $dbProg->target_tanggal,
+                        'realisasi_tanggal' => $dbProg->realisasi_tanggal
+                    ];
+                }
+
                 $hasTarget = !empty($data['target_tanggal']);
 
                 // Jika kegiatan wajib, atau kegiatan opsional yang sudah mulai diisi targetnya
@@ -547,6 +560,14 @@ class DescanController extends Controller
                                     $linkFound = true;
                                     break;
                                 }
+                            }
+                        }
+
+                        // Check DB if not found in request (because approved items are rendered without name attribute)
+                        if (!$linkFound && $dbProg) {
+                            $dbBukti = $dbProg->buktis->where('jenis_bukti_id', $mb->id)->first();
+                            if ($dbBukti && !empty($dbBukti->link_file)) {
+                                $linkFound = true;
                             }
                         }
 
@@ -602,14 +623,16 @@ class DescanController extends Controller
                     // Cari urutan kegiatan ini dari master
                     $urutan = $kegiatanUrutan[$keg_id] ?? 0;
 
+                    $existingProg = DescanProgressDesa::where('peserta_id', $peserta_id)->where('kegiatan_id', $keg_id)->first();
                     $progress = DescanProgressDesa::updateOrCreate(
                         ['peserta_id' => $peserta_id, 'kegiatan_id' => $keg_id],
                         [
-                            'urutan' => $urutan, // Simpan urutan saat ini ke progress (lock order)
+                            'urutan' => $existingProg ? $existingProg->urutan : $urutan, // Simpan urutan saat ini ke progress (lock order)
                             'target_tanggal' => $data['target_tanggal'],
                             'realisasi_tanggal' => $data['realisasi_tanggal'],
                             'status' => $status,
-                            'updated_by' => Auth::id()
+                            'updated_by' => Auth::id(),
+                            'created_by' => $existingProg ? $existingProg->created_by : Auth::id()
                         ]
                     );
 
@@ -854,7 +877,7 @@ class DescanController extends Controller
         }
 
         $status = ($request->action == 'approve') ? 'disetujui' : 'ditolak';
-        
+
         $updateData = [
             'status' => $status,
         ];
