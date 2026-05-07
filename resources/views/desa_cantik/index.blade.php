@@ -3,12 +3,12 @@
 @section('title', 'Visualisasi Desa Cantik')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4 mt-1 fade-in-up">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 mt-1 fade-in-up gap-3">
         <div>
             <h1 class="h3 mb-0 fw-bold" style="color: var(--bps-orange);">Visualisasi Desa Cantik</h1>
             <p class="text-muted small mb-0">Statistik dan Monitoring Program Desa Cantik di Kalimantan Barat</p>
         </div>
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
             <form action="{{ route('desa-cantik.index') }}" method="GET"
                 class="d-flex align-items-center gap-2 bg-white p-2 rounded-3 shadow-sm border">
                 <i class="fas fa-filter text-muted small"></i>
@@ -24,12 +24,15 @@
                 </select>
             </form>
             @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
-                <a href="{{ route('desa-cantik.export', ['periode_id' => $selectedPeriodeId]) }}" class="btn btn-sm btn-success">
-                    <i class="fas fa-file-excel me-1"></i> Ekspor Excel
+                <a href="{{ route('desa-cantik.export', ['periode_id' => $selectedPeriodeId]) }}"
+                    onclick="confirmExport(event, this, '{{ $periodes->where('id', $selectedPeriodeId)->first()->tahun ?? '' }}')"
+                    class="btn btn-success btn-sm fw-bold px-3 shadow-sm d-flex align-items-center">
+                    <i class="fas fa-file-excel me-2"></i> Ekspor Excel
                 </a>
-                <a href="{{ route('desa-cantik.kelola') }}" class="btn btn-sm text-white"
+                <a href="{{ route('desa-cantik.kelola') }}"
+                    class="btn btn-sm text-white fw-bold px-3 shadow-sm d-flex align-items-center"
                     style="background-color: var(--bps-orange);">
-                    <i class="fas fa-cog me-1 fa-spin"></i> Kelola
+                    <i class="fas fa-cog me-2 fa-spin"></i> Kelola
                 </a>
             @endif
         </div>
@@ -290,5 +293,110 @@
             });
 
         });
+        function confirmExport(e, btn, year) {
+            e.preventDefault();
+            const url = new URL(btn.href).pathname + new URL(btn.href).search;
+
+
+            const originalContent = btn.innerHTML;
+
+            Swal.fire({
+                title: `Apakah yakin export Progress Desa Cantik Tahun ${year}?`,
+                html: 'Mohon jangan meninggalkan halaman sampai proses selesai hingga terlihat "<i class="fas fa-check me-2"></i>Berhasil!"',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Export',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none';
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sedang mengunduh..';
+
+                    let timerInterval;
+                    let secondsLeft = 10;
+
+                    Swal.fire({
+                        title: 'Menyiapkan Data...',
+                        html: `Mohon tunggu sejenak (<b>${secondsLeft}</b> detik)...<br><small class="text-muted">Sedang memproses data progress desa.</small>`,
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            timerInterval = setInterval(() => {
+                                secondsLeft--;
+                                const container = Swal.getHtmlContainer();
+                                if (container) {
+                                    if (secondsLeft > 0) {
+                                        const b = container.querySelector('b');
+                                        if (b) b.textContent = secondsLeft;
+                                    } else {
+                                        container.innerHTML = 'Hampir selesai, sedang mengemas file...<br><small class="text-muted">Sedang memproses data progress desa.</small>';
+                                    }
+                                }
+                            }, 1000);
+                        },
+                        willClose: () => {
+                            clearInterval(timerInterval);
+                        }
+                    });
+
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            let filename = `Progress_Desa_Cantik_${year}.xlsx`;
+                            const disposition = response.headers.get('Content-Disposition');
+                            if (disposition && disposition.indexOf('attachment') !== -1) {
+                                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                                const matches = filenameRegex.exec(disposition);
+                                if (matches != null && matches[1]) {
+                                    filename = matches[1].replace(/['"]/g, '');
+                                }
+                            }
+                            return response.blob().then(blob => ({ blob, filename }));
+                        })
+                        .then(({ blob, filename }) => {
+                            const downloadUrl = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = downloadUrl;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(downloadUrl);
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Data berhasil diexport.',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+
+                            btn.innerHTML = '<i class="fas fa-check me-2"></i> Berhasil!';
+
+                            setTimeout(() => {
+                                btn.classList.remove('disabled');
+                                btn.style.pointerEvents = 'auto';
+                                btn.innerHTML = originalContent;
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.error('Download failed:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: 'Terjadi kesalahan saat mengunduh data.',
+                            });
+                            btn.classList.remove('disabled');
+                            btn.style.pointerEvents = 'auto';
+                            btn.innerHTML = originalContent;
+                        });
+                }
+            });
+        }
     </script>
 @endpush

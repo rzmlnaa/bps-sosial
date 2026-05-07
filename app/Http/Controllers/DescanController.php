@@ -27,7 +27,13 @@ class DescanController extends Controller
         $selectedPeriodeId = $request->get('periode_id');
 
         if (!$selectedPeriodeId) {
-            $selectedPeriode = $periodes->where('is_active', true)->first();
+            $currentYear = date('Y');
+            $selectedPeriode = $periodes->where('tahun', $currentYear)->first();
+            
+            if (!$selectedPeriode) {
+                $selectedPeriode = $periodes->where('is_active', true)->first();
+            }
+            
             $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
         }
 
