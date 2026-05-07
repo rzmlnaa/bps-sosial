@@ -254,6 +254,7 @@ Route::middleware(['check.status'])->group(function () {
 
 
 
+
 });
 
 
@@ -412,6 +413,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/desa-cantik/progress/{peserta_id}/verify-output/{output_id}', [DescanController::class, 'verifyOutput'])->name('desa-cantik.progress.verify-output');
     Route::post('/desa-cantik/progress/{peserta_id}/verify-dukung/{dukung_id}', [DescanController::class, 'verifyDukung'])->name('desa-cantik.progress.verify-dukung');
     Route::post('/desa-cantik/progress/{peserta_id}/verify-all', [DescanController::class, 'verifyAllProgress'])->name('desa-cantik.progress.verify-all');
+
+    Route::get('/desa-cantik/export', [DescanController::class, 'export'])->name('desa-cantik.export');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

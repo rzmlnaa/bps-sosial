@@ -16,6 +16,8 @@ use App\Models\Desa;
 use App\Models\DescanOutputDesa;
 use App\Models\DescanBuktiDukungDesa;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\DescanProgressExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DescanController extends Controller
 {
@@ -83,6 +85,20 @@ class DescanController extends Controller
             'totalDraf',
             'trendPeriode'
         ));
+    }
+
+    public function export(Request $request)
+    {
+        $periodeId = $request->get('periode_id');
+        if (!$periodeId) {
+            $activePeriode = DescanPeriode::where('is_active', true)->first();
+            $periodeId = $activePeriode ? $activePeriode->id : DescanPeriode::max('id');
+        }
+
+        $periode = DescanPeriode::find($periodeId);
+        $fileName = 'Progres_Desa_Cantik_' . ($periode ? $periode->tahun : 'All') . '.xlsx';
+
+        return Excel::download(new DescanProgressExport($periodeId), $fileName);
     }
 
     public function kelola()

@@ -24,6 +24,9 @@
                 </select>
             </form>
             @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
+                <a href="{{ route('desa-cantik.export', ['periode_id' => $selectedPeriodeId]) }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-file-excel me-1"></i> Ekspor Excel
+                </a>
                 <a href="{{ route('desa-cantik.kelola') }}" class="btn btn-sm text-white"
                     style="background-color: var(--bps-orange);">
                     <i class="fas fa-cog me-1 fa-spin"></i> Kelola
