@@ -626,9 +626,9 @@ class DescanController extends Controller
             'kecamatan',
             'kabupaten',
             'periode',
-            'outputs.creator',
-            'outputs.updater',
-            'buktiDukungs.creator'
+            'outputs.creator.kabupaten',
+            'outputs.updater.kabupaten',
+            'buktiDukungs.creator.kabupaten'
         ])->findOrFail($peserta_id);
         $kegiatans = DescanKegiatan::where('is_active', true)
             ->leftJoin('descan_progress_desa', function ($join) use ($peserta_id) {
@@ -639,7 +639,7 @@ class DescanController extends Controller
             ->orderByRaw('(descan_progress_desa.id IS NOT NULL) DESC, COALESCE(descan_progress_desa.urutan, descan_kegiatan.urutan) ASC, descan_kegiatan.id ASC')
             ->get();
 
-        $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier', 'creator', 'updater'])
+        $progresses = DescanProgressDesa::with(['buktis.jenisBukti', 'verifier.kabupaten', 'creator.kabupaten', 'updater.kabupaten'])
             ->where('peserta_id', $peserta_id)
             ->get()
             ->keyBy('kegiatan_id');
@@ -807,6 +807,21 @@ class DescanController extends Controller
                         }
                     }
                 }
+                
+                if (!$linkFound) {
+                    $dbOutput = \App\Models\DescanOutputDesa::where('peserta_id', $peserta_id)
+                        ->where('jenis_output_id', $jo->id)
+                        ->where(function($q) {
+                            $q->where('status', 'disetujui')
+                              ->orWhere('status', 'menunggu_verifikasi')
+                              ->orWhereNotNull('link');
+                        })
+                        ->first();
+                    if ($dbOutput && !empty($dbOutput->link)) {
+                        $linkFound = true;
+                    }
+                }
+
                 if (!$linkFound) {
                     return back()->with('error', "Output wajib '{$jo->nama_output}' harus diisi sebelum diajukan.");
                 }
@@ -824,6 +839,21 @@ class DescanController extends Controller
                         }
                     }
                 }
+
+                if (!$linkFound) {
+                    $dbDukung = \App\Models\DescanBuktiDukungDesa::where('peserta_id', $peserta_id)
+                        ->where('jenis_bukti_id', $jd->id)
+                        ->where(function($q) {
+                            $q->where('status', 'disetujui')
+                              ->orWhere('status', 'menunggu_verifikasi')
+                              ->orWhereNotNull('link_file');
+                        })
+                        ->first();
+                    if ($dbDukung && !empty($dbDukung->link_file)) {
+                        $linkFound = true;
+                    }
+                }
+
                 if (!$linkFound) {
                     return back()->with('error', "Bukti Lainnya yang bersifat wajib ('{$jd->nama_bukti}') harus diisi sebelum diajukan.");
                 }
@@ -913,8 +943,10 @@ class DescanController extends Controller
                 }
             }
             // Hapus yang tidak ada di form (untuk opsional)
+            // Kecuali yang statusnya sudah disetujui atau menunggu verifikasi (karena di UI di-disable jadi tidak terkirim)
             \App\Models\DescanOutputDesa::where('peserta_id', $peserta_id)
                 ->whereNotIn('id', $existingOutputIds)
+                ->whereNotIn('status', ['disetujui', 'menunggu_verifikasi'])
                 ->delete();
         }
 
@@ -944,8 +976,11 @@ class DescanController extends Controller
                     $existingDukungIds[] = $dukung->id;
                 }
             }
+            // Hapus yang tidak ada di form (untuk opsional)
+            // Kecuali yang statusnya sudah disetujui atau menunggu verifikasi
             \App\Models\DescanBuktiDukungDesa::where('peserta_id', $peserta_id)
                 ->whereNotIn('id', $existingDukungIds)
+                ->whereNotIn('status', ['disetujui', 'menunggu_verifikasi'])
                 ->delete();
         }
 

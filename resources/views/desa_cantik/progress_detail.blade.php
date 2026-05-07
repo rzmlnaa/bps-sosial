@@ -8,6 +8,7 @@
             <div>
                 <a href="{{ route('desa-cantik.progress') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
                     <i class="fas fa-arrow-left"></i> Kembali
+
                 </a>
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">
                     {{ $peserta->desa->nama_desa }}
@@ -29,7 +30,8 @@
             $peserta->outputs->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
             $peserta->buktiDukungs->where('status', 'menunggu_verifikasi')->isNotEmpty();
 
-        $isReadonly = $hasPending;
+        // Individual items handle their own lock status now to allow "focusing on new drafts"
+        $isReadonly = false; 
     @endphp
     <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
         <input type="hidden" name="action_type" id="action_type" value="draf">
@@ -181,7 +183,10 @@
                                                                                 </a>
                                                                             @endif
                                                                         </div>
-                                                                        @if(!$isReadonly)
+                                                                        @php 
+                                                                            $isItemLocked = ($isReadonly || ($prog && in_array($prog->status, ['disetujui', 'menunggu_verifikasi'])));
+                                                                        @endphp
+                                                                        @if(!$isItemLocked)
                                                                             <button type="button" class="btn btn-sm btn-outline-danger border-0"
                                                                                 onclick="this.parentElement.remove()"><i
                                                                                     class="fas fa-trash"></i></button>
@@ -289,13 +294,13 @@
                                                 <div class="d-flex flex-wrap justify-content-between align-items-center">
                                                     <div class="text-muted">
                                                         <i class="fas fa-user-plus me-1"></i> Input oleh:
-                                                        <strong>{{ $prog->creator->name ?? '-' }}</strong> pada
+                                                        <strong><span data-bs-toggle="tooltip" title="{{ $prog->creator->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $prog->creator->name ?? '-' }}</span></strong> pada
                                                         {{ $prog->created_at->format('d/m/Y H:i') }}
                                                     </div>
                                                     @if($prog->updated_by && $prog->updated_at != $prog->created_at)
                                                         <div class="text-muted">
                                                             <i class="fas fa-user-edit me-1"></i> Update terakhir:
-                                                            <strong>{{ $prog->updater->name ?? '-' }}</strong> pada
+                                                            <strong><span data-bs-toggle="tooltip" title="{{ $prog->updater->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $prog->updater->name ?? '-' }}</span></strong> pada
                                                             {{ $prog->updated_at->format('d/m/Y H:i') }}
                                                         </div>
                                                     @endif
@@ -306,7 +311,7 @@
                                                         <i
                                                             class="fas {{ $prog->status == 'disetujui' ? 'fa-user-check' : 'fa-user-times' }} me-1"></i>
                                                         {{ $prog->status == 'disetujui' ? 'Diverifikasi' : 'Ditolak' }} oleh:
-                                                        <strong>{{ $prog->verifier->name ?? '-' }}</strong> pada
+                                                        <strong><span data-bs-toggle="tooltip" title="{{ $prog->verifier->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $prog->verifier->name ?? '-' }}</span></strong> pada
                                                         {{ $prog->verified_at->format('d/m/Y H:i') }}
                                                     </div>
                                                 @endif
@@ -354,11 +359,11 @@
                                                 style="font-size: 0.65rem;">{{ $sLabel }}</span>
                                         @endif
                                     </div>
-                                    <input type="hidden" name="output_jenis_id[]" value="{{ $jo->id }}">
+                                    <input type="hidden" name="output_jenis_id[]" value="{{ $jo->id }}" {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'disabled' : '' }}>
                                     <div class="input-group">
                                         <input type="text" name="output_link[]" class="form-control mandatory-output-input"
                                             value="{{ $out ? $out->link : '' }}" placeholder="Link {{ $jo->nama_output }}..."
-                                            oninput="checkMandatoryFilled()" {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                            oninput="checkMandatoryFilled()" {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                         @if($out && filter_var($out->link, FILTER_VALIDATE_URL))
                                             <a href="{{ $out->link }}" target="_blank" class="btn btn-outline-primary">
                                                 <i class="fas fa-external-link-alt"></i>
@@ -369,12 +374,12 @@
                                         <div class="mt-1 d-flex flex-wrap justify-content-between align-items-center opacity-75"
                                             style="font-size: 0.65rem;">
                                             <div class="text-muted">
-                                                <i class="fas fa-user-plus me-1"></i> Input: {{ $out->creator->name ?? '-' }}
+                                                <i class="fas fa-user-plus me-1"></i> Input: <span data-bs-toggle="tooltip" title="{{ $out->creator->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $out->creator->name ?? '-' }}</span>
                                                 ({{ $out->created_at->format('d/m/Y H:i') }})
                                             </div>
                                             @if($out->updated_by && $out->updated_at != $out->created_at)
                                                 <div class="text-muted">
-                                                    <i class="fas fa-user-edit me-1"></i> Update: {{ $out->updater->name ?? '-' }}
+                                                    <i class="fas fa-user-edit me-1"></i> Update: <span data-bs-toggle="tooltip" title="{{ $out->updater->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $out->updater->name ?? '-' }}</span>
                                                     ({{ $out->updated_at->format('d/m/Y H:i') }})
                                                 </div>
                                             @endif
@@ -408,6 +413,26 @@
                             {{-- Existing Optional Output --}}
                             @foreach($peserta->outputs->whereIn('jenis_output_id', $jenisOutputOptional->pluck('id')) as $out)
                                 <div class="mb-3">
+                                    @if($out && $out->status)
+                                        <div class="d-flex justify-content-end mb-1">
+                                            @php
+                                                $sLabel = 'Draf';
+                                                $sColor = 'info';
+                                                if ($out->status == 'menunggu_verifikasi') {
+                                                    $sLabel = 'Menunggu Verifikasi';
+                                                    $sColor = 'warning';
+                                                } elseif ($out->status == 'disetujui') {
+                                                    $sLabel = 'Terverifikasi';
+                                                    $sColor = 'success';
+                                                } elseif ($out->status == 'ditolak') {
+                                                    $sLabel = 'Ditolak';
+                                                    $sColor = 'danger';
+                                                }
+                                            @endphp
+                                            <span class="badge bg-{{ $sColor }} rounded-pill"
+                                                style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                        </div>
+                                    @endif
                                     <div class="d-flex gap-2 mb-1 align-items-center">
                                         <select name="output_jenis_id[]" class="form-select w-50" {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
                                             {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
@@ -418,7 +443,7 @@
                                         </select>
                                         <div class="input-group flex-grow-1">
                                             <input type="text" name="output_link[]" class="form-control"
-                                                value="{{ $out->link }}" placeholder="Link output..." {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                                value="{{ $out->link }}" placeholder="Link output..." {{ ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }} {{ ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             @if(filter_var($out->link, FILTER_VALIDATE_URL))
                                                 <a href="{{ $out->link }}" target="_blank" class="btn btn-outline-primary">
                                                     <i class="fas fa-external-link-alt"></i>
@@ -429,18 +454,21 @@
                                             <div class="mt-1 d-flex flex-wrap justify-content-between align-items-center opacity-75 w-100"
                                                 style="font-size: 0.65rem;">
                                                 <div class="text-muted">
-                                                    <i class="fas fa-user-plus me-1"></i> Input: {{ $out->creator->name ?? '-' }}
+                                                    <i class="fas fa-user-plus me-1"></i> Input: <span data-bs-toggle="tooltip" title="{{ $out->creator->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $out->creator->name ?? '-' }}</span>
                                                     ({{ $out->created_at->format('d/m/Y H:i') }})
                                                 </div>
                                                 @if($out->updated_by && $out->updated_at != $out->created_at)
                                                     <div class="text-muted">
-                                                        <i class="fas fa-user-edit me-1"></i> Update: {{ $out->updater->name ?? '-' }}
+                                                        <i class="fas fa-user-edit me-1"></i> Update: <span data-bs-toggle="tooltip" title="{{ $out->updater->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $out->updater->name ?? '-' }}</span>
                                                         ({{ $out->updated_at->format('d/m/Y H:i') }})
                                                     </div>
                                                 @endif
                                             </div>
                                         @endif
-                                        @if(!$isReadonly)
+                                        @php 
+                                            $isItemLocked = ($isReadonly || ($out && in_array($out->status, ['disetujui', 'menunggu_verifikasi'])));
+                                        @endphp
+                                        @if(!$isItemLocked)
                                             <button type="button" class="btn btn-sm btn-link text-danger p-0"
                                                 onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
                                         @endif
@@ -527,11 +555,11 @@
                                                 style="font-size: 0.65rem;">{{ $sLabel }}</span>
                                         @endif
                                     </div>
-                                    <input type="hidden" name="dukung_jenis_id[]" value="{{ $jd->id }}">
+                                    <input type="hidden" name="dukung_jenis_id[]" value="{{ $jd->id }}" {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'disabled' : '' }}>
                                     <div class="input-group">
                                         <input type="text" name="dukung_link[]" class="form-control mandatory-dukung-input"
                                             value="{{ $duk ? $duk->link_file : '' }}"
-                                            placeholder="Link {{ $jd->nama_bukti }}..." oninput="checkMandatoryFilled()" {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                            placeholder="Link {{ $jd->nama_bukti }}..." oninput="checkMandatoryFilled()" {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                         @if($duk && filter_var($duk->link_file, FILTER_VALIDATE_URL))
                                             <a href="{{ $duk->link_file }}" target="_blank" class="btn btn-outline-info">
                                                 <i class="fas fa-external-link-alt"></i>
@@ -541,7 +569,7 @@
                                     @if($duk)
                                         <div class="mt-1 opacity-75" style="font-size: 0.65rem;">
                                             <div class="text-muted">
-                                                <i class="fas fa-user-plus me-1"></i> Input oleh: {{ $duk->creator->name ?? '-' }}
+                                                <i class="fas fa-user-plus me-1"></i> Input oleh: <span data-bs-toggle="tooltip" title="{{ $duk->creator->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $duk->creator->name ?? '-' }}</span>
                                                 ({{ $duk->created_at->format('d/m/Y H:i') }})
                                             </div>
                                         </div>
@@ -574,6 +602,26 @@
                             {{-- Existing Optional Dukung --}}
                             @foreach($peserta->buktiDukungs->whereIn('jenis_bukti_id', $jenisDukungOptional->pluck('id')) as $duk)
                                 <div class="mb-3">
+                                    @if($duk && $duk->status)
+                                        <div class="d-flex justify-content-end mb-1">
+                                            @php
+                                                $sLabel = 'Draf';
+                                                $sColor = 'info';
+                                                if ($duk->status == 'menunggu_verifikasi') {
+                                                    $sLabel = 'Menunggu Verifikasi';
+                                                    $sColor = 'warning';
+                                                } elseif ($duk->status == 'disetujui') {
+                                                    $sLabel = 'Terverifikasi';
+                                                    $sColor = 'success';
+                                                } elseif ($duk->status == 'ditolak') {
+                                                    $sLabel = 'Ditolak';
+                                                    $sColor = 'danger';
+                                                }
+                                            @endphp
+                                            <span class="badge bg-{{ $sColor }} rounded-pill"
+                                                style="font-size: 0.65rem;">{{ $sLabel }}</span>
+                                        </div>
+                                    @endif
                                     <div class="d-flex gap-2 mb-1 align-items-center">
                                         <select name="dukung_jenis_id[]" class="form-select w-50" {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }}
                                             {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
@@ -586,7 +634,7 @@
                                         </select>
                                         <div class="input-group flex-grow-1">
                                             <input type="text" name="dukung_link[]" class="form-control"
-                                                value="{{ $duk->link_file }}" placeholder="Link bukti..." {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'readonly' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
+                                                value="{{ $duk->link_file }}" placeholder="Link bukti..." {{ ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi']))) ? 'disabled' : '' }} {{ ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])) ? 'data-locked="true"' : '' }}>
                                             @if(filter_var($duk->link_file, FILTER_VALIDATE_URL))
                                                 <a href="{{ $duk->link_file }}" target="_blank" class="btn btn-outline-info">
                                                     <i class="fas fa-external-link-alt"></i>
@@ -597,11 +645,14 @@
                                             <div class="mt-1 opacity-75 w-100" style="font-size: 0.65rem;">
                                                 <div class="text-muted">
                                                     <i class="fas fa-user-plus me-1"></i> Input oleh:
-                                                    {{ $duk->creator->name ?? '-' }} ({{ $duk->created_at->format('d/m/Y H:i') }})
+                                                    <span data-bs-toggle="tooltip" title="{{ $duk->creator->kabupaten->nama_kabupaten ?? 'Pusat/Provinsi' }}">{{ $duk->creator->name ?? '-' }}</span> ({{ $duk->created_at->format('d/m/Y H:i') }})
                                                 </div>
                                             </div>
                                         @endif
-                                        @if(!$isReadonly)
+                                        @php 
+                                            $isItemLocked = ($isReadonly || ($duk && in_array($duk->status, ['disetujui', 'menunggu_verifikasi'])));
+                                        @endphp
+                                        @if(!$isItemLocked)
                                             <button type="button" class="btn btn-sm btn-link text-danger p-0"
                                                 onclick="this.closest('.mb-3').remove()"><i class="fas fa-trash"></i></button>
                                         @endif
@@ -787,9 +838,9 @@
                         </div>
 
                         <!-- <div class="alert alert-info border-0 small mt-4">
-                                                            <i class="fas fa-info-circle me-1"></i>
-                                                            Admin Provinsi akan melakukan verifikasi pada setiap tahapan kegiatan yang telah diajukan.
-                                                        </div> -->
+                                                                    <i class="fas fa-info-circle me-1"></i>
+                                                                    Admin Provinsi akan melakukan verifikasi pada setiap tahapan kegiatan yang telah diajukan.
+                                                                </div> -->
 
                         @php
                             $hasPending = $peserta->progresses->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
@@ -798,24 +849,23 @@
                         @endphp
 
                         <div class="d-grid gap-2 mt-4">
-                            @if($hasPending)
-                                @if($isProvinsi)
-                                    <div class="d-grid gap-2">
-                                        <button type="button" onclick="confirmVerifyAll('approve')"
-                                            class="btn btn-success rounded-pill">
-                                            <i class="fas fa-check-double me-1"></i> Terima Semua Progress
-                                        </button>
-                                        <button type="button" onclick="confirmVerifyAll('reject')"
-                                            class="btn btn-danger rounded-pill">
-                                            <i class="fas fa-times-circle me-1"></i> Tolak Semua Progress
-                                        </button>
-                                    </div>
-                                @else
-                                    <div class="alert alert-warning border-0 text-center rounded-pill py-2 mb-0 fw-bold">
-                                        <i class="fas fa-clock me-1"></i> Dalam Proses Verifikasi
+                            @if($hasPending && $isProvinsi)
+                                <div class="d-grid gap-2">
+                                    <button type="button" onclick="confirmVerifyAll('approve')"
+                                        class="btn btn-success rounded-pill">
+                                        <i class="fas fa-check-double me-1"></i> Terima Semua Progress
+                                    </button>
+                                    <button type="button" onclick="confirmVerifyAll('reject')"
+                                        class="btn btn-danger rounded-pill">
+                                        <i class="fas fa-times-circle me-1"></i> Tolak Semua Progress
+                                    </button>
+                                </div>
+                            @else
+                                @if($hasPending && !$isProvinsi)
+                                    <div class="alert alert-info border-0 text-center rounded-4 py-2 mb-3 small">
+                                        <i class="fas fa-info-circle me-1"></i> Beberapa isian sedang diverifikasi. Anda tetap dapat mengisi draf baru lainnya.
                                     </div>
                                 @endif
-                            @else
                                 <button type="submit" onclick="document.getElementById('action_type').value='draf'"
                                     class="btn btn-light rounded-pill">
                                     <i class="fas fa-save me-1"></i> Simpan Draf
@@ -913,10 +963,16 @@
                 // Clear values
                 const select = newRow.querySelector('select');
                 const input = newRow.querySelector('input[type="text"]');
-                if (select) select.value = '';
+                if (select) {
+                    select.value = '';
+                    select.disabled = false;
+                    select.removeAttribute('data-locked');
+                }
                 if (input) {
                     input.value = '';
+                    input.disabled = false;
                     input.readOnly = false;
+                    input.removeAttribute('data-locked');
                     input.style.backgroundColor = '#fff';
                     input.style.cursor = 'text';
                 }
@@ -954,10 +1010,16 @@
                 // Clear values and remove badges/reasons
                 const select = newRow.querySelector('select');
                 const input = newRow.querySelector('input[type="text"]');
-                if (select) select.value = '';
+                if (select) {
+                    select.value = '';
+                    select.disabled = false;
+                    select.removeAttribute('data-locked');
+                }
                 if (input) {
                     input.value = '';
+                    input.disabled = false;
                     input.readOnly = false;
+                    input.removeAttribute('data-locked');
                     input.style.backgroundColor = '#fff';
                     input.style.cursor = 'text';
                     input.placeholder = input.getAttribute('data-placeholder') || input.placeholder;
@@ -1158,23 +1220,17 @@
                     const container = document.getElementById(id);
                     if (!container) return;
 
-                    const inputs = container.querySelectorAll('input:not([type="hidden"]), select');
+                    const inputs = container.querySelectorAll('input, select');
                     inputs.forEach(input => {
                         if (input.tagName === 'SELECT') {
                             input.disabled = !enabled || input.hasAttribute('data-locked');
-                            if (!enabled && !input.hasAttribute('data-locked')) {
-                                input.value = '';
-                            }
                         } else {
-                            input.readOnly = !enabled || input.hasAttribute('data-locked');
+                            input.disabled = !enabled || input.hasAttribute('data-locked');
                             input.style.backgroundColor = (!enabled || input.hasAttribute('data-locked')) ? '#f8f9fa' : '#fff';
                             input.style.cursor = (!enabled || input.hasAttribute('data-locked')) ? 'not-allowed' : 'text';
 
                             if (!enabled) {
                                 input.placeholder = "Selesaikan kegiatan & bukti wajib terlebih dahulu...";
-                                if (!input.hasAttribute('data-locked') && input.type === 'text') {
-                                    input.value = '';
-                                }
                             } else {
                                 // Restore original placeholder if needed or just use default
                                 input.placeholder = input.getAttribute('data-placeholder') || input.placeholder;
@@ -1424,6 +1480,13 @@
                     });
                 }
             }
+            // Initialize Bootstrap Tooltips
+            document.addEventListener('DOMContentLoaded', function () {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                })
+            });
         </script>
     @endpush
 @endsection
