@@ -128,9 +128,9 @@
                                 @endif
                                 <select name="filter_periode" class="form-select form-select-sm" style="min-width:130px;"
                                     onchange="this.form.submit()">
-                                    <option value="">Semua Periode</option>
+                                    <option value="all" {{ $filterPeriode === 'all' ? 'selected' : '' }}>Semua Periode</option>
                                     @foreach($periodes as $p)
-                                        <option value="{{ $p->id }}" {{ request('filter_periode') == $p->id ? 'selected' : '' }}>
+                                        <option value="{{ $p->id }}" {{ $filterPeriode == $p->id ? 'selected' : '' }}>
                                             {{ $p->tahun }}
                                         </option>
                                     @endforeach

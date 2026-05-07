@@ -29,11 +29,11 @@ class DescanController extends Controller
         $selectedPeriodeId = $request->get('periode_id');
 
         if ($selectedPeriodeId === null) {
-            $currentYear = date('Y');
-            $selectedPeriode = $periodes->where('tahun', $currentYear)->first();
+            $selectedPeriode = $periodes->where('is_active', true)->first();
 
             if (!$selectedPeriode) {
-                $selectedPeriode = $periodes->where('is_active', true)->first();
+                $currentYear = date('Y');
+                $selectedPeriode = $periodes->where('tahun', $currentYear)->first();
             }
 
             $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
@@ -435,8 +435,17 @@ class DescanController extends Controller
         }
 
         // Filter periode
-        if ($request->filled('filter_periode')) {
-            $query->where('periode_id', $request->filter_periode);
+        $filterPeriode = $request->get('filter_periode');
+        if ($filterPeriode === null) {
+            $activePeriode = $periodes->where('is_active', true)->first();
+            if (!$activePeriode) {
+                $activePeriode = $periodes->where('tahun', date('Y'))->first();
+            }
+            $filterPeriode = $activePeriode ? $activePeriode->id : ($periodes->first() ? $periodes->first()->id : null);
+        }
+
+        if ($filterPeriode && $filterPeriode !== 'all') {
+            $query->where('periode_id', $filterPeriode);
         }
 
         $pesertas = $query->paginate(20)->withQueryString();
@@ -447,7 +456,8 @@ class DescanController extends Controller
             'kecamatans',
             'myKabupatenId',
             'isProvinsi',
-            'pesertas'
+            'pesertas',
+            'filterPeriode'
         ));
     }
 
@@ -543,8 +553,17 @@ class DescanController extends Controller
             }
         }
 
-        if ($request->filled('filter_periode')) {
-            $query->where('periode_id', $request->filter_periode);
+        $filterPeriode = $request->get('filter_periode');
+        if ($filterPeriode === null) {
+            $activePeriode = $periodes->where('is_active', true)->first();
+            if (!$activePeriode) {
+                $activePeriode = $periodes->where('tahun', date('Y'))->first();
+            }
+            $filterPeriode = $activePeriode ? $activePeriode->id : ($periodes->first() ? $periodes->first()->id : null);
+        }
+
+        if ($filterPeriode && $filterPeriode !== 'all') {
+            $query->where('periode_id', $filterPeriode);
         }
 
         $pesertas = $query->paginate(20)->withQueryString();
@@ -554,7 +573,8 @@ class DescanController extends Controller
             'kabupatens',
             'myKabupatenId',
             'isProvinsi',
-            'pesertas'
+            'pesertas',
+            'filterPeriode'
         ));
     }
 
@@ -640,8 +660,17 @@ class DescanController extends Controller
             }
         }
 
-        if ($request->filled('periode_id')) {
-            $query->where('descan_peserta.periode_id', $request->periode_id);
+        $selectedPeriodeId = $request->get('periode_id');
+        if ($selectedPeriodeId === null) {
+            $activePeriode = $periodes->where('is_active', true)->first();
+            if (!$activePeriode) {
+                $activePeriode = $periodes->where('tahun', date('Y'))->first();
+            }
+            $selectedPeriodeId = $activePeriode ? $activePeriode->id : ($periodes->first() ? $periodes->first()->id : null);
+        }
+
+        if ($selectedPeriodeId && $selectedPeriodeId !== 'all') {
+            $query->where('descan_peserta.periode_id', $selectedPeriodeId);
         }
 
         if ($request->filled('kecamatan_id')) {
@@ -725,7 +754,8 @@ class DescanController extends Controller
             'selectedDesa',
             'countAction',
             'countPerbaikan',
-            'countDraf'
+            'countDraf',
+            'selectedPeriodeId'
         ));
     }
 

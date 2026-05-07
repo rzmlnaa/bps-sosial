@@ -18,9 +18,9 @@
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Periode</label>
                         <select name="periode_id" class="form-select border-0 bg-light" onchange="this.form.submit()">
-                            <option value="">Semua Periode</option>
+                            <option value="all" {{ $selectedPeriodeId === 'all' ? 'selected' : '' }}>Semua Periode</option>
                             @foreach ($periodes as $p)
-                                <option value="{{ $p->id }}" {{ request('periode_id') == $p->id ? 'selected' : '' }}>
+                                <option value="{{ $p->id }}" {{ $selectedPeriodeId == $p->id ? 'selected' : '' }}>
                                     Tahun {{ $p->tahun }}
                                 </option>
                             @endforeach
