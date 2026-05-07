@@ -30,9 +30,23 @@
             $peserta->outputs->where('status', 'menunggu_verifikasi')->isNotEmpty() ||
             $peserta->buktiDukungs->where('status', 'menunggu_verifikasi')->isNotEmpty();
 
+        $hasDraftOrRejected = $peserta->progresses->whereIn('status', ['draf', 'ditolak'])->isNotEmpty() ||
+            $peserta->outputs->whereIn('status', ['draf', 'ditolak'])->isNotEmpty() ||
+            $peserta->buktiDukungs->whereIn('status', ['draf', 'ditolak'])->isNotEmpty();
+
+        $mandatoryKegiatanCount = $kegiatans->where('is_wajib', true)->count();
+        $mandatoryOutputCount = $jenisOutputMandatory->count();
+        $mandatoryDukungCount = $jenisDukungMandatory->count();
+
+        $isWorkFinished = !$hasPending && !$hasDraftOrRejected &&
+            $peserta->progresses->where('status', 'disetujui')->count() >= $mandatoryKegiatanCount &&
+            $peserta->outputs->where('status', 'disetujui')->count() >= $mandatoryOutputCount &&
+            $peserta->buktiDukungs->where('status', 'disetujui')->count() >= $mandatoryDukungCount;
+
         // Individual items handle their own lock status now to allow "focusing on new drafts"
         $isReadonly = false; 
     @endphp
+    
     <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
         <input type="hidden" name="action_type" id="action_type" value="draf">
         @csrf
@@ -866,14 +880,25 @@
                                         <i class="fas fa-info-circle me-1"></i> Beberapa isian sedang diverifikasi. Anda tetap dapat mengisi draf baru lainnya.
                                     </div>
                                 @endif
-                                <button type="submit" onclick="document.getElementById('action_type').value='draf'"
-                                    class="btn btn-light rounded-pill">
-                                    <i class="fas fa-save me-1"></i> Simpan Draf
-                                </button>
-                                <button type="button" id="btn-submit-verifikasi" onclick="confirmSubmit()"
-                                    class="btn btn-orange rounded-pill">
-                                    <i class="fas fa-paper-plane me-1"></i> Ajukan Verifikasi
-                                </button>
+
+                                @if($isWorkFinished)
+                                    <div id="verified-all-alert" class="alert alert-success border-0 text-center rounded-4 py-3 mb-0 shadow-sm">
+                                        <i class="fas fa-check-double fa-2x mb-2 d-block text-success"></i>
+                                        <div class="fw-bold text-success">Semua Progress Terverifikasi</div>
+                                        <div class="small opacity-75 text-success">Seluruh komponen wajib telah disetujui.</div>
+                                    </div>
+                                @endif
+
+                                <div id="action-buttons-container" class="d-grid gap-2" {!! ($isWorkFinished) ? 'style="display: none !important;"' : '' !!}>
+                                    <button type="submit" onclick="document.getElementById('action_type').value='draf'"
+                                        class="btn btn-light rounded-pill">
+                                        <i class="fas fa-save me-1"></i> Simpan Draf
+                                    </button>
+                                    <button type="button" id="btn-submit-verifikasi" onclick="confirmSubmit()"
+                                        class="btn btn-orange rounded-pill">
+                                        <i class="fas fa-paper-plane me-1"></i> Ajukan Verifikasi
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -983,18 +1008,19 @@
                     btnTrash.type = 'button';
                     btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
                     btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
-                    btnTrash.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); };
+                    btnTrash.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); showActionButtons(); };
                     newRow.appendChild(btnTrash);
                 } else {
                     // Pastikan fungsi hapus bekerja pada baris baru
                     const btn = newRow.querySelector('button');
                     if (btn) {
-                        btn.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); };
+                        btn.onclick = function () { this.parentElement.remove(); updateSelectOptions(container); showActionButtons(); };
                     }
                 }
 
                 container.appendChild(newRow);
                 updateSelectOptions(container);
+                showActionButtons();
             }
 
             function addGenericField(containerId) {
@@ -1037,17 +1063,18 @@
                     btnTrash.type = 'button';
                     btnTrash.className = 'btn btn-sm btn-link text-danger p-0';
                     btnTrash.innerHTML = '<i class="fas fa-trash"></i>';
-                    btnTrash.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); };
+                    btnTrash.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); showActionButtons(); };
                     newRow.querySelector('.d-flex').appendChild(btnTrash);
                 } else {
                     const btn = newRow.querySelector('.fa-trash').parentElement;
                     if (btn) {
-                        btn.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); };
+                        btn.onclick = function () { this.closest('.mb-3').remove(); updateSelectOptions(container); showActionButtons(); };
                     }
                 }
 
                 container.appendChild(newRow);
                 updateSelectOptions(container);
+                showActionButtons();
             }
 
             function updateMinDate(kegId) {
@@ -1486,6 +1513,30 @@
                 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                     return new bootstrap.Tooltip(tooltipTriggerEl)
                 })
+            });
+
+            function showActionButtons() {
+                const container = document.getElementById('action-buttons-container');
+                const alert = document.getElementById('verified-all-alert');
+                if (container) {
+                    container.style.setProperty('display', 'grid', 'important');
+                }
+                if (alert) {
+                    alert.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            // Show buttons on any interaction with editable fields
+            document.addEventListener('input', function(e) {
+                if (e.target.closest('#form-progress') && !e.target.disabled && !e.target.readOnly) {
+                    showActionButtons();
+                }
+            });
+
+            document.addEventListener('change', function(e) {
+                if (e.target.closest('#form-progress') && !e.target.disabled && !e.target.readOnly) {
+                    showActionButtons();
+                }
             });
         </script>
     @endpush

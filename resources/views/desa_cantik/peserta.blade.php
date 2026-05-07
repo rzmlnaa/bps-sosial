@@ -173,18 +173,11 @@
                                                         class="badge bg-secondary rounded-pill">{{ $peserta->creator->name ?? '-' }}</span>
                                                 </td>
                                                 <td class="text-end pe-3">
-                                                    @if($peserta->periode->is_active)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                            data-url="{{ route('desa-cantik.peserta.destroy', $peserta->id) }}"
-                                                            data-type="Peserta Desa" data-name="{{ $peserta->desa->nama_desa ?? '' }}">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    @else
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled
-                                                            title="Periode tidak aktif">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    @endif
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        data-url="{{ route('desa-cantik.peserta.destroy', $peserta->id) }}"
+                                                        data-type="Peserta Desa" data-name="{{ $peserta->desa->nama_desa ?? '' }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforeach

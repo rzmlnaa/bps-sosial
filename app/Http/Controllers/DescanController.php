@@ -15,6 +15,7 @@ use App\Models\Kecamatan;
 use App\Models\Desa;
 use App\Models\DescanOutputDesa;
 use App\Models\DescanBuktiDukungDesa;
+use App\Models\DescanPenilaian;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\DescanProgressExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -29,11 +30,11 @@ class DescanController extends Controller
         if (!$selectedPeriodeId) {
             $currentYear = date('Y');
             $selectedPeriode = $periodes->where('tahun', $currentYear)->first();
-            
+
             if (!$selectedPeriode) {
                 $selectedPeriode = $periodes->where('is_active', true)->first();
             }
-            
+
             $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
         }
 
@@ -415,14 +416,12 @@ class DescanController extends Controller
     {
         $peserta = DescanPeserta::with('periode')->findOrFail($id);
 
-        if (!$peserta->periode->is_active) {
-            return back()->with('error', 'Peserta tidak dapat dihapus karena periode ini tidak aktif.');
-        }
-
-        // Cek apakah sudah ada progress
+        // Cek apakah sudah ada data terkait (progres atau penilaian)
         $hasProgress = DescanProgressDesa::where('peserta_id', $id)->exists();
-        if ($hasProgress) {
-            return back()->with('error', 'Peserta tidak dapat dihapus karena sudah memiliki data progress.');
+        $hasPenilaian = DescanPenilaian::where('peserta_id', $id)->exists();
+
+        if ($hasProgress || $hasPenilaian) {
+            return back()->with('error', 'Peserta tidak dapat dihapus karena sudah memiliki data progres atau penilaian.');
         }
 
         $peserta->delete();
@@ -485,22 +484,31 @@ class DescanController extends Controller
             'catatan' => 'nullable|string'
         ]);
 
-        $data = [];
+        $penilaian = \App\Models\DescanPenilaian::firstOrNew(['peserta_id' => $peserta_id]);
 
         if (!$isProvinsi) {
-            $data['penilaian_mandiri_desa'] = $request->has('penilaian_mandiri_desa');
-            $data['penilaian_mandiri_kab'] = $request->has('penilaian_mandiri_kab');
+            $penilaian->penilaian_mandiri_desa = $request->has('penilaian_mandiri_desa');
+            $penilaian->penilaian_mandiri_kab = $request->has('penilaian_mandiri_kab');
         } else {
-            $data['verifikasi_provinsi'] = $request->has('verifikasi_provinsi');
-            $data['catatan'] = $request->input('catatan');
+            $penilaian->verifikasi_provinsi = $request->has('verifikasi_provinsi');
+            $penilaian->catatan = $request->input('catatan');
         }
 
-        \App\Models\DescanPenilaian::updateOrCreate(
-            ['peserta_id' => $peserta_id],
-            $data
-        );
+        // Jika semua 0/false dan catatan kosong, hapus barisnya (jika ada)
+        if (
+            !$penilaian->penilaian_mandiri_desa &&
+            !$penilaian->penilaian_mandiri_kab &&
+            !$penilaian->verifikasi_provinsi &&
+            empty($penilaian->catatan)
+        ) {
+            if ($penilaian->exists) {
+                $penilaian->delete();
+            }
+        } else {
+            $penilaian->save();
+        }
 
-        return back()->with('success', 'Data penilaian berhasil diperbarui.');
+        return back()->with('success', 'Penilaian berhasil diperbarui.');
     }
 
     // =========================================================
@@ -807,14 +815,14 @@ class DescanController extends Controller
                         }
                     }
                 }
-                
+
                 if (!$linkFound) {
                     $dbOutput = \App\Models\DescanOutputDesa::where('peserta_id', $peserta_id)
                         ->where('jenis_output_id', $jo->id)
-                        ->where(function($q) {
+                        ->where(function ($q) {
                             $q->where('status', 'disetujui')
-                              ->orWhere('status', 'menunggu_verifikasi')
-                              ->orWhereNotNull('link');
+                                ->orWhere('status', 'menunggu_verifikasi')
+                                ->orWhereNotNull('link');
                         })
                         ->first();
                     if ($dbOutput && !empty($dbOutput->link)) {
@@ -843,10 +851,10 @@ class DescanController extends Controller
                 if (!$linkFound) {
                     $dbDukung = \App\Models\DescanBuktiDukungDesa::where('peserta_id', $peserta_id)
                         ->where('jenis_bukti_id', $jd->id)
-                        ->where(function($q) {
+                        ->where(function ($q) {
                             $q->where('status', 'disetujui')
-                              ->orWhere('status', 'menunggu_verifikasi')
-                              ->orWhereNotNull('link_file');
+                                ->orWhere('status', 'menunggu_verifikasi')
+                                ->orWhereNotNull('link_file');
                         })
                         ->first();
                     if ($dbDukung && !empty($dbDukung->link_file)) {
