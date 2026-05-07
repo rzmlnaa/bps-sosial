@@ -41,7 +41,7 @@
                                         <option value="">Semua Kabupaten</option>
                                         @foreach($kabupatens as $kab)
                                             <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
-                                                {{ $kab->nama_kabupaten }}
+                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -82,16 +82,22 @@
                                                     {{ ($pesertas->currentPage() - 1) * $pesertas->perPage() + $index + 1 }}
                                                 </td>
                                                 <td class="text-start">
-                                                    <div class="fw-bold fs-6 text-dark">{{ $peserta->desa->nama_desa ?? '-' }}</div>
+                                                    <div class="fw-bold fs-6 text-dark">
+                                                        <span class="badge bg-light text-dark border me-1" style="font-size: 0.7rem;">{{ $peserta->desa->kode_desa ?? '-' }}</span>
+                                                        {{ $peserta->desa->nama_desa ?? '-' }}
+                                                    </div>
                                                     <div class="text-muted small" style="font-size: 0.75rem;">
                                                         <i class="fas fa-calendar-alt me-1 opacity-50"></i>{{ $peserta->periode->tahun ?? '-' }}
                                                     </div>
                                                 </td>
                                                 <td class="text-start">
-                                                    <div class="small fw-medium text-secondary">{{ $peserta->kecamatan->nama_kecamatan ?? '-' }}</div>
+                                                    <div class="small fw-medium text-secondary">
+                                                        <span class="text-muted me-1">[{{ $peserta->kecamatan->kode_kecamatan ?? '-' }}]</span>
+                                                        {{ $peserta->kecamatan->nama_kecamatan ?? '-' }}
+                                                    </div>
                                                     <div class="mt-1">
                                                         <span class="badge rounded-pill fw-normal" style="font-size: 0.65rem; background-color: #f8f9fa; color: #6c757d; border: 1px solid #e9ecef;">
-                                                            {{ $peserta->kabupaten->nama_kabupaten ?? '-' }}
+                                                            [{{ $peserta->kabupaten->kode_kab ?? '-' }}] {{ $peserta->kabupaten->nama_kabupaten ?? '-' }}
                                                         </span>
                                                     </div>
                                                 </td>

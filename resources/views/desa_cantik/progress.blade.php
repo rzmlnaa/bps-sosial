@@ -35,7 +35,7 @@
                                 <option value="">Semua Kabupaten</option>
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
-                                        {{ $kab->nama_kabupaten }}
+                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                     </option>
                                 @endforeach
                             </select>
@@ -46,13 +46,17 @@
 
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Kecamatan</label>
+                        @php
+                            $kabSelected = request('kabupaten_id') ?: (!$isProvinsi ? ($myKabupatenId ?? null) : null);
+                        @endphp
                         <select name="kecamatan_id" id="selectKecamatan"
-                            class="form-select border-0 bg-light select2-kecamatan" onchange="this.form.submit()">
+                            class="form-select border-0 bg-light select2-kecamatan" onchange="this.form.submit()"
+                            {{ !$kabSelected ? 'disabled' : '' }}>
                             @if($selectedKecamatan)
                                 <option value="{{ $selectedKecamatan->id }}" selected>{{ $selectedKecamatan->nama_kecamatan }}
                                 </option>
                             @else
-                                <option value="">Semua Kecamatan</option>
+                                <option value="">{{ !$kabSelected ? 'Pilih kabupaten dulu' : 'Semua Kecamatan' }}</option>
                             @endif
                         </select>
                     </div>
@@ -60,11 +64,12 @@
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Desa</label>
                         <select name="desa_id" id="selectDesa" class="form-select border-0 bg-light select2-desa"
-                            onchange="this.form.submit()">
+                            onchange="this.form.submit()"
+                            {{ !request('kecamatan_id') ? 'disabled' : '' }}>
                             @if($selectedDesa)
                                 <option value="{{ $selectedDesa->id }}" selected>{{ $selectedDesa->nama_desa }}</option>
                             @else
-                                <option value="">Semua Desa</option>
+                                <option value="">{{ !request('kecamatan_id') ? 'Pilih kecamatan dulu' : 'Semua Desa' }}</option>
                             @endif
                         </select>
                     </div>
@@ -191,11 +196,14 @@
                                         <span class="badge bg-light text-dark border">{{ $p->periode->tahun }}</span>
                                         @if($isProvinsi)
                                             <span
-                                                class="badge bg-soft-orange text-orange">{{ $p->kabupaten->nama_kabupaten }}</span>
+                                                class="badge bg-soft-orange text-orange">[{{ $p->kabupaten->kode_kab }}] {{ $p->kabupaten->nama_kabupaten }}</span>
                                         @endif
                                     </div>
-                                    <h5 class="fw-bold text-navy mb-1">{{ $p->desa->nama_desa }}</h5>
-                                    <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt me-1"></i> Kec.
+                                    <h5 class="fw-bold text-navy mb-1">
+                                        <span class="badge bg-light text-muted border fw-normal me-1" style="font-size: 0.75rem;">{{ $p->desa->kode_desa }}</span>
+                                        {{ $p->desa->nama_desa }}
+                                    </h5>
+                                    <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt me-1"></i> Kec. [{{ $p->kecamatan->kode_kecamatan }}]
                                         {{ $p->kecamatan->nama_kecamatan }}</p>
                                 </div>
                                 <div class="ms-2">
@@ -505,7 +513,7 @@
             }
 
             $('#selectKecamatan').select2({
-                placeholder: 'Semua Kecamatan',
+                placeholder: $('#selectKecamatan').find('option[value=""]').text() || 'Semua Kecamatan',
                 allowClear: true,
                 ajax: {
                     url: urlKecamatan,
@@ -517,7 +525,7 @@
                         kabupaten_id: getKabupatenId(),
                     }),
                     processResults: data => ({
-                        results: data.map(k => ({ id: k.id, text: k.nama_kecamatan }))
+                        results: data.map(k => ({ id: k.id, text: k.text }))
                     }),
                     cache: true
                 }
@@ -526,7 +534,7 @@
             });
 
             $('#selectDesa').select2({
-                placeholder: 'Semua Desa',
+                placeholder: $('#selectDesa').find('option[value=""]').text() || 'Semua Desa',
                 allowClear: true,
                 ajax: {
                     url: urlDesa,

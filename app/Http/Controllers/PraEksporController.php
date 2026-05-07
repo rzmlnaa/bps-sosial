@@ -9,7 +9,7 @@ class PraEksporController extends Controller
     public function index(Request $request)
     {
         // Get all kabupatens for the dropdown
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
         $indikators = \App\Models\Indikator::where('kelompok', 'utama')->orderBy('nama', 'asc')->get();
 
         $selectedKabupatenId = $request->input('kabupaten_id');
@@ -316,7 +316,7 @@ class PraEksporController extends Controller
         }
 
         $selections = $selectionsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
 
         $dataPerKabupaten = [];
         foreach ($kabupatens as $kab) {
@@ -386,7 +386,7 @@ class PraEksporController extends Controller
         }
 
         $selections = $selectionsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
 
         $dataPerKabupaten = [];
         foreach ($kabupatens as $kab) {

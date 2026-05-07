@@ -16,18 +16,29 @@ class WilayahController extends Controller
         $isProvinsi = $user->role === 'admin' || (isset($user->kabupaten) && $user->kabupaten->kode_kab == '6100');
 
         $search = $request->input('search');
+        $filterKabupaten = $request->input('kabupaten_id');
 
         $query = Kecamatan::with([
             'kabupaten',
             'creator',
             'updater',
             'desas' => function ($q) {
-                $q->with(['creator', 'updater'])->orderBy('kode_desa', 'asc');
+                $q->with(['creator', 'updater'])
+                    ->orderByRaw('LENGTH(kode_desa) ASC')
+                    ->orderBy('kode_desa', 'asc');
             }
-        ])->orderBy('kode_kecamatan', 'asc');
+        ])
+            ->select('tb_kecamatan.*')
+            ->join('tb_kabupaten', 'tb_kecamatan.kabupaten_id', '=', 'tb_kabupaten.id')
+            ->orderByRaw('LENGTH(tb_kabupaten.kode_kab) ASC')
+            ->orderBy('tb_kabupaten.kode_kab', 'asc')
+            ->orderByRaw('LENGTH(tb_kecamatan.kode_kecamatan) ASC')
+            ->orderBy('tb_kecamatan.kode_kecamatan', 'asc');
 
         if (!$isProvinsi) {
-            $query->where('kabupaten_id', $user->kabupaten_id);
+            $query->where('tb_kecamatan.kabupaten_id', $user->kabupaten_id);
+        } elseif ($filterKabupaten) {
+            $query->where('tb_kecamatan.kabupaten_id', $filterKabupaten);
         }
 
         if ($search) {
@@ -44,7 +55,7 @@ class WilayahController extends Controller
         $kecamatans = $query->paginate(10)->withQueryString();
 
         if ($isProvinsi) {
-            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get();
+            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab', 'asc')->get();
         } else {
             $kabupatens = Kabupaten::where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
         }
@@ -52,15 +63,21 @@ class WilayahController extends Controller
         // Hitung total untuk statistik
         $totalKecamatan = Kecamatan::when(!$isProvinsi, function ($q) use ($user) {
             return $q->where('kabupaten_id', $user->kabupaten_id);
+        })->when($isProvinsi && $filterKabupaten, function ($q) use ($filterKabupaten) {
+            return $q->where('kabupaten_id', $filterKabupaten);
         })->count();
 
         $totalDesa = Desa::when(!$isProvinsi, function ($q) use ($user) {
             return $q->whereHas('kecamatan', function ($sq) use ($user) {
                 $sq->where('kabupaten_id', $user->kabupaten_id);
             });
+        })->when($isProvinsi && $filterKabupaten, function ($q) use ($filterKabupaten) {
+            return $q->whereHas('kecamatan', function ($sq) use ($filterKabupaten) {
+                $sq->where('kabupaten_id', $filterKabupaten);
+            });
         })->count();
 
-        return view('wilayah.index', compact('kecamatans', 'kabupatens', 'user', 'isProvinsi', 'search', 'totalKecamatan', 'totalDesa'));
+        return view('wilayah.index', compact('kecamatans', 'kabupatens', 'user', 'isProvinsi', 'search', 'filterKabupaten', 'totalKecamatan', 'totalDesa'));
     }
 
     public function searchKecamatanAjax(Request $request)
@@ -77,6 +94,9 @@ class WilayahController extends Controller
         } elseif ($request->filled('kabupaten_id')) {
             $query->where('kabupaten_id', $request->input('kabupaten_id'));
         }
+
+        $query->orderByRaw('LENGTH(kode_kecamatan) ASC')
+            ->orderBy('kode_kecamatan', 'asc');
 
         if ($search) {
             $query->where(function ($q) use ($search) {

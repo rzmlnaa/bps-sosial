@@ -15,7 +15,7 @@
                 <label for="periode_id" class="text-nowrap mb-0 small fw-bold text-muted">Periode:</label>
                 <select name="periode_id" id="periode_id" class="form-select form-select-sm border-0 fw-bold"
                     onchange="this.form.submit()" style="cursor: pointer;">
-
+                    <option value="all" @selected($selectedPeriodeId === 'all')>Semua Tahun</option>
                     @foreach($periodes as $p)
                         <option value="{{ $p->id }}" @selected($selectedPeriodeId == $p->id)>{{ $p->tahun }}
                             @if($p->is_active) (Aktif) @endif
@@ -24,11 +24,17 @@
                 </select>
             </form>
             @if(auth()->check() && auth()->user()->kabupaten && auth()->user()->kabupaten->kode_kab == '6100')
-                <a href="{{ route('desa-cantik.export', ['periode_id' => $selectedPeriodeId]) }}"
-                    onclick="confirmExport(event, this, '{{ $periodes->where('id', $selectedPeriodeId)->first()->tahun ?? '' }}')"
-                    class="btn btn-success btn-sm fw-bold px-3 shadow-sm d-flex align-items-center">
-                    <i class="fas fa-file-excel me-2"></i> Ekspor Excel
-                </a>
+                @if($selectedPeriodeId !== 'all')
+                    <a href="{{ route('desa-cantik.export', ['periode_id' => $selectedPeriodeId]) }}"
+                        onclick="confirmExport(event, this, '{{ $periodes->where('id', $selectedPeriodeId)->first()->tahun ?? '' }}')"
+                        class="btn btn-success btn-sm fw-bold px-3 shadow-sm d-flex align-items-center">
+                        <i class="fas fa-file-excel me-2"></i> Ekspor Excel
+                    </a>
+                @else
+                    <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 shadow-sm d-flex align-items-center" disabled>
+                        <i class="fas fa-file-excel me-2"></i> Ekspor Excel
+                    </button>
+                @endif
                 <a href="{{ route('desa-cantik.kelola') }}"
                     class="btn btn-sm text-white fw-bold px-3 shadow-sm d-flex align-items-center"
                     style="background-color: var(--bps-orange);">
@@ -40,7 +46,7 @@
 
     <!-- Summary Cards -->
     <div class="row g-3 mb-4 fade-in-up">
-        <!-- Total Peserta -->
+        <!-- Total Desa -->
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm h-100 overflow-hidden"
                 style="border-left: 4px solid var(--bps-blue) !important;">
@@ -48,7 +54,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: var(--bps-blue);">
-                                Total Peserta</div>
+                                Total Desa</div>
                             <div class="h4 mb-0 font-weight-bold text-dark">
                                 {{ $totalPeserta }}
                             </div>
@@ -220,7 +226,7 @@
                 data: {
                     labels: @json($rekapKabupaten->pluck('nama')),
                     datasets: [{
-                        label: "Total Peserta",
+                        label: "Total Desa",
                         backgroundColor: "#0093dd",
                         borderRadius: 5,
                         data: @json($rekapKabupaten->pluck('pesertas_count')),

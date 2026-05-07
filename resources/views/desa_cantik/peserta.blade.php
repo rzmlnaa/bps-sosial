@@ -57,11 +57,11 @@
                             @if($isProvinsi)
                                 <div class="mb-3" id="wrapKabupaten">
                                     <label class="form-label fw-bold small">Kabupaten <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="kabupaten_id" id="selectKabupaten">
-                                        <option value="">-- Pilih Kabupaten --</option>
+                                    <select class="form-select" name="kabupaten_id" id="selectKabupaten" {{ $isProvinsi ? 'disabled' : '' }}>
+                                        <option value="">-- {{ $isProvinsi ? 'Pilih periode dulu' : 'Pilih Kabupaten' }} --</option>
                                         @foreach($kabupatens as $kab)
                                             <option value="{{ $kab->id }}" data-kode="{{ $kab->kode_kab }}">
-                                                {{ $kab->nama_kabupaten }}
+                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -75,10 +75,8 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold small">Kecamatan <span class="text-danger">*</span></label>
                                 <select name="kecamatan_id" id="selectKecamatan" class="form-select select2-kecamatan"
-                                    required style="width:100%">
-                                    <option value="">
-                                        {{ $isProvinsi ? '-- Pilih Kabupaten dulu --' : '-- Ketik untuk cari kecamatan --' }}
-                                    </option>
+                                    required style="width:100%" disabled>
+                                    <option value="">-- Pilih periode dulu --</option>
                                 </select>
                             </div>
 
@@ -90,7 +88,7 @@
                                     <option value="">-- Pilih Kecamatan dulu --</option>
                                 </select>
                             </div>
- 
+
                             {{-- Warning for inactive period --}}
                             <div id="inactivePeriodAlert" class="mb-3 d-none">
                                 <div class="alert alert-warning py-2 rounded-3 mb-0 small">
@@ -118,6 +116,16 @@
                             {{-- Filter Periode --}}
                             <form method="GET" action="{{ route('desa-cantik.peserta') }}"
                                 class="d-flex gap-2 align-items-center">
+                                @if($isProvinsi)
+                                    <select name="kabupaten_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="">Semua Kabupaten</option>
+                                        @foreach($kabupatens as $kab)
+                                            <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
+                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 <select name="filter_periode" class="form-select form-select-sm" style="min-width:130px;"
                                     onchange="this.form.submit()">
                                     <option value="">Semua Periode</option>
@@ -154,12 +162,21 @@
                                                 <td class="ps-3">
                                                     {{ ($pesertas->currentPage() - 1) * $pesertas->perPage() + $index + 1 }}
                                                 </td>
-                                                <td class="fw-bold">{{ $peserta->desa->nama_desa ?? '-' }}</td>
-                                                <td>{{ $peserta->kecamatan->nama_kecamatan ?? '-' }}</td>
+                                                <td class="fw-bold">
+                                                    <span class="badge bg-light text-muted border fw-normal me-1"
+                                                        style="font-size: 0.7rem;">{{ $peserta->desa->kode_desa ?? '-' }}</span>
+                                                    {{ $peserta->desa->nama_desa ?? '-' }}
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        class="text-muted small">[{{ $peserta->kecamatan->kode_kecamatan ?? '-' }}]</span>
+                                                    {{ $peserta->kecamatan->nama_kecamatan ?? '-' }}
+                                                </td>
                                                 @if($isProvinsi)
                                                     <td>
                                                         <span class="badge rounded-pill"
                                                             style="background-color: #fff3e0; color: var(--bps-orange); border: 1px solid var(--bps-orange);">
+                                                            [{{ $peserta->kabupaten->kode_kab ?? '-' }}]
                                                             {{ $peserta->kabupaten->nama_kabupaten ?? '-' }}
                                                         </span>
                                                     </td>
@@ -315,8 +332,19 @@
                 function initKecamatan() {
                     const $sel = $('#selectKecamatan');
 
+                    const perId = getPeriodeId();
                     const kabId = getKabupatenId();
-                    const shouldDisable = isProvinsi && !kabId;
+                    
+                    let placeholder = '-- Ketik atau pilih kecamatan --';
+                    let shouldDisable = false;
+
+                    if (!perId) {
+                        placeholder = '-- Pilih periode dulu --';
+                        shouldDisable = true;
+                    } else if (isProvinsi && !kabId) {
+                        placeholder = '-- Pilih Kabupaten dulu --';
+                        shouldDisable = true;
+                    }
 
                     if ($sel.data('select2')) $sel.select2('destroy');
 
@@ -324,7 +352,7 @@
                     $sel.empty().append('<option value=""></option>');
 
                     $sel.select2({
-                        placeholder: shouldDisable ? '-- Pilih Kabupaten dulu --' : '-- Ketik atau pilih kecamatan --',
+                        placeholder: placeholder,
                         allowClear: true,
                         minimumInputLength: 0,
                         ajax: {
@@ -337,7 +365,7 @@
                                 kabupaten_id: getKabupatenId(),
                             }),
                             processResults: data => ({
-                                results: data.map(k => ({ id: k.id, text: k.nama_kecamatan }))
+                                results: data.map(k => ({ id: k.id, text: k.text }))
                             }),
                             cache: true,
                         }
@@ -413,6 +441,14 @@
                 $(selectPeriode).on('change select2:select', function () {
                     const val = $(this).val();
                     const isActive = $(this).find(':selected').data('active') == 1;
+
+                    if (isProvinsi && selectKabupaten) {
+                        if (val) {
+                            $(selectKabupaten).prop('disabled', false).find('option:first').text('-- Pilih Kabupaten --');
+                        } else {
+                            $(selectKabupaten).prop('disabled', true).val('').find('option:first').text('-- Pilih periode dulu --');
+                        }
+                    }
 
                     $('#selectKecamatan').val(null).trigger('change');
                     resetDesa();

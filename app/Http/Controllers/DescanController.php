@@ -27,7 +27,7 @@ class DescanController extends Controller
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
         $selectedPeriodeId = $request->get('periode_id');
 
-        if (!$selectedPeriodeId) {
+        if ($selectedPeriodeId === null) {
             $currentYear = date('Y');
             $selectedPeriode = $periodes->where('tahun', $currentYear)->first();
 
@@ -38,7 +38,7 @@ class DescanController extends Controller
             $selectedPeriodeId = $selectedPeriode ? $selectedPeriode->id : ($periodes->first() ? $periodes->first()->id : null);
         }
 
-        $queryPeserta = DescanPeserta::when($selectedPeriodeId, function ($q) use ($selectedPeriodeId) {
+        $queryPeserta = DescanPeserta::when($selectedPeriodeId && $selectedPeriodeId !== 'all', function ($q) use ($selectedPeriodeId) {
             $q->where('periode_id', $selectedPeriodeId);
         });
 
@@ -48,7 +48,7 @@ class DescanController extends Controller
 
         // Optimasi: Ambil jumlah peserta per kabupaten dalam 1 query (GROUP BY)
         $pesertaCounts = DescanPeserta::selectRaw('kabupaten_id, count(*) as count')
-            ->when($selectedPeriodeId, function ($q) use ($selectedPeriodeId) {
+            ->when($selectedPeriodeId && $selectedPeriodeId !== 'all', function ($q) use ($selectedPeriodeId) {
                 $q->where('periode_id', $selectedPeriodeId);
             })
             ->groupBy('kabupaten_id')
@@ -56,15 +56,16 @@ class DescanController extends Controller
 
         $rekapKabupaten = collect();
         foreach ($kabupatens as $kab) {
+            $nama = str_replace(['KABUPATEN ', 'KOTA '], '', strtoupper($kab->nama_kabupaten));
             $rekapKabupaten->push([
-                'nama' => str_replace(['KABUPATEN ', 'KOTA '], '', strtoupper($kab->nama_kabupaten)),
+                'nama' => '[' . $kab->kode_kab . '] ' . $nama,
                 'pesertas_count' => $pesertaCounts->get($kab->id, 0)
             ]);
         }
 
         // Optimasi: Ambil rekap status dalam 1 query (GROUP BY status)
         $statusCounts = DescanProgressDesa::whereHas('peserta', function ($q) use ($selectedPeriodeId) {
-            if ($selectedPeriodeId) {
+            if ($selectedPeriodeId && $selectedPeriodeId !== 'all') {
                 $q->where('periode_id', $selectedPeriodeId);
             }
         })
@@ -341,17 +342,30 @@ class DescanController extends Controller
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
 
         // Data untuk form
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get() : collect();
-        $kecamatans = !$isProvinsi ? Kecamatan::where('kabupaten_id', $kabupaten?->id)->orderBy('nama_kecamatan')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
+        $kecamatans = !$isProvinsi ? Kecamatan::where('kabupaten_id', $kabupaten?->id)->orderByRaw('LENGTH(kode_kecamatan) ASC')->orderBy('kode_kecamatan', 'asc')->get() : collect();
         $myKabupatenId = $isProvinsi ? null : $kabupaten?->id;
 
         // Query peserta
         $query = DescanPeserta::with(['desa', 'kecamatan', 'creator', 'kabupaten', 'periode'])
-            ->orderBy('created_at', 'desc');
+            ->select('descan_peserta.*')
+            ->join('tb_kabupaten', 'descan_peserta.kabupaten_id', '=', 'tb_kabupaten.id')
+            ->join('tb_kecamatan', 'descan_peserta.kecamatan_id', '=', 'tb_kecamatan.id')
+            ->join('tb_desa', 'descan_peserta.desa_id', '=', 'tb_desa.id')
+            ->orderByRaw('LENGTH(tb_kabupaten.kode_kab) ASC')
+            ->orderBy('tb_kabupaten.kode_kab', 'asc')
+            ->orderByRaw('LENGTH(tb_kecamatan.kode_kecamatan) ASC')
+            ->orderBy('tb_kecamatan.kode_kecamatan', 'asc')
+            ->orderByRaw('LENGTH(tb_desa.kode_desa) ASC')
+            ->orderBy('tb_desa.kode_desa', 'asc');
 
         // Filter oleh kabupaten jika bukan provinsi
         if (!$isProvinsi) {
-            $query->where('kabupaten_id', $myKabupatenId);
+            $query->where('descan_peserta.kabupaten_id', $myKabupatenId);
+        } else {
+            if ($request->filled('kabupaten_id')) {
+                $query->where('descan_peserta.kabupaten_id', $request->kabupaten_id);
+            }
         }
 
         // Filter periode
@@ -359,7 +373,7 @@ class DescanController extends Controller
             $query->where('periode_id', $request->filter_periode);
         }
 
-        $pesertas = $query->paginate(20);
+        $pesertas = $query->paginate(20)->withQueryString();
 
         return view('desa_cantik.peserta', compact(
             'periodes',
@@ -440,17 +454,26 @@ class DescanController extends Controller
 
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
         $myKabupatenId = $isProvinsi ? null : $kabupaten?->id;
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
 
         // Query peserta along with penilaian relation
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'penilaian'])
-            ->orderBy('created_at', 'desc');
+            ->select('descan_peserta.*')
+            ->join('tb_kabupaten', 'descan_peserta.kabupaten_id', '=', 'tb_kabupaten.id')
+            ->join('tb_kecamatan', 'descan_peserta.kecamatan_id', '=', 'tb_kecamatan.id')
+            ->join('tb_desa', 'descan_peserta.desa_id', '=', 'tb_desa.id')
+            ->orderByRaw('LENGTH(tb_kabupaten.kode_kab) ASC')
+            ->orderBy('tb_kabupaten.kode_kab', 'asc')
+            ->orderByRaw('LENGTH(tb_kecamatan.kode_kecamatan) ASC')
+            ->orderBy('tb_kecamatan.kode_kecamatan', 'asc')
+            ->orderByRaw('LENGTH(tb_desa.kode_desa) ASC')
+            ->orderBy('tb_desa.kode_desa', 'asc');
 
         if (!$isProvinsi) {
-            $query->where('kabupaten_id', $myKabupatenId);
+            $query->where('descan_peserta.kabupaten_id', $myKabupatenId);
         } else {
             if ($request->filled('kabupaten_id')) {
-                $query->where('kabupaten_id', $request->kabupaten_id);
+                $query->where('descan_peserta.kabupaten_id', $request->kabupaten_id);
             }
         }
 
@@ -525,29 +548,38 @@ class DescanController extends Controller
         $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
 
         $myKabupatenId = $isProvinsi ? null : $user->kabupaten_id;
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderBy('nama_kabupaten')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
 
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.buktis', 'outputs', 'buktiDukungs'])
-            ->orderBy('created_at', 'desc');
+            ->select('descan_peserta.*')
+            ->join('tb_kabupaten', 'descan_peserta.kabupaten_id', '=', 'tb_kabupaten.id')
+            ->join('tb_kecamatan', 'descan_peserta.kecamatan_id', '=', 'tb_kecamatan.id')
+            ->join('tb_desa', 'descan_peserta.desa_id', '=', 'tb_desa.id')
+            ->orderByRaw('LENGTH(tb_kabupaten.kode_kab) ASC')
+            ->orderBy('tb_kabupaten.kode_kab', 'asc')
+            ->orderByRaw('LENGTH(tb_kecamatan.kode_kecamatan) ASC')
+            ->orderBy('tb_kecamatan.kode_kecamatan', 'asc')
+            ->orderByRaw('LENGTH(tb_desa.kode_desa) ASC')
+            ->orderBy('tb_desa.kode_desa', 'asc');
 
         if (!$isProvinsi) {
-            $query->where('kabupaten_id', $user->kabupaten_id);
+            $query->where('descan_peserta.kabupaten_id', $user->kabupaten_id);
         } else {
             if ($request->filled('kabupaten_id')) {
-                $query->where('kabupaten_id', $request->kabupaten_id);
+                $query->where('descan_peserta.kabupaten_id', $request->kabupaten_id);
             }
         }
 
         if ($request->filled('periode_id')) {
-            $query->where('periode_id', $request->periode_id);
+            $query->where('descan_peserta.periode_id', $request->periode_id);
         }
 
         if ($request->filled('kecamatan_id')) {
-            $query->where('kecamatan_id', $request->kecamatan_id);
+            $query->where('descan_peserta.kecamatan_id', $request->kecamatan_id);
         }
 
         if ($request->filled('desa_id')) {
-            $query->where('desa_id', $request->desa_id);
+            $query->where('descan_peserta.desa_id', $request->desa_id);
         }
 
         // Keep selected values for select2
@@ -1179,15 +1211,27 @@ class DescanController extends Controller
     {
         $kabupatenId = $request->kabupaten_id;
         $search = $request->get('search', '');
-        $limit = (int) $request->get('limit', 4);
+        $limit = (int) $request->get('limit', 10);
 
         $kecamatans = Kecamatan::where('kabupaten_id', $kabupatenId)
-            ->when($search, fn($q) => $q->where('nama_kecamatan', 'like', "%{$search}%"))
-            ->orderBy('nama_kecamatan')
+            ->when($search, function ($q) use ($search) {
+                $q->where('nama_kecamatan', 'like', "%{$search}%")
+                    ->orWhere('kode_kecamatan', 'like', "%{$search}%");
+            })
+            ->orderByRaw('LENGTH(kode_kecamatan) ASC')
+            ->orderBy('kode_kecamatan', 'asc')
             ->limit($limit)
-            ->get(['id', 'nama_kecamatan']);
+            ->get(['id', 'nama_kecamatan', 'kode_kecamatan']);
 
-        return response()->json($kecamatans);
+        $result = $kecamatans->map(function ($k) {
+            return [
+                'id' => $k->id,
+                'text' => "[{$k->kode_kecamatan}] {$k->nama_kecamatan}",
+                'nama_kecamatan' => $k->nama_kecamatan
+            ];
+        });
+
+        return response()->json($result);
     }
 
     public function ajaxDesa(Request $request)
@@ -1195,13 +1239,17 @@ class DescanController extends Controller
         $kecamatanId = $request->kecamatan_id;
         $periodeId = $request->periode_id;
         $search = $request->get('search', '');
-        $limit = (int) $request->get('limit', 4);
+        $limit = (int) $request->get('limit', 10);
 
         $desas = Desa::where('kecamatan_id', $kecamatanId)
-            ->when($search, fn($q) => $q->where('nama_desa', 'like', "%{$search}%"))
-            ->orderBy('nama_desa')
+            ->when($search, function ($q) use ($search) {
+                $q->where('nama_desa', 'like', "%{$search}%")
+                    ->orWhere('kode_desa', 'like', "%{$search}%");
+            })
+            ->orderByRaw('LENGTH(kode_desa) ASC')
+            ->orderBy('kode_desa', 'asc')
             ->limit($limit)
-            ->get(['id', 'nama_desa']);
+            ->get(['id', 'nama_desa', 'kode_desa']);
 
         // Tandai desa yang sudah terdaftar di periode ini
         $terdaftar = DescanPeserta::where('periode_id', $periodeId)
@@ -1216,10 +1264,12 @@ class DescanController extends Controller
             ->groupBy('desa_id');
 
         $result = $desas->map(function ($d) use ($terdaftar, $previousPesertas, $request) {
+            $codePrefix = "[{$d->kode_desa}] ";
+
             if ($request->get('is_filter') == '1') {
                 return [
                     'id' => $d->id,
-                    'text' => $d->nama_desa,
+                    'text' => $codePrefix . $d->nama_desa,
                     'disabled' => false
                 ];
             }
@@ -1230,7 +1280,7 @@ class DescanController extends Controller
 
             $isDisabled = $terdaftarFlag || !empty($previousTahun);
 
-            $text = $d->nama_desa;
+            $text = $codePrefix . $d->nama_desa;
             if ($terdaftarFlag) {
                 $text .= ' ✓ terdaftar di periode ini';
             } elseif (!empty($previousTahun)) {

@@ -184,7 +184,10 @@ class AdminController extends Controller
 
     public function kabupatens()
     {
-        $kabupatens = \App\Models\Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::with(['userAdd', 'userUpdate'])
+            ->orderByRaw('LENGTH(kode_kab) ASC')
+            ->orderBy('kode_kab', 'asc')
+            ->get();
         return view('admin.kabupaten', compact('kabupatens'));
     }
 }

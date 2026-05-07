@@ -71,7 +71,10 @@ class VerificationController extends Controller
             $kabupatenStats[$item->kabupaten_id]['rejected'] += $item->count;
         }
 
-        $kabupatens = Kabupaten::whereIn('id', array_keys($kabupatenStats))->get();
+        $kabupatens = Kabupaten::whereIn('id', array_keys($kabupatenStats))
+            ->orderByRaw('LENGTH(kode_kab) ASC')
+            ->orderBy('kode_kab', 'asc')
+            ->get();
 
         foreach ($kabupatens as $kab) {
             $kab->pending_count = $kabupatenStats[$kab->id]['pending'];

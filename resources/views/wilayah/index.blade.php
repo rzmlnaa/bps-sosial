@@ -47,7 +47,17 @@
                 class="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <h5 class="mb-0 fw-bold" style="color: var(--bps-orange);">Daftar Wilayah (Desa/Kelurahan)</h5>
                 <div class="d-flex flex-column flex-md-row gap-2">
-                    <form action="{{ route('wilayah.index') }}" method="GET" class="d-flex">
+                    <form action="{{ route('wilayah.index') }}" method="GET" class="d-flex flex-column flex-md-row gap-2">
+                        @if($isProvinsi)
+                            <select name="kabupaten_id" class="form-select form-select-sm" style="min-width: 200px;" onchange="this.form.submit()">
+                                <option value="">Semua Kabupaten/Kota</option>
+                                @foreach($kabupatens as $kab)
+                                    <option value="{{ $kab->id }}" {{ $filterKabupaten == $kab->id ? 'selected' : '' }}>
+                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
                         <div class="input-group input-group-sm">
                             <input type="text" name="search" class="form-control" placeholder="Cari Desa atau Kecamatan..."
                                 value="{{ $search }}">
@@ -106,7 +116,7 @@
                                                         Kecamatan {{ $kecamatan->nama_kecamatan }}
                                                     </span>
                                                     @if($isProvinsi)
-                                                        <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ $kecamatan->kabupaten->nama_kabupaten ?? '-' }}</small>
+                                                        <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>[{{ $kecamatan->kabupaten->kode_kab }}] {{ $kecamatan->kabupaten->nama_kabupaten ?? '-' }}</small>
                                                     @endif
                                                 </div>
                                                 <span class="badge bg-white text-dark border ms-2 shadow-sm rounded-pill px-3">{{ $kecamatan->desas->count() }} Desa</span>
@@ -144,7 +154,7 @@
                                     <td class="px-4 py-3 text-muted border-start border-3 border-transparent ps-4">{{ $globalNo++ }}</td>
                                     <td class="py-3">
                                         <div class="d-flex flex-column">
-                                            <span class="text-muted small"><i class="fas fa-level-up-alt fa-rotate-90 text-light me-2"></i>{{ $kecamatan->nama_kecamatan }}</span>
+                                            <span class="text-muted small"><i class="fas fa-level-up-alt fa-rotate-90 text-black me-2"></i>{{ $kecamatan->nama_kecamatan }}</span>
                                         </div>
                                     </td>
                                     <td class="py-3">
