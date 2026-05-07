@@ -75,11 +75,8 @@
                     alt="Logo BPS">
             </div>
             <div>
-                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">Badan Pusat Statistik</h5>
-                @auth
-                    <small class="text-muted"
-                        style="font-size: 0.7rem;">{{ Auth::user()->kabupaten->nama_kabupaten ?? '-' }}</small>
-                @endauth
+                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">SISOKA</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">BPS Prov. Kalimantan Barat</small>
             </div>
         </div>
         @php
@@ -96,6 +93,13 @@
             <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
                 {{ $greeting }}@auth, {{ Auth::user()->name }}@endauth 👋
             </span>
+            <small class="text-muted d-block">
+
+                @auth
+                    <small class="text-muted" style="font-size: 0.7rem;">Team BPS
+                        {{ Auth::user()->kabupaten->nama_kabupaten ?? '-' }}</small>
+                @endauth
+            </small>
         </div>
         <div class="py-3">
 
@@ -150,7 +154,7 @@
                     </a>
                 @endif
 
-                @if(auth()->check())
+                @if(auth()->check() && auth()->user()->kabupaten->kode_kab == '6100')
                     <a href="{{ route('wilayah.index') }}"
                         class="nav-link {{ request()->routeIs('wilayah.*') ? 'active' : '' }}">
                         <i class="fas fa-map-marked-alt"></i>
@@ -364,6 +368,13 @@
                         </a>
                     @endif
                 @endforeach
+
+                <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mt-4 mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em;">Bantuan</h6>
+                <a href="{{ route('panduan') }}" class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}">
+                    <i class="fas fa-book-open"></i>
+                    <span>Panduan Pengguna</span>
+                </a>
             @endif
 
         </div>
@@ -410,16 +421,21 @@
         </div>
 
         <footer class="mt-auto pt-4 border-top text-center text-muted pb-0">
-            <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
-                rights reserved.</small>
-            <small>
-                Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
-                    class="text-danger fw-bold">error - bug</span> pada sistem,
-                harap hubungi Developer dengan
-                <a href="/developer" target="_blank" class="text-decoration-none fw-bold"
-                    style="color: var(--bps-orange);">
-                    klik disini
-                </a>
+            @php
+                $startYear = 2026; // tahun pertama web di deploy
+                $currentYear = date('Y');
+            @endphp
+
+            <small class="d-block mb-1">
+                &copy; {{ $startYear == $currentYear ? $startYear : $startYear . ' - ' . $currentYear }}
+                Badan Pusat Statistik Provinsi Kalimantan Barat. All rights reserved.
+            </small>
+            Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
+                class="text-danger fw-bold">error - bug</span> pada sistem,
+            harap hubungi Developer dengan
+            <a href="/developer" target="_blank" class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
+                klik disini
+            </a>
             </small>
         </footer>
     </main>

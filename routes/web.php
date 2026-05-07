@@ -82,20 +82,10 @@ Route::middleware(['auth'])->group(function () {
 
     })->name('logout');
 
-    // Peserta Desa Cantik (semua user login)
-    Route::get('/desa-cantik/peserta', [DescanController::class, 'peserta'])->name('desa-cantik.peserta');
-    Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
-    Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
-
-    Route::get('/desa-cantik/penilaian', [DescanController::class, 'penilaian'])->name('desa-cantik.penilaian');
-    Route::post('/desa-cantik/penilaian/{peserta_id}', [DescanController::class, 'updatePenilaian'])->name('desa-cantik.penilaian.update');
-
-    Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
-    Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
-    Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');
 
 
-    // AJAX Dropdown
+
+    // AJAX Dropdown descan
     Route::get('/desa-cantik/ajax/kecamatan', [DescanController::class, 'ajaxKecamatan'])->name('desa-cantik.ajax.kecamatan');
     Route::get('/desa-cantik/ajax/desa', [DescanController::class, 'ajaxDesa'])->name('desa-cantik.ajax.desa');
 });
@@ -123,16 +113,28 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // My Team Route
     Route::get('/my-team', [MyTeamController::class, 'index'])->name('my-team.index');
 
-    // Wilayah (Kecamatan & Desa)
-    Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
-    Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
-    Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
-    Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
-    Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
-    Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
-    Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
-    Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
-    Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
+    // // Wilayah (Kecamatan & Desa)
+    // Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
+    // Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    // Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
+    // Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
+    // Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
+    // Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
+    // Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
+    // Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
+    // Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
+
+    // Peserta Desa Cantik (semua user login)
+    Route::get('/desa-cantik/peserta', [DescanController::class, 'peserta'])->name('desa-cantik.peserta');
+    Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
+    Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
+
+    Route::get('/desa-cantik/penilaian', [DescanController::class, 'penilaian'])->name('desa-cantik.penilaian');
+    Route::post('/desa-cantik/penilaian/{peserta_id}', [DescanController::class, 'updatePenilaian'])->name('desa-cantik.penilaian.update');
+
+    Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
+    Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
+    Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');
 });
 
 
@@ -252,8 +254,10 @@ Route::middleware(['check.status'])->group(function () {
     // Menu Desa Cantik
     Route::get('/desa-cantik', [DescanController::class, 'index'])->name('desa-cantik.index');
 
-
-
+    // Panduan Pengguna
+    Route::get('/panduan', function () {
+        return view('panduan.index');
+    })->name('panduan');
 
 });
 
@@ -415,6 +419,18 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/desa-cantik/progress/{peserta_id}/verify-all', [DescanController::class, 'verifyAllProgress'])->name('desa-cantik.progress.verify-all');
 
     Route::get('/desa-cantik/export', [DescanController::class, 'export'])->name('desa-cantik.export');
+
+
+    // Wilayah (Kecamatan & Desa)
+    Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
+    Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
+    Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
+    Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
+    Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
+    Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
+    Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
+    Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

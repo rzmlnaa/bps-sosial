@@ -4,43 +4,43 @@
 
 @section('content')
     <!-- <style>
-                                                                                                                                                                                                                                                                                    .dev-wrapper {
-                                                                                                                                                                                                                                                                                        min-height: calc(100vh - 120px);
-                                                                                                                                                                                                                                                                                        /* sesuaikan tinggi navbar/header */
-                                                                                                                                                                                                                                                                                        display: flex;
-                                                                                                                                                                                                                                                                                        align-items: center;
-                                                                                                                                                                                                                                                                                        justify-content: center;
-                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                </style>
+                                                                                                                                                                                                                                                                                                                    .dev-wrapper {
+                                                                                                                                                                                                                                                                                                                        min-height: calc(100vh - 120px);
+                                                                                                                                                                                                                                                                                                                        /* sesuaikan tinggi navbar/header */
+                                                                                                                                                                                                                                                                                                                        display: flex;
+                                                                                                                                                                                                                                                                                                                        align-items: center;
+                                                                                                                                                                                                                                                                                                                        justify-content: center;
+                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                </style>
 
-                                                                                                                                                                                                                                                                                <div class="dev-wrapper">
-                                                                                                                                                                                                                                                                                    <div class="dev-box text-center">
+                                                                                                                                                                                                                                                                                                                <div class="dev-wrapper">
+                                                                                                                                                                                                                                                                                                                    <div class="dev-box text-center">
 
-                                                                                                                                                                                                                                                                                        <img src="https://i.pinimg.com/originals/48/e3/03/48e303bf57f8ad627c73a0e0e30f5f33.gif" width="300"
-                                                                                                                                                                                                                                                                                            class="mb-1">
+                                                                                                                                                                                                                                                                                                                        <img src="https://i.pinimg.com/originals/48/e3/03/48e303bf57f8ad627c73a0e0e30f5f33.gif" width="300"
+                                                                                                                                                                                                                                                                                                                            class="mb-1">
 
-                                                                                                                                                                                                                                                                                        <h4 class="fw-bold text-warning mb-2">
-                                                                                                                                                                                                                                                                                            🚧 Fitur Dalam Pengembangan
-                                                                                                                                                                                                                                                                                        </h4>
+                                                                                                                                                                                                                                                                                                                        <h4 class="fw-bold text-warning mb-2">
+                                                                                                                                                                                                                                                                                                                            🚧 Fitur Dalam Pengembangan
+                                                                                                                                                                                                                                                                                                                        </h4>
 
-                                                                                                                                                                                                                                                                                        <p class="text-muted mb-0">
-                                                                                                                                                                                                                                                                                            Halaman ini masih dalam tahap pengembangan. <br>
-                                                                                                                                                                                                                                                                                            Beberapa fitur mungkin belum berjalan secara optimal.
-                                                                                                                                                                                                                                                                                            <br><br>
-                                                                                                                                                                                                                                                                                            © BPS Provinsi Kalimantan Barat
-                                                                                                                                                                                                                                                                                            <br>
-                                                                                                                                                                                                                                                                                            Dikembangkan oleh <a href="/developer" target="_blank" style="text-decoration: none;">Peserta Magang</a> –
-                                                                                                                                                                                                                                                                                            Program
-                                                                                                                                                                                                                                                                                            MagangHUB Kemnaker
-                                                                                                                                                                                                                                                                                        </p>
+                                                                                                                                                                                                                                                                                                                        <p class="text-muted mb-0">
+                                                                                                                                                                                                                                                                                                                            Halaman ini masih dalam tahap pengembangan. <br>
+                                                                                                                                                                                                                                                                                                                            Beberapa fitur mungkin belum berjalan secara optimal.
+                                                                                                                                                                                                                                                                                                                            <br><br>
+                                                                                                                                                                                                                                                                                                                            © BPS Provinsi Kalimantan Barat
+                                                                                                                                                                                                                                                                                                                            <br>
+                                                                                                                                                                                                                                                                                                                            Dikembangkan oleh <a href="/developer" target="_blank" style="text-decoration: none;">Peserta Magang</a> –
+                                                                                                                                                                                                                                                                                                                            Program
+                                                                                                                                                                                                                                                                                                                            MagangHUB Kemnaker
+                                                                                                                                                                                                                                                                                                                        </p>
 
-                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                </div> -->
+                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                </div> -->
 
 
-    <div class="container-fluid px-4 py-4 fade-in-up">
+    <div class="container-fluid mt-3 ">
         <!-- Dashboard Header -->
-        <div class="row align-items-center mb-5 ">
+        <div class="row align-items-center mb-3 fade-in-up">
             <div class="col-md-8 col-12 mb-3 mb-md-0">
                 <h1 class="fw-bold text-navy mb-1" style="color: var(--bps-orange);">Dashboard SISOKA</h1>
                 <p class="text-dark lead mb-0">Monitoring dan Analisis Sosial Ekonomi Regional</p>
@@ -55,31 +55,85 @@
         </div>
 
 
-        <!-- Welcome Section -->
-        <div class="row mb-5">
+        <!-- Hero Carousel Section -->
+        <div class="row mb-3">
             <div class="col-12">
-                <div class="welcome-card p-4 p-md-5 shadow-sm border-0 position-relative overflow-hidden"
-                    style="border-radius: 1.5rem; background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
-                    <div class="position-absolute top-0 end-0 p-4" style="opacity: 0.25;">
-                        <i class="fas fa-chart-line fa-10x text-white"></i>
+                <div id="heroCarousel" class="carousel slide carousel-fade shadow-sm" data-bs-ride="carousel"
+                    data-bs-pause="false" style="border-radius: 1.5rem; overflow: hidden;">
+                    <!-- Indicators -->
+                    <div class="carousel-indicators mb-3">
+                        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"
+                            aria-current="true" aria-label="Slide 1"></button>
+                        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"
+                            aria-label="Slide 2"></button>
                     </div>
-                    <div class="row align-items-center position-relative" style="z-index: 1;">
-                        <div class="col-lg-12 text-white">
-                            <h2 class="fw-bold mb-1">Selamat Datang di SISOKA</h2>
-                            <p class="mb-4 opacity-75 fw-medium">Sistem Informasi Sosial Kalbar</p>
 
-                            <p class="lead mb-4 opacity-75" style="max-width: 850px; line-height: 1.6; font-size: 1.1rem;">
-                                SISOKA adalah platform pemantauan indikator sosial ekonomi di Kalimantan Barat yang
-                                menyajikan data harga komoditas dan fenomena pembangunan secara real-time untuk mendukung
-                                analisis yang lebih akurat.
-                            </p>
+                    <div class="carousel-inner">
+                        <!-- Slide 1: Welcome -->
+                        <div class="carousel-item active" data-bs-interval="5000">
+                            <div class="welcome-card p-4 p-md-5 border-0 position-relative overflow-hidden"
+                                style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); min-height: 320px;">
+                                <div class="position-absolute top-0 end-0 p-4 opacity-25">
+                                    <i class="fas fa-chart-line fa-10x text-white"></i>
+                                </div>
+                                <div class="row align-items-center position-relative" style="z-index: 1;">
+                                    <div class="col-lg-12 text-white">
+                                        <h2 class="fw-bold mb-1">Selamat Datang di SISOKA</h2>
+                                        <p class="mb-4 opacity-75 fw-medium">Sistem Informasi Sosial Kalbar</p>
 
-                            <div class="d-flex align-items-center text-white-50 small">
-                                <i class="fas fa-mouse-pointer me-2"></i>
-                                <span>Gunakan menu di samping untuk mulai eksplorasi data.</span>
+                                        <p class="lead mb-4 opacity-75"
+                                            style="max-width: 850px; line-height: 1.6; font-size: 1.1rem;">
+                                            SISOKA adalah platform pemantauan indikator sosial ekonomi di Kalimantan Barat
+                                            yang
+                                            menyajikan data harga komoditas dan fenomena pembangunan secara real-time untuk
+                                            mendukung
+                                            analisis yang lebih akurat.
+                                        </p>
+
+                                        <div class="d-flex align-items-center text-white-50 small">
+                                            <i class="fas fa-mouse-pointer me-2"></i>
+                                            <span>Gunakan menu di samping untuk mulai eksplorasi data.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 2: User Guide -->
+                        <div class="carousel-item" data-bs-interval="5000">
+                            <div class="p-4 p-md-5 border-0 position-relative overflow-hidden"
+                                style="background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); min-height: 320px;">
+                                <div
+                                    class="position-absolute top-50 end-0 translate-middle-y p-4 opacity-25 d-none d-md-block">
+                                    <i class="fas fa-book-open fa-8x text-white"></i>
+                                </div>
+
+                                <div class="row align-items-center position-relative" style="z-index: 1;">
+                                    <div class="col-lg-8 text-white">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
+                                                <i class="fas fa-lightbulb text-white"></i>
+                                            </div>
+                                            <span class="text-uppercase tracking-wider small fw-bold opacity-75">Panduan
+                                                Sistem</span>
+                                        </div>
+                                        <h2 class="fw-bold mb-2">Butuh Bantuan Penggunaan SISOKA?</h2>
+                                        <p class="mb-4 opacity-90 lead" style="font-size: 1.05rem; max-width: 700px;">
+                                            Kami telah menyediakan panduan lengkap untuk memudahkan Anda dalam
+                                            mengoperasikan Dashboard SISOKA.
+                                            Pelajari cara input data hingga proses verifikasi secara detail.
+                                        </p>
+                                        <a href="{{ route('panduan') }}"
+                                            class="btn btn-light btn-lg rounded-pill px-5 fw-bold shadow-sm transition-all hover-up"
+                                            style="background: #ffffff; color: #ea580c; border: none;">
+                                            <i class="fas fa-book-reader me-2"></i> Baca Panduan Sekarang
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -88,7 +142,7 @@
         <!-- Stats Grid (KPIs with Deltas) -->
         <div class="row g-4 mb-5">
             <!-- Perubahan Harga -->
-            <div class="col-xl-6 col-md-6">
+            <div class="col-xl-3 col-md-6">
                 <div class="stats-card h-100 border-0 shadow-sm hover-up transition-all"
                     style="border-radius: 1.5rem; background: #ffffff;">
                     <div class="p-4">
@@ -115,7 +169,7 @@
             </div>
 
             <!-- Dynamic Menu -->
-            <div class="col-xl-6 col-md-6">
+            <div class="col-xl-3 col-md-6">
                 <div class="stats-card h-100 border-0 shadow-sm hover-up transition-all"
                     style="border-radius: 1.5rem; background: #ffffff;">
                     <div class="p-4">
@@ -137,6 +191,77 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Kabupaten -->
+            <div class="col-xl-2 col-md-6">
+                <div class="stats-card h-100 border-0 shadow-sm hover-up transition-all"
+                    style="border-radius: 1.5rem; background: #ffffff;">
+                    <div class="p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div class="rounded-circle p-2 text-primary d-flex align-items-center justify-content-center"
+                                style="width: 45px; height: 45px; background: rgba(13, 110, 253, 0.1);">
+                                <i class="fas fa-map-marked-alt fa-lg"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-navy mb-1 counter-value" data-target="{{ $stats['kabupaten_count'] }}">0
+                            </h3>
+                            <p class="text-muted small mb-1 text-uppercase letter-spacing-1 fw-bold">Kabupaten</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kecamatan -->
+            <div class="col-xl-2 col-md-6">
+                <div class="stats-card h-100 border-0 shadow-sm hover-up transition-all"
+                    style="border-radius: 1.5rem; background: #ffffff;">
+                    <div class="p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div class="rounded-circle p-2 text-success d-flex align-items-center justify-content-center"
+                                style="width: 45px; height: 45px; background: rgba(25, 135, 84, 0.1);">
+                                <i class="fas fa-map-signs fa-lg"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-navy mb-1 counter-value" data-target="{{ $stats['kecamatan_count'] }}">0
+                            </h3>
+                            <p class="text-muted small mb-1 text-uppercase letter-spacing-1 fw-bold">Kecamatan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desa -->
+            <div class="col-xl-2 col-md-6">
+                <div class="stats-card h-100 border-0 shadow-sm hover-up transition-all"
+                    style="border-radius: 1.5rem; background: #ffffff;">
+                    <div class="p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div class="rounded-circle p-2 text-danger d-flex align-items-center justify-content-center"
+                                style="width: 45px; height: 45px; background: rgba(220, 53, 69, 0.1);">
+                                <i class="fas fa-home fa-lg"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-navy mb-1 counter-value" data-target="{{ $stats['desa_count'] }}">0</h3>
+                            <p class="text-muted small mb-1 text-uppercase letter-spacing-1 fw-bold">Desa</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info border-0 shadow-sm mb-5 d-flex align-items-center"
+            style="border-radius: 1rem; background: rgba(13, 202, 240, 0.05);">
+            <div class="p-2 rounded-circle bg-info text-white me-3 d-flex align-items-center justify-content-center"
+                style="width: 32px; height: 32px;">
+                <i class="fas fa-info-circle small"></i>
+            </div>
+            <div class="small fw-medium text-info">
+                <strong>Catatan:</strong> Data Wilayah di atas adalah data yang hanya di input oleh admin, jadinya belum
+                semua kecamatan dan desa yang di masukan oleh admin.
             </div>
         </div>
 
@@ -380,251 +505,250 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <style>
-        :root {
-            --primary-faded: rgba(37, 99, 235, 0.1);
-            --success-faded: rgba(34, 197, 94, 0.1);
-            --danger-faded: rgba(239, 68, 68, 0.1);
-            --warning-faded: rgba(245, 158, 11, 0.1);
-        }
-
-        .text-navy {
-            color: #1e293b;
-        }
-
-        .text-xs {
-            font-size: 0.75rem;
-        }
-
-        .text-sm {
-            font-size: 0.875rem;
-        }
-
-        .letter-spacing-1 {
-            letter-spacing: 0.1em;
-        }
-
-        .hover-up:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-        }
-
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        <style>
+            :root {
+                --primary-faded: rgba(37, 99, 235, 0.1);
+                --success-faded: rgba(34, 197, 94, 0.1);
+                --danger-faded: rgba(239, 68, 68, 0.1);
+                --warning-faded: rgba(245, 158, 11, 0.1);
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            .text-navy {
+                color: #1e293b;
             }
 
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            .text-xs {
+                font-size: 0.75rem;
             }
 
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            .text-sm {
+                font-size: 0.875rem;
             }
-        }
 
-        .bg-blue-100 {
-            background-color: #dbeafe;
-        }
+            .letter-spacing-1 {
+                letter-spacing: 0.1em;
+            }
 
-        .bg-danger-100 {
-            background-color: #fee2e2;
-        }
+            .hover-up:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+            }
 
-        .bg-success-100 {
-            background-color: #dcfce7;
-        }
+            .transition-all {
+                transition: all 0.3s ease;
+            }
 
-        .bg-warning-100 {
-            background-color: #fef3c7;
-        }
+            .fade-in {
+                animation: fadeIn 0.8s ease-out;
+            }
 
-        .bg-indigo-100 {
-            background-color: #e0e7ff;
-        }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
 
-        .group:hover .text-navy {
-            color: #2563eb !important;
-        }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-        .group:hover .btn-link-icon {
-            opacity: 1 !important;
-            transform: translateX(2px);
-        }
+            @keyframes pulse {
+                0% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+                }
 
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-transform: uppercase;
-        }
+                70% {
+                    transform: scale(1);
+                    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+                }
 
-        .bg-color-1 {
-            background: linear-gradient(135deg, #FF6B6B, #EE5253);
-        }
+                100% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+                }
+            }
 
-        .bg-color-2 {
-            background: linear-gradient(135deg, #4834D4, #686DE0);
-        }
+            .bg-blue-100 {
+                background-color: #dbeafe;
+            }
 
-        .bg-color-3 {
-            background: linear-gradient(135deg, #20BF6B, #26DE81);
-        }
+            .bg-danger-100 {
+                background-color: #fee2e2;
+            }
 
-        .bg-color-4 {
-            background: linear-gradient(135deg, #F0932B, #FFBE76);
-        }
+            .bg-success-100 {
+                background-color: #dcfce7;
+            }
 
-        .bg-color-5 {
-            background: linear-gradient(135deg, #A55EEA, #D1D8E0);
-        }
+            .bg-warning-100 {
+                background-color: #fef3c7;
+            }
 
-        .bg-color-6 {
-            background: linear-gradient(135deg, #2bcbba, #0fb9b1);
-        }
-    </style>
+            .bg-indigo-100 {
+                background-color: #e0e7ff;
+            }
+
+            .group:hover .text-navy {
+                color: #2563eb !important;
+            }
+
+            .group:hover .btn-link-icon {
+                opacity: 1 !important;
+                transform: translateX(2px);
+            }
+
+            .avatar-circle {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: white;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                text-transform: uppercase;
+            }
+
+            .bg-color-1 {
+                background: linear-gradient(135deg, #FF6B6B, #EE5253);
+            }
+
+            .bg-color-2 {
+                background: linear-gradient(135deg, #4834D4, #686DE0);
+            }
+
+            .bg-color-3 {
+                background: linear-gradient(135deg, #20BF6B, #26DE81);
+            }
+
+            .bg-color-4 {
+                background: linear-gradient(135deg, #F0932B, #FFBE76);
+            }
+
+            .bg-color-5 {
+                background: linear-gradient(135deg, #A55EEA, #D1D8E0);
+            }
+
+            .bg-color-6 {
+                background: linear-gradient(135deg, #2bcbba, #0fb9b1);
+            }
+        </style>
 @endsection
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const colors = ['#0ea5e9', '#f59e0b', '#ef4444', '#10b981', '#6366f1'];
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const colors = ['#0ea5e9', '#f59e0b', '#ef4444', '#10b981', '#6366f1'];
 
 
-            // 3. Price Chart (Multi-line)
-            const priceCtx = document.getElementById('priceChart').getContext('2d');
-            new Chart(priceCtx, {
-                type: 'line',
-                data: {
-                    labels: {!! json_encode($priceLabels) !!},
-                    datasets: [
-                        @foreach($priceTrend as $index => $trend)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
-                                label: '{{ $trend["name"] }}',
-                                data: {!! json_encode($trend["data"]) !!},
-                                borderColor: colors[{{ $index }} % colors.length],
-                                borderWidth: 4,
-                                tension: 0.3,
-                                pointRadius: 5,
-                                pointHoverRadius: 8,
-                                fill: false
-                            },
-                        @endforeach
-                                                                                                                                                                                                                                        ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20,
-                                font: { size: 12, weight: 'bold' }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            padding: 15,
-                            callbacks: {
-                                label: function (context) {
-                                    return context.dataset.label + ': Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
-                                }
-                            }
-                        }
+                // 3. Price Chart (Multi-line)
+                const priceCtx = document.getElementById('priceChart').getContext('2d');
+                new Chart(priceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: {!! json_encode($priceLabels) !!},
+                        datasets: [
+                            @foreach($priceTrend as $index => $trend)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+                                    label: '{{ $trend["name"] }}',
+                                    data: {!! json_encode($trend["data"]) !!},
+                                    borderColor: colors[{{ $index }} % colors.length],
+                                    borderWidth: 4,
+                                    tension: 0.3,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 8,
+                                    fill: false
+                                },
+                            @endforeach
+                                                                                                                                                                                                                                                                        ]
                     },
-                    scales: {
-                        y: {
-                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
-                            ticks: {
-                                font: { size: 11 },
-                                callback: function (value) {
-                                    return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(value);
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { size: 12, weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                padding: 15,
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.dataset.label + ': Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                    }
                                 }
                             }
                         },
-                        x: { grid: { drawBorder: false }, ticks: { font: { size: 11 } } }
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function (value) {
+                                        return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(value);
+                                    }
+                                }
+                            },
+                            x: { grid: { drawBorder: false }, ticks: { font: { size: 11 } } }
+                        }
                     }
+                });
+            });
+
+            // 4. Counter Animation
+            document.addEventListener('DOMContentLoaded', function () {
+                const counters = document.querySelectorAll('.counter-value');
+                const duration = 2000; // Total animation time in ms (2 seconds)
+
+                counters.forEach(counter => {
+                    const target = +counter.getAttribute('data-target');
+                    if (target === 0) return;
+
+                    let startTimestamp = null;
+                    const step = (timestamp) => {
+                        if (!startTimestamp) startTimestamp = timestamp;
+                        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                        const currentCount = Math.floor(progress * target);
+
+                        counter.innerText = currentCount.toLocaleString('id-ID');
+
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
+                        } else {
+                            counter.innerText = target.toLocaleString('id-ID');
+                        }
+                    };
+                    window.requestAnimationFrame(step);
+                });
+            });
+
+            // Real-time Clock
+            function updateClock() {
+                const now = new Date();
+                const d = String(now.getDate()).padStart(2, '0');
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const m = months[now.getMonth()];
+                const y = now.getFullYear();
+                const h = String(now.getHours()).padStart(2, '0');
+                const i = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+
+                const clockElement = document.getElementById('realtime-clock');
+                if (clockElement) {
+                    clockElement.innerText = `${d} ${m} ${y}, ${h}:${i}:${s}`;
                 }
-            });
-        });
-
-        // 4. Counter Animation
-        document.addEventListener('DOMContentLoaded', function () {
-            const counters = document.querySelectorAll('.counter-value');
-            const duration = 2000; // Total animation time in ms (2 seconds)
-
-            counters.forEach(counter => {
-                const target = +counter.getAttribute('data-target');
-                if (target === 0) return;
-
-                let startTimestamp = null;
-                const step = (timestamp) => {
-                    if (!startTimestamp) startTimestamp = timestamp;
-                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                    const currentCount = Math.floor(progress * target);
-
-                    counter.innerText = currentCount.toLocaleString('id-ID');
-
-                    if (progress < 1) {
-                        window.requestAnimationFrame(step);
-                    } else {
-                        counter.innerText = target.toLocaleString('id-ID');
-                    }
-                };
-                window.requestAnimationFrame(step);
-            });
-        });
-
-        // Real-time Clock
-        function updateClock() {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const m = months[now.getMonth()];
-            const y = now.getFullYear();
-            const h = String(now.getHours()).padStart(2, '0');
-            const i = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-
-            const clockElement = document.getElementById('realtime-clock');
-            if (clockElement) {
-                clockElement.innerText = `${d} ${m} ${y}, ${h}:${i}:${s}`;
             }
-        }
-        setInterval(updateClock, 1000);
-    </script>
-@endpush
+            setInterval(updateClock, 1000);
+        </script>
+    @endpush

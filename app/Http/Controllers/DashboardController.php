@@ -11,6 +11,9 @@ use App\Models\DynamicMenu;
 use App\Models\RhTahun;
 use App\Models\VariabelKemiskinan;
 use App\Models\Komoditas;
+use App\Models\Kabupaten;
+use App\Models\Kecamatan;
+use App\Models\Desa;
 
 class DashboardController extends Controller
 {
@@ -34,6 +37,9 @@ class DashboardController extends Controller
                             $q->whereJsonLength('meta', '>', 0);
                         });
                 })->count(),
+            'kabupaten_count' => Kabupaten::where('kode_kab', '!=', '6100')->count(),
+            'kecamatan_count' => Kecamatan::count(),
+            'desa_count' => Desa::count(),
         ];
 
 
