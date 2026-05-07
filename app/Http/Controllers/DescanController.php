@@ -19,6 +19,7 @@ use App\Models\DescanPenilaian;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\DescanProgressExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class DescanController extends Controller
 {
@@ -121,7 +122,38 @@ class DescanController extends Controller
         $jenisOutputs = DescanJenisOutput::paginate(10, ['*'], 'output_page');
         $jenisBuktiDukungs = DescanJenisBuktiDukung::paginate(10, ['*'], 'jbd_page');
 
-        return view('desa_cantik.kelola', compact('periodes', 'kegiatans', 'jenisBuktiKegiatans', 'jenisOutputs', 'jenisBuktiDukungs'));
+        // Ringkasan progress belum selesai pada periode aktif (Optimasi: Aggregation via SQL)
+        $activePeriode = DescanPeriode::where('is_active', true)->first();
+        $unfinishedSummary = collect();
+        if ($activePeriode) {
+            $unfinishedStatuses = ['draf', 'menunggu_verifikasi', 'ditolak'];
+            $unfinishedSummary = DescanPeserta::query()
+                ->join('tb_kabupaten', 'descan_peserta.kabupaten_id', '=', 'tb_kabupaten.id')
+                ->where('descan_peserta.periode_id', $activePeriode->id)
+                ->where(function ($q) use ($unfinishedStatuses) {
+                    $q->whereHas('progresses', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                        ->orWhereHas('outputs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                        ->orWhereHas('buktiDukungs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses));
+                })
+                ->select(
+                    'tb_kabupaten.nama_kabupaten as nama',
+                    'tb_kabupaten.kode_kab as kode',
+                    DB::raw('count(descan_peserta.id) as count')
+                )
+                ->groupBy('tb_kabupaten.id', 'tb_kabupaten.nama_kabupaten', 'tb_kabupaten.kode_kab')
+                ->orderBy('tb_kabupaten.kode_kab')
+                ->get();
+        }
+
+        return view('desa_cantik.kelola', compact(
+            'periodes',
+            'kegiatans',
+            'jenisBuktiKegiatans',
+            'jenisOutputs',
+            'jenisBuktiDukungs',
+            'unfinishedSummary',
+            'activePeriode'
+        ));
     }
 
     public function storePeriode(Request $request)
@@ -145,10 +177,44 @@ class DescanController extends Controller
         $newStatus = !$periode->is_active;
 
         if ($newStatus) {
-            // Jika mau mengaktifkan, matikan yang lain dulu
-            DescanPeriode::where('id', '!=', $id)->update(['is_active' => false]);
+            // Jika mau mengaktifkan, cek dulu apakah ada periode lain yang sedang aktif
+            $currentlyActive = DescanPeriode::where('is_active', true)->where('id', '!=', $id)->first();
+
+            if ($currentlyActive) {
+                // Cek apakah periode yang sedang aktif tersebut masih memiliki progress yang belum 'disetujui'
+                $unfinishedStatuses = ['draf', 'menunggu_verifikasi', 'ditolak'];
+                $hasUnfinished = DescanPeserta::where('periode_id', $currentlyActive->id)
+                    ->where(function ($q) use ($unfinishedStatuses) {
+                        $q->whereHas('progresses', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                            ->orWhereHas('outputs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                            ->orWhereHas('buktiDukungs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses));
+                    })->exists();
+
+                if ($hasUnfinished) {
+                    return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])
+                        ->with('error', 'Tidak dapat mengaktifkan periode ' . $periode->tahun . '. Periode aktif saat ini (' . $currentlyActive->tahun . ') masih memiliki progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).');
+                }
+
+                // Matikan periode yang sedang aktif
+                $currentlyActive->update(['is_active' => false]);
+            }
+
             $msg = 'Periode ' . $periode->tahun . ' telah diatur sebagai periode aktif.';
         } else {
+            // Jika mau menonaktifkan, cek apakah masih ada progress yang belum 'disetujui'
+            $unfinishedStatuses = ['draf', 'menunggu_verifikasi', 'ditolak'];
+            $hasUnfinished = DescanPeserta::where('periode_id', $id)
+                ->where(function ($q) use ($unfinishedStatuses) {
+                    $q->whereHas('progresses', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                        ->orWhereHas('outputs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses))
+                        ->orWhereHas('buktiDukungs', fn($sq) => $sq->whereIn('status', $unfinishedStatuses));
+                })->exists();
+
+            if ($hasUnfinished) {
+                return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])
+                    ->with('error', 'Periode ' . $periode->tahun . ' tidak dapat dinonaktifkan karena masih terdapat progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).');
+            }
+
             $msg = 'Periode ' . $periode->tahun . ' telah dinonaktifkan.';
         }
 
@@ -497,7 +563,11 @@ class DescanController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
 
-        $peserta = DescanPeserta::findOrFail($peserta_id);
+        $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Anda tidak dapat melakukan perubahan data penilaian.");
+        }
 
         if (!$isProvinsi && $peserta->kabupaten_id != $user->kabupaten_id) {
             return back()->with('error', 'Anda tidak memiliki akses ke peserta ini.');
@@ -724,6 +794,11 @@ class DescanController extends Controller
         ]);
 
         $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Anda tidak dapat melakukan perubahan data progress.");
+        }
+
         $year = $peserta->periode->tahun;
         $allKegiatans = DescanKegiatan::where('is_active', true)
             ->leftJoin('descan_progress_desa', function ($join) use ($peserta_id) {
@@ -1033,6 +1108,11 @@ class DescanController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
 
+        $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Tidak dapat melakukan verifikasi.");
+        }
+
         if (!$isProvinsi) {
             return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
         }
@@ -1074,6 +1154,11 @@ class DescanController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
 
+        $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Tidak dapat melakukan verifikasi.");
+        }
+
         if (!$isProvinsi) {
             return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
         }
@@ -1113,6 +1198,11 @@ class DescanController extends Controller
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
 
+        $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Tidak dapat melakukan verifikasi.");
+        }
+
         if (!$isProvinsi) {
             return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');
         }
@@ -1149,6 +1239,11 @@ class DescanController extends Controller
     {
         $user = Auth::user();
         $isProvinsi = $user->kabupaten && $user->kabupaten->kode_kab == '6100';
+
+        $peserta = DescanPeserta::with('periode')->findOrFail($peserta_id);
+        if (!$peserta->periode->is_active) {
+            return back()->with('error', "Periode {$peserta->periode->tahun} sudah tidak aktif. Tidak dapat melakukan verifikasi.");
+        }
 
         if (!$isProvinsi) {
             return back()->with('error', 'Hanya admin provinsi yang dapat melakukan verifikasi.');

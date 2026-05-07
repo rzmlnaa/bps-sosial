@@ -8,8 +8,13 @@
             <div>
                 <a href="{{ route('desa-cantik.progress') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
                     <i class="fas fa-arrow-left"></i> Kembali
-
                 </a>
+                @if(!$peserta->periode->is_active)
+                    <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 py-2">
+                        <i class="fas fa-lock me-2"></i>
+                        Periode <strong>{{ $peserta->periode->tahun }}</strong> sudah tidak aktif. Seluruh data progress telah dikunci.
+                    </div>
+                @endif
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">
                     {{ $peserta->desa->nama_desa }}
                 </h2>
@@ -44,7 +49,7 @@
             $peserta->buktiDukungs->where('status', 'disetujui')->count() >= $mandatoryDukungCount;
 
         // Individual items handle their own lock status now to allow "focusing on new drafts"
-        $isReadonly = false; 
+        $isReadonly = !$peserta->periode->is_active; 
     @endphp
     
     <form action="{{ route('desa-cantik.progress.store', $peserta->id) }}" method="POST" id="form-progress">
@@ -284,7 +289,7 @@
 
 
 
-                                            @if($isProvinsi && $prog->status == 'menunggu_verifikasi')
+                                            @if($isProvinsi && $prog->status == 'menunggu_verifikasi' && $peserta->periode->is_active)
                                                 <div class="mt-4 pt-3 border-top">
                                                     <div class="d-flex gap-2">
                                                         <div id="verify-actions-{{ $prog->id }}" class="d-flex gap-2">
@@ -406,7 +411,7 @@
                                         </small>
                                     @endif
 
-                                    @if($isProvinsi && $out && $out->status == 'menunggu_verifikasi')
+                                    @if($isProvinsi && $out && $out->status == 'menunggu_verifikasi' && $peserta->periode->is_active)
                                         <div class="mt-2 pt-2 border-top">
                                             <div id="verify-output-actions-{{ $out->id }}" class="d-flex gap-2">
                                                 <button type="button" onclick="confirmApproveOutput({{ $out->id }})"
@@ -494,7 +499,7 @@
                                         </small>
                                     @endif
 
-                                    @if($isProvinsi && $out && $out->status == 'menunggu_verifikasi')
+                                    @if($isProvinsi && $out && $out->status == 'menunggu_verifikasi' && $peserta->periode->is_active)
                                         <div class="mt-2 pt-2 border-top">
                                             <div id="verify-output-actions-{{ $out->id }}" class="d-flex gap-2">
                                                 <button type="button" onclick="confirmApproveOutput({{ $out->id }})"
@@ -595,7 +600,7 @@
                                         </small>
                                     @endif
 
-                                    @if($isProvinsi && $duk && $duk->status == 'menunggu_verifikasi')
+                                    @if($isProvinsi && $duk && $duk->status == 'menunggu_verifikasi' && $peserta->periode->is_active)
                                         <div class="mt-2 pt-2 border-top">
                                             <div id="verify-dukung-actions-{{ $duk->id }}" class="d-flex gap-2">
                                                 <button type="button" onclick="confirmApproveDukung({{ $duk->id }})"
@@ -678,7 +683,7 @@
                                         </small>
                                     @endif
 
-                                    @if($isProvinsi && $duk && $duk->status == 'menunggu_verifikasi')
+                                    @if($isProvinsi && $duk && $duk->status == 'menunggu_verifikasi' && $peserta->periode->is_active)
                                         <div class="mt-2 pt-2 border-top">
                                             <div id="verify-dukung-actions-{{ $duk->id }}" class="d-flex gap-2">
                                                 <button type="button" onclick="confirmApproveDukung({{ $duk->id }})"
@@ -863,7 +868,7 @@
                         @endphp
 
                         <div class="d-grid gap-2 mt-4">
-                            @if($hasPending && $isProvinsi)
+                            @if($hasPending && $isProvinsi && $peserta->periode->is_active)
                                 <div class="d-grid gap-2">
                                     <button type="button" onclick="confirmVerifyAll('approve')"
                                         class="btn btn-success rounded-pill">
@@ -889,7 +894,7 @@
                                     </div>
                                 @endif
 
-                                <div id="action-buttons-container" class="d-grid gap-2" {!! ($isWorkFinished) ? 'style="display: none !important;"' : '' !!}>
+                                <div id="action-buttons-container" class="d-grid gap-2" {!! ($isWorkFinished || !$peserta->periode->is_active) ? 'style="display: none !important;"' : '' !!}>
                                     <button type="submit" onclick="document.getElementById('action_type').value='draf'"
                                         class="btn btn-light rounded-pill">
                                         <i class="fas fa-save me-1"></i> Simpan Draf

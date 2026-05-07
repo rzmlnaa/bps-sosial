@@ -73,6 +73,29 @@
                             </div>
                         </form>
 
+                        @if($unfinishedSummary->count() > 0)
+                            <div class="alert alert-info border-0 shadow-sm rounded-4 mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-info-circle me-2 fs-5 text-info"></i>
+                                    <h6 class="mb-0 fw-bold">Peringatan: Progress Belum Selesai (Periode {{ $activePeriode->tahun ?? '-' }})</h6>
+                                </div>
+                                <p class="small text-muted mb-3">Berikut adalah daftar Kabupaten/Kota yang masih memiliki progress dengan status <strong>Draf, Menunggu Verifikasi, atau Ditolak</strong>. Periode aktif tidak dapat dinonaktifkan sebelum semua progress di bawah ini berstatus <strong>Disetujui</strong>.</p>
+                                <div class="row g-2">
+                                    @foreach($unfinishedSummary as $summary)
+                                        <div class="col-md-4 col-lg-3">
+                                            <div class="bg-white p-2 rounded-3 border d-flex justify-content-between align-items-center">
+                                                <div class="text-truncate me-2">
+                                                    <span class="fw-bold small">[{{ $summary['kode'] }}]</span>
+                                                    <span class="small">{{ $summary['nama'] }}</span>
+                                                </div>
+                                                <span class="badge bg-danger rounded-pill">{{ $summary['count'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
                         @if($periodes->count() > 0)
                             <h6 class="fw-bold text-muted small">Periode Terdaftar:</h6>
                             <div class="table-responsive table-scrollable">
@@ -113,6 +136,7 @@
                                                         @else
                                                             <button type="submit"
                                                                 class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 mb-1"
+                                                                title="Aktifkan periode ini"
                                                                 style="font-size: 0.75rem; font-weight: 600;">
                                                                 Set Aktif
                                                             </button>
