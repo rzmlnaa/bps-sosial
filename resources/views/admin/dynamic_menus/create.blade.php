@@ -33,7 +33,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label fw-medium">Parent Menu</label>
                         <select name="parent_id" id="parentSelect" class="form-select">
                             <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
@@ -44,12 +44,6 @@
                             @endforeach
                         </select>
                         <small class="text-muted">Pilih parent jika ini adalah submenu.</small>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-medium">Urutan (Order Number) <span class="text-danger">*</span></label>
-                        <input type="number" name="order_number" class="form-control" required min="0"
-                            value="{{ old('order_number', 0) }}">
-                        <small class="text-muted">Angka lebih kecil tampil lebih atas.</small>
                     </div>
                 </div>
 

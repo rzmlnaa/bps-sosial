@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
 
         // Dynamic Menus Admin
+        Route::patch('/dynamic-menus/reorder', [DynamicMenuController::class, 'reorder'])->name('dynamic-menus.reorder');
         Route::resource('dynamic-menus', DynamicMenuController::class)->except(['show']);
     });
 

@@ -30,14 +30,17 @@
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
                             @php
                                 $parents = $menus->whereNull('parent_id');
                             @endphp
                             @forelse($parents as $parent)
+                                <tbody class="sortable-tbody" data-id="{{ $parent->id }}">
                                 <!-- Parent Row -->
-                                <tr>
-                                    <td>{{ $parent->order_number }}</td>
+                                <tr class="bg-white parent-row">
+                                    <td class="order-number">
+                                        <i class="fas fa-grip-vertical text-muted me-2 drag-handle-parent" style="cursor: grab;" title="Geser untuk mengubah urutan"></i>
+                                        <span class="number-display">{{ $parent->order_number }}</span>
+                                    </td>
                                     <td class="fw-bold">
                                         {{ $parent->name }}
                                         <br><small class="text-muted fw-normal">{{ $parent->slug }}</small>
@@ -123,8 +126,11 @@
 
                                 <!-- Children Rows -->
                                 @foreach($menus->where('parent_id', $parent->id) as $child)
-                                    <tr class="bg-light bg-opacity-50">
-                                        <td>{{ $child->order_number }}</td>
+                                    <tr class="bg-light bg-opacity-50 child-row" data-child-id="{{ $child->id }}">
+                                        <td class="ps-4">
+                                            <i class="fas fa-grip-vertical text-muted me-2 drag-handle-child" style="cursor: grab;" title="Geser untuk mengubah urutan sub-menu"></i>
+                                            <span class="number-display-child">{{ $child->order_number }}</span>
+                                        </td>
                                         <td style="padding-left: 30px;">
                                             <div class="d-flex align-items-start">
                                                 <span class="text-muted me-2">&#x21B3;</span>
@@ -196,12 +202,14 @@
                                         </td>
                                     </tr>
                                 @endforeach
+                                </tbody>
                             @empty
+                                <tbody>
                                 <tr>
                                     <td colspan="7" class="text-center py-4 text-muted">Belum ada menu dinamis.</td>
                                 </tr>
+                                </tbody>
                             @endforelse
-                        </tbody>
                     </table>
                 </div>
             </div>
@@ -211,6 +219,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
     function confirmDelete(id) {
         Swal.fire({
@@ -228,5 +237,118 @@
             }
         })
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var el = document.querySelector('.table');
+        if (el) {
+            Sortable.create(el, {
+                animation: 150,
+                handle: '.drag-handle-parent',
+                draggable: '.sortable-tbody',
+                onEnd: function (evt) {
+                    var order = [];
+                    var orderNumber = 1;
+                    
+                    document.querySelectorAll('.sortable-tbody').forEach(function(tbody) {
+                        var id = tbody.getAttribute('data-id');
+                        if (id) {
+                            order.push({
+                                id: id,
+                                order_number: orderNumber
+                            });
+                            tbody.querySelector('.number-display').innerText = orderNumber;
+                            orderNumber++;
+                        }
+                    });
+
+                    if (order.length > 0) {
+                        fetch('/admin/dynamic-menus/reorder', {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ order: order })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: 'Urutan menu berhasil diperbarui',
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            } else {
+                                Swal.fire('Error!', 'Gagal memperbarui urutan.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error');
+                        });
+                    }
+                }
+            });
+        }
+
+        // Initialize SortableJS for each parent's sub-menus
+        document.querySelectorAll('.sortable-tbody').forEach(function(tbody) {
+            Sortable.create(tbody, {
+                animation: 150,
+                handle: '.drag-handle-child',
+                draggable: '.child-row',
+                filter: '.parent-row',
+                onEnd: function (evt) {
+                    var order = [];
+                    var orderNumber = 1;
+                    
+                    tbody.querySelectorAll('.child-row').forEach(function(row) {
+                        var id = row.getAttribute('data-child-id');
+                        if (id) {
+                            order.push({
+                                id: id,
+                                order_number: orderNumber
+                            });
+                            row.querySelector('.number-display-child').innerText = orderNumber;
+                            orderNumber++;
+                        }
+                    });
+
+                    if (order.length > 0) {
+                        fetch('/admin/dynamic-menus/reorder', {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ order: order })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: 'Urutan sub-menu berhasil diperbarui',
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            } else {
+                                Swal.fire('Error!', 'Gagal memperbarui urutan sub-menu.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error');
+                        });
+                    }
+                }
+            });
+        });
+    });
 </script>
 @endpush

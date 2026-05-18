@@ -45,8 +45,10 @@ class DynamicMenuController extends Controller
                 }
             ],
             'embed_url' => 'nullable|string',
-            'order_number' => 'required|integer',
         ]);
+
+        $validated['parent_id'] = $validated['parent_id'] ?? null;
+        $validated['order_number'] = DynamicMenu::where('parent_id', $validated['parent_id'])->max('order_number') + 1;
 
         // If parent_id is null and type is empty, set type to 'main_menu'
         if (empty($validated['parent_id']) && empty($validated['type'])) {
@@ -146,8 +148,12 @@ class DynamicMenuController extends Controller
                 }
             ],
             'embed_url' => 'nullable|string',
-            'order_number' => 'required|integer',
         ]);
+
+        $validated['parent_id'] = $validated['parent_id'] ?? null;
+        if ($validated['parent_id'] != $dynamicMenu->parent_id) {
+            $validated['order_number'] = DynamicMenu::where('parent_id', $validated['parent_id'])->max('order_number') + 1;
+        }
 
         // If parent_id is null and type is empty, set type to 'main_menu'
         if (empty($validated['parent_id']) && empty($validated['type'])) {
@@ -268,5 +274,26 @@ class DynamicMenuController extends Controller
     {
         $dynamicMenu->delete();
         return redirect()->route('admin.dynamic-menus.index')->with('success', 'Menu berhasil dihapus.');
+    }
+
+    public function reorder(Request $request)
+    {
+
+        // Antar Menu Utama (Parent dengan Parent) angka order_number tidak boleh sama
+        // Antar Sub-Menu di dalam satu Menu Utama yang SAMA order_number tidak boleh sama
+
+        // Antar Sub-Menu di Menu Utama yang BEDA order_number boleh sama
+        // Antara Menu Utama dan Sub-Menu order_number boleh sama
+        $request->validate([
+            'order' => 'required|array',
+            'order.*.id' => 'required|exists:dynamic_menus,id',
+            'order.*.order_number' => 'required|integer'
+        ]);
+
+        foreach ($request->order as $item) {
+            DynamicMenu::where('id', $item['id'])->update(['order_number' => $item['order_number']]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }
