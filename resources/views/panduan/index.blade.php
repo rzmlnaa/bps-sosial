@@ -80,15 +80,10 @@
                                     <i class="fas fa-question-circle fa-2x text-primary"></i>
                                 </div>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-11">
                                 <h5 class="fw-bold text-navy mb-1">Masih butuh bantuan?</h5>
                                 <p class="text-muted mb-0 small">Jika Anda mengalami kendala teknis atau menemukan bug yang
-                                    tidak dijelaskan dalam panduan, jangan ragu untuk menghubungi tim pengembang.</p>
-                            </div>
-                            <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                                <a href="/developer" target="_blank" class="btn btn-outline-primary rounded-pill px-4">
-                                    <i class="fas fa-headset me-2"></i> Hubungi Developer
-                                </a>
+                                    tidak dijelaskan dalam panduan, silakan hubungi tim IT / Administrator BPS Provinsi Kalimantan Barat.</p>
                             </div>
                         </div>
                     </div>

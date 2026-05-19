@@ -468,13 +468,6 @@
                 &copy; {{ $startYear == $currentYear ? $startYear : $startYear . ' - ' . $currentYear }}
                 Badan Pusat Statistik Provinsi Kalimantan Barat. All rights reserved.
             </small>
-            Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
-                class="text-danger fw-bold">error - bug</span> pada sistem,
-            harap hubungi Developer dengan
-            <a href="/developer" target="_blank" class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
-                klik disini
-            </a>
-            </small>
         </footer>
     </main>
 
