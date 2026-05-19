@@ -6,11 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard Kemiskinan Kalbar')</title>
 
+    @php
+        $logoMenu = \App\Models\DynamicMenu::where('type', 'logo')->first();
+        $logoUrl = 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';
+        if ($logoMenu && $logoMenu->url) {
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } elseif (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } else {
+                $logoUrl = $logoMenu->url;
+            }
+        }
+    @endphp
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon"
-        href="https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg"
+        href="{{ $logoUrl }}"
         type="image/x-icon">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -57,8 +71,9 @@
     <div class="mobile-nav d-lg-none">
         <div class="d-flex align-items-center gap-2">
             <div class="logo-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
-                    alt="Logo BPS">
+                <img src="{{ $logoUrl }}"
+                    alt="Logo BPS"
+                    onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
             <span class="fw-bold text-navy">BPS Kalbar</span>
         </div>
@@ -71,8 +86,9 @@
     <nav class="sidebar client-sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
-                    alt="Logo BPS">
+                <img src="{{ $logoUrl }}"
+                    alt="Logo BPS"
+                    onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
             <div>
                 <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">SISOKA</h5>

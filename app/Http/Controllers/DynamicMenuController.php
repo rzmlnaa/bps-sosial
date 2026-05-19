@@ -24,7 +24,9 @@ class DynamicMenuController extends Controller
 
     public function create()
     {
-        $parents = DynamicMenu::whereNull('parent_id')->get();
+        $parents = DynamicMenu::whereNull('parent_id')
+            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->get();
         return view('admin.dynamic_menus.create', compact('parents'));
     }
 
@@ -130,7 +132,10 @@ class DynamicMenuController extends Controller
 
     public function edit(DynamicMenu $dynamicMenu)
     {
-        $parents = DynamicMenu::whereNull('parent_id')->where('id', '!=', $dynamicMenu->id)->get();
+        $parents = DynamicMenu::whereNull('parent_id')
+            ->where('id', '!=', $dynamicMenu->id)
+            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->get();
         return view('admin.dynamic_menus.edit', compact('dynamicMenu', 'parents'));
     }
 

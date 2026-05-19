@@ -198,7 +198,19 @@
                                         @if($hasChildren)
                                             <span class="text-muted fst-italic">Menu Utama (Dropdown)</span>
                                         @else
-                                            @if($parent->url)
+                                            @if($parent->type === 'external')
+                                                @php
+                                                    $links = $parent->meta['links'] ?? [];
+                                                    $linkCount = is_array($links) ? count($links) : 0;
+                                                @endphp
+                                                @if($linkCount > 0)
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                                        <i class="fas fa-link me-1"></i>{{ $linkCount }} Link
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Belum di set</span>
+                                                @endif
+                                            @elseif($parent->url)
                                                 @if($parent->type === 'logo')
                                                     @php
                                                         $logoUrl = $parent->url;
@@ -289,7 +301,19 @@
                                             </span>
                                         </td>
                                         <td>
-                                            @if($child->url)
+                                            @if($child->type === 'external')
+                                                @php
+                                                    $links = $child->meta['links'] ?? [];
+                                                    $linkCount = is_array($links) ? count($links) : 0;
+                                                @endphp
+                                                @if($linkCount > 0)
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                                        <i class="fas fa-link me-1"></i>{{ $linkCount }} Link
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Belum di set</span>
+                                                @endif
+                                            @elseif($child->url)
                                                 <div class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $child->url }}">
                                                     <a href="{{ $child->url }}" target="_blank" class="text-decoration-none">
                                                         <i class="fas fa-external-link-alt fa-xs me-1"></i>{{ $child->url }}

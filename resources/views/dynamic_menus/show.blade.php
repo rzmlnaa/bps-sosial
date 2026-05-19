@@ -6,16 +6,28 @@
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">{{ $menu->name }}</h2>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">
+                {{ $menu->name }}
+            </h2>
+
             @if($title)
                 <p class="text-muted mb-0">{{ $title }}</p>
             @endif
         </div>
+
         @if($menu->type !== 'external' && ($menu->url || $menu->embed_url))
-            <div class="mt-3 mt-md-0">
+            <div class="d-flex gap-2 mt-3 mt-md-0">
+                <!-- Tombol Buka -->
+                <a href="{{ $menu->url ?: $menu->embed_url }}" target="_blank"
+                    class="btn btn-primary rounded-pill px-4 d-flex align-items-center">
+                    <i class="fas fa-up-right-from-square me-2"></i>
+                    <span>Buka</span>
+                </a>
+                <!-- Tombol Bagikan -->
                 <button class="btn btn-outline-primary rounded-pill px-4 d-flex align-items-center copy-link-btn"
                     data-url="{{ $menu->url ?: $menu->embed_url }}">
-                    <i class="fas fa-share-alt me-2"></i> <span>Bagikan</span>
+                    <i class="fas fa-share-alt me-2"></i>
+                    <span>Bagikan</span>
                 </button>
             </div>
         @endif

@@ -1,11 +1,25 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $logoMenu = \App\Models\DynamicMenu::where('type', 'logo')->first();
+        $logoUrl = 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';
+        if ($logoMenu && $logoMenu->url) {
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } elseif (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } else {
+                $logoUrl = $logoMenu->url;
+            }
+        }
+    @endphp
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <!-- Header / Logo -->
         <div class="w-full max-w-md text-center mb-8">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
-                alt="Logo BPS" class="h-16 mx-auto mb-4">
+            <img src="{{ $logoUrl }}"
+                alt="Logo BPS" class="h-16 mx-auto mb-4"
+                onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
                 Lengkapi Profil Anda
             </h2>
