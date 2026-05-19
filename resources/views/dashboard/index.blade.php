@@ -33,7 +33,7 @@
                     <br><br>
                     © BPS Provinsi Kalimantan Barat
                     <br>
-                    Dikembangkan oleh <a href="https://kostapp.reservasiaja.com/portofolio" target="_blank"
+                    Dikembangkan oleh <a href="*" target="_blank"
                         style="text-decoration: none;">Peserta Magang</a> –
                     Program
                     MagangHUB Kemnaker

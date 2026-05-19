@@ -346,7 +346,7 @@
                 Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
                     class="text-danger fw-bold">error - bug</span> pada sistem,
                 harap hubungi Developer dengan
-                <a href="https://kostapp.reservasiaja.com/portofolio" target="_blank"
+                <a href="*" target="_blank"
                     class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
                     klik disini
                 </a>
