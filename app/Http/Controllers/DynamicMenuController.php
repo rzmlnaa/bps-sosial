@@ -12,20 +12,21 @@ class DynamicMenuController extends Controller
     public function index()
     {
         $menus = DynamicMenu::with('parent', 'creator')
-            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->whereNotIn('type', ['panduan_pengguna', 'logo', 'video_panduan'])
             ->orderBy('order_number')
             ->get();
 
         $panduan = DynamicMenu::where('type', 'panduan_pengguna')->first();
         $logo = DynamicMenu::where('type', 'logo')->first();
+        $videoPanduan = DynamicMenu::where('type', 'video_panduan')->first();
 
-        return view('admin.dynamic_menus.index', compact('menus', 'panduan', 'logo'));
+        return view('admin.dynamic_menus.index', compact('menus', 'panduan', 'logo', 'videoPanduan'));
     }
 
     public function create()
     {
         $parents = DynamicMenu::whereNull('parent_id')
-            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->whereNotIn('type', ['panduan_pengguna', 'logo', 'video_panduan'])
             ->get();
         return view('admin.dynamic_menus.create', compact('parents'));
     }
@@ -40,7 +41,7 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus',
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo'],
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo,video_panduan'],
             'url' => [
                 'nullable',
                 'string',
@@ -51,8 +52,8 @@ class DynamicMenuController extends Controller
                     if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
                         $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
                     }
-                    if (in_array($request->type, ['panduan_pengguna', 'logo']) && empty($value)) {
-                        $fail('URL Google Drive wajib diisi untuk tipe Panduan Pengguna atau Logo.');
+                    if (in_array($request->type, ['panduan_pengguna', 'logo', 'video_panduan']) && empty($value)) {
+                        $fail('URL Google Drive atau YouTube wajib diisi untuk tipe Panduan Pengguna, Logo, atau Video Panduan.');
                     }
                 }
             ],
@@ -69,8 +70,8 @@ class DynamicMenuController extends Controller
 
         // Strict YouTube/Spreadsheet/Drive URL Validation (Only if URL is provided)
         if (!empty($validated['url'])) {
-            if ($validated['type'] === 'youtube') {
-                if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/||.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
+            if ($validated['type'] === 'youtube' || $validated['type'] === 'video_panduan') {
+                if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
                     return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
                 }
             } elseif ($validated['type'] === 'spreadsheet') {
@@ -135,7 +136,7 @@ class DynamicMenuController extends Controller
     {
         $parents = DynamicMenu::whereNull('parent_id')
             ->where('id', '!=', $dynamicMenu->id)
-            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->whereNotIn('type', ['panduan_pengguna', 'logo', 'video_panduan'])
             ->get();
         return view('admin.dynamic_menus.edit', compact('dynamicMenu', 'parents'));
     }
@@ -150,7 +151,7 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus,slug,' . $dynamicMenu->id,
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo'],
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo,video_panduan'],
             'url' => [
                 'nullable',
                 'string',
@@ -161,8 +162,8 @@ class DynamicMenuController extends Controller
                     if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
                         $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
                     }
-                    if (in_array($request->type, ['panduan_pengguna', 'logo']) && empty($value)) {
-                        $fail('URL Google Drive wajib diisi untuk tipe Panduan Pengguna atau Logo.');
+                    if (in_array($request->type, ['panduan_pengguna', 'logo', 'video_panduan']) && empty($value)) {
+                        $fail('URL Google Drive atau YouTube wajib diisi untuk tipe Panduan Pengguna, Logo, atau Video Panduan.');
                     }
                 }
             ],
@@ -181,7 +182,7 @@ class DynamicMenuController extends Controller
 
         // Strict YouTube/Spreadsheet/Drive URL Validation (Only if URL is provided)
         if (!empty($validated['url'])) {
-            if ($validated['type'] === 'youtube') {
+            if ($validated['type'] === 'youtube' || $validated['type'] === 'video_panduan') {
                 if (!preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $validated['url'])) {
                     return back()->withErrors(['url' => 'Format file URL YouTube tidak valid. Harap masukkan link youtube.com atau youtu.be yang benar.'])->withInput();
                 }
@@ -251,7 +252,7 @@ class DynamicMenuController extends Controller
 
     private function generateEmbedUrl($type, $url, $meta = [])
     {
-        if ($type === 'youtube') {
+        if ($type === 'youtube' || $type === 'video_panduan') {
             if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches)) {
                 return "https://www.youtube.com/embed/" . $matches[1];
             }

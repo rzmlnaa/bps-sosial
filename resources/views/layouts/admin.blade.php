@@ -335,7 +335,7 @@
 
                 @php
                     $dynamicMenus = \App\Models\DynamicMenu::whereNull('parent_id')
-                        ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+                        ->whereNotIn('type', ['panduan_pengguna', 'logo', 'video_panduan'])
                         ->where('is_active', true)
                         ->with([
                             'children' => function ($q) {

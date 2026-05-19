@@ -17,10 +17,10 @@
        </div>
     </div>
 
-    <!-- Special System Configurations (Panduan & Logo) -->
+    <!-- Special System Configurations (Panduan, Logo & Video) -->
     <div class="row mb-4">
         <!-- Panduan Pengguna Card -->
-        <div class="col-md-6 mb-3 mb-md-0">
+        <div class="col-md-4 mb-3 mb-md-0">
             <div class="card shadow-sm border-0 rounded-4 h-100">
                 <div class="card-body p-4 d-flex flex-column justify-content-between">
                     <div>
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Logo Sisoka Card -->
-        <div class="col-md-6">
+        <div class="col-md-4 mb-3 mb-md-0">
             <div class="card shadow-sm border-0 rounded-4 h-100">
                 <div class="card-body p-4 d-flex flex-column justify-content-between">
                     <div>
@@ -131,6 +131,61 @@
                         @else
                             <a href="{{ route('admin.dynamic-menus.create', ['type' => 'logo']) }}" class="btn btn-info text-white rounded-pill px-4 btn-sm">
                                 <i class="fas fa-plus me-1"></i> Set Logo Sisoka
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Panduan Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Video Panduan</h5>
+                                <p class="text-muted small mb-0">Video petunjuk pemakaian sistem SISOKA</p>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            @if($videoPanduan)
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-truncate me-2" style="max-width: 80%;">
+                                            <a href="{{ $videoPanduan->url }}" target="_blank" class="text-decoration-none fw-medium text-danger">
+                                                <i class="fas fa-external-link-alt me-1"></i>{{ $videoPanduan->url }}
+                                            </a>
+                                        </div>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Aktif</span>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-light rounded-3 text-center text-muted fst-italic">
+                                    Belum ada video panduan yang dikonfigurasi.
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if($videoPanduan)
+                            <a href="{{ route('admin.dynamic-menus.edit', $videoPanduan->id) }}" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
+                                <i class="fas fa-edit me-1"></i> Edit Video
+                            </a>
+                            <form action="{{ route('admin.dynamic-menus.destroy', $videoPanduan->id) }}" method="POST" id="delete-video-panduan" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-video-panduan', 'Video Panduan')">
+                                    <i class="fas fa-trash me-1"></i> Hapus
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('admin.dynamic-menus.create', ['type' => 'video_panduan']) }}" class="btn btn-danger text-white rounded-pill px-4 btn-sm">
+                                <i class="fas fa-plus me-1"></i> Set Video Panduan
                             </a>
                         @endif
                     </div>

@@ -5,7 +5,7 @@
 @section('content')
     @php 
         $reqType = request('type', old('type')); 
-        $isSpecial = in_array($reqType, ['panduan_pengguna', 'logo']);
+        $isSpecial = in_array($reqType, ['panduan_pengguna', 'logo', 'video_panduan']);
         $defaultName = '';
         $pageTitle = 'Tambah Menu Baru';
         $pageSubtitle = 'Tambah Menu Baru Dinamis';
@@ -17,6 +17,10 @@
             $defaultName = 'Logo Sisoka';
             $pageTitle = 'Kelola Logo Sisoka';
             $pageSubtitle = 'Kelola logo Sisoka';
+        } elseif ($reqType == 'video_panduan') {
+            $defaultName = 'Video Panduan';
+            $pageTitle = 'Kelola Video Panduan';
+            $pageSubtitle = 'Kelola video panduan';
         }
     @endphp
 
@@ -92,6 +96,9 @@
                                 @endif
                                 @if($reqType == 'logo')
                                     <option value="logo" selected>Logo Sisoka (Google Drive)</option>
+                                @endif
+                                @if($reqType == 'video_panduan')
+                                    <option value="video_panduan" selected>Video Panduan (YouTube)</option>
                                 @endif
                             @endif
                         </select>
@@ -281,7 +288,7 @@
                 const typeRequiredStar = document.getElementById('typeRequiredStar');
                 const urlRequiredStar = document.getElementById('urlRequiredStar');
 
-                if (parentId === "" && type !== 'panduan_pengguna' && type !== 'logo') {
+                if (parentId === "" && type !== 'panduan_pengguna' && type !== 'logo' && type !== 'video_panduan') {
                     // It's a Top Level Menu (Dropdown), Content Type is NOT required
                     typeSelect.required = false;
                     urlInput.required = false;
@@ -325,7 +332,7 @@
 
                 if (type === 'spreadsheet') {
                     urlHint.innerHTML = 'Paste link Google Spreadsheet lengkap. ID dan GID akan diekstrak otomatis.';
-                } else if (type === 'youtube') {
+                } else if (type === 'youtube' || type === 'video_panduan') {
                     urlHint.innerHTML = 'Paste link video YouTube (misal: https://www.youtube.com/watch?v=...)';
                 } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     urlHint.innerHTML = 'Paste link "Share" dari Google Drive atau link folder.';
@@ -394,7 +401,7 @@
                         isValid = false;
                     }
                 } else {
-                    if (type === 'youtube') {
+                    if (type === 'youtube' || type === 'video_panduan') {
                         if (!isValidYoutubeUrl(url)) {
                             urlInput.classList.add('is-invalid');
                             if (youtubeError) youtubeError.classList.remove('d-none');
@@ -442,7 +449,7 @@
             function getEmbedUrl(type, url, gid, mode) {
                 if (!url) return '';
 
-                if (type === 'youtube') {
+                if (type === 'youtube' || type === 'video_panduan') {
                     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
                     const match = url.match(regExp);
                     if (match && match[2].length == 11) {

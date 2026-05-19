@@ -26,7 +26,7 @@ class DashboardController extends Controller
         $stats = [
             'price_range_count' => RhPerubahanDetail::count(),
             'menu_count' => DynamicMenu::where('is_active', true)
-                ->whereNotIn('type', ['logo', 'panduan_pengguna'])
+                ->whereNotIn('type', ['logo', 'panduan_pengguna', 'video_panduan'])
                 ->whereNotIn('id', function ($query) {
                     $query->select('parent_id')
                         ->from('dynamic_menus')
