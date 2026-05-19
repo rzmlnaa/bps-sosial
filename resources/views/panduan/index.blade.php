@@ -3,6 +3,11 @@
 @section('title', 'Panduan Pengguna SISOKA')
 
 @section('content')
+    @php
+        $panduanLink = \App\Models\DynamicMenu::where('type', 'panduan_pengguna')->first();
+        $rawUrl = $panduanLink ? $panduanLink->url : '';
+    @endphp
+
     <div class="container-fluid mt-3">
         <!-- Header -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5">
@@ -10,11 +15,13 @@
                 <h1 class="fw-bold mb-1" style="color: var(--bps-orange);">Panduan Pengguna</h1>
                 <p class="text-dark lead mb-0">Petunjuk penggunaan sistem informasi SISOKA</p>
             </div>
-            <div class="mt-3 mt-md-0">
-                <a href="" id="externalLinkBtn" target="_blank" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                    <i class="fas fa-external-link-alt me-2"></i> Buka di Tab Baru
-                </a>
-            </div>
+            @if($rawUrl)
+                <div class="mt-3 mt-md-0">
+                    <a href="" id="externalLinkBtn" target="_blank" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="fas fa-external-link-alt me-2"></i> Buka di Tab Baru
+                    </a>
+                </div>
+            @endif
         </div>
 
         <!-- PDF Viewer Section -->
@@ -23,25 +30,38 @@
                 <div class="card border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden"
                     style="min-height: calc(100vh - 250px);">
                     <div class="card-body p-0 d-flex flex-column">
-                        <div id="previewContainer" class="flex-grow-1 w-100"
-                            style="display: none; min-height: calc(100vh - 250px);">
-                            <iframe id="previewIframe" src="" width="100%" height="100%"
-                                style="border:0; flex-grow: 1; min-height: calc(100vh - 250px);"
-                                title="Panduan Pengguna"></iframe>
-                        </div>
-
-                        <!-- Loading Indicator -->
-                        <div id="loadingPreview" class="d-flex flex-grow-1 justify-content-center align-items-center p-5"
-                            style="min-height: 50vh;">
-                            <div class="text-center">
-                                <div class="spinner-border text-primary mb-3" role="status"
-                                    style="color: var(--bps-orange) !important; width: 3rem; height: 3rem;">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <h5 class="fw-bold">Memuat Panduan...</h5>
-                                <p class="text-muted small">Pastikan koneksi internet Anda stabil</p>
+                        @if($rawUrl)
+                            <div id="previewContainer" class="flex-grow-1 w-100"
+                                style="display: none; min-height: calc(100vh - 250px);">
+                                <iframe id="previewIframe" src="" width="100%" height="100%"
+                                    style="border:0; flex-grow: 1; min-height: calc(100vh - 250px);"
+                                    title="Panduan Pengguna"></iframe>
                             </div>
-                        </div>
+
+                            <!-- Loading Indicator -->
+                            <div id="loadingPreview" class="d-flex flex-grow-1 justify-content-center align-items-center p-5"
+                                style="min-height: 50vh;">
+                                <div class="text-center">
+                                    <div class="spinner-border text-primary mb-3" role="status"
+                                        style="color: var(--bps-orange) !important; width: 3rem; height: 3rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <h5 class="fw-bold">Memuat Panduan...</h5>
+                                    <p class="text-muted small">Pastikan koneksi internet Anda stabil</p>
+                                </div>
+                            </div>
+                        @else
+                            <!-- Empty State -->
+                            <div class="d-flex flex-grow-1 flex-column justify-content-center align-items-center p-5" style="min-height: 50vh;">
+                                <div class="text-center my-5 py-5">
+                                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-4 mb-4 d-inline-flex" style="width: 80px; height: 80px; align-items: center; justify-content: center;">
+                                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    </div>
+                                    <h4 class="fw-bold text-navy mb-2">Panduan Pengguna Belum Tersedia</h4>
+                                    <p class="text-muted mb-0">Administrator belum menyetel konten panduan ini.</p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -109,10 +129,11 @@
         </style>
     @endpush
 
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const rawUrl = "https://drive.google.com/file/d/1Gfrw6jmE7OoVPLGsNgSHgKBeB-lCZx_r/view?usp=sharing";
+    @if($rawUrl)
+        @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const rawUrl = "{{ $rawUrl }}";
 
                 const previewContainer = document.getElementById('previewContainer');
                 const previewIframe = document.getElementById('previewIframe');
@@ -123,10 +144,22 @@
 
                 function getEmbedUrl(url) {
                     if (!url) return '';
-                    const fileMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                    if (fileMatch && fileMatch[1]) {
-                        return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+                    
+                    // Google Drive Folders
+                    const folderMatch = url.match(/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9-_]+)/);
+                    if (folderMatch && folderMatch[1]) {
+                        return "https://drive.google.com/embeddedfolderview?id=" + folderMatch[1] + "#list";
                     }
+
+                    // Google Drive Files
+                    const fileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/);
+                    if (fileMatch && fileMatch[1]) {
+                        return "https://drive.google.com/file/d/" + fileMatch[1] + "/preview";
+                    }
+
+                    if (url.includes('view?usp=sharing')) return url.replace('view?usp=sharing', 'preview');
+                    if (url.includes('/view')) return url.replace('/view', '/preview');
+
                     return url;
                 }
 
@@ -165,4 +198,5 @@
             });
         </script>
     @endpush
+@endif
 @endsection

@@ -11,8 +11,15 @@ class DynamicMenuController extends Controller
 {
     public function index()
     {
-        $menus = DynamicMenu::with('parent', 'creator')->orderBy('order_number')->get();
-        return view('admin.dynamic_menus.index', compact('menus'));
+        $menus = DynamicMenu::with('parent', 'creator')
+            ->whereNotIn('type', ['panduan_pengguna', 'logo'])
+            ->orderBy('order_number')
+            ->get();
+
+        $panduan = DynamicMenu::where('type', 'panduan_pengguna')->first();
+        $logo = DynamicMenu::where('type', 'logo')->first();
+
+        return view('admin.dynamic_menus.index', compact('menus', 'panduan', 'logo'));
     }
 
     public function create()
@@ -31,7 +38,7 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus',
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo'],
             'url' => [
                 'nullable',
                 'string',
@@ -41,6 +48,9 @@ class DynamicMenuController extends Controller
                     }
                     if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
                         $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
+                    }
+                    if (in_array($request->type, ['panduan_pengguna', 'logo']) && empty($value)) {
+                        $fail('URL Google Drive wajib diisi untuk tipe Panduan Pengguna atau Logo.');
                     }
                 }
             ],
@@ -65,7 +75,7 @@ class DynamicMenuController extends Controller
                 if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
                     return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
                 }
-            } elseif ($validated['type'] === 'drive') {
+            } elseif (in_array($validated['type'], ['drive', 'panduan_pengguna', 'logo'])) {
                 if (!str_contains($validated['url'], 'drive.google.com')) {
                     return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
                 }
@@ -134,7 +144,7 @@ class DynamicMenuController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:dynamic_menus,slug,' . $dynamicMenu->id,
             'parent_id' => 'nullable|exists:dynamic_menus,id',
-            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu'],
+            'type' => [Rule::requiredIf($request->filled('parent_id')), 'nullable', 'string', 'in:youtube,drive,spreadsheet,external,main_menu,panduan_pengguna,logo'],
             'url' => [
                 'nullable',
                 'string',
@@ -144,6 +154,9 @@ class DynamicMenuController extends Controller
                     }
                     if ($request->type === 'external' && empty($value) && (empty($request->links) || count($request->links) === 0)) {
                         $fail('URL utama atau minimal satu link di daftar link wajib diisi untuk tipe External.');
+                    }
+                    if (in_array($request->type, ['panduan_pengguna', 'logo']) && empty($value)) {
+                        $fail('URL Google Drive wajib diisi untuk tipe Panduan Pengguna atau Logo.');
                     }
                 }
             ],
@@ -170,7 +183,7 @@ class DynamicMenuController extends Controller
                 if (!str_contains($validated['url'], 'docs.google.com/spreadsheets')) {
                     return back()->withErrors(['url' => 'Format URL Spreadsheet tidak valid. Harap masukkan link docs.google.com/spreadsheets yang benar.'])->withInput();
                 }
-            } elseif ($validated['type'] === 'drive') {
+            } elseif (in_array($validated['type'], ['drive', 'panduan_pengguna', 'logo'])) {
                 if (!str_contains($validated['url'], 'drive.google.com')) {
                     return back()->withErrors(['url' => 'Format URL Google Drive tidak valid. Harap masukkan link drive.google.com yang benar.'])->withInput();
                 }

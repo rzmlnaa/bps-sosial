@@ -10,10 +10,135 @@
             <p class="text-muted mb-0">Master Menu Dinamis</p>
         </div>
 
-       <a href="{{ route('admin.dynamic-menus.create') }}" class="btn btn-primary bg-navy border-0 rounded-pill px-4">
-            <i class="fas fa-plus me-2"></i>Tambah Menu
-        </a>
+       <div class="d-flex gap-2">
+            <a href="{{ route('admin.dynamic-menus.create') }}" class="btn btn-primary bg-navy border-0 rounded-pill px-4">
+                <i class="fas fa-plus me-2"></i>Tambah Menu
+            </a>
+       </div>
     </div>
+
+    <!-- Special System Configurations (Panduan & Logo) -->
+    <div class="row mb-4">
+        <!-- Panduan Pengguna Card -->
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Panduan Pengguna</h5>
+                                <p class="text-muted small mb-0">Dokumen panduan pemakaian sistem SISOKA</p>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            @if($panduan)
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-truncate me-2" style="max-width: 80%;">
+                                            <a href="{{ $panduan->url }}" target="_blank" class="text-decoration-none fw-medium text-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i>{{ $panduan->url }}
+                                            </a>
+                                        </div>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Aktif</span>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-light rounded-3 text-center text-muted fst-italic">
+                                    Belum ada panduan pengguna yang dikonfigurasi.
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if($panduan)
+                            <a href="{{ route('admin.dynamic-menus.edit', $panduan->id) }}" class="btn btn-outline-primary rounded-pill px-4 btn-sm">
+                                <i class="fas fa-edit me-1"></i> Edit Link
+                            </a>
+                            <form action="{{ route('admin.dynamic-menus.destroy', $panduan->id) }}" method="POST" id="delete-panduan" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-panduan', 'Panduan Pengguna')">
+                                    <i class="fas fa-trash me-1"></i> Hapus
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('admin.dynamic-menus.create', ['type' => 'panduan_pengguna']) }}" class="btn btn-primary bg-navy border-0 rounded-pill px-4 btn-sm">
+                                <i class="fas fa-plus me-1"></i> Set Panduan Pengguna
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logo Sisoka Card -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info bg-opacity-10 text-info rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Logo Sisoka</h5>
+                                <p class="text-muted small mb-0">Logo utama aplikasi SISOKA</p>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            @if($logo)
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        @php
+                                            $logoUrl = $logo->url;
+                                            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $logo->url, $matches)) {
+                                                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+                                            }
+                                        @endphp
+                                        <div class="bg-white border rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            <img src="{{ $logoUrl }}" alt="Logo Sisoka" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                        </div>
+                                        <div class="text-truncate flex-grow-1" style="max-width: calc(100% - 100px);">
+                                            <a href="{{ $logo->url }}" target="_blank" class="text-decoration-none fw-medium text-info">
+                                                <i class="fas fa-external-link-alt me-1"></i>Link Logo
+                                            </a>
+                                            <span class="d-block text-muted small text-truncate">{{ $logo->url }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-light rounded-3 text-center text-muted fst-italic">
+                                    Belum ada logo yang dikonfigurasi.
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if($logo)
+                            <a href="{{ route('admin.dynamic-menus.edit', $logo->id) }}" class="btn btn-outline-info rounded-pill px-4 btn-sm">
+                                <i class="fas fa-edit me-1"></i> Edit Logo
+                            </a>
+                            <form action="{{ route('admin.dynamic-menus.destroy', $logo->id) }}" method="POST" id="delete-logo" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-logo', 'Logo Sisoka')">
+                                    <i class="fas fa-trash me-1"></i> Hapus
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('admin.dynamic-menus.create', ['type' => 'logo']) }}" class="btn btn-info text-white rounded-pill px-4 btn-sm">
+                                <i class="fas fa-plus me-1"></i> Set Logo Sisoka
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div>
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body p-4">
@@ -74,11 +199,21 @@
                                             <span class="text-muted fst-italic">Menu Utama (Dropdown)</span>
                                         @else
                                             @if($parent->url)
-                                                <div class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $parent->url }}">
-                                                    <a href="{{ $parent->url }}" target="_blank" class="text-decoration-none">
-                                                        <i class="fas fa-external-link-alt fa-xs me-1"></i>{{ $parent->url }}
-                                                    </a>
-                                                </div>
+                                                @if($parent->type === 'logo')
+                                                    @php
+                                                        $logoUrl = $parent->url;
+                                                        if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $parent->url, $matches)) {
+                                                            $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+                                                        }
+                                                    @endphp
+                                                    <img src="{{ $logoUrl }}" alt="Logo Sisoka" style="max-height: 40px; border-radius: 4px; object-fit: contain;">
+                                                @else
+                                                    <div class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $parent->url }}">
+                                                        <a href="{{ $parent->url }}" target="_blank" class="text-decoration-none">
+                                                            <i class="fas fa-external-link-alt fa-xs me-1"></i>{{ $parent->url }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                                 @if($parent->type === 'spreadsheet')
                                                     @php $meta = $parent->meta; @endphp
                                                     <br><small class="text-muted">
@@ -234,6 +369,23 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('delete-form-' + id).submit();
+            }
+        })
+    }
+
+    function confirmDeleteSpecial(formId, itemName) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: itemName + " yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
             }
         })
     }

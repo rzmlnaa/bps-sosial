@@ -3,10 +3,27 @@
 @section('title', 'Tambah Menu')
 
 @section('content')
+    @php 
+        $reqType = request('type', old('type')); 
+        $isSpecial = in_array($reqType, ['panduan_pengguna', 'logo']);
+        $defaultName = '';
+        $pageTitle = 'Tambah Menu Baru';
+        $pageSubtitle = 'Tambah Menu Baru Dinamis';
+        if ($reqType == 'panduan_pengguna') {
+            $defaultName = 'Panduan Pengguna';
+            $pageTitle = 'Kelola Panduan Pengguna';
+            $pageSubtitle = 'Kelola link Panduan Pengguna';
+        } elseif ($reqType == 'logo') {
+            $defaultName = 'Logo Sisoka';
+            $pageTitle = 'Kelola Logo Sisoka';
+            $pageSubtitle = 'Kelola logo Sisoka';
+        }
+    @endphp
+
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Tambah Menu Baru</h2>
-            <p class="text-muted mb-0">Tambah Menu Baru Dinamis</p>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">{{ $pageTitle }}</h2>
+            <p class="text-muted mb-0">{{ $pageSubtitle }}</p>
         </div>
 
         <a href="{{ route('admin.dynamic-menus.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
@@ -15,58 +32,68 @@
 
     </div>
 
-
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
             <form action="{{ route('admin.dynamic-menus.store') }}" method="POST">
                 @csrf
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium">Nama Menu <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" required
-                            placeholder="Contoh: Publikasi" value="{{ old('name') }}">
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <input type="hidden" name="slug" required value="{{ old('slug') }}">
+
+                <div style="{{ $isSpecial ? 'display: none;' : '' }}">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-medium">Nama Menu <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" {{ !$isSpecial ? 'required' : '' }}
+                                placeholder="Contoh: Publikasi" value="{{ old('name', $defaultName) }}">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <input type="hidden" name="slug" {{ !$isSpecial ? 'required' : '' }} value="{{ old('slug', \Illuminate\Support\Str::slug($defaultName)) }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-medium">Parent Menu</label>
+                            <select name="parent_id" id="parentSelect" class="form-select">
+                                <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
+                                @foreach($parents as $parent)
+                                    <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
+                                        {{ $parent->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Pilih parent jika ini adalah submenu.</small>
+                        </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium">Parent Menu</label>
-                        <select name="parent_id" id="parentSelect" class="form-select">
-                            <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
-                            @foreach($parents as $parent)
-                                <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
-                                    {{ $parent->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Pilih parent jika ini adalah submenu.</small>
-                    </div>
-                </div>
+                <hr class="my-4" style="{{ $isSpecial ? 'display: none;' : '' }}">
+                <h5 class="fw-bold mb-3" style="{{ $isSpecial ? 'display: none;' : '' }}">Pengaturan Konten</h5>
 
-                <hr class="my-4">
-                <h5 class="fw-bold mb-3">Pengaturan Konten</h5>
-
-                <div class="row">
+                <div class="row" style="{{ $isSpecial ? 'display: none;' : '' }}">
                     <div class="col-md-12 mb-3">
                         <label class="form-label fw-medium">Tipe Konten <span class="text-danger"
                                 id="typeRequiredStar">*</span></label>
                         <select name="type" class="form-select" id="typeSelect">
-                            <option value="" {{ !old('type') ? 'selected' : '' }}>Pilih Tipe Konten</option>
-                            <option value="spreadsheet" {{ old('type') == 'spreadsheet' ? 'selected' : '' }}>Google
-                                Spreadsheet</option>
-                            <option value="youtube" {{ old('type') == 'youtube' ? 'selected' : '' }}>YouTube Video
-
-                            </option>
-                            <option value="drive" {{ old('type') == 'drive' ? 'selected' : '' }}>Google Drive
-                                (View/Embed)
-                            </option>
-                            <option value="external" {{ old('type') == 'external' ? 'selected' : '' }}>Link Eksternal
-                                Lainnya
-                            </option>
+                            @if(!$isSpecial)
+                                <option value="" {{ !$reqType ? 'selected' : '' }}>Pilih Tipe Konten</option>
+                                <option value="spreadsheet" {{ $reqType == 'spreadsheet' ? 'selected' : '' }}>Google
+                                    Spreadsheet</option>
+                                <option value="youtube" {{ $reqType == 'youtube' ? 'selected' : '' }}>YouTube Video
+                                </option>
+                                <option value="drive" {{ $reqType == 'drive' ? 'selected' : '' }}>Google Drive
+                                    (View/Embed)
+                                </option>
+                                <option value="external" {{ $reqType == 'external' ? 'selected' : '' }}>Link Eksternal
+                                    Lainnya
+                                </option>
+                            @else
+                                @if($reqType == 'panduan_pengguna')
+                                    <option value="panduan_pengguna" selected>Panduan Pengguna (Google Drive)</option>
+                                @endif
+                                @if($reqType == 'logo')
+                                    <option value="logo" selected>Logo Sisoka (Google Drive)</option>
+                                @endif
+                            @endif
                         </select>
                     </div>
                 </div>
@@ -147,10 +174,14 @@
                     </div>
                 </div>
 
-                <div class="mb-4 form-check form-switch mt-3">
-                    <input class="form-check-input" type="checkbox" role="switch" id="isActive" name="is_active" checked>
-                    <label class="form-check-label ms-2 fw-medium" for="isActive">Aktifkan Menu Ini</label>
-                </div>
+                @if($isSpecial)
+                    <input type="hidden" name="is_active" value="1">
+                @else
+                    <div class="mb-4 form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="isActive" name="is_active" checked>
+                        <label class="form-check-label ms-2 fw-medium" for="isActive">Aktifkan Menu Ini</label>
+                    </div>
+                @endif
 
                 <hr class="my-4">
                 <h5 class="fw-bold mb-3">Live Preview Konten</h5>
@@ -241,7 +272,7 @@
                 const typeRequiredStar = document.getElementById('typeRequiredStar');
                 const urlRequiredStar = document.getElementById('urlRequiredStar');
 
-                if (parentId === "") {
+                if (parentId === "" && type !== 'panduan_pengguna' && type !== 'logo') {
                     // It's a Top Level Menu (Dropdown), Content Type is NOT required
                     typeSelect.required = false;
                     urlInput.required = false;
@@ -287,7 +318,7 @@
                     urlHint.innerHTML = 'Paste link Google Spreadsheet lengkap. ID dan GID akan diekstrak otomatis.';
                 } else if (type === 'youtube') {
                     urlHint.innerHTML = 'Paste link video YouTube (misal: https://www.youtube.com/watch?v=...)';
-                } else if (type === 'drive') {
+                } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     urlHint.innerHTML = 'Paste link "Share" dari Google Drive atau link folder.';
                 } else {
                     urlHint.innerHTML = 'Paste link URL eksternal lainnya.';
@@ -368,7 +399,7 @@
                             if (urlError) urlError.classList.add('d-none');
                             isValid = false;
                         }
-                    } else if (type === 'drive') {
+                    } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                         if (!isValidDriveUrl(url)) {
                             urlInput.classList.add('is-invalid');
                             if (driveError) driveError.classList.remove('d-none');
@@ -422,7 +453,7 @@
                         }
                         return embed + (params.length ? '?' + params.join('&') : '');
                     }
-                } else if (type === 'drive') {
+                } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     // Google Drive Folders
                     const folderMatch = url.match(/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9-_]+)/);
                     if (folderMatch && folderMatch[1]) {
