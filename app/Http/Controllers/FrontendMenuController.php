@@ -14,6 +14,12 @@ class FrontendMenuController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        // If spreadsheet allows direct editing on the website, only show it to logged in users
+        $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
+        if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit']) && !auth()->check()) {
+            abort(403, 'Akses ditolak. Menu ini hanya dapat diakses oleh pengguna yang sudah login.');
+        }
+
         $title = null;
 
         if ($menu->type === 'spreadsheet' && !empty($menu->url)) {

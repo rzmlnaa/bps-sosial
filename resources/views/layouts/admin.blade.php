@@ -344,6 +344,27 @@
                         ])
                         ->orderBy('order_number')
                         ->get();
+
+                    if (!auth()->check()) {
+                        // Filter out spreadsheets with allow_edit enabled for guest users
+                        $dynamicMenus = $dynamicMenus->filter(function($menu) {
+                            $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
+                            if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit'])) {
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        foreach ($dynamicMenus as $menu) {
+                            $menu->setRelation('children', $menu->children->filter(function($child) {
+                                $childMeta = is_array($child->meta) ? $child->meta : json_decode($child->meta ?? '[]', true);
+                                if ($child->type === 'spreadsheet' && !empty($childMeta['allow_edit'])) {
+                                    return false;
+                                }
+                                return true;
+                            }));
+                        }
+                    }
                 @endphp
 
                 @foreach($dynamicMenus as $menu)

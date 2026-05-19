@@ -124,6 +124,15 @@
                                 value="{{ old('gid', $meta['gid'] ?? '') }}">
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="allowEdit" name="allow_edit" {{ old('allow_edit', $meta['allow_edit'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label ms-2 fw-medium" for="allowEdit">Izinkan Edit Langsung di Website</label>
+                            </div>
+                            <small class="text-muted">Centang jika ingin spreadsheet ini dapat diedit langsung oleh pengguna di website (memerlukan izin edit pada link Google Spreadsheet).</small>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="externalLinksSection" style="display: none;" class="mb-3">
@@ -429,16 +438,30 @@
                 } else if (type === 'spreadsheet') {
                     const idMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
                     if (idMatch && idMatch[1]) {
-                        let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
-                        let params = [];
-                        if (mode === 'single' && gid !== '') {
-                            params.push(`gid=${gid}`);
-                            params.push('single=true');
-                        } else {
+                        const allowEditCheckbox = document.getElementById('allowEdit');
+                        const allowEdit = allowEditCheckbox ? allowEditCheckbox.checked : false;
+                        
+                        if (allowEdit) {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/edit`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                            }
                             params.push('widget=true');
                             params.push('headers=false');
+                            return embed + (params.length ? '?' + params.join('&') : '');
+                        } else {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                                params.push('single=true');
+                            } else {
+                                params.push('widget=true');
+                                params.push('headers=false');
+                            }
+                            return embed + (params.length ? '?' + params.join('&') : '');
                         }
-                        return embed + (params.length ? '?' + params.join('&') : '');
                     }
                 } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     // Google Drive Folders
@@ -515,6 +538,10 @@
             gidInput.addEventListener('input', updatePreview);
             modeSelect.addEventListener('change', updatePreview);
             embedUrlInput.addEventListener('input', updatePreview);
+            const allowEditCheckbox = document.getElementById('allowEdit');
+            if (allowEditCheckbox) {
+                allowEditCheckbox.addEventListener('change', updatePreview);
+            }
 
             // Initial UI state
             updateUI();

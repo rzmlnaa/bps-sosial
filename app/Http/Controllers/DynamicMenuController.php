@@ -92,6 +92,7 @@ class DynamicMenuController extends Controller
         if (!empty($validated['url']) && $validated['type'] === 'spreadsheet') {
             $meta['gid'] = $request->gid;
             $meta['sheet_mode'] = $request->sheet_mode;
+            $meta['allow_edit'] = $request->has('allow_edit');
 
             if (preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $validated['url'], $matches)) {
                 $meta['spreadsheet_id'] = $matches[1];
@@ -202,6 +203,7 @@ class DynamicMenuController extends Controller
         if (!empty($validated['url']) && $validated['type'] === 'spreadsheet') {
             $meta['gid'] = $request->gid;
             $meta['sheet_mode'] = $request->sheet_mode;
+            $meta['allow_edit'] = $request->has('allow_edit');
 
             if (preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $validated['url'], $matches)) {
                 $meta['spreadsheet_id'] = $matches[1];
@@ -256,16 +258,27 @@ class DynamicMenuController extends Controller
         } elseif ($type === 'spreadsheet') {
             if (preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $url, $matches)) {
                 $id = $matches[1];
-                $embedUrl = "https://docs.google.com/spreadsheets/d/{$id}/htmlembed";
-                $queryParams = [];
-                if (($meta['sheet_mode'] ?? null) === 'single' && ($meta['gid'] ?? null) !== null) {
-                    $queryParams[] = "gid={$meta['gid']}";
-                    $queryParams[] = "single=true";
-                } else {
+                if (!empty($meta['allow_edit'])) {
+                    $embedUrl = "https://docs.google.com/spreadsheets/d/{$id}/edit";
+                    $queryParams = [];
+                    if (($meta['sheet_mode'] ?? null) === 'single' && ($meta['gid'] ?? null) !== null) {
+                        $queryParams[] = "gid={$meta['gid']}";
+                    }
                     $queryParams[] = "widget=true";
                     $queryParams[] = "headers=false";
+                    return $embedUrl . (!empty($queryParams) ? "?" . implode("&", $queryParams) : "");
+                } else {
+                    $embedUrl = "https://docs.google.com/spreadsheets/d/{$id}/htmlembed";
+                    $queryParams = [];
+                    if (($meta['sheet_mode'] ?? null) === 'single' && ($meta['gid'] ?? null) !== null) {
+                        $queryParams[] = "gid={$meta['gid']}";
+                        $queryParams[] = "single=true";
+                    } else {
+                        $queryParams[] = "widget=true";
+                        $queryParams[] = "headers=false";
+                    }
+                    return $embedUrl . (!empty($queryParams) ? "?" . implode("&", $queryParams) : "");
                 }
-                return $embedUrl . (!empty($queryParams) ? "?" . implode("&", $queryParams) : "");
             }
         } elseif ($type === 'drive') {
             // Google Drive Folders
