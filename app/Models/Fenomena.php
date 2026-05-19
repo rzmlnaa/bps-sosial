@@ -66,4 +66,9 @@ class Fenomena extends Model
             ->withPivot(['arah', 'ditetapkan_oleh', 'ditetapkan_at'])
             ->withTimestamps();
     }
+
+    public function praEksporSelections()
+    {
+        return $this->hasMany(PraEksporFenomenaSelection::class, 'fenomena_id');
+    }
 }

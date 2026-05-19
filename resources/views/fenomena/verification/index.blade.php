@@ -1088,7 +1088,7 @@
 
                             {{-- Action Buttons --}}
                             <div class="action-group">
-                                <a href="{{ route('fenomena.show', [$fenomena->id, 'from' => 'verification']) }}"
+                                <a href="{{ route('fenomena.show', ['id' => $fenomena->id, 'from' => 'verification', 'tab' => 'pending']) }}"
                                     class="btn-detail">
                                     <i class="fas fa-eye"></i> Detail
                                 </a>
@@ -1300,7 +1300,8 @@
                                 </div>
                             </div>
                             <div class="action-group">
-                                <a href="{{ route('fenomena.show', [$item->id, 'from' => 'verification']) }}" class="btn-detail">
+                                <a href="{{ route('fenomena.show', ['id' => $item->id, 'from' => 'verification', 'tab' => 'riwayat']) }}"
+                                    class="btn-detail">
                                     <i class="fas fa-eye"></i> Detail
                                 </a>
                             </div>

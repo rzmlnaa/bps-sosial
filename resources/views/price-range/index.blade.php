@@ -16,7 +16,32 @@
             background-color: var(--bps-blue) !important;
             color: #fff !important;
         }
-    </style>
+    /* Custom Scrollbar for Analysis Area */
+            .analysis-scroll-area {
+                max-height: 600px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding-right: 5px;
+            }
+
+            .analysis-scroll-area::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .analysis-scroll-area::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            .analysis-scroll-area::-webkit-scrollbar-thumb {
+                background: #ccc;
+                border-radius: 10px;
+            }
+
+            .analysis-scroll-area::-webkit-scrollbar-thumb:hover {
+                background: var(--bps-blue);
+            }
+        </style>
 @endpush
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
@@ -65,8 +90,7 @@
     <script>
         function confirmExport(e, btn, year) {
             e.preventDefault();
-            const url = btn.getAttribute('href');
-            // Store original content to revert later
+            const url = new URL(btn.href).pathname + new URL(btn.href).search;
             const originalContent = btn.innerHTML;
 
             Swal.fire({
@@ -74,7 +98,7 @@
                 html: 'Ketika proses mengekspor data. Mohon jangan meninggalkan halaman sampai proses selesai hingga terlihat "<i class="fas fa-check me-2"></i>Berhasil!"',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#198754', // Match success btn color
+                confirmButtonColor: '#198754',
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Ya, Export',
                 cancelButtonText: 'Batal'
@@ -82,16 +106,37 @@
                 if (result.isConfirmed) {
                     // Disable button and show loading state
                     btn.classList.add('disabled');
-                    btn.style.pointerEvents = 'none'; // Prevent double clicks
+                    btn.style.pointerEvents = 'none';
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sedang mengunduh..';
 
-                    // Use fetch to handle the download and know when it starts/finishes
+                    let timerInterval;
+                    let secondsLeft = 30;
+
+                    Swal.fire({
+                        title: 'Menyiapkan Data...',
+                        html: `Mohon tunggu sejenak (<b>${secondsLeft}</b> detik)...<br><small class="text-muted">Sedang memproses ribuan baris data.</small>`,
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            timerInterval = setInterval(() => {
+                                secondsLeft--;
+                                if (secondsLeft > 0) {
+                                    Swal.getHtmlContainer().querySelector('b').textContent = secondsLeft;
+                                } else {
+                                    Swal.getHtmlContainer().innerHTML = 'Hampir selesai, sedang mengemas file...<br><small class="text-muted">Sedang memproses ribuan baris data.</small>';
+                                }
+                            }, 1000);
+                        },
+                        willClose: () => {
+                            clearInterval(timerInterval);
+                        }
+                    });
+
                     fetch(url)
                         .then(response => {
                             if (!response.ok) throw new Error('Network response was not ok');
-
-                            // Try to get filename from headers
-                            let filename = 'data_export.xlsx';
+                            let filename = `RH_${year}.xlsx`;
                             const disposition = response.headers.get('Content-Disposition');
                             if (disposition && disposition.indexOf('attachment') !== -1) {
                                 const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -100,24 +145,31 @@
                                     filename = matches[1].replace(/['"]/g, '');
                                 }
                             }
-
                             return response.blob().then(blob => ({ blob, filename }));
                         })
                         .then(({ blob, filename }) => {
-                            // Create download link
-                            const url = window.URL.createObjectURL(blob);
+                            const downloadUrl = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.style.display = 'none';
-                            a.href = url;
+                            a.href = downloadUrl;
                             a.download = filename;
                             document.body.appendChild(a);
                             a.click();
-                            window.URL.revokeObjectURL(url);
+                            window.URL.revokeObjectURL(downloadUrl);
 
                             // Success State
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Data berhasil diexport.',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+
+                            });
+
                             btn.innerHTML = '<i class="fas fa-check me-2"></i> Berhasil!';
 
-                            // Revert after delay
                             setTimeout(() => {
                                 btn.classList.remove('disabled');
                                 btn.style.pointerEvents = 'auto';
@@ -129,7 +181,14 @@
                             btn.classList.remove('disabled');
                             btn.style.pointerEvents = 'auto';
                             btn.innerHTML = originalContent;
-                            Swal.fire('Error', 'Gagal mengunduh file.', 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: 'Gagal mengunduh file. Silakan coba lagi nanti.'
+                            });
+                        })
+                        .finally(() => {
+                            clearInterval(timerInterval);
                         });
                 }
             });
@@ -261,12 +320,12 @@
                                         id="tab-{{ Str::slug($periodName) }}" data-bs-toggle="tab"
                                         data-bs-target="#content-{{ Str::slug($periodName) }}" type="button" role="tab"
                                         onclick="setActiveTab('{{ $periodName }}')">
-                                        {{ $periodName }}
+                                        {{ $periodName }} ({{ count($data) }} Ditemukan)
                                     </button>
                                 </li>
                             @endforeach
                         </ul>
-                        <div class="tab-content" id="insightTabsContent">
+                        <div class="tab-content analysis-scroll-area" id="insightTabsContent">
                             @foreach($outliers as $periodName => $commodities)
 
                                 <div class="tab-pane fade {{ $activeTab == $periodName ? 'show active' : '' }}"

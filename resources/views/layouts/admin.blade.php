@@ -6,11 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard Kemiskinan Kalbar')</title>
 
+    @php
+        $logoMenu = \App\Models\DynamicMenu::where('type', 'logo')->first();
+        $logoUrl = 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';
+        if ($logoMenu && $logoMenu->url) {
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } elseif (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } else {
+                $logoUrl = $logoMenu->url;
+            }
+        }
+    @endphp
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon"
-        href="https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg"
+        href="{{ $logoUrl }}"
         type="image/x-icon">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -57,8 +71,9 @@
     <div class="mobile-nav d-lg-none">
         <div class="d-flex align-items-center gap-2">
             <div class="logo-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
-                    alt="Logo BPS">
+                <img src="{{ $logoUrl }}"
+                    alt="Logo BPS"
+                    onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
             <span class="fw-bold text-navy">BPS Kalbar</span>
         </div>
@@ -71,15 +86,13 @@
     <nav class="sidebar client-sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg/960px-Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg.png"
-                    alt="Logo BPS">
+                <img src="{{ $logoUrl }}"
+                    alt="Logo BPS"
+                    onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
             <div>
-                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">Badan Pusat Statistik</h5>
-                @auth
-                    <small class="text-muted"
-                        style="font-size: 0.7rem;">{{ Auth::user()->kabupaten->nama_kabupaten ?? '-' }}</small>
-                @endauth
+                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">SISOKA</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">BPS Prov. Kalimantan Barat</small>
             </div>
         </div>
         @php
@@ -96,6 +109,13 @@
             <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
                 {{ $greeting }}@auth, {{ Auth::user()->name }}@endauth 👋
             </span>
+            <small class="text-muted d-block">
+
+                @auth
+                    <small class="text-muted" style="font-size: 0.7rem;">Team BPS
+                        {{ Auth::user()->kabupaten->nama_kabupaten ?? '-' }}</small>
+                @endauth
+            </small>
         </div>
         <div class="py-3">
 
@@ -142,6 +162,21 @@
                     <span>Dashboard</span>
                 </a>
 
+                @if(auth()->check() && auth()->user()->role === 'user')
+                    <a href="{{ route('my-team.index') }}"
+                        class="nav-link {{ request()->routeIs('my-team.index') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i>
+                        <span>Anggota Tim</span>
+                    </a>
+                @endif
+
+                @if(auth()->check() && auth()->user()->kabupaten->kode_kab == '6100')
+                    <a href="{{ route('wilayah.index') }}"
+                        class="nav-link {{ request()->routeIs('wilayah.*') ? 'active' : '' }}">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Kelola Wilayah</span>
+                    </a>
+                @endif
 
                 <a href="{{ route('poverty') }}"
                     class="nav-link {{ request()->routeIs('poverty') || request()->routeIs('poverty.input') ? 'active' : '' }}">
@@ -151,8 +186,56 @@
 
                 <a href="{{ route('seruti.index') }}" class="nav-link {{ request()->routeIs('seruti.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-pie"></i>
-                    <span>SERUTI</span>
+                    <span>Seruti</span>
                 </a>
+
+                <a href="#submenuDescan" id="menu-descan"
+                    class="nav-link {{ request()->routeIs('desa-cantik.*') ? 'active' : '' }}" data-bs-toggle="collapse"
+                    aria-expanded="true">
+                    <i class="fas fa-seedling"></i>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>Desa Cantik</span>
+                        <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                    </div>
+                </a>
+
+                <div class="collapse {{ request()->routeIs('desa-cantik.*') ? 'show' : '' }}" id="submenuDescan">
+                    <ul class="nav flex-column ps-4 border-start ms-3 py-1">
+                        <li class="nav-item">
+                            <a href="{{ route('desa-cantik.index') }}"
+                                class="nav-link {{ request()->routeIs('desa-cantik.kelola') || request()->routeIs('desa-cantik.index') ? 'active' : '' }}">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Visualisasi</span>
+                            </a>
+                        </li>
+                        @if (auth()->check())
+
+
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.peserta') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.peserta') ? 'active' : '' }}">
+                                    <i class="fas fa-users"></i>
+                                    <span>Peserta Desa</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.progress') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.progress.*') || request()->routeIs('desa-cantik.progress') ? 'active' : '' }}">
+                                    <i class="fas fa-tasks"></i>
+                                    <span>Progress Kegiatan</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('desa-cantik.penilaian') }}"
+                                    class="nav-link {{ request()->routeIs('desa-cantik.penilaian.*') || request()->routeIs('desa-cantik.penilaian') ? 'active' : '' }}">
+                                    <i class="fas fa-star"></i>
+                                    <span>Penilaian</span>
+                                </a>
+                            </li>
+                        @endif
+
+                    </ul>
+                </div>
 
 
                 <a href="#submenu2" id="menu-rentang-harga"
@@ -192,7 +275,7 @@
 
 
                 <a href="#submenu3" id="menu-fenomena"
-                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') ? 'active' : '' }}"
+                    class="nav-link {{request()->is('verification-fenomena*') || request()->is('fenomena*') || request()->routeIs('pra-ekspor.*') ? 'active' : '' }}"
                     data-bs-toggle="collapse" aria-expanded="true">
                     <i class="fas fa-newspaper"></i>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -201,7 +284,7 @@
                     </div>
                 </a>
 
-                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') ? 'show' : '' }}"
+                <div class="collapse {{ request()->routeIs('fenomena.*') || request()->routeIs('fenomena.verification.*') || request()->routeIs('pra-ekspor.*') ? 'show' : '' }}"
                     id="submenu3">
                     <ul class="nav flex-column ps-4 border-start ms-3 py-1">
                         <li class="nav-item">
@@ -235,6 +318,13 @@
                                         <span>Verifikasi</span>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('pra-ekspor.index') }}"
+                                        class="nav-link {{ request()->routeIs('pra-ekspor.*') ? 'active' : '' }}">
+                                        <i class="fas fa-file-export"></i>
+                                        <span>Pra Ekspor</span>
+                                    </a>
+                                </li>
                             @endif
                         @endif
                     </ul>
@@ -245,6 +335,7 @@
 
                 @php
                     $dynamicMenus = \App\Models\DynamicMenu::whereNull('parent_id')
+                        ->whereNotIn('type', ['panduan_pengguna', 'logo', 'video_panduan'])
                         ->where('is_active', true)
                         ->with([
                             'children' => function ($q) {
@@ -253,6 +344,27 @@
                         ])
                         ->orderBy('order_number')
                         ->get();
+
+                    if (!auth()->check()) {
+                        // Filter out spreadsheets with allow_edit enabled for guest users
+                        $dynamicMenus = $dynamicMenus->filter(function($menu) {
+                            $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
+                            if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit'])) {
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        foreach ($dynamicMenus as $menu) {
+                            $menu->setRelation('children', $menu->children->filter(function($child) {
+                                $childMeta = is_array($child->meta) ? $child->meta : json_decode($child->meta ?? '[]', true);
+                                if ($child->type === 'spreadsheet' && !empty($childMeta['allow_edit'])) {
+                                    return false;
+                                }
+                                return true;
+                            }));
+                        }
+                    }
                 @endphp
 
                 @foreach($dynamicMenus as $menu)
@@ -294,6 +406,13 @@
                         </a>
                     @endif
                 @endforeach
+
+                <h6 class="px-4 text-xs font-weight-bold text-muted text-uppercase mt-4 mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 0.05em;">Bantuan</h6>
+                <a href="{{ route('panduan') }}" class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}">
+                    <i class="fas fa-book-open"></i>
+                    <span>Panduan Pengguna</span>
+                </a>
             @endif
 
         </div>
@@ -340,16 +459,14 @@
         </div>
 
         <footer class="mt-auto pt-4 border-top text-center text-muted pb-0">
-            <small class="d-block mb-1">&copy; {{ date('Y') }} Badan Pusat Statistik Provinsi Kalimantan Barat. All
-                rights reserved.</small>
-            <small>
-                Jika terdapat <span class="text-danger fw-bold">pertanyaan</span> atau <span
-                    class="text-danger fw-bold">error - bug</span> pada sistem,
-                harap hubungi Developer dengan
-                <a href="*" target="_blank"
-                    class="text-decoration-none fw-bold" style="color: var(--bps-orange);">
-                    klik disini
-                </a>
+            @php
+                $startYear = 2026; // tahun pertama web di deploy
+                $currentYear = date('Y');
+            @endphp
+
+            <small class="d-block mb-1">
+                &copy; {{ $startYear == $currentYear ? $startYear : $startYear . ' - ' . $currentYear }}
+                Badan Pusat Statistik Provinsi Kalimantan Barat. All rights reserved.
             </small>
         </footer>
     </main>
@@ -365,7 +482,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: '{{ session('success') }}',
+                text: @json(session('success')),
                 showConfirmButton: false,
                 timer: 2000,
                 timerProgressBar: true
@@ -378,7 +495,7 @@
             Swal.fire({
                 icon: 'warning',
                 title: 'Perhatian!',
-                html: '{{ session('warning') }}',
+                html: @json(session('warning')),
             });
         </script>
     @endif
@@ -388,7 +505,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: '{{ session('error') }}',
+                text: @json(session('error')),
             });
         </script>
     @endif
@@ -398,7 +515,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Validasi Gagal',
-                text: '{{ $errors->first() }}',
+                text: @json($errors->first()),
             });
         </script>
     @endif

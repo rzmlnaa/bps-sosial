@@ -3,10 +3,27 @@
 @section('title', 'Edit Menu')
 
 @section('content')
+    @php 
+        $reqType = old('type', $dynamicMenu->type); 
+        $isSpecial = in_array($reqType, ['panduan_pengguna', 'logo', 'video_panduan']);
+        $pageTitle = 'Edit Menu: ' . $dynamicMenu->name;
+        $pageSubtitle = 'Edit Menu';
+        if ($reqType == 'panduan_pengguna') {
+            $pageTitle = 'Edit Panduan Pengguna';
+            $pageSubtitle = 'Perbarui link Panduan Pengguna';
+        } elseif ($reqType == 'logo') {
+            $pageTitle = 'Edit Logo Sisoka';
+            $pageSubtitle = 'Perbarui logo Sisoka';
+        } elseif ($reqType == 'video_panduan') {
+            $pageTitle = 'Edit Video Panduan';
+            $pageSubtitle = 'Perbarui video panduan';
+        }
+    @endphp
+
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Edit Menu: {{ $dynamicMenu->name }}</h2>
-            <p class="text-muted mb-0">Edit Menu</p>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">{{ $pageTitle }}</h2>
+            <p class="text-muted mb-0">{{ $pageSubtitle }}</p>
         </div>
 
         <a href="{{ route('admin.dynamic-menus.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
@@ -19,64 +36,69 @@
             <form action="{{ route('admin.dynamic-menus.update', $dynamicMenu->id) }}" method="POST">
                 @csrf
                 @method('PUT')
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium">Nama Menu <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" required
-                            value="{{ old('name', $dynamicMenu->name) }}">
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <input type="hidden" name="slug" required value="{{ old('slug', $dynamicMenu->slug) }}">
+
+                <div style="{{ $isSpecial ? 'display: none;' : '' }}">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-medium">Nama Menu <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" {{ !$isSpecial ? 'required' : '' }}
+                                value="{{ old('name', $dynamicMenu->name) }}">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <input type="hidden" name="slug" {{ !$isSpecial ? 'required' : '' }} value="{{ old('slug', $dynamicMenu->slug) }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-medium">Parent Menu</label>
+                            <select name="parent_id" id="parentSelect" class="form-select">
+                                <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
+                                @foreach($parents as $parent)
+                                    <option value="{{ $parent->id }}" {{ old('parent_id', $dynamicMenu->parent_id) == $parent->id ? 'selected' : '' }}>{{ $parent->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Pilih parent jika ini adalah submenu.</small>
+                        </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-medium">Parent Menu</label>
-                        <select name="parent_id" class="form-select">
-                            <option value="">-- Jadikan Menu Utama (Dropdown) --</option>
-                            @foreach($parents as $parent)
-                                <option value="{{ $parent->id }}" {{ old('parent_id', $dynamicMenu->parent_id) == $parent->id ? 'selected' : '' }}>{{ $parent->name }}</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Pilih parent jika ini adalah submenu.</small>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-medium">Urutan (Order Number) <span class="text-danger">*</span></label>
-                        <input type="number" name="order_number" class="form-control" required min="0"
-                            value="{{ old('order_number', $dynamicMenu->order_number) }}">
-                        <small class="text-muted">Angka lebih kecil tampil lebih atas.</small>
-                    </div>
-                </div>
+                <hr class="my-4" style="{{ $isSpecial ? 'display: none;' : '' }}">
+                <h5 class="fw-bold mb-3" style="{{ $isSpecial ? 'display: none;' : '' }}">Pengaturan Konten</h5>
 
-                <hr class="my-4">
-                <h5 class="fw-bold mb-3">Pengaturan Konten</h5>
-
-                <div class="row">
+                <div class="row" style="{{ $isSpecial ? 'display: none;' : '' }}">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium">Tipe Konten <span class="text-danger">*</span></label>
-                        <select name="type" class="form-select" id="typeSelect" required>
-                            <option value="">Pilih Tipe Konten</option>
-                            <option value="spreadsheet" {{ old('type', $dynamicMenu->type) == 'spreadsheet' ? 'selected' : '' }}>Google Spreadsheet</option>
-                            <option value="youtube" {{ old('type', $dynamicMenu->type) == 'youtube' ? 'selected' : '' }}
-                                disabled>
-                                YouTube Video (DALAM PENGEMBANGAN)</option>
-                            <option value="drive" {{ old('type', $dynamicMenu->type) == 'drive' ? 'selected' : '' }} disabled>
-                                Google
-                                Drive (View/Embed) (DALAM PENGEMBANGAN)</option>
-                            <option value="external" {{ old('type', $dynamicMenu->type) == 'external' ? 'selected' : '' }}>
-                                Link Eksternal Lainnya</option>
+                        <label class="form-label fw-medium">Tipe Konten <span class="text-danger"
+                                id="typeRequiredStar">*</span></label>
+                        <select name="type" class="form-select" id="typeSelect">
+                            @if(!$isSpecial)
+                                <option value="">Pilih Tipe Konten</option>
+                                <option value="spreadsheet" {{ $reqType == 'spreadsheet' ? 'selected' : '' }}>Google Spreadsheet</option>
+                                <option value="youtube" {{ $reqType == 'youtube' ? 'selected' : '' }}>YouTube Video </option>
+                                <option value="drive" {{ $reqType == 'drive' ? 'selected' : '' }}>Google Drive (View/Embed) </option>
+                                <option value="external" {{ $reqType == 'external' ? 'selected' : '' }}>Link Eksternal Lainnya</option>
+                            @else
+                                @if($reqType == 'panduan_pengguna')
+                                    <option value="panduan_pengguna" selected>Panduan Pengguna (Google Drive)</option>
+                                @endif
+                                @if($reqType == 'logo')
+                                    <option value="logo" selected>Logo Sisoka (Google Drive)</option>
+                                @endif
+                                @if($reqType == 'video_panduan')
+                                    <option value="video_panduan" selected>Video Panduan (YouTube)</option>
+                                @endif
+                            @endif
                         </select>
                     </div>
                 </div>
 
                 <div class="row" id="urlSection" style="display: none;">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label fw-medium" id="urlLabel">Link / URL <span
-                                class="text-danger">*</span></label>
+                        <label class="form-label fw-medium" id="urlLabel">Link / URL <span class="text-danger"
+                                id="urlRequiredStar">*</span></label>
                         <input type="text" name="url" id="urlInput" class="form-control @error('url') is-invalid @enderror"
-                            required placeholder="Paste link di sini..." value="{{ old('url', $dynamicMenu->url) }}">
+                            placeholder="Paste link di sini..." value="{{ old('url', $dynamicMenu->url) }}">
                         @error('url')
                             <div class="invalid-feedback" id="urlError">{{ $message }}</div>
                         @enderror
@@ -108,9 +130,47 @@
                                 value="{{ old('gid', $meta['gid'] ?? '') }}">
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="allowEdit" name="allow_edit" {{ old('allow_edit', $meta['allow_edit'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label ms-2 fw-medium" for="allowEdit">Izinkan Edit Langsung di Website</label>
+                            </div>
+                            <small class="text-muted">Centang jika ingin spreadsheet ini dapat diedit langsung oleh pengguna di website (memerlukan izin edit pada link Google Spreadsheet).</small>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="row">
+                <div id="externalLinksSection" style="display: none;" class="mb-3">
+                    <label class="form-label fw-medium">Daftar Link (Opsional)</label>
+                    <div id="linksContainer">
+                        @php
+                            $links = old('links', $meta['links'] ?? []);
+                        @endphp
+                        @foreach($links as $index => $link)
+                            <div class="row mb-2 link-row">
+                                <div class="col-md-5">
+                                    <input type="text" name="links[{{ $index }}][name]" class="form-control"
+                                        placeholder="Nama Link" value="{{ $link['name'] ?? '' }}">
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="text" name="links[{{ $index }}][url]" class="form-control"
+                                        placeholder="URL Link" value="{{ $link['url'] ?? '' }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger w-100 remove-link-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill mt-2" id="addLinkBtn">
+                        <i class="fas fa-plus me-1"></i> Tambah Link
+                    </button>
+                </div>
+
+                <div class="row" id="embedUrlSection">
                     <div class="col-md-12 mb-3">
                         <label class="form-label fw-medium">Embed URL (Opsional)</label>
                         <input type="text" name="embed_url" id="embedUrlInput" class="form-control"
@@ -120,10 +180,14 @@
                     </div>
                 </div>
 
-                <div class="mb-4 form-check form-switch mt-3">
-                    <input class="form-check-input" type="checkbox" role="switch" id="isActive" name="is_active" {{ old('is_active', $dynamicMenu->is_active) ? 'checked' : '' }}>
-                    <label class="form-check-label ms-2 fw-medium" for="isActive">Aktifkan Menu Ini</label>
-                </div>
+                @if($isSpecial)
+                    <input type="hidden" name="is_active" value="1">
+                @else
+                    <div class="mb-4 form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="isActive" name="is_active" {{ old('is_active', $dynamicMenu->is_active) ? 'checked' : '' }}>
+                        <label class="form-check-label ms-2 fw-medium" for="isActive">Aktifkan Menu Ini</label>
+                    </div>
+                @endif
 
                 <hr class="my-4">
                 <h5 class="fw-bold mb-3">Live Preview Konten</h5>
@@ -203,23 +267,102 @@
                 return url.includes('drive.google.com');
             }
 
-            function updateUI() {
+            const parentSelect = document.getElementById('parentSelect');
+
+            function updateUI(event) {
                 const type = typeSelect.value;
+                const parentId = parentSelect.value;
                 const urlSection = document.getElementById('urlSection');
-                urlSection.style.display = type ? 'block' : 'none';
+
+                // Conditional Required Logic
+                const typeRequiredStar = document.getElementById('typeRequiredStar');
+                const urlRequiredStar = document.getElementById('urlRequiredStar');
+
+                if (parentId === "" && type !== 'panduan_pengguna' && type !== 'logo' && type !== 'video_panduan') {
+                    // It's a Top Level Menu (Dropdown), Content Type is NOT required
+                    typeSelect.required = false;
+                    urlInput.required = false;
+                    typeRequiredStar.style.display = 'none';
+                    urlRequiredStar.style.display = 'none';
+
+                    // NEW: Automatically reset values when switched to Menu Utama
+                    if (event && event.target === parentSelect) {
+                        typeSelect.value = "";
+                        urlInput.value = "";
+                    }
+                } else {
+                    // It's a Submenu, Content Type IS required
+                    typeSelect.required = true;
+                    // For external types, the main URL is optional if there are links in the list
+                    urlInput.required = type === 'external' ? false : true;
+                    typeRequiredStar.style.display = 'inline';
+                    urlRequiredStar.style.display = type === 'external' ? 'none' : 'inline';
+                }
+
+                urlSection.style.display = (type && type !== 'external') ? 'block' : 'none';
                 spreadsheetExtra.style.display = type === 'spreadsheet' ? 'block' : 'none';
+
+                const embedUrlSection = document.getElementById('embedUrlSection');
+                if (embedUrlSection) {
+                    embedUrlSection.style.display = (type && type !== 'external') ? 'block' : 'none';
+                }
+
+                if (type === 'external') {
+                    urlInput.value = '';
+                    const embedInput = document.getElementById('embedUrlInput');
+                    if (embedInput) embedInput.value = '';
+                }
+
+                const externalLinksSection = document.getElementById('externalLinksSection');
+                if (externalLinksSection) {
+                    externalLinksSection.style.display = type === 'external' ? 'block' : 'none';
+                }
 
                 if (type === 'spreadsheet') {
                     urlHint.innerHTML = 'Paste link Google Spreadsheet lengkap. ID dan GID akan diekstrak otomatis.';
-                } else if (type === 'youtube') {
+                } else if (type === 'youtube' || type === 'video_panduan') {
                     urlHint.innerHTML = 'Paste link video YouTube (misal: https://www.youtube.com/watch?v=...)';
-                } else if (type === 'drive') {
+                } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     urlHint.innerHTML = 'Paste link "Share" dari Google Drive atau link folder.';
                 } else {
                     urlHint.innerHTML = 'Paste link URL eksternal lainnya.';
                 }
                 validateForm();
                 updatePreview();
+            }
+
+            // External Links Handling
+            const addLinkBtn = document.getElementById('addLinkBtn');
+            const linksContainer = document.getElementById('linksContainer');
+            let linkIndex = document.querySelectorAll('.link-row').length;
+
+            if (addLinkBtn) {
+                addLinkBtn.addEventListener('click', function () {
+                    const row = document.createElement('div');
+                    row.className = 'row mb-2 link-row';
+                    row.innerHTML = `
+                                            <div class="col-md-5">
+                                                <input type="text" name="links[${linkIndex}][name]" class="form-control" placeholder="Nama Link">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" name="links[${linkIndex}][url]" class="form-control" placeholder="URL Link">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-outline-danger w-100 remove-link-btn">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        `;
+                    linksContainer.appendChild(row);
+                    linkIndex++;
+                });
+
+                linksContainer.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('remove-link-btn') || e.target.closest('.remove-link-btn')) {
+                        const row = e.target.closest('.link-row');
+                        row.remove();
+                    }
+                });
             }
 
             function validateForm() {
@@ -239,9 +382,14 @@
                 if (urlError) urlError.classList.remove('d-none');
 
                 if (url === '') {
-                    isValid = false;
+                    // For external types, it's valid if there's at least one link in the list
+                    if (type === 'external' && document.querySelectorAll('.link-row').length > 0) {
+                        isValid = true;
+                    } else {
+                        isValid = false;
+                    }
                 } else {
-                    if (type === 'youtube') {
+                    if (type === 'youtube' || type === 'video_panduan') {
                         if (!isValidYoutubeUrl(url)) {
                             urlInput.classList.add('is-invalid');
                             if (youtubeError) youtubeError.classList.remove('d-none');
@@ -255,7 +403,7 @@
                             if (urlError) urlError.classList.add('d-none');
                             isValid = false;
                         }
-                    } else if (type === 'drive') {
+                    } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                         if (!isValidDriveUrl(url)) {
                             urlInput.classList.add('is-invalid');
                             if (driveError) driveError.classList.remove('d-none');
@@ -265,7 +413,13 @@
                     }
                 }
 
-                submitBtn.disabled = !isValid;
+                // submitBtn.disabled = !isValid; 
+                const hasError = urlInput.classList.contains('is-invalid');
+                if (hasError) {
+                    submitBtn.disabled = true;
+                } else {
+                    submitBtn.disabled = false;
+                }
             }
 
             function extractSpreadsheetInfo(url) {
@@ -281,7 +435,7 @@
             function getEmbedUrl(type, url, gid, mode) {
                 if (!url) return '';
 
-                if (type === 'youtube') {
+                if (type === 'youtube' || type === 'video_panduan') {
                     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
                     const match = url.match(regExp);
                     if (match && match[2].length == 11) {
@@ -290,18 +444,32 @@
                 } else if (type === 'spreadsheet') {
                     const idMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
                     if (idMatch && idMatch[1]) {
-                        let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
-                        let params = [];
-                        if (mode === 'single' && gid !== '') {
-                            params.push(`gid=${gid}`);
-                            params.push('single=true');
-                        } else {
+                        const allowEditCheckbox = document.getElementById('allowEdit');
+                        const allowEdit = allowEditCheckbox ? allowEditCheckbox.checked : false;
+                        
+                        if (allowEdit) {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/edit`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                            }
                             params.push('widget=true');
                             params.push('headers=false');
+                            return embed + (params.length ? '?' + params.join('&') : '');
+                        } else {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                                params.push('single=true');
+                            } else {
+                                params.push('widget=true');
+                                params.push('headers=false');
+                            }
+                            return embed + (params.length ? '?' + params.join('&') : '');
                         }
-                        return embed + (params.length ? '?' + params.join('&') : '');
                     }
-                } else if (type === 'drive') {
+                } else if (type === 'drive' || type === 'panduan_pengguna' || type === 'logo') {
                     // Google Drive Folders
                     const folderMatch = url.match(/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9-_]+)/);
                     if (folderMatch && folderMatch[1]) {
@@ -367,6 +535,7 @@
             }
 
             typeSelect.addEventListener('change', updateUI);
+            parentSelect.addEventListener('change', updateUI);
             urlInput.addEventListener('input', function () {
                 extractSpreadsheetInfo(this.value);
                 validateForm();
@@ -375,6 +544,10 @@
             gidInput.addEventListener('input', updatePreview);
             modeSelect.addEventListener('change', updatePreview);
             embedUrlInput.addEventListener('input', updatePreview);
+            const allowEditCheckbox = document.getElementById('allowEdit');
+            if (allowEditCheckbox) {
+                allowEditCheckbox.addEventListener('change', updatePreview);
+            }
 
             // Initial UI state
             updateUI();

@@ -115,18 +115,6 @@
                                     $styleMin = "background-color: #FFFF00;"; // Yellow
                                 }
                                 $currentMin = $newMin; // Update carry forward
-                            } else {
-                                // Even if carry forward, we might want to show the value? 
-                                // The previous table showed just the number.
-                                // If no edit, it implies carry forward if we want to show the 'State at this revision'.
-                                // Standard logic: Show current state. 
-                                // But if 'MIN_EDIT' usually implies 'The Edited Value'. 
-                                // However, user said "jika nilai min ... sama ... jangan label kuning". This implies we ARE showing it.
-                                // So we display $currentMin (state).
-                                // Wait, the column name is MIN_EDIT. 
-                                // If I just show $currentMin, it's the state.
-                                // If I compare $currentMin (now) vs $currentMin (before), it is same.
-                                // So checks out.
                             }
 
                             $newMax = null;

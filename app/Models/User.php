@@ -66,4 +66,8 @@ class User extends Authenticatable
         return $this->belongsTo(Kabupaten::class, 'kabupaten_id');
     }
 
+    public function fenomenas()
+    {
+        return $this->hasMany(Fenomena::class, 'created_by');
+    }
 }

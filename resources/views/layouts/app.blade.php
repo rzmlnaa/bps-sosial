@@ -6,11 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Sistem Informasi BPS')</title>
 
+    @php
+        $logoMenu = \App\Models\DynamicMenu::where('type', 'logo')->first();
+        $logoUrl = 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';
+        if ($logoMenu && $logoMenu->url) {
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } elseif (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9-_]+)/', $logoMenu->url, $matches)) {
+                $logoUrl = 'https://lh3.googleusercontent.com/d/' . $matches[1];
+            } else {
+                $logoUrl = $logoMenu->url;
+            }
+        }
+    @endphp
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon"
-        href="https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg"
+        href="{{ $logoUrl }}"
         type="image/x-icon">
 
     <link

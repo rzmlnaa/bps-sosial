@@ -25,6 +25,11 @@ use App\Http\Controllers\DynamicMenuController;
 use App\Http\Controllers\FrontendMenuController;
 use App\Http\Controllers\SektorUsahaController;
 use App\Http\Controllers\IndikatorController;
+use App\Http\Controllers\MyTeamController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WilayahController;
+use App\Http\Controllers\DescanController;
+
 
 
 // --- Authentication Routes (Public/Guest) ---
@@ -38,6 +43,8 @@ Route::get('/login', function () {
 
 Route::get('auth/google', [LoginController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback']);
+
+
 
 Route::middleware(['auth'])->group(function () {
     // Admin Routes
@@ -60,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/kabupaten/{id}', [KabupatenController::class, 'destroy'])->name('kabupaten.destroy');
 
         // Dynamic Menus Admin
+        Route::patch('/dynamic-menus/reorder', [DynamicMenuController::class, 'reorder'])->name('dynamic-menus.reorder');
         Route::resource('dynamic-menus', DynamicMenuController::class)->except(['show']);
     });
 
@@ -72,6 +80,13 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login');
 
     })->name('logout');
+
+
+
+
+    // AJAX Dropdown descan
+    Route::get('/desa-cantik/ajax/kecamatan', [DescanController::class, 'ajaxKecamatan'])->name('desa-cantik.ajax.kecamatan');
+    Route::get('/desa-cantik/ajax/desa', [DescanController::class, 'ajaxDesa'])->name('desa-cantik.ajax.desa');
 });
 
 
@@ -93,6 +108,32 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     Route::get('/fenomena/input', [FenomenaController::class, 'create'])->name('fenomena.create');
     Route::get('/fenomena/check-uniqueness', [FenomenaController::class, 'checkUniqueness'])->name('fenomena.check-uniqueness');
     Route::post('/fenomena', [FenomenaController::class, 'store'])->name('fenomena.store');
+
+    // My Team Route
+    Route::get('/my-team', [MyTeamController::class, 'index'])->name('my-team.index');
+
+    // // Wilayah (Kecamatan & Desa)
+    // Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
+    // Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    // Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
+    // Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
+    // Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
+    // Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
+    // Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
+    // Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
+    // Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
+
+    // Peserta Desa Cantik (semua user login)
+    Route::get('/desa-cantik/peserta', [DescanController::class, 'peserta'])->name('desa-cantik.peserta');
+    Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
+    Route::delete('/desa-cantik/peserta/{id}', [DescanController::class, 'destroyPeserta'])->name('desa-cantik.peserta.destroy');
+
+    Route::get('/desa-cantik/penilaian', [DescanController::class, 'penilaian'])->name('desa-cantik.penilaian');
+    Route::post('/desa-cantik/penilaian/{peserta_id}', [DescanController::class, 'updatePenilaian'])->name('desa-cantik.penilaian.update');
+
+    Route::get('/desa-cantik/progress', [DescanController::class, 'progress'])->name('desa-cantik.progress');
+    Route::get('/desa-cantik/progress/{peserta_id}', [DescanController::class, 'progressDetail'])->name('desa-cantik.progress.detail');
+    Route::post('/desa-cantik/progress/{peserta_id}/store', [DescanController::class, 'storeProgress'])->name('desa-cantik.progress.store');
 });
 
 
@@ -106,9 +147,7 @@ Route::middleware(['check.status'])->group(function () {
         return redirect('/dashboard');
     });
 
-    Route::get('/dashboard', function () {
-        return view('dashboard.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/layouts', function () {
         return view('layouts.admin');
@@ -210,7 +249,17 @@ Route::middleware(['check.status'])->group(function () {
     Route::get('/fenomena', [FenomenaController::class, 'index'])->name('fenomena.index');
     Route::get('/fenomena-visualisasi', [FenomenaController::class, 'visualisasi'])->name('fenomena.visualisasi');
     Route::get('/fenomena-contributor', [\App\Http\Controllers\FenomenaContributorController::class, 'index'])->name('fenomena.contributor');
+
+    // Menu Desa Cantik
+    Route::get('/desa-cantik', [DescanController::class, 'index'])->name('desa-cantik.index');
+
+    // Panduan Pengguna
+    Route::get('/panduan', function () {
+        return view('panduan.index');
+    })->name('panduan');
+
 });
+
 
 
 Route::middleware(['auth', 'check.status', 'only.province'])->group(function () {
@@ -322,6 +371,65 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
     Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
     Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
+
+    // Pra Ekspor
+    Route::get('/pra-ekspor', [\App\Http\Controllers\PraEksporController::class, 'index'])->name('pra-ekspor.index');
+    Route::post('/pra-ekspor/toggle', [\App\Http\Controllers\PraEksporController::class, 'toggleSelection'])->name('pra-ekspor.toggle');
+    Route::get('/pra-ekspor/preview', [\App\Http\Controllers\PraEksporController::class, 'preview'])->name('pra-ekspor.preview');
+    Route::get('/pra-ekspor/export-excel', [\App\Http\Controllers\PraEksporController::class, 'exportExcel'])->name('pra-ekspor.export-excel');
+    Route::get('/pra-ekspor/preview-semua', [\App\Http\Controllers\PraEksporController::class, 'previewSemua'])->name('pra-ekspor.preview-semua');
+    Route::get('/pra-ekspor/export-excel-semua', [\App\Http\Controllers\PraEksporController::class, 'exportExcelSemua'])->name('pra-ekspor.export-excel-semua');
+
+    // Pengelolaan Desa Cantik (Province Only)
+    Route::get('/desa-cantik/kelola', [DescanController::class, 'kelola'])->name('desa-cantik.kelola');
+
+    // Desa Cantik: Periode
+    Route::post('/desa-cantik/periode', [DescanController::class, 'storePeriode'])->name('desa-cantik.periode.store');
+    Route::patch('/desa-cantik/periode/{id}/toggle-active', [DescanController::class, 'togglePeriodeActive'])->name('desa-cantik.periode.toggle-active');
+    Route::delete('/desa-cantik/periode/{id}', [DescanController::class, 'destroyPeriode'])->name('desa-cantik.periode.destroy');
+
+
+
+    // Desa Cantik: Kegiatan
+    Route::post('/desa-cantik/kegiatan', [DescanController::class, 'storeKegiatan'])->name('desa-cantik.kegiatan.store');
+    Route::put('/desa-cantik/kegiatan/{id}', [DescanController::class, 'updateKegiatan'])->name('desa-cantik.kegiatan.update');
+    Route::patch('/desa-cantik/kegiatan/{id}/toggle-active', [DescanController::class, 'toggleKegiatanActive'])->name('desa-cantik.kegiatan.toggle-active');
+    Route::delete('/desa-cantik/kegiatan/{id}', [DescanController::class, 'destroyKegiatan'])->name('desa-cantik.kegiatan.destroy');
+    Route::patch('/desa-cantik/kegiatan/reorder', [DescanController::class, 'reorderKegiatan'])->name('desa-cantik.kegiatan.reorder');
+
+    // Desa Cantik: Jenis Bukti Kegiatan
+    Route::post('/desa-cantik/jenis-bukti-kegiatan', [DescanController::class, 'storeJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.store');
+    Route::put('/desa-cantik/jenis-bukti-kegiatan/{id}', [DescanController::class, 'updateJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.update');
+    Route::delete('/desa-cantik/jenis-bukti-kegiatan/{id}', [DescanController::class, 'destroyJenisBuktiKegiatan'])->name('desa-cantik.jenis-bukti-kegiatan.destroy');
+
+    // Desa Cantik: Jenis Output
+    Route::post('/desa-cantik/jenis-output', [DescanController::class, 'storeJenisOutput'])->name('desa-cantik.jenis-output.store');
+    Route::put('/desa-cantik/jenis-output/{id}', [DescanController::class, 'updateJenisOutput'])->name('desa-cantik.jenis-output.update');
+    Route::delete('/desa-cantik/jenis-output/{id}', [DescanController::class, 'destroyJenisOutput'])->name('desa-cantik.jenis-output.destroy');
+
+    // Desa Cantik: Jenis Bukti Dukung
+    Route::post('/desa-cantik/jenis-bukti-dukung', [DescanController::class, 'storeJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.store');
+    Route::put('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'updateJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.update');
+    Route::delete('/desa-cantik/jenis-bukti-dukung/{id}', [DescanController::class, 'destroyJenisBuktiDukung'])->name('desa-cantik.jenis-bukti-dukung.destroy');
+
+    Route::post('/desa-cantik/progress/{peserta_id}/verify/{progress_id}', [DescanController::class, 'verifyProgress'])->name('desa-cantik.progress.verify');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-output/{output_id}', [DescanController::class, 'verifyOutput'])->name('desa-cantik.progress.verify-output');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-dukung/{dukung_id}', [DescanController::class, 'verifyDukung'])->name('desa-cantik.progress.verify-dukung');
+    Route::post('/desa-cantik/progress/{peserta_id}/verify-all', [DescanController::class, 'verifyAllProgress'])->name('desa-cantik.progress.verify-all');
+
+    Route::get('/desa-cantik/export', [DescanController::class, 'export'])->name('desa-cantik.export');
+
+
+    // Wilayah (Kecamatan & Desa)
+    Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
+    Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
+    Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
+    Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
+    Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
+    Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
+    Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
+    Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
+    Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
 });
 
 // Detail Fenomena (Diletakkan di luar kelompok agar semua user bisa akses, 

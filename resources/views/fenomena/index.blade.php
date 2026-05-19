@@ -258,7 +258,7 @@
 @endpush
 
 @section('content')
-    <div class="fi-page fade-in-up" style="padding: 1.5rem 0;">
+    <div class="fi-page " style="padding: 1.5rem 0;">
 
         {{-- ══ HEADER ══ --}}
         <div class="fi-header">
@@ -485,9 +485,16 @@
 
                         {{-- Title --}}
                         <h2 class="fi-card-title">{{ $fenomena->judul }}</h2>
-
+                 
                         {{-- Preview --}}
-                        <p class="fi-card-preview">{{ $fenomena->penjelasan }}</p>
+                        <p class="fi-card-preview">{{ str($fenomena->penjelasan)->limit(110) }}
+
+                        @if(strlen($fenomena->penjelasan) > 110)
+                            <a href="#" style="font-size: 0.8rem; text-decoration: none; font-weight: 500; color: var(--fi-primary);"
+                                data-bs-toggle="modal" data-bs-target="#modalFen{{ $fenomena->id }}">Lihat selengkapnya</a>
+                        @endif
+                        </p>
+                        
 
                         {{-- Meta --}}
                         <div class="fi-card-meta">
@@ -532,6 +539,44 @@
                     </div>
                 @endforeach
             </div>
+
+            {{-- ══ MODALS ══ --}}
+            @foreach($fenomenas as $fenomena)
+                    <div class="modal fade" id="modalFen{{ $fenomena->id }}" tabindex="-1"
+                        aria-labelledby="modalFenLabel{{ $fenomena->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                            <div class="modal-content" style="border-radius: 14px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,.12);">
+                                <div class="modal-header" style="background: var(--fi-primary-lt); border-bottom: 1px solid #fed7aa; border-radius: 14px 14px 0 0;">
+                                    <h5 class="modal-title fw-bold" id="modalFenLabel{{ $fenomena->id }}"
+                                        style="color: var(--fi-primary); font-size: 1rem;">
+                                        <i class="fas fa-align-left me-2"></i>Detail Penjelasan Fenomena
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="color: #334155; font-size: 0.92rem; line-height: 1.75;">
+                                    <h6 class="fw-bold mb-3" style="color: #0f172a; font-size: 1rem;">{{ $fenomena->judul }}</h6>
+                                    <div style="white-space: pre-wrap; text-align: justify;">{{ $fenomena->penjelasan }}</div>
+                                    @if($fenomena->link_berita)
+                                        <div class="mt-3">
+                                            <a href="{{ $fenomena->link_berita }}" target="_blank" rel="noopener"
+                                                class="btn btn-sm" style="background: var(--fi-primary-lt); color: var(--fi-primary); border: 1px solid #fed7aa; font-weight: 600; border-radius: 8px;">
+                                                <i class="fas fa-external-link-alt me-1"></i> Buka Sumber Berita
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="modal-footer" style="border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 14px 14px;">
+                                    <a href="{{ route('fenomena.show', [$fenomena->id, 'from' => 'fenomena']) }}"
+                                        class="btn btn-sm" style="background: var(--fi-primary); color: #fff; border-radius: 8px; font-weight: 600;">
+                                        <i class="fas fa-eye me-1"></i> Lihat Halaman Detail
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal"
+                                        style="border-radius: 8px;">Tutup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            @endforeach
 
             {{-- ══ PAGINATION ══ --}}
             @if($fenomenas->hasPages())

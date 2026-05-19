@@ -31,4 +31,14 @@ class Kabupaten extends Model
     {
         return $this->hasMany(NilaiKemiskinan::class, 'kabupaten_id');
     }
+
+    public function praEksporSelections()
+    {
+        return $this->hasMany(PraEksporFenomenaSelection::class, 'kabupaten_id');
+    }
+
+    public function kecamatans()
+    {
+        return $this->hasMany(Kecamatan::class, 'kabupaten_id');
+    }
 }

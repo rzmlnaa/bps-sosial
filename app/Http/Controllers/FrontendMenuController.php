@@ -14,20 +14,29 @@ class FrontendMenuController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        // If spreadsheet allows direct editing on the website, only show it to logged in users
+        $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
+        if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit']) && !auth()->check()) {
+            abort(403, 'Akses ditolak. Menu ini hanya dapat diakses oleh pengguna yang sudah login.');
+        }
+
         $title = null;
 
         if ($menu->type === 'spreadsheet' && !empty($menu->url)) {
             $response = Http::get($menu->url);
 
             if ($response->successful()) {
-                preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches);
-                $title = $matches[1] ?? null;
-                if ($title) {
-                    $title = str_replace([' - Google Sheets', ' - Google Spreadshet'], '', $title);
+                if (preg_match('/<title>(.*?)<\/title>/', $response->body(), $matches)) {
+                    $title = $matches[1] ?? null;
+
+                    if ($title) {
+                        $title = str_replace([' - Google Sheets', ' - Google Spreadshet'], '', $title);
+                    }
+                } else {
+                    $title = null;
                 }
             }
         }
-
         return view('dynamic_menus.show', compact('menu', 'title'));
     }
 }

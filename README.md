@@ -1,43 +1,54 @@
-# Dashboard Kemiskinan Provinsi Kalimantan Barat
+# SISOKA - Sistem Informasi Sosial Kalimantan Barat
 
 ## Deskripsi
 
-Dashboard Kemiskinan Provinsi Kalimantan Barat adalah aplikasi berbasis web yang dibangun menggunakan framework **Laravel** untuk menyajikan gambaran umum indikator kemiskinan di Provinsi Kalimantan Barat berdasarkan data resmi Badan Pusat Statistik (BPS).
+SISOKA adalah aplikasi berbasis web yang dikembangkan menggunakan Laravel untuk mendukung pengelolaan, visualisasi, monitoring, dan verifikasi data statistik sosial di lingkungan BPS Provinsi Kalimantan Barat.
 
-Aplikasi ini dirancang untuk mendukung kebutuhan monitoring, analisis, dan visualisasi data kemiskinan secara informatif, terstruktur, dan mudah diakses.
+Sistem ini mencakup berbagai modul seperti:
 
----
-
-## Tujuan Aplikasi
-
-- Menyediakan ringkasan indikator kemiskinan secara komprehensif
-- Mendukung pengambilan keputusan berbasis data
-- Menampilkan tren dan perbandingan antar wilayah
-- Menyediakan visualisasi statistik dalam bentuk tabel dan grafik
+- Kemiskinan
+- SERUTI
+- Rentang Harga
+- Fenomena
+- Desa Cantik
+- Dashboard dan Visualisasi Statistik
 
 ---
 
-## Ruang Lingkup Indikator
+## Fitur Utama
 
-Beberapa indikator yang ditampilkan dalam dashboard antara lain:
-
-- Persentase penduduk miskin
-- Jumlah penduduk miskin
-- Garis kemiskinan
-- Indeks Kedalaman Kemiskinan (P1)
-- Indeks Keparahan Kemiskinan (P2)
-- Distribusi kemiskinan per kabupaten/kota
-- Tren kemiskinan antar periode
+- Dashboard statistik interaktif
+- Visualisasi data berbasis grafik
+- Workflow verifikasi data
+- Multi role access
+- Export Excel
+- Dynamic menu management
+- Monitoring progress Desa Cantik
+- Manajemen Fenomena statistik
 
 ---
 
-## Teknologi yang Digunakan
+## Tech Stack
+### Backend
+- Laravel 12
+- PHP 8
+- MySQL
+  
+### Frontend
+- Blade Template Engine
+- Bootstrap 5
+- Tailwind CSS
+- jQuery (AJAX)
+- SweetAlert2
+- Chart.js
 
-- **Framework**: Laravel
-- **Bahasa Pemrograman**: PHP
-- **Database**: MySQL / MariaDB
-- **Frontend**: Blade Template / CSS / JavaScript
-- **Library Visualisasi**: (opsional, misal Chart.js)
+---
+
+## Role Sistem
+- Super Admin
+- Admin Provinsi
+- Admin Kabupaten/Kota
+- Guest/Public User
 
 ---
 
@@ -48,5 +59,16 @@ Aplikasi menggunakan arsitektur MVC (Model-View-Controller) yang disediakan oleh
 - **Model** → Mengelola data dan relasi database
 - **View** → Menampilkan data dalam bentuk dashboard
 - **Controller** → Mengatur logika aplikasi dan pengolahan data
+
+---
+
+## Dokumentasi Lengkap
+Dokumentasi lengkap sistem tersedia pada Notion berikut: 
+https://www.notion.so/SISOKA-Developer-Documentation-34cacbee13b380fa8c58edc2e25a3bbc?source=copy_link
+
+---
+
+## Catatan
+Project ini dikembangkan untuk mendukung kebutuhan pengelolaan data statistik sosial di lingkungan BPS Provinsi Kalimantan Barat.
 
 ---

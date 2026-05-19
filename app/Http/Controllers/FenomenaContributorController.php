@@ -11,24 +11,33 @@ class FenomenaContributorController extends Controller
 {
     public function index()
     {
-        // Fetch users who have contributed phenomena, with their counts
-        // $contributors = User::whereHas('fenomenas', function ($query) {
-        //     $query->where('status_verifikasi', 'Y');
-        // })
-        //     ->withCount([
-        //         'fenomenas' => function ($query) {
-        //             $query->where('status_verifikasi', 'Y');
-        //         }
-        //     ])
-        //     ->orderBy('fenomenas_count', 'desc')
-        //     ->get();
+        $topContributors = User::withCount([
+            'fenomenas' => function ($query) {
+                $query->where('status_verifikasi', 'Y');
+            }
+        ])
+            ->withMax([
+                'fenomenas' => function ($query) {
+                    $query->where('status_verifikasi', 'Y');
+                }
+            ], 'created_at')
+            ->having('fenomenas_count', '>', 0)
+            ->orderBy('fenomenas_count', 'desc')
+            ->orderBy('fenomenas_max_created_at', 'asc')
+            ->take(10)
+            ->get();
 
-        // // Calculate some stats
-        // $totalContributors = $contributors->count();
-        // $totalContributions = Fenomena::where('status_verifikasi', 'Y')->count();
+        $stats = Fenomena::where('status_verifikasi', 'Y')
+            ->selectRaw('
+        COUNT(*) as total_verified,
+        COUNT(DISTINCT created_by) as total_contributors,
+        MAX(created_at) as last_update
+    ')
+            ->first();
+        $totalVerified = $stats->total_verified;
+        $totalContributors = $stats->total_contributors;
+        $lastUpdate = $stats->last_update;
 
-        //return view('fenomena.contributor', compact('contributors', 'totalContributors', 'totalContributions'));
-
-        return view('fenomena.contributor');
+        return view('fenomena.contributor', compact('topContributors', 'totalVerified', 'totalContributors', 'lastUpdate'));
     }
 }
