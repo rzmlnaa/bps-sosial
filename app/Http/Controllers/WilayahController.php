@@ -128,14 +128,27 @@ class WilayahController extends Controller
             'kabupaten_id' => 'required|exists:tb_kabupaten,id',
             'is_new_kecamatan' => 'nullable|string',
             'kecamatan_id' => 'required_without:is_new_kecamatan|nullable',
-            'new_kode_kecamatan' => 'required_if:is_new_kecamatan,1|nullable|unique:tb_kecamatan,kode_kecamatan',
+            'new_kode_kecamatan' => 'required_if:is_new_kecamatan,1|nullable',
             'new_nama_kecamatan' => 'required_if:is_new_kecamatan,1|nullable',
-            'kode_desa' => 'required|unique:tb_desa,kode_desa',
+            'kode_desa' => 'required',
             'nama_desa' => 'required',
-        ], [
-            'new_kode_kecamatan.unique' => 'Kode Kecamatan sudah digunakan.',
-            'kode_desa.unique' => 'Kode Desa sudah digunakan.',
         ]);
+
+        if ($request->is_new_kecamatan == '1') {
+            $existsKecamatan = Kecamatan::where('kabupaten_id', $request->kabupaten_id)
+                ->where('kode_kecamatan', $request->new_kode_kecamatan)
+                ->exists();
+            if ($existsKecamatan) {
+                return back()->withInput()->withErrors(['new_kode_kecamatan' => 'Kode Kecamatan sudah digunakan di kabupaten ini.']);
+            }
+        } else {
+            $existsDesa = Desa::where('kecamatan_id', $request->kecamatan_id)
+                ->where('kode_desa', $request->kode_desa)
+                ->exists();
+            if ($existsDesa) {
+                return back()->withInput()->withErrors(['kode_desa' => 'Kode Desa sudah digunakan di kecamatan ini.']);
+            }
+        }
 
         if (!$isProvinsi && $request->kabupaten_id != $user->kabupaten_id) {
             return back()->with('error', 'Akses ditolak: Anda tidak dapat memanipulasi data untuk kabupaten lain.');
@@ -189,9 +202,16 @@ class WilayahController extends Controller
 
         $request->validate([
             'kabupaten_id' => 'required',
-            'kode_kecamatan' => 'required|unique:tb_kecamatan,kode_kecamatan',
+            'kode_kecamatan' => 'required',
             'nama_kecamatan' => 'required'
         ]);
+
+        $existsKecamatan = Kecamatan::where('kabupaten_id', $request->kabupaten_id)
+            ->where('kode_kecamatan', $request->kode_kecamatan)
+            ->exists();
+        if ($existsKecamatan) {
+            return back()->withInput()->withErrors(['kode_kecamatan' => 'Kode Kecamatan sudah digunakan di kabupaten ini.']);
+        }
 
         $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
         if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
@@ -224,9 +244,17 @@ class WilayahController extends Controller
 
         $request->validate([
             'kabupaten_id' => 'required',
-            'kode_kecamatan' => 'required|unique:tb_kecamatan,kode_kecamatan,' . $id,
+            'kode_kecamatan' => 'required',
             'nama_kecamatan' => 'required'
         ]);
+
+        $existsKecamatan = Kecamatan::where('kabupaten_id', $request->kabupaten_id)
+            ->where('kode_kecamatan', $request->kode_kecamatan)
+            ->where('id', '!=', $id)
+            ->exists();
+        if ($existsKecamatan) {
+            return back()->withInput()->withErrors(['kode_kecamatan' => 'Kode Kecamatan sudah digunakan di kabupaten ini.']);
+        }
 
         $kecamatan->update([
             'kabupaten_id' => $request->kabupaten_id,
@@ -259,7 +287,7 @@ class WilayahController extends Controller
     {
         $request->validate([
             'kecamatan_id' => 'required',
-            'kode_desa' => 'required|unique:tb_desa,kode_desa',
+            'kode_desa' => 'required',
             'nama_desa' => 'required'
         ]);
 
@@ -269,6 +297,13 @@ class WilayahController extends Controller
 
         if (!$isProvinsi && $kecamatan->kabupaten_id != $user->kabupaten_id) {
             return redirect()->back()->with('error', 'Akses ditolak: Anda tidak dapat memasukkan desa pada kecamatan milik kabupaten lain.');
+        }
+
+        $existsDesa = Desa::where('kecamatan_id', $request->kecamatan_id)
+            ->where('kode_desa', $request->kode_desa)
+            ->exists();
+        if ($existsDesa) {
+            return back()->withInput()->withErrors(['kode_desa' => 'Kode Desa sudah digunakan di kecamatan ini.']);
         }
 
         Desa::create([
@@ -293,13 +328,21 @@ class WilayahController extends Controller
 
         $request->validate([
             'kecamatan_id' => 'required',
-            'kode_desa' => 'required|unique:tb_desa,kode_desa,' . $id,
+            'kode_desa' => 'required',
             'nama_desa' => 'required'
         ]);
 
         $kecamatanTarget = \App\Models\Kecamatan::findOrFail($request->kecamatan_id);
         if (!$isProvinsi && $kecamatanTarget->kabupaten_id != $user->kabupaten_id) {
             return redirect()->back()->with('error', 'Akses ditolak: Anda tidak dapat mengubah desa ke kecamatan milik kabupaten lain.');
+        }
+
+        $existsDesa = Desa::where('kecamatan_id', $request->kecamatan_id)
+            ->where('kode_desa', $request->kode_desa)
+            ->where('id', '!=', $id)
+            ->exists();
+        if ($existsDesa) {
+            return back()->withInput()->withErrors(['kode_desa' => 'Kode Desa sudah digunakan di kecamatan ini.']);
         }
 
         $desa->update([
