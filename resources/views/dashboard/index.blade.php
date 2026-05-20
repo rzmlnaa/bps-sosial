@@ -8,8 +8,8 @@
         <!-- Dashboard Header -->
         <div class="row align-items-center mb-3 fade-in-up">
             <div class="col-md-8 col-12 mb-3 mb-md-0">
-                <h1 class="fw-bold text-navy mb-1" style="color: var(--bps-orange);">Dashboard SISOKA</h1>
-                <p class="text-dark lead mb-0">Monitoring dan Analisis Sosial Ekonomi Regional</p>
+                <h2 class="fw-bold text-navy mb-1" style="color: var(--bps-orange);">Dashboard SISOKA</h1>
+                    <p class="text-muted mb-0">Monitoring dan Analisis Sosial Ekonomi Regional</p>
             </div>
             <div class="col-md-4 col-12 text-md-end">
                 <div class="d-inline-flex align-items-center bg-white shadow-sm p-2 rounded-pill px-4">
@@ -621,7 +621,7 @@
                         labels: {!! json_encode($priceLabels) !!},
                         datasets: [
                             @foreach($priceTrend as $index => $trend)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
                                     label: '{{ $trend["name"] }}',
                                     data: {!! json_encode($trend["data"]) !!},
                                     borderColor: colors[{{ $index }} % colors.length],
@@ -632,7 +632,7 @@
                                     fill: false
                                 },
                             @endforeach
-                                                                                                                                                                                                                                                                        ]
+                                                                                                                                                                                                                                                                                ]
                     },
                     options: {
                         responsive: true,

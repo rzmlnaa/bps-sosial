@@ -23,9 +23,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon"
-        href="{{ $logoUrl }}"
-        type="image/x-icon">
+    <link rel="icon" href="{{ $logoUrl }}" type="image/x-icon">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -71,11 +69,10 @@
     <div class="mobile-nav d-lg-none">
         <div class="d-flex align-items-center gap-2">
             <div class="logo-icon">
-                <img src="{{ $logoUrl }}"
-                    alt="Logo BPS"
+                <img src="{{ $logoUrl }}" alt="Logo BPS"
                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
-            <span class="fw-bold text-navy">BPS Kalbar</span>
+            <span class="fw-bold text-navy">Sistem Informasi Sosial Kalbar</span>
         </div>
         <button class="btn btn-link text-dark" id="sidebarToggle">
             <i class="fas fa-bars fa-lg"></i>
@@ -86,8 +83,7 @@
     <nav class="sidebar client-sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-icon">
-                <img src="{{ $logoUrl }}"
-                    alt="Logo BPS"
+                <img src="{{ $logoUrl }}" alt="Logo BPS"
                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
             <div>
@@ -347,7 +343,7 @@
 
                     if (!auth()->check()) {
                         // Filter out spreadsheets with allow_edit enabled for guest users
-                        $dynamicMenus = $dynamicMenus->filter(function($menu) {
+                        $dynamicMenus = $dynamicMenus->filter(function ($menu) {
                             $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
                             if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit'])) {
                                 return false;
@@ -356,7 +352,7 @@
                         });
 
                         foreach ($dynamicMenus as $menu) {
-                            $menu->setRelation('children', $menu->children->filter(function($child) {
+                            $menu->setRelation('children', $menu->children->filter(function ($child) {
                                 $childMeta = is_array($child->meta) ? $child->meta : json_decode($child->meta ?? '[]', true);
                                 if ($child->type === 'spreadsheet' && !empty($childMeta['allow_edit'])) {
                                     return false;
