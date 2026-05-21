@@ -15,7 +15,7 @@
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-3">
                 <form action="{{ route('desa-cantik.progress') }}" method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Periode</label>
                         <select name="periode_id" class="form-select border-0 bg-light" onchange="this.form.submit()">
                             <option value="all" {{ $selectedPeriodeId === 'all' ? 'selected' : '' }}>Semua Periode</option>
@@ -28,7 +28,7 @@
                     </div>
 
                     @if($isProvinsi)
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-bold text-muted mb-1">Kabupaten</label>
                             <select name="kabupaten_id" id="selectKabupaten"
                                 class="form-select border-0 bg-light select2-kabupaten" onchange="this.form.submit()">
@@ -44,7 +44,7 @@
                         <input type="hidden" name="kabupaten_id" id="selectKabupaten" value="{{ $myKabupatenId }}">
                     @endif
 
-                    <div class="col-md-3">
+                    <div class="{{ $isProvinsi ? 'col-md-2' : 'col-md-3' }}">
                         <label class="form-label small fw-bold text-muted mb-1">Kecamatan</label>
                         @php
                             $kabSelected = request('kabupaten_id') ?: (!$isProvinsi ? ($myKabupatenId ?? null) : null);
@@ -61,7 +61,7 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="{{ $isProvinsi ? 'col-md-2' : 'col-md-3' }}">
                         <label class="form-label small fw-bold text-muted mb-1">Desa</label>
                         <select name="desa_id" id="selectDesa" class="form-select border-0 bg-light select2-desa"
                             onchange="this.form.submit()"
@@ -72,6 +72,18 @@
                                 <option value="">{{ !request('kecamatan_id') ? 'Pilih kecamatan dulu' : 'Semua Desa' }}</option>
                             @endif
                         </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted mb-1 d-flex justify-content-between">
+                            <span>Progress Wajib Maksimal</span>
+                            <span id="range-val" class="text-orange fw-bold">{{ request('progress_wajib_max', 100) }}%</span>
+                        </label>
+                        <input type="range" name="progress_wajib_max" min="0" max="100"
+                            class="form-range custom-range mt-2"
+                            value="{{ request('progress_wajib_max', 100) }}"
+                            oninput="document.getElementById('range-val').innerText = this.value + '%'"
+                            onchange="this.form.submit()">
                     </div>
 
                     <div class="col-12 mt-3 d-flex flex-column flex-md-row justify-content-between gap-3">
@@ -472,6 +484,26 @@
 
     .bg-soft-orange {
         background-color: rgba(253, 126, 20, 0.1) !important;
+    }
+
+    /* Custom range color overriding Bootstrap variables dynamically */
+    .custom-range::-webkit-slider-thumb {
+        background-color: var(--bps-orange) !important;
+    }
+    .custom-range::-webkit-slider-thumb:active {
+        background-color: #e6661a !important;
+    }
+    .custom-range::-moz-range-thumb {
+        background-color: var(--bps-orange) !important;
+    }
+    .custom-range::-moz-range-thumb:active {
+        background-color: #e6661a !important;
+    }
+    .custom-range:focus::-webkit-slider-thumb {
+        box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(253, 126, 20, 0.25) !important;
+    }
+    .custom-range:focus::-moz-range-thumb {
+        box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(253, 126, 20, 0.25) !important;
     }
 
     .card-hover {

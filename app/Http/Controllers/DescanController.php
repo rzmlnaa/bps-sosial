@@ -681,6 +681,68 @@ class DescanController extends Controller
             $query->where('descan_peserta.desa_id', $request->desa_id);
         }
 
+        // Filter range progress wajib (maksimal)
+        if ($request->filled('progress_wajib_max')) {
+            $max = (int) $request->input('progress_wajib_max');
+
+            if ($max < 100) {
+                $mandatoryBuktiIds = DescanJenisBuktiKegiatan::where('is_wajib', true)->pluck('id')->toArray();
+                $mandatoryOutputIds = DescanJenisOutput::where('is_wajib', true)->pluck('id')->toArray();
+                $mandatoryDukungIds = DescanJenisBuktiDukung::where('is_wajib', true)->pluck('id')->toArray();
+                $wajibKegiatanIds = DescanKegiatan::where('is_active', true)->where('is_wajib', true)->pluck('id')->toArray();
+
+                $wajibKegiatanCount = count($wajibKegiatanIds);
+                $totalMandatory = $wajibKegiatanCount * (2 + count($mandatoryBuktiIds)) + count($mandatoryOutputIds) + count($mandatoryDukungIds);
+
+                if ($totalMandatory > 0) {
+                    $mandatoryBuktiIdsCsv = implode(',', array_map('intval', $mandatoryBuktiIds ?: [0]));
+                    $mandatoryOutputIdsCsv = implode(',', array_map('intval', $mandatoryOutputIds ?: [0]));
+                    $mandatoryDukungIdsCsv = implode(',', array_map('intval', $mandatoryDukungIds ?: [0]));
+                    $wajibKegiatanIdsCsv = implode(',', array_map('intval', $wajibKegiatanIds ?: [0]));
+
+                    $filledKegDateSql = "COALESCE((
+                        SELECT SUM(
+                            (CASE WHEN target_tanggal IS NOT NULL THEN 1 ELSE 0 END) +
+                            (CASE WHEN realisasi_tanggal IS NOT NULL THEN 1 ELSE 0 END)
+                        )
+                        FROM descan_progress_desa
+                        WHERE descan_progress_desa.peserta_id = descan_peserta.id
+                          AND descan_progress_desa.kegiatan_id IN ($wajibKegiatanIdsCsv)
+                    ), 0)";
+
+                    $filledKegBuktiSql = "COALESCE((
+                        SELECT COUNT(*)
+                        FROM descan_bukti_kegiatan
+                        JOIN descan_progress_desa ON descan_bukti_kegiatan.progress_desa_id = descan_progress_desa.id
+                        WHERE descan_progress_desa.peserta_id = descan_peserta.id
+                          AND descan_progress_desa.kegiatan_id IN ($wajibKegiatanIdsCsv)
+                          AND descan_bukti_kegiatan.jenis_bukti_id IN ($mandatoryBuktiIdsCsv)
+                          AND descan_bukti_kegiatan.link_file IS NOT NULL AND descan_bukti_kegiatan.link_file != ''
+                    ), 0)";
+
+                    $filledOutputSql = "COALESCE((
+                        SELECT COUNT(*)
+                        FROM descan_output_desa
+                        WHERE descan_output_desa.peserta_id = descan_peserta.id
+                          AND descan_output_desa.jenis_output_id IN ($mandatoryOutputIdsCsv)
+                          AND descan_output_desa.link IS NOT NULL AND descan_output_desa.link != ''
+                    ), 0)";
+
+                    $filledDukungSql = "COALESCE((
+                        SELECT COUNT(*)
+                        FROM descan_bukti_dukung_desa
+                        WHERE descan_bukti_dukung_desa.peserta_id = descan_peserta.id
+                          AND descan_bukti_dukung_desa.jenis_bukti_id IN ($mandatoryDukungIdsCsv)
+                          AND descan_bukti_dukung_desa.link_file IS NOT NULL AND descan_bukti_dukung_desa.link_file != ''
+                    ), 0)";
+
+                    $filledMandatorySql = "($filledKegDateSql + $filledKegBuktiSql + $filledOutputSql + $filledDukungSql)";
+
+                    $query->whereRaw("ROUND(($filledMandatorySql / $totalMandatory) * 100) <= ?", [$max]);
+                }
+            }
+        }
+
         // Keep selected values for select2
         $selectedKecamatan = $request->filled('kecamatan_id') ? Kecamatan::find($request->kecamatan_id) : null;
         $selectedDesa = $request->filled('desa_id') ? Desa::find($request->desa_id) : null;
@@ -729,7 +791,7 @@ class DescanController extends Controller
             $query->where($actionCondition);
         }
 
-        $pesertas = $query->paginate(10)->withQueryString();
+        $pesertas = $query->paginate(12)->withQueryString();
         $mandatoryBuktiIds = DescanJenisBuktiKegiatan::where('is_wajib', true)->pluck('id')->toArray();
         $mandatoryOutputIds = DescanJenisOutput::where('is_wajib', true)->pluck('id')->toArray();
         $mandatoryDukungIds = DescanJenisBuktiDukung::where('is_wajib', true)->pluck('id')->toArray();
