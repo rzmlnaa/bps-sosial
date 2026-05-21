@@ -168,7 +168,7 @@ class DescanController extends Controller
         ]);
 
         // Tetap di tab periode
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('success', 'Periode tahun berhasil ditambahkan.');
+        return back()->with('success', 'Periode tahun berhasil ditambahkan.')->with('tab', 'periode');
     }
 
     public function togglePeriodeActive($id)
@@ -191,8 +191,7 @@ class DescanController extends Controller
                     })->exists();
 
                 if ($hasUnfinished) {
-                    return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])
-                        ->with('error', 'Tidak dapat mengaktifkan periode ' . $periode->tahun . '. Periode aktif saat ini (' . $currentlyActive->tahun . ') masih memiliki progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).');
+                    return back()->with('error', 'Tidak dapat mengaktifkan periode ' . $periode->tahun . '. Periode aktif saat ini (' . $currentlyActive->tahun . ') masih memiliki progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).')->with('tab', 'periode');
                 }
 
                 // Matikan periode yang sedang aktif
@@ -211,8 +210,7 @@ class DescanController extends Controller
                 })->exists();
 
             if ($hasUnfinished) {
-                return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])
-                    ->with('error', 'Periode ' . $periode->tahun . ' tidak dapat dinonaktifkan karena masih terdapat progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).');
+                return back()->with('error', 'Periode ' . $periode->tahun . ' tidak dapat dinonaktifkan karena masih terdapat progress yang belum disetujui (Draf/Menunggu Verifikasi/Ditolak).')->with('tab', 'periode');
             }
 
             $msg = 'Periode ' . $periode->tahun . ' telah dinonaktifkan.';
@@ -221,7 +219,7 @@ class DescanController extends Controller
         $periode->is_active = $newStatus;
         $periode->save();
 
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('success', $msg);
+        return back()->with('success', $msg)->with('tab', 'periode');
     }
 
     public function destroyPeriode($id)
@@ -231,11 +229,11 @@ class DescanController extends Controller
         $hasPeserta = DescanPeserta::where('periode_id', $id)->exists();
 
         if ($hasPeserta) {
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('error', 'Periode tidak dapat dihapus karena sudah memiliki relasi peserta desa.');
+            return back()->with('error', 'Periode tidak dapat dihapus karena sudah memiliki relasi peserta desa.')->with('tab', 'periode');
         }
 
         $periode->delete();
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'periode'])->with('success', 'Periode berhasil dihapus.');
+        return back()->with('success', 'Periode berhasil dihapus.')->with('tab', 'periode');
     }
 
 
@@ -257,7 +255,7 @@ class DescanController extends Controller
             'is_wajib' => $request->has('is_wajib')
         ]);
 
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Kegiatan berhasil ditambahkan.');
+        return back()->with('success', 'Kegiatan berhasil ditambahkan.')->with('tab', 'kegiatan');
     }
 
     public function toggleKegiatanActive($id)
@@ -266,7 +264,7 @@ class DescanController extends Controller
         $keg->is_active = !$keg->is_active;
         $keg->save();
 
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Status kegiatan berhasil diubah.');
+        return back()->with('success', 'Status kegiatan berhasil diubah.')->with('tab', 'kegiatan');
     }
 
     public function updateKegiatan(Request $request, $id)
@@ -283,7 +281,7 @@ class DescanController extends Controller
             'is_wajib' => $request->has('is_wajib')
         ]);
 
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Kegiatan berhasil diperbarui.');
+        return back()->with('success', 'Kegiatan berhasil diperbarui.')->with('tab', 'kegiatan');
     }
 
     public function destroyKegiatan($id)
@@ -292,11 +290,11 @@ class DescanController extends Controller
 
         $hasProgress = DescanProgressDesa::where('kegiatan_id', $id)->exists();
         if ($hasProgress) {
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('error', 'Kegiatan tidak dapat dihapus karena sudah digunakan pada Progress Desa.');
+            return back()->with('error', 'Kegiatan tidak dapat dihapus karena sudah digunakan pada Progress Desa.')->with('tab', 'kegiatan');
         }
 
         $keg->delete();
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'kegiatan'])->with('success', 'Kegiatan berhasil dihapus.');
+        return back()->with('success', 'Kegiatan berhasil dihapus.')->with('tab', 'kegiatan');
     }
 
     public function reorderKegiatan(Request $request)
@@ -322,7 +320,7 @@ class DescanController extends Controller
             'nama_bukti' => $request->nama_bukti,
             'is_wajib' => $request->has('is_wajib')
         ]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil ditambahkan.');
+        return back()->with('success', 'Jenis Bukti Kegiatan berhasil ditambahkan.')->with('tab', 'jbk');
     }
 
     public function updateJenisBuktiKegiatan(Request $request, $id)
@@ -332,16 +330,16 @@ class DescanController extends Controller
             'nama_bukti' => $request->nama_bukti,
             'is_wajib' => $request->has('is_wajib')
         ]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil diperbarui.');
+        return back()->with('success', 'Jenis Bukti Kegiatan berhasil diperbarui.')->with('tab', 'jbk');
     }
 
     public function destroyJenisBuktiKegiatan($id)
     {
         try {
             DescanJenisBuktiKegiatan::findOrFail($id)->delete();
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('success', 'Jenis Bukti Kegiatan berhasil dihapus.');
+            return back()->with('success', 'Jenis Bukti Kegiatan berhasil dihapus.')->with('tab', 'jbk');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbk'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+            return back()->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.')->with('tab', 'jbk');
         }
     }
 
@@ -350,23 +348,23 @@ class DescanController extends Controller
     {
         $request->validate(['nama_output' => 'required|string|max:255|unique:descan_jenis_output,nama_output']);
         DescanJenisOutput::create(['nama_output' => $request->nama_output, 'is_wajib' => $request->has('is_wajib')]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil ditambahkan.');
+        return back()->with('success', 'Jenis Output berhasil ditambahkan.')->with('tab', 'output');
     }
 
     public function updateJenisOutput(Request $request, $id)
     {
         $request->validate(['nama_output' => 'required|string|max:255|unique:descan_jenis_output,nama_output,' . $id]);
         DescanJenisOutput::findOrFail($id)->update(['nama_output' => $request->nama_output, 'is_wajib' => $request->has('is_wajib')]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil diperbarui.');
+        return back()->with('success', 'Jenis Output berhasil diperbarui.')->with('tab', 'output');
     }
 
     public function destroyJenisOutput($id)
     {
         try {
             DescanJenisOutput::findOrFail($id)->delete();
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('success', 'Jenis Output berhasil dihapus.');
+            return back()->with('success', 'Jenis Output berhasil dihapus.')->with('tab', 'output');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'output'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+            return back()->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.')->with('tab', 'output');
         }
     }
 
@@ -375,23 +373,23 @@ class DescanController extends Controller
     {
         $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_dukung,nama_bukti']);
         DescanJenisBuktiDukung::create(['nama_bukti' => $request->nama_bukti, 'is_wajib' => $request->has('is_wajib')]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil ditambahkan.');
+        return back()->with('success', 'Jenis Bukti Dukung berhasil ditambahkan.')->with('tab', 'jbd');
     }
 
     public function updateJenisBuktiDukung(Request $request, $id)
     {
         $request->validate(['nama_bukti' => 'required|string|max:255|unique:descan_jenis_bukti_dukung,nama_bukti,' . $id]);
         DescanJenisBuktiDukung::findOrFail($id)->update(['nama_bukti' => $request->nama_bukti, 'is_wajib' => $request->has('is_wajib')]);
-        return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil diperbarui.');
+        return back()->with('success', 'Jenis Bukti Dukung berhasil diperbarui.')->with('tab', 'jbd');
     }
 
     public function destroyJenisBuktiDukung($id)
     {
         try {
             DescanJenisBuktiDukung::findOrFail($id)->delete();
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('success', 'Jenis Bukti Dukung berhasil dihapus.');
+            return back()->with('success', 'Jenis Bukti Dukung berhasil dihapus.')->with('tab', 'jbd');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('desa-cantik.kelola', ['tab' => 'jbd'])->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.');
+            return back()->with('error', 'Data gagal dihapus karena sudah digunakan di rekam jejak progress desa.')->with('tab', 'jbd');
         }
     }
 

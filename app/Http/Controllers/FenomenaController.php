@@ -169,7 +169,7 @@ class FenomenaController extends Controller
         $fenomena->indikators()->sync([$request->indikator_id]);
         $fenomena->jenisFenomenas()->sync($request->jenis_fenomena_ids);
 
-        return redirect()->route('fenomena.index')->with('success', 'Data fenomena berhasil disimpan.');
+        return redirect('/fenomena')->with('success', 'Data fenomena berhasil disimpan.');
     }
 
     public function kelola()

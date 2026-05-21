@@ -118,7 +118,7 @@ class FenomenaVerificationController extends Controller
             ->find($id);
 
         if (!$fenomena) {
-            return redirect()->route('fenomena.verification.index')
+            return redirect('/verification-fenomena')
                 ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
         }
 
@@ -141,7 +141,7 @@ class FenomenaVerificationController extends Controller
         $fenomena = Fenomena::where('status_verifikasi', 'P')->find($id);
 
         if (!$fenomena) {
-            return redirect()->route('fenomena.verification.index')
+            return redirect('/verification-fenomena')
                 ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
         }
 
@@ -194,7 +194,7 @@ class FenomenaVerificationController extends Controller
             }
         });
 
-        return redirect()->route('fenomena.verification.index')
+        return redirect('/verification-fenomena')
             ->with('success', 'Verifikasi fenomena berhasil disimpan.');
     }
 }

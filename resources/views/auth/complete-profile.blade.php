@@ -17,8 +17,7 @@
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <!-- Header / Logo -->
         <div class="w-full max-w-md text-center mb-8">
-            <img src="{{ $logoUrl }}"
-                alt="Logo BPS" class="h-16 mx-auto mb-4"
+            <img src="{{ $logoUrl }}" alt="Logo BPS" class="h-32 mx-auto mb-4"
                 onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
                 Lengkapi Profil Anda

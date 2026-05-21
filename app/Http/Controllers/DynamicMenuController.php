@@ -129,7 +129,7 @@ class DynamicMenuController extends Controller
 
         DynamicMenu::create($validated);
 
-        return redirect()->route('admin.dynamic-menus.index')->with('success', 'Menu berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Menu berhasil ditambahkan.');
     }
 
     public function edit(DynamicMenu $dynamicMenu)
@@ -247,7 +247,7 @@ class DynamicMenuController extends Controller
 
         $dynamicMenu->update($validated);
 
-        return redirect()->route('admin.dynamic-menus.index')->with('success', 'Menu berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Menu berhasil diperbarui.');
     }
 
     private function generateEmbedUrl($type, $url, $meta = [])
@@ -305,7 +305,7 @@ class DynamicMenuController extends Controller
     public function destroy(DynamicMenu $dynamicMenu)
     {
         $dynamicMenu->delete();
-        return redirect()->route('admin.dynamic-menus.index')->with('success', 'Menu berhasil dihapus.');
+        return redirect()->back()->with('success', 'Menu berhasil dihapus.');
     }
 
     public function reorder(Request $request)
