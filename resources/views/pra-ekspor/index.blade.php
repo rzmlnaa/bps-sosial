@@ -267,22 +267,32 @@
                 @endforeach
             </select>
 
+            @if($selectedKabupatenId)
+                <select class="fi-select" name="status_ekspor" style="max-width: 200px; min-width: 170px;">
+                    <option value="all" @selected($statusEkspor == 'all')>-- Semua Status Ekspor --</option>
+                    <option value="aktif" @selected($statusEkspor == 'aktif')>Sudah Ditambahkan</option>
+                    <option value="belum" @selected($statusEkspor == 'belum')>Belum Ditambahkan</option>
+                </select>
+            @endif
+
             <button type="submit" class="fi-btn-submit">
                 <i class="fas fa-filter"></i> Terapkan Filter
             </button>
 
-            @if($selectedKabupatenId)
-                <a href="{{ route('pra-ekspor.preview', ['kabupaten_id' => $selectedKabupatenId, 'tahun' => $tahun, 'bulan' => $bulan]) }}"
-                    id="btn-preview-sasaran" class="fi-btn-submit"
-                    style="background: #10b981; text-decoration: none; margin-left: auto;">
-                    <i class="fas fa-table"></i> Lihat Tabel Ekspor
+            <div class="d-flex align-items-center gap-2 ms-auto" style="width: 100%; justify-content: flex-end; margin-top: 0.75rem; border-top: 1px dashed var(--fi-border); padding-top: 0.75rem;">
+                @if($selectedKabupatenId)
+                    <a href="{{ route('pra-ekspor.preview', ['kabupaten_id' => $selectedKabupatenId, 'tahun' => $tahun, 'bulan' => $bulan]) }}"
+                        id="btn-preview-sasaran" class="fi-btn-submit"
+                        style="background: #10b981; text-decoration: none;">
+                        <i class="fas fa-table"></i> Lihat Tabel Ekspor
+                    </a>
+                @endif
+                <a href="{{ route('pra-ekspor.preview-semua', ['tahun' => $tahun, 'bulan' => $bulan]) }}" id="btn-preview-semua"
+                    class="fi-btn-submit"
+                    style="background: #0284c7; text-decoration: none;">
+                    <i class="fas fa-globe"></i> Tabel Semua Wilayah
                 </a>
-            @endif
-            <a href="{{ route('pra-ekspor.preview-semua', ['tahun' => $tahun, 'bulan' => $bulan]) }}" id="btn-preview-semua"
-                class="fi-btn-submit"
-                style="background: #0284c7; text-decoration: none; {{ !$selectedKabupatenId ? 'margin-left: auto;' : '' }}">
-                <i class="fas fa-globe"></i> Tabel Semua Wilayah
-            </a>
+            </div>
         </form>
 
         {{-- Results & Grid --}}

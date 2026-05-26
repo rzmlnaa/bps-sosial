@@ -14,8 +14,9 @@ class PraEksporController extends Controller
 
         $selectedKabupatenId = $request->input('kabupaten_id');
         $selectedIndikatorId = $request->input('indikator_id');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', 'all');
+        $bulan = $request->input('bulan', 'all');
+        $statusEkspor = $request->input('status_ekspor', 'all');
 
         $fenomenas = null;
         $selectedIds = [];
@@ -40,31 +41,49 @@ class PraEksporController extends Controller
 
                 // Efficient Eager Loading 
                 $query = \App\Models\Fenomena::with(['sumberBerita', 'creator.kabupaten', 'indikators'])
+                    ->where('status_verifikasi', 'Y')
                     ->where(function ($q) use ($kataKunci) {
                         $q->where('judul', 'LIKE', '%' . $kataKunci . '%')
                             ->orWhere('penjelasan', 'LIKE', '%' . $kataKunci . '%');
+
+                        if (str_contains(strtolower($kataKunci), 'kalimantan barat')) {
+                            $q->orWhere('judul', 'LIKE', '%kalbar%')
+                                ->orWhere('penjelasan', 'LIKE', '%kalbar%');
+                        }
                     });
 
                 $searchField = "LOWER(CONCAT(IFNULL(judul, ''), ' ', IFNULL(penjelasan, '')))";
                 $targetLen = strlen($kataKunci);
 
                 if ($targetLen > 0) {
+                    $getKeywordCountSql = function ($searchField, $keyword) {
+                        $keyword = strtolower($keyword);
+                        if ($keyword === 'kalimantan barat') {
+                            return "(((LENGTH($searchField) - LENGTH(REPLACE($searchField, 'kalimantan barat', ''))) / 16) + ((LENGTH($searchField) - LENGTH(REPLACE($searchField, 'kalbar', ''))) / 6))";
+                        }
+                        $len = strlen($keyword);
+                        $escapedKeyword = str_replace("'", "''", $keyword);
+                        return "((LENGTH($searchField) - LENGTH(REPLACE($searchField, '{$escapedKeyword}', ''))) / {$len})";
+                    };
+
+                    $targetCountSql = $getKeywordCountSql($searchField, $kataKunci);
+
                     foreach (array_unique($otherKeywords) as $otherKw) {
                         $otherLen = strlen($otherKw);
                         if ($otherLen > 0) {
-                            $query->whereRaw("((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?) <= ((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?)", [
-                                $otherKw,
-                                $otherLen,
-                                $kataKunci,
-                                $targetLen
-                            ]);
+                            $otherCountSql = $getKeywordCountSql($searchField, $otherKw);
+                            $query->whereRaw("{$otherCountSql} <= {$targetCountSql}");
                         }
                     }
 
-                    $query->orderByRaw("((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?) DESC", [
-                        $kataKunci,
-                        $targetLen
-                    ]);
+                    if ($kataKunci === 'kalimantan barat') {
+                        $query->orderByRaw("(((LENGTH($searchField) - LENGTH(REPLACE($searchField, 'kalimantan barat', ''))) / 16) + ((LENGTH($searchField) - LENGTH(REPLACE($searchField, 'kalbar', ''))) / 6)) DESC");
+                    } else {
+                        $query->orderByRaw("((LENGTH($searchField) - LENGTH(REPLACE($searchField, ?, ''))) / ?) DESC", [
+                            $kataKunci,
+                            $targetLen
+                        ]);
+                    }
                 }
 
                 if ($tahun !== 'all') {
@@ -79,6 +98,32 @@ class PraEksporController extends Controller
                     $query->whereHas('indikators', function ($qInd) use ($selectedIndikatorId) {
                         $qInd->where('indikators.kode', $selectedIndikatorId)
                             ->orWhere('indikators.id', $selectedIndikatorId);
+                    });
+                }
+
+                if ($statusEkspor === 'aktif') {
+                    $query->whereIn('id', function ($qSub) use ($selectedKabupatenId, $tahun, $bulan) {
+                        $qSub->select('fenomena_id')
+                            ->from('pra_ekspor_fenomena_selections')
+                            ->where('kabupaten_id', $selectedKabupatenId);
+                        if ($tahun !== 'all') {
+                            $qSub->where('tahun', $tahun);
+                        }
+                        if ($bulan !== 'all') {
+                            $qSub->where('bulan', $bulan);
+                        }
+                    });
+                } elseif ($statusEkspor === 'belum') {
+                    $query->whereNotIn('id', function ($qSub) use ($selectedKabupatenId, $tahun, $bulan) {
+                        $qSub->select('fenomena_id')
+                            ->from('pra_ekspor_fenomena_selections')
+                            ->where('kabupaten_id', $selectedKabupatenId);
+                        if ($tahun !== 'all') {
+                            $qSub->where('tahun', $tahun);
+                        }
+                        if ($bulan !== 'all') {
+                            $qSub->where('bulan', $bulan);
+                        }
                     });
                 }
 
@@ -102,7 +147,7 @@ class PraEksporController extends Controller
             }
         }
 
-        return view('pra-ekspor.index', compact('kabupatens', 'indikators', 'fenomenas', 'selectedKabupatenId', 'selectedIndikatorId', 'tahun', 'bulan', 'selectedIds'));
+        return view('pra-ekspor.index', compact('kabupatens', 'indikators', 'fenomenas', 'selectedKabupatenId', 'selectedIndikatorId', 'tahun', 'bulan', 'selectedIds', 'statusEkspor'));
     }
 
     public function toggleSelection(Request $request)
@@ -152,8 +197,8 @@ class PraEksporController extends Controller
     public function preview(Request $request)
     {
         $kabupaten_id = $request->input('kabupaten_id');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', 'all');
+        $bulan = $request->input('bulan', 'all');
 
         if (!$kabupaten_id) {
             return redirect()->route('pra-ekspor.index')->with('error', 'Pilih kabupaten terlebih dahulu.');
@@ -217,8 +262,8 @@ class PraEksporController extends Controller
     public function exportExcel(Request $request)
     {
         $kabupaten_id = $request->input('kabupaten_id');
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', 'all');
+        $bulan = $request->input('bulan', 'all');
 
         if (!$kabupaten_id) {
             return redirect()->route('pra-ekspor.index')->with('error', 'Pilih kabupaten terlebih dahulu.');
@@ -302,8 +347,8 @@ class PraEksporController extends Controller
 
     public function previewSemua(Request $request)
     {
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', 'all');
+        $bulan = $request->input('bulan', 'all');
 
         $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators', 'fenomena.creator.kabupaten']);
 
@@ -372,8 +417,8 @@ class PraEksporController extends Controller
 
     public function exportExcelSemua(Request $request)
     {
-        $tahun = $request->input('tahun', date('Y'));
-        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', 'all');
+        $bulan = $request->input('bulan', 'all');
 
         $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators', 'fenomena.creator.kabupaten']);
 
