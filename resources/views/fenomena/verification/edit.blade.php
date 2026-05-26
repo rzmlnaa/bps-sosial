@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Detail Verifikasi Fenomena')
+@section('title', 'Edit Verifikasi Fenomena')
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -839,12 +839,12 @@
 @section('content')
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Verifikasi Fenomena</h2>
-            <p class="text-muted mb-0">Review data fenomena dan tentukan dampaknya</p>
+            <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Edit Verifikasi Fenomena</h2>
+            <p class="text-muted mb-0">Ubah keputusan verifikasi dan arah dampak indikator terkait</p>
         </div>
 
         <div class="mt-3 mt-md-0">
-            <a href="{{ route('fenomena.verification.index') }}" class="btn btn-outline-secondary shadow-sm"
+            <a href="{{ route('fenomena.verification.index', ['tab' => 'riwayat']) }}" class="btn btn-outline-secondary shadow-sm"
                 style="border-radius: 8px;">
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
@@ -852,8 +852,9 @@
     </div>
 
     {{-- ════════════ FORM ════════════ --}}
-    <form id="dvf-form" action="{{ route('fenomena.verification.store', $fenomena->id) }}" method="POST">
+    <form id="dvf-form" action="{{ route('fenomena.verification.update', $fenomena->id) }}" method="POST">
         @csrf
+        @method('PUT')
 
         {{-- ────────────────────────────────────────────
         CARD 1 — TITLE & EXPLANATION CARD (EDITABLE)
@@ -1063,12 +1064,12 @@
             </div>
             <div class="dvf-card-body">
                 <div class="dvf-status-segment" id="status-segment">
-                    <input type="radio" name="status_verifikasi" id="status_y" value="Y" required>
+                    <input type="radio" name="status_verifikasi" id="status_y" value="Y" required @checked(old('status_verifikasi', $fenomena->status_verifikasi) === 'Y')>
                     <label for="status_y" id="label_y">
                         <i class="fas fa-check-circle"></i>
                         Verifikasi (Setujui)
                     </label>
-                    <input type="radio" name="status_verifikasi" id="status_t" value="T">
+                    <input type="radio" name="status_verifikasi" id="status_t" value="T" @checked(old('status_verifikasi', $fenomena->status_verifikasi) === 'T')>
                     <label for="status_t" id="label_t">
                         <i class="fas fa-times-circle"></i>
                         Tolak Data
@@ -1086,6 +1087,9 @@
         CARD 3 — ARAH INDIKATOR UTAMA
         (hanya muncul saat Setujui dipilih)
         ──────────────────────────────────────────── --}}
+        @php
+            $arahUtamaVal = old('arah_utama', $utama ? $utama->pivot->arah ?? null : null);
+        @endphp
         <div class="dvf-section-reveal" id="section-arah" style="max-height:0;opacity:0;">
             <div class="dvf-card">
                 <div class="dvf-card-header">
@@ -1109,15 +1113,15 @@
                             </div>
                         </div>
                         <div class="dvf-pill-group" id="primary-pill-group">
-                            <input type="radio" name="arah_utama" id="arah_naik" value="naik" data-dir="naik">
+                            <input type="radio" name="arah_utama" id="arah_naik" value="naik" data-dir="naik" @checked($arahUtamaVal === 'naik')>
                             <label for="arah_naik">
                                 <i class="fas fa-arrow-trend-up"></i> Naik
                             </label>
-                            <input type="radio" name="arah_utama" id="arah_turun" value="turun" data-dir="turun">
+                            <input type="radio" name="arah_utama" id="arah_turun" value="turun" data-dir="turun" @checked($arahUtamaVal === 'turun')>
                             <label for="arah_turun">
                                 <i class="fas fa-arrow-trend-down"></i> Turun
                             </label>
-                            <input type="radio" name="arah_utama" id="arah_tetap" value="tetap" data-dir="tetap">
+                            <input type="radio" name="arah_utama" id="arah_tetap" value="tetap" data-dir="tetap" @checked($arahUtamaVal === 'tetap')>
                             <label for="arah_tetap">
                                 <i class="fas fa-minus"></i> Tetap
                             </label>
@@ -1143,6 +1147,10 @@
                     @if(count($impactIndikators) > 0)
                         <div class="dvf-impact-grid" id="impact-grid">
                             @foreach($impactIndikators as $impact)
+                                @php
+                                    $impactPivot = $fenomena->indikators->where('id', $impact->id)->first()->pivot ?? null;
+                                    $impactArahVal = old("impact_directions.{$impact->id}", $impactPivot ? $impactPivot->arah : null);
+                                @endphp
                                 <div class="dvf-impact-item" id="impact-item-{{ $impact->id }}">
                                     <div class="dvf-impact-item-header">
                                         <div class="dvf-impact-icon">
@@ -1155,28 +1163,28 @@
                                     <div class="dvf-impact-pills">
                                         <input type="radio" name="impact_directions[{{ $impact->id }}]"
                                             id="imp_{{ $impact->id }}_naik" value="naik" data-dir="naik"
-                                            data-impact="{{ $impact->id }}">
+                                            data-impact="{{ $impact->id }}" @checked($impactArahVal === 'naik')>
                                         <label for="imp_{{ $impact->id }}_naik">
                                             <i class="fas fa-arrow-up" style="font-size:.7rem;"></i> Naik
                                         </label>
 
                                         <input type="radio" name="impact_directions[{{ $impact->id }}]"
                                             id="imp_{{ $impact->id }}_turun" value="turun" data-dir="turun"
-                                            data-impact="{{ $impact->id }}">
+                                            data-impact="{{ $impact->id }}" @checked($impactArahVal === 'turun')>
                                         <label for="imp_{{ $impact->id }}_turun">
                                             <i class="fas fa-arrow-down" style="font-size:.7rem;"></i> Turun
                                         </label>
 
                                         <input type="radio" name="impact_directions[{{ $impact->id }}]"
                                             id="imp_{{ $impact->id }}_tetap" value="tetap" data-dir="tetap"
-                                            data-impact="{{ $impact->id }}">
+                                            data-impact="{{ $impact->id }}" @checked($impactArahVal === 'tetap')>
                                         <label for="imp_{{ $impact->id }}_tetap">
                                             <i class="fas fa-minus" style="font-size:.7rem;"></i> Tetap
                                         </label>
 
                                         <input type="radio" name="impact_directions[{{ $impact->id }}]"
                                             id="imp_{{ $impact->id }}_na" value="" data-dir="na" data-impact="{{ $impact->id }}"
-                                            checked>
+                                            @checked(empty($impactArahVal))>
                                         <label for="imp_{{ $impact->id }}_na" class="na-label">
                                             <i class="fas fa-ban" style="font-size:.7rem;"></i> Tidak Ada (N/A)
                                         </label>
@@ -1213,7 +1221,7 @@
 
             {{-- Actions --}}
             <div class="dvf-bar-actions">
-                <a href="{{ route('fenomena.verification.index') }}" class="dvf-btn-cancel">
+                <a href="{{ route('fenomena.verification.index', ['tab' => 'riwayat']) }}" class="dvf-btn-cancel">
                     <i class="fas fa-xmark"></i> Batal
                 </a>
                 <button type="submit" form="dvf-form" class="dvf-btn-save" id="btn-save">
@@ -1329,19 +1337,32 @@
             onStatusChange(); // init
 
             /* ── Arah utama highlight ── */
+            function updateArahUtamaHighlight(checkedInput) {
+                if (!checkedInput) return;
+                const dir = checkedInput.value;
+                const icons = { naik: '↑', turun: '↓', tetap: '—' };
+                const cls = { naik: 'success', turun: 'danger', tetap: 'neutral' };
+
+                if (dir) {
+                    dirCardUtama.classList.add('has-selection');
+                    sumArah.className = 'dvf-summary-chip ' + (cls[dir] || 'neutral');
+                    sumArah.textContent = icons[dir] + ' ' + dir.charAt(0).toUpperCase() + dir.slice(1);
+                } else {
+                    dirCardUtama.classList.remove('has-selection');
+                }
+            }
+
             arahInputs.forEach(r => {
                 r.addEventListener('change', function () {
-                    const dir = this.value;
-                    const icons = { naik: '↑', turun: '↓', tetap: '—' };
-                    const cls = { naik: 'success', turun: 'danger', tetap: 'neutral' };
-
-                    if (dir) {
-                        dirCardUtama.classList.add('has-selection');
-                        sumArah.className = 'dvf-summary-chip ' + (cls[dir] || 'neutral');
-                        sumArah.textContent = icons[dir] + ' ' + dir.charAt(0).toUpperCase() + dir.slice(1);
-                    }
+                    updateArahUtamaHighlight(this);
                 });
             });
+
+            // Initial trigger for checked arah utama
+            const checkedArahUtama = document.querySelector('input[name="arah_utama"]:checked');
+            if (checkedArahUtama) {
+                updateArahUtamaHighlight(checkedArahUtama);
+            }
 
             /* ── Impact card highlight & counter ── */
             function updateImpactCounter() {
@@ -1349,20 +1370,30 @@
                 sumImpact.textContent = selected.length;
             }
 
+            function updateImpactHighlight(inputEl) {
+                const impactId = inputEl.dataset.impact;
+                const item = document.getElementById('impact-item-' + impactId);
+                if (item) {
+                    if (inputEl.value !== '') {
+                        item.classList.add('has-selection');
+                    } else {
+                        item.classList.remove('has-selection');
+                    }
+                }
+            }
+
             document.querySelectorAll('input[name^="impact_directions"]').forEach(r => {
                 r.addEventListener('change', function () {
-                    const impactId = this.dataset.impact;
-                    const item = document.getElementById('impact-item-' + impactId);
-                    if (item) {
-                        if (this.value !== '') {
-                            item.classList.add('has-selection');
-                        } else {
-                            item.classList.remove('has-selection');
-                        }
-                    }
+                    updateImpactHighlight(this);
                     updateImpactCounter();
                 });
             });
+
+            // Initial highlight triggers for impact directions
+            document.querySelectorAll('input[name^="impact_directions"]:checked').forEach(r => {
+                updateImpactHighlight(r);
+            });
+            updateImpactCounter();
 
             /* ── Form submit guard ── */
             document.getElementById('dvf-form').addEventListener('submit', function (e) {

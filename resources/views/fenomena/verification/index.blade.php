@@ -896,6 +896,19 @@
             </a>
         </div>
 
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-3" role="alert" style="margin-top: 1rem;">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-3" role="alert" style="margin-top: 1rem;">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         @if($tab === 'pending')
 
             {{-- ════════════════════ FILTER BAR ════════════════════ --}}
@@ -981,13 +994,6 @@
                 </div>
             </div>
 
-            {{-- ════════════════════ FENOMENA CARD LIST ════════════════════ --}}
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show rounded-3 mb-3" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
 
             <div class="fenomena-list" id="fenomena-list">
                 @forelse($fenomenas as $fenomena)
@@ -1303,6 +1309,9 @@
                                 <a href="{{ route('fenomena.show', ['id' => $item->id, 'from' => 'verification', 'tab' => 'riwayat']) }}"
                                     class="btn-detail">
                                     <i class="fas fa-eye"></i> Detail
+                                </a>
+                                <a href="{{ route('fenomena.verification.edit', $item->id) }}" class="btn-verify" style="background-color: var(--vf-warning); box-shadow: 0 2px 8px rgba(217, 119, 6, .25);">
+                                    <i class="fas fa-edit"></i> Edit
                                 </a>
                             </div>
                         </div>

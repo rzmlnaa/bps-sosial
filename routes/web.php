@@ -371,6 +371,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
     Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
     Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
+    Route::get('/verification-fenomena/{id}/edit', [FenomenaVerificationController::class, 'edit'])->name('fenomena.verification.edit');
+    Route::put('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'update'])->name('fenomena.verification.update');
 
     // Pra Ekspor
     Route::get('/pra-ekspor', [\App\Http\Controllers\PraEksporController::class, 'index'])->name('pra-ekspor.index');
