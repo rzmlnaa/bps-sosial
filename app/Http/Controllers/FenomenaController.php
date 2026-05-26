@@ -71,7 +71,7 @@ class FenomenaController extends Controller
         }
 
         $query->orderBy('tanggal_berita', 'desc');
-        $fenomenas = $query->paginate(10)->withQueryString();
+        $fenomenas = $query->paginate(12)->withQueryString();
         $totalFiltered = $fenomenas->total();
         $totalVerified = Fenomena::where('status_verifikasi', 'Y')->count();
         $myCount = auth()->check()
