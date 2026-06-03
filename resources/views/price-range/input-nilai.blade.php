@@ -133,13 +133,13 @@
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
                                 <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
-                                                                                                                            onchange="this.form.submit()">
-                                                                                                                            @foreach($kabupatens as $kab)
-                                                                                                                                <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                                                                                                                    [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                                                                                                                </option>
-                                                                                                                            @endforeach
-                                                                                                                        </select> -->
+                                                                                                                                                onchange="this.form.submit()">
+                                                                                                                                                @foreach($kabupatens as $kab)
+                                                                                                                                                    <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                                                                                                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                                                                                                                    </option>
+                                                                                                                                                @endforeach
+                                                                                                                                            </select> -->
 
 
                                 @if (auth()->user()->kabupaten->kode_kab == '6100')
@@ -363,6 +363,7 @@
                                                         $mMinVal = isset($master->min_nilai) ? number_format($master->min_nilai, 0, ',', '.') : '';
                                                         $mMaxVal = isset($master->max_nilai) ? number_format($master->max_nilai, 0, ',', '.') : '';
 
+                                                        $mShowLimitWarning = false;
                                                         // Fallback logic for empty Master check Prev Year
                                                         if (!$hasMasterData && !empty($prevYearFinal[$komo->id])) {
                                                             $pData = $prevYearFinal[$komo->id];
@@ -372,6 +373,7 @@
                                                             if ($pDiff > $limit && !$pHasAlasan) {
                                                                 $mMinVal = number_format($pData['min'], 0, ',', '.');
                                                                 $mMaxVal = number_format($pData['max'], 0, ',', '.');
+                                                                $mShowLimitWarning = true;
                                                             }
                                                         }
                                                     @endphp
@@ -394,9 +396,18 @@
                                                         </div>
                                                     @endif
                                                     <textarea name="master[{{ $komo->id }}][alasan]" rows="1"
-                                                        class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) ? '' : 'd-none' }}"
+                                                        class="form-control form-control-sm border-0 bg-blue-faded {{ ($master->max_nilai ?? 0) - ($master->min_nilai ?? 0) > ($komo->batas_selisih_harga ?? 0) || $mShowLimitWarning ? '' : 'd-none' }}"
                                                         placeholder="Berikan alasan"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
+                                                    @if($mShowLimitWarning)
+                                                        <div class="text-danger mt-1" style="font-size: 0.65rem; line-height: 1.1;">
+                                                            <i class="fas fa-info-circle"></i> Harga ini tidak dapat dikosongkan karena diambil
+                                                            dari harga
+                                                            dari periode sebelumnya, anda wajib mengisi alasan atau mengubah harga karena
+                                                            melewati batas
+                                                            selisih harga terbaru.
+                                                        </div>
+                                                    @endif
                                                 </td>
                                             @else
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
@@ -446,6 +457,7 @@
                                                         $displayMin = is_numeric($valMin) ? number_format($valMin, 0, ',', '.') : $valMin;
                                                         $displayMax = is_numeric($valMax) ? number_format($valMax, 0, ',', '.') : $valMax;
 
+                                                        $rShowLimitWarning = false;
                                                         // Fallback logic for empty Revision check Previous State
                                                         if (($valMin === '' || $valMin === null) && ($valMax === '' || $valMax === null)) {
                                                             // Find previous state
@@ -465,6 +477,7 @@
                                                                 if ($pDiff > $limit && !$pHasAlasan) {
                                                                     $displayMin = number_format($prevState['min'], 0, ',', '.');
                                                                     $displayMax = number_format($prevState['max'], 0, ',', '.');
+                                                                    $rShowLimitWarning = true;
                                                                 }
                                                             }
                                                         }
@@ -488,9 +501,18 @@
                                                         </div>
                                                     @endif
                                                     <textarea name="revision[{{ $rev->id }}][{{ $komo->id }}][alasan]" rows="1"
-                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ ((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '' ? '' : 'd-none' }}"
+                                                        class="form-control form-control-sm border-0 bg-orange-faded {{ (((float) $valMax - (float) $valMin) > ($komo->batas_selisih_harga ?? 0) && $valMax !== '' && $valMin !== '') || $rShowLimitWarning ? '' : 'd-none' }}"
                                                         placeholder="Berikan alasan"
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
+                                                    @if($rShowLimitWarning)
+                                                        <div class="text-danger mt-1" style="font-size: 0.65rem; line-height: 1.1;">
+                                                            <i class="fas fa-info-circle"></i> Harga ini tidak dapat dikosongkan karena diambil
+                                                            dari harga
+                                                            dari periode sebelumnya, anda wajib mengisi alasan atau mengubah harga karena
+                                                            melewati batas
+                                                            selisih harga terbaru.
+                                                        </div>
+                                                    @endif
                                                 </td>
                                             @else
                                                 <td class="p-1 text-center align-middle bg-light text-muted">
