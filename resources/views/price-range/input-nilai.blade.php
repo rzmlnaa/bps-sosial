@@ -133,13 +133,13 @@
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
                                 <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
-                                                                                                                                                onchange="this.form.submit()">
-                                                                                                                                                @foreach($kabupatens as $kab)
-                                                                                                                                                    <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                                                                                                                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                                                                                                                                    </option>
-                                                                                                                                                @endforeach
-                                                                                                                                            </select> -->
+                                                                                                                                                    onchange="this.form.submit()">
+                                                                                                                                                    @foreach($kabupatens as $kab)
+                                                                                                                                                        <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                                                                                                                            [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                                                                                                                        </option>
+                                                                                                                                                    @endforeach
+                                                                                                                                                </select> -->
 
 
                                 @if (auth()->user()->kabupaten->kode_kab == '6100')
@@ -401,11 +401,9 @@
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $master->alasan ?? '' }}</textarea>
                                                     @if($mShowLimitWarning)
                                                         <div class="text-danger mt-1" style="font-size: 0.65rem; line-height: 1.1;">
-                                                            <i class="fas fa-info-circle"></i> Harga ini tidak dapat dikosongkan karena diambil
-                                                            dari harga
-                                                            dari periode sebelumnya, anda wajib mengisi alasan atau mengubah harga karena
-                                                            melewati batas
-                                                            selisih harga terbaru.
+                                                            <i class="fas fa-info-circle"></i> Harga ini merupakan turunan dari periode
+                                                            sebelumnya yang melewati batas selisih harga terbaru. Anda wajib mengubah harga atau
+                                                            mengisi Alasan.
                                                         </div>
                                                     @endif
                                                 </td>
@@ -506,11 +504,9 @@
                                                         data-batas="{{ $komo->batas_selisih_harga ?? 0 }}">{{ $valAlasan }}</textarea>
                                                     @if($rShowLimitWarning)
                                                         <div class="text-danger mt-1" style="font-size: 0.65rem; line-height: 1.1;">
-                                                            <i class="fas fa-info-circle"></i> Harga ini tidak dapat dikosongkan karena diambil
-                                                            dari harga
-                                                            dari periode sebelumnya, anda wajib mengisi alasan atau mengubah harga karena
-                                                            melewati batas
-                                                            selisih harga terbaru.
+                                                            <i class="fas fa-info-circle"></i> Harga ini merupakan turunan dari periode
+                                                            sebelumnya yang melewati batas selisih harga terbaru. Anda wajib mengubah harga atau
+                                                            mengisi Alasan.
                                                         </div>
                                                     @endif
                                                 </td>
