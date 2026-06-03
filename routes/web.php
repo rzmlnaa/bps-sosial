@@ -32,6 +32,14 @@ use App\Http\Controllers\DescanController;
 
 
 
+// --- Temporary Cleanup RH Route ---
+Route::get('/cleanup-null-rh', function () {
+    $deleted = \App\Models\RhPerubahanDetail::whereNull('min_edit')
+        ->whereNull('max_edit')
+        ->delete();
+    return "Berhasil menghapus " . $deleted . " data kosong.";
+});
+
 // --- Authentication Routes (Public/Guest) ---
 
 Route::get('/login', function () {

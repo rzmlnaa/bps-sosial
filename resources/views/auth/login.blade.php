@@ -36,7 +36,8 @@
                 Sistem Informasi Sosial Kalbar
             </h2>
             <p class="text-secondary text-center mx-auto mb-2" style="max-width:520px;">
-                Menyediakan informasi statistik sosial ekonomi untuk BPS Kabupaten/Kota se-Kalimantan Barat.
+                Menyediakan informasi statistik sosial ekonomi untuk Badan Pusat Statistik Kabupaten/Kota se-Kalimantan
+                Barat.
             </p>
 
             <p class="text-muted text-center small mb-4">
