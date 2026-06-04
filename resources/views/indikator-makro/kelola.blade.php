@@ -1392,21 +1392,21 @@
 
             // 2. Drag & Drop Indikator Makro
             const startIdxMakro = {{ ($indikatorMakros->currentPage() - 1) * $indikatorMakros->perPage() }};
-            initBidirectionalSortable('sortable-makro', 'sortable-makro-mobile', '{{ route("indikator-makro.makro.reorder") }}', startIdxMakro, '.badge-sequence');
+            initBidirectionalSortable('sortable-makro', 'sortable-makro-mobile', '/indikator-makro/makro/reorder', startIdxMakro, '.badge-sequence');
 
             // 3. Drag & Drop Indikator Bidang
             const startIdxBidang = {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() }};
-            initBidirectionalSortable('sortable-bidang', 'sortable-bidang-mobile', '{{ route("indikator-makro.bidang.reorder") }}', startIdxBidang, '.badge-sequence');
+            initBidirectionalSortable('sortable-bidang', 'sortable-bidang-mobile', '/indikator-makro/bidang/reorder', startIdxBidang, '.badge-sequence');
 
             // 3b. Drag & Drop Indikator Dimensi
             const startIdxIndDimensi = {{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() }};
-            initBidirectionalSortable('sortable-ind-dimensi', 'sortable-ind-dimensi-mobile', '{{ route("indikator-makro.indikator-dimensi.reorder") }}', startIdxIndDimensi, '.badge-sequence');
+            initBidirectionalSortable('sortable-ind-dimensi', 'sortable-ind-dimensi-mobile', '/indikator-makro/indikator-dimensi/reorder', startIdxIndDimensi, '.badge-sequence');
 
             // 4. Toggle Periode Status Switch
             document.querySelectorAll('.toggle-periode-status').forEach(function (toggle) {
                 toggle.addEventListener('change', function () {
                     const id = this.getAttribute('data-id');
-                    const url = '{{ route("indikator-makro.periode.toggle", ":id") }}'.replace(':id', id);
+                    const url = '/indikator-makro/periode/' + id + '/toggle';
 
                     fetch(url, {
                         method: 'PATCH',
@@ -1434,7 +1434,7 @@
             document.querySelectorAll('.toggle-bidang-status').forEach(function (toggle) {
                 toggle.addEventListener('change', function () {
                     const id = this.getAttribute('data-id');
-                    const url = '{{ route("indikator-makro.bidang.toggle", ":id") }}'.replace(':id', id);
+                    const url = '/indikator-makro/bidang/' + id + '/toggle';
 
                     fetch(url, {
                         method: 'PATCH',
@@ -1462,7 +1462,7 @@
             document.querySelectorAll('.toggle-makro-status').forEach(function (toggle) {
                 toggle.addEventListener('change', function () {
                     const id = this.getAttribute('data-id');
-                    const url = '{{ route("indikator-makro.makro.toggle", ":id") }}'.replace(':id', id);
+                    const url = '/indikator-makro/makro/' + id + '/toggle';
 
                     fetch(url, {
                         method: 'PATCH',
@@ -1508,7 +1508,7 @@
             let debounceTimer;
 
             const performSearch = (query) => {
-                fetch('{{ route("indikator-makro.search") }}?q=' + encodeURIComponent(query))
+                fetch('/indikator-makro/search?q=' + encodeURIComponent(query))
                     .then(response => response.json())
                     .then(data => {
                         searchResults.innerHTML = '';

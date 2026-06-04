@@ -154,6 +154,8 @@ class IndikatorMakroTest extends TestCase
 
         $this->assertEquals(1, $b2->refresh()->urutan);
         $this->assertEquals(2, $b1->refresh()->urutan);
+        $this->assertEquals($user->id, $b2->refresh()->updated_by);
+        $this->assertEquals($user->id, $b1->refresh()->updated_by);
     }
 
     public function test_can_access_input_nilai_page()
@@ -377,6 +379,41 @@ class IndikatorMakroTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(3);
     }
+
+    public function test_can_reorder_indikator_dimensis_sets_updated_by()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dim1 = Dimensi::create(['nama_dimensi' => 'D1']);
+        $dim2 = Dimensi::create(['nama_dimensi' => 'D2']);
+        
+        $id1 = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dim1->id,
+            'urutan' => 1,
+            'is_active' => true
+        ]);
+        $id2 = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dim2->id,
+            'urutan' => 2,
+            'is_active' => true
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('indikator-makro.indikator-dimensi.reorder'), [
+            'order' => [$id2->id, $id1->id]
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $this->assertEquals(1, $id2->refresh()->urutan);
+        $this->assertEquals(2, $id1->refresh()->urutan);
+        $this->assertEquals($user->id, $id2->refresh()->updated_by);
+        $this->assertEquals($user->id, $id1->refresh()->updated_by);
+    }
 }
+
 
 

@@ -323,7 +323,10 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['order' => 'required|array']);
         foreach ($request->order as $index => $id) {
-            IndikatorBidang::where('id', $id)->update(['urutan' => $index + 1]);
+            IndikatorBidang::where('id', $id)->update([
+                'urutan' => $index + 1,
+                'updated_by' => auth()->id()
+            ]);
         }
         return response()->json(['success' => true]);
     }
@@ -397,7 +400,10 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['order' => 'required|array']);
         foreach ($request->order as $index => $id) {
-            IndikatorMakro::where('id', $id)->update(['urutan' => $index + 1]);
+            IndikatorMakro::where('id', $id)->update([
+                'urutan' => $index + 1,
+                'updated_by' => auth()->id()
+            ]);
         }
         return response()->json(['success' => true]);
     }
@@ -583,7 +589,10 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['order' => 'required|array']);
         foreach ($request->order as $index => $id) {
-            IndikatorDimensi::where('id', $id)->update(['urutan' => $index + 1]);
+            IndikatorDimensi::where('id', $id)->update([
+                'urutan' => $index + 1,
+                'updated_by' => auth()->id()
+            ]);
         }
         return response()->json(['success' => true]);
     }

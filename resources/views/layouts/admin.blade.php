@@ -39,8 +39,8 @@
 
     <style>
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -57,6 +57,27 @@
             height: 100%;
             object-fit: contain;
             /* AGAR LOGO TIDAK TERPOTONG */
+        }
+
+        .logo-icon-sidebar {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #fff;
+            margin-bottom: 0;
+        }
+
+        .logo-icon-sidebar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            margin-top: -20px;
         }
     </style>
 
@@ -81,14 +102,15 @@
 
     <!-- Sidebar -->
     <nav class="sidebar client-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo-icon">
+        <div class="sidebar-header d-flex flex-column align-items-center text-center pb-2">
+            <div class="logo-icon-sidebar mb-0">
                 <img src="{{ $logoUrl }}" alt="Logo BPS"
                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
-            <div>
-                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">SISOKA</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">BPS Prov. Kalimantan Barat</small>
+            <div class="logo-text mb-3">
+                <h5 class="fw-bold mb-0" style="font-size: 1.15rem; color: var(--primary-navy); letter-spacing: 0.5px;">
+                    SISOKA</h5>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">BPS Prov. Kalimantan Barat</small>
             </div>
         </div>
         @php
@@ -103,7 +125,7 @@
         @endphp
         <div class="px-4 mb-3">
             <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
-                {{ $greeting }}@auth, {{ Auth::user()->name }}@endauth 👋
+                {{ $greeting }}@auth, {{ Str::of(Auth::user()->name)->before(' ') }}@endauth 👋
             </span>
             <small class="text-muted d-block">
 
@@ -542,6 +564,24 @@
                     sidebar.classList.remove('active');
                 }
             });
+
+            // Restore and persist sidebar scroll position
+            if (sidebar) {
+                const scrollPos = localStorage.getItem('sidebar-scroll-pos');
+                if (scrollPos) {
+                    sidebar.scrollTop = parseInt(scrollPos, 10);
+                }
+
+                // Save scroll position on scroll
+                sidebar.addEventListener('scroll', function () {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+
+                // Save scroll position before unload
+                window.addEventListener('beforeunload', function () {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+            }
         });
     </script>
 
