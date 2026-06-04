@@ -24,7 +24,7 @@ class IndikatorMakroController extends Controller
     {
         // 1. Fetch all PeriodeIndikator (ordered by tahun desc)
         $periodeIndikators = PeriodeIndikator::orderBy('tahun', 'desc')->get();
-        
+
         // 2. Fetch all IndikatorMakro (ordered by urutan asc, then created_at desc)
         $indikatorMakros = IndikatorMakro::where('is_active', true)
             ->orderBy('urutan', 'asc')
@@ -45,7 +45,7 @@ class IndikatorMakroController extends Controller
         // Determine selected Periode
         $selectedPeriodeId = $request->query('periode_indikator_id') ?? ($periodeIndikators->where('is_active', true)->first()->id ?? $periodeIndikators->first()->id ?? null);
         $selectedPeriode = PeriodeIndikator::find($selectedPeriodeId);
-        
+
         // Determine selected Indikator Makro
         $selectedIndikatorMakroId = $request->query('indikator_makro_id') ?? ($indikatorMakros->first()->id ?? null);
 
@@ -134,7 +134,7 @@ class IndikatorMakroController extends Controller
                         if (!$record->exists) {
                             $record->created_by = $userId;
                         }
-                        $record->nilai = (float)$nilaiClean;
+                        $record->nilai = (float) $nilaiClean;
                         $record->updated_by = $userId;
                         $record->save();
                     }
@@ -148,7 +148,7 @@ class IndikatorMakroController extends Controller
         ])->with('success', 'Nilai Indikator Makro berhasil disimpan.');
     }
 
-    public function kelola()
+    public function kelola(Request $request)
     {
         $periodeIndikators = PeriodeIndikator::withCount('nilaiIndikatorMakros')
             ->orderBy('tahun', 'desc')
@@ -171,11 +171,19 @@ class IndikatorMakroController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'dimensi_page');
 
-        $indikatorDimensis = IndikatorDimensi::with(['indikatorMakro', 'dimensi', 'creator', 'updater'])
-            ->withCount('nilaiIndikatorMakros')
-            ->orderBy('urutan', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'ind_dimensi_page');
+        $selectedMakroId = $request->query('filter_makro_id');
+
+        if ($selectedMakroId) {
+            $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedMakroId)
+                ->with(['indikatorMakro', 'dimensi', 'creator', 'updater'])
+                ->withCount('nilaiIndikatorMakros')
+                ->orderBy('urutan', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10, ['*'], 'ind_dimensi_page');
+        } else {
+            $indikatorDimensis = IndikatorDimensi::whereNull('id')
+                ->paginate(10, ['*'], 'ind_dimensi_page');
+        }
 
         $allIndikatorBidangs = IndikatorBidang::orderBy('urutan', 'asc')->get();
         $allIndikatorMakros = IndikatorMakro::orderBy('urutan', 'asc')->get();
@@ -189,7 +197,8 @@ class IndikatorMakroController extends Controller
             'indikatorDimensis',
             'allIndikatorBidangs',
             'allIndikatorMakros',
-            'allDimensis'
+            'allDimensis',
+            'selectedMakroId'
         ));
     }
 
@@ -380,6 +389,19 @@ class IndikatorMakroController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function toggleMakroActive($id)
+    {
+        $makro = IndikatorMakro::findOrFail($id);
+        $makro->is_active = !$makro->is_active;
+        $makro->updated_by = auth()->id();
+        $makro->save();
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $makro->is_active
+        ]);
+    }
+
     public function destroyMakro($id)
     {
         $count = \App\Models\IndikatorDimensi::where('indikator_makro_id', $id)->count();
@@ -457,6 +479,30 @@ class IndikatorMakroController extends Controller
                 ->with('tab', 'indikator-dimensi');
         }
 
+        // Validasi dimensi "none"
+        $dimensi = Dimensi::findOrFail($request->dimensi_id);
+        $isNoneDimensi = strtolower(trim($dimensi->nama_dimensi)) === 'none';
+
+        if ($isNoneDimensi) {
+            $hasExistingRelations = IndikatorDimensi::where('indikator_makro_id', $request->indikator_makro_id)->exists();
+            if ($hasExistingRelations) {
+                return back()
+                    ->withErrors(['indikator_dimensi' => 'Indikator ini sudah memiliki relasi dimensi lain, tidak dapat memilih dimensi "none".'])
+                    ->with('tab', 'indikator-dimensi');
+            }
+        } else {
+            $hasNoneRelation = IndikatorDimensi::where('indikator_makro_id', $request->indikator_makro_id)
+                ->whereHas('dimensi', function ($q) {
+                    $q->where(DB::raw('LOWER(nama_dimensi)'), 'none');
+                })
+                ->exists();
+            if ($hasNoneRelation) {
+                return back()
+                    ->withErrors(['indikator_dimensi' => 'Indikator ini sudah menggunakan dimensi "none". Hapus dimensi "none" terlebih dahulu untuk menambahkan dimensi lain.'])
+                    ->with('tab', 'indikator-dimensi');
+            }
+        }
+
         $data = $request->all();
         $data['created_by'] = auth()->id();
         $data['is_active'] = true;
@@ -484,6 +530,33 @@ class IndikatorMakroController extends Controller
             return back()
                 ->withErrors(['indikator_dimensi' => 'Kombinasi Indikator Makro dan Dimensi ini sudah terdaftar.'])
                 ->with('tab', 'indikator-dimensi');
+        }
+
+        // Validasi dimensi "none" untuk update
+        $dimensi = Dimensi::findOrFail($request->dimensi_id);
+        $isNoneDimensi = strtolower(trim($dimensi->nama_dimensi)) === 'none';
+
+        if ($isNoneDimensi) {
+            $hasExistingRelations = IndikatorDimensi::where('indikator_makro_id', $request->indikator_makro_id)
+                ->where('id', '!=', $id)
+                ->exists();
+            if ($hasExistingRelations) {
+                return back()
+                    ->withErrors(['indikator_dimensi' => 'Indikator ini sudah memiliki relasi dimensi lain, tidak dapat memilih dimensi "none".'])
+                    ->with('tab', 'indikator-dimensi');
+            }
+        } else {
+            $hasNoneRelation = IndikatorDimensi::where('indikator_makro_id', $request->indikator_makro_id)
+                ->where('id', '!=', $id)
+                ->whereHas('dimensi', function ($q) {
+                    $q->where(DB::raw('LOWER(nama_dimensi)'), 'none');
+                })
+                ->exists();
+            if ($hasNoneRelation) {
+                return back()
+                    ->withErrors(['indikator_dimensi' => 'Indikator ini sudah menggunakan dimensi "none". Hapus dimensi "none" terlebih dahulu untuk menambahkan dimensi lain.'])
+                    ->with('tab', 'indikator-dimensi');
+            }
         }
 
         $data = $request->all();

@@ -52,9 +52,15 @@
     <div class="mt-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <a href="{{ route('indikator-makro.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
+                @if(request('from') === 'input-nilai')
+                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-light btn-sm mb-2 rounded-pill">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                @else
+                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                @endif
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Kelola Master Indikator</h2>
                 <p class="text-muted mb-0">Pengaturan Periode, Bidang, Makro, Dimensi, dan Indikator Dimensi</p>
             </div>
@@ -80,7 +86,7 @@
             </div>
         @endif
 
-        @php $activeTab = session('tab', 'periode'); @endphp
+        @php $activeTab = request()->query('tab') ?? session('tab', 'periode'); @endphp
         <ul class="nav nav-tabs fw-medium border-bottom-0 mb-4 scrollable-tabs" id="kelolaTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $activeTab == 'periode' ? 'active' : '' }} px-4 py-3 rounded-top-3 border"
@@ -232,7 +238,12 @@
                                 </table>
                             </div>
                             <div class="mt-3">
-                                {{ $periodeIndikators->appends(['tab' => 'periode'])->links('pagination::bootstrap-5') }}
+                                {{ $periodeIndikators->appends([
+                                    'tab' => 'periode',
+                                    'from' => request('from'),
+                                    'periode_indikator_id' => request('periode_indikator_id'),
+                                    'indikator_makro_id' => request('indikator_makro_id')
+                                ])->links('pagination::bootstrap-5') }}
                             </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
@@ -381,7 +392,12 @@
                                 </table>
                             </div>
                             <div class="mt-3">
-                                {{ $indikatorBidangs->appends(['tab' => 'bidang'])->links('pagination::bootstrap-5') }}
+                                {{ $indikatorBidangs->appends([
+                                    'tab' => 'bidang',
+                                    'from' => request('from'),
+                                    'periode_indikator_id' => request('periode_indikator_id'),
+                                    'indikator_makro_id' => request('indikator_makro_id')
+                                ])->links('pagination::bootstrap-5') }}
                             </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
@@ -473,11 +489,10 @@
                                                 <td>{{ $item->bidang->nama_bidang ?? '-' }}</td>
                                                 <td>{{ $item->satuan ?? '-' }}</td>
                                                 <td class="text-center">
-                                                    @if($item->is_active)
-                                                        <span class="badge bg-success rounded-pill">Aktif</span>
-                                                    @else
-                                                        <span class="badge bg-secondary rounded-pill">Non-Aktif</span>
-                                                    @endif
+                                                    <div class="form-check form-switch d-inline-block">
+                                                        <input class="form-check-input toggle-makro-status" type="checkbox"
+                                                            data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
+                                                    </div>
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge bg-info rounded-pill">{{ $item->indikator_dimensis_count }} kali</span>
@@ -581,7 +596,12 @@
                                 </table>
                             </div>
                             <div class="mt-3">
-                                {{ $indikatorMakros->appends(['tab' => 'makro'])->links('pagination::bootstrap-5') }}
+                                {{ $indikatorMakros->appends([
+                                    'tab' => 'makro',
+                                    'from' => request('from'),
+                                    'periode_indikator_id' => request('periode_indikator_id'),
+                                    'indikator_makro_id' => request('indikator_makro_id')
+                                ])->links('pagination::bootstrap-5') }}
                             </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
@@ -707,7 +727,12 @@
                                 </table>
                             </div>
                             <div class="mt-3">
-                                {{ $dimensis->appends(['tab' => 'dimensi'])->links('pagination::bootstrap-5') }}
+                                {{ $dimensis->appends([
+                                    'tab' => 'dimensi',
+                                    'from' => request('from'),
+                                    'periode_indikator_id' => request('periode_indikator_id'),
+                                    'indikator_makro_id' => request('indikator_makro_id')
+                                ])->links('pagination::bootstrap-5') }}
                             </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
@@ -734,10 +759,10 @@
                                 <div class="col-md-5 mb-3">
                                     <label class="form-label fw-bold small">Indikator Makro <span
                                             class="text-danger">*</span></label>
-                                    <select name="indikator_makro_id" class="form-select" required>
+                                    <select name="indikator_makro_id" class="form-select" required onchange="filterByMakro(this.value)">
                                         <option value="">-- Pilih Indikator --</option>
                                         @foreach($allIndikatorMakros as $makro)
-                                            <option value="{{ $makro->id }}">{{ $makro->nama_indikator }}</option>
+                                            <option value="{{ $makro->id }}" {{ $selectedMakroId == $makro->id ? 'selected' : '' }}>{{ $makro->nama_indikator }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -756,7 +781,7 @@
                                 </div>
                             </div>
                         </form>
-
+ 
                         @if($errors->has('indikator_dimensi'))
                             <div class="alert alert-danger alert-dismissible fade show rounded-3 py-2" role="alert">
                                 <i class="fas fa-exclamation-circle me-2"></i>
@@ -764,74 +789,88 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         @endif
-
+ 
                         <hr class="my-4">
-                        <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:</h6>
-                        @if($indikatorDimensis->count() > 0)
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th style="width: 50px;"></th>
-                                            <th style="width: 80px;" class="text-center">Urutan</th>
-                                            <th>Indikator Makro</th>
-                                            <th>Dimensi</th>
-                                            <th class="text-center">Data Digunakan</th>
-                                            <th class="text-center">Info User</th>
-                                            <th class="text-end" width="15%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="sortable-ind-dimensi">
-                                        @foreach($indikatorDimensis as $idx => $item)
-                                            <tr data-id="{{ $item->id }}">
-                                                <td class="text-center" style="cursor: grab;">
-                                                    <i class="fas fa-grip-vertical text-muted"></i>
-                                                </td>
-                                                <td class="text-center sortable-urutan fw-bold">{{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}</td>
-                                                <td class="fw-bold">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</td>
-                                                <td class="fw-bold">{{ $item->dimensi->nama_dimensi ?? '-' }}</td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-info rounded-pill">{{ $item->nilai_indikator_makros_count }} kali</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @if($item->updater)
-                                                    <span style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    @if($item->nilai_indikator_makros_count > 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i></button>
-                                                    @else
-                                                        <form
-                                                            action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </td>
+
+                        @if($selectedMakroId)
+                            <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:</h6>
+                            @if($indikatorDimensis->count() > 0)
+                                <div class="table-responsive table-scrollable">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th style="width: 50px;"></th>
+                                                <th style="width: 80px;" class="text-center">Urutan</th>
+                                                <th>Indikator Makro</th>
+                                                <th>Dimensi</th>
+                                                <th class="text-center">Data Digunakan</th>
+                                                <th class="text-center">Info User</th>
+                                                <th class="text-end" width="15%">Aksi</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $indikatorDimensis->appends(['tab' => 'indikator-dimensi'])->links('pagination::bootstrap-5') }}
-                            </div>
+                                        </thead>
+                                        <tbody id="sortable-ind-dimensi">
+                                            @foreach($indikatorDimensis as $idx => $item)
+                                                <tr data-id="{{ $item->id }}">
+                                                    <td class="text-center" style="cursor: grab;">
+                                                        <i class="fas fa-grip-vertical text-muted"></i>
+                                                    </td>
+                                                    <td class="text-center sortable-urutan fw-bold">{{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}</td>
+                                                    <td class="fw-bold">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</td>
+                                                    <td class="fw-bold">{{ $item->dimensi->nama_dimensi ?? '-' }}</td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info rounded-pill">{{ $item->nilai_indikator_makros_count }} kali</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
+                                                            <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
+                                                        </span>
+                                                        @if($item->updater)
+                                                        <span style="font-size: 1.1rem; cursor: pointer;">
+                                                            <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
+                                                        </span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-end">
+                                                        @if($item->nilai_indikator_makros_count > 0)
+                                                            <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i></button>
+                                                        @else
+                                                            <form
+                                                                action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
+                                                                method="POST" class="d-inline delete-form">
+                                                                @csrf @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
+                                                                        class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    {{ $indikatorDimensis->appends([
+                                        'tab' => 'indikator-dimensi',
+                                        'filter_makro_id' => $selectedMakroId,
+                                        'from' => request('from'),
+                                        'periode_indikator_id' => request('periode_indikator_id'),
+                                        'indikator_makro_id' => request('indikator_makro_id')
+                                    ])->links('pagination::bootstrap-5') }}
+                                </div>
+                            @else
+                                <div class="text-center text-muted p-3 bg-light rounded">
+                                    <small>Belum ada relasi indikator dimensi untuk indikator makro yang dipilih.</small>
+                                </div>
+                            @endif
                         @else
-                            <div class="text-center text-muted p-3 bg-light rounded">
-                                <small>Belum ada relasi indikator dimensi.</small>
+                            <div class="text-center text-muted p-4 bg-light rounded-3 border">
+                                <i class="fas fa-info-circle fa-2x mb-2 text-warning text-opacity-75"></i>
+                                <p class="mb-0 fw-medium">Silakan pilih Indikator Makro terlebih dahulu pada dropdown di atas untuk menampilkan daftar Indikator Dimensi.</p>
                             </div>
                         @endif
                     </div>
@@ -1001,6 +1040,46 @@
                         });
                 });
             });
+
+            // 5b. Toggle Makro Status Switch
+            document.querySelectorAll('.toggle-makro-status').forEach(function (toggle) {
+                toggle.addEventListener('change', function () {
+                    const id = this.getAttribute('data-id');
+                    const url = '{{ route("indikator-makro.makro.toggle", ":id") }}'.replace(':id', id);
+
+                    fetch(url, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    }).then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: 'Status indikator makro diperbarui',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                });
+                            }
+                        });
+                });
+            });
+
+            window.filterByMakro = function (val) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', 'indikator-dimensi');
+                if (val) {
+                    url.searchParams.set('filter_makro_id', val);
+                } else {
+                    url.searchParams.delete('filter_makro_id');
+                }
+                url.searchParams.delete('ind_dimensi_page');
+                window.location.href = url.toString();
+            };
 
             // 6. SweetAlert2 Delete Confirmation
             document.querySelectorAll('.delete-form').forEach(function (form) {

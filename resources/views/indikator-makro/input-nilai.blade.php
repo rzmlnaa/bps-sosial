@@ -130,10 +130,18 @@
             box-shadow: inset 0 -1px 0 #bbb;
         }
 
-        .table-bps thead tr.col-num th {
+        .table-bps:not(.table-none-only) thead tr.col-num th {
             position: sticky;
             top: 80px;
             /* Height of first + second header rows */
+            z-index: 1022;
+            background-color: #fafafa !important;
+            box-shadow: inset 0 -1.5px 0 #000;
+        }
+
+        .table-bps.table-none-only thead tr.col-num th {
+            position: sticky;
+            top: 41px;
             z-index: 1022;
             background-color: #fafafa !important;
             box-shadow: inset 0 -1.5px 0 #000;
@@ -282,65 +290,93 @@
                             Tabel {{ $selectedIndikator ? $selectedIndikator->nama_indikator : 'Indikator Makro' }} menurut
                             Kabupaten/Kota/Provinsi
                         </h4>
+                        
+                    </div>
+                   
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        
                         <div class="table-unit-bps mb-0">
                             Satuan: {{ $selectedIndikator->satuan ?? '-' }}
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapsePasteExcel">
-                            <i class="fas fa-file-excel me-1"></i> Paste Excel
-                        </button>
-                        <button type="submit" class="btn btn-primary-custom">
-                            <i class="fas fa-save me-1"></i> Simpan
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Copy Paste Excel Section --}}
-                <div class="collapse mb-3" id="collapsePasteExcel">
-                    <div class="card card-body bg-light border-0 rounded-3">
-                        <h6 class="fw-bold mb-2 text-success"><i class="fas fa-file-excel me-1"></i> Paste Excel Data Matrix</h6>
-                        <p class="text-muted small mb-2">
-                            Copy blok data angka dari Excel (sesuai urutan baris kabupaten dan kolom dimensi di bawah), lalu paste di kotak di bawah ini dan klik tombol untuk mengisi tabel otomatis. Nilai kosong atau tanda (-) akan otomatis dikosongkan.
-                        </p>
-                        <textarea id="excel-paste-area" class="form-control mb-3" rows="5" placeholder="Paste data Excel disini... (Contoh: 115.08	82.08	98.96)"></textarea>
-                        <div class="text-end">
-                            <button type="button" id="btn-parse-excel" class="btn btn-sm btn-success rounded-pill px-3">
-                                <i class="fas fa-check me-1"></i> Terapkan Nilai ke Tabel
+                    @if($indikatorDimensis->isNotEmpty())
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapsePasteExcel">
+                                <i class="fas fa-file-excel me-1"></i> Paste Excel
+                            </button>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-save me-1"></i> Simpan
                             </button>
                         </div>
-                    </div>
+                    @else
+                    <a href="/indikator-makro/kelola?tab=indikator-dimensi&filter_makro_id={{ $selectedIndikatorMakroId }}&from=input-nilai&periode_indikator_id={{ $selectedPeriodeId }}&indikator_makro_id={{ $selectedIndikatorMakroId }}" class="btn btn-outline-warning rounded-pill px-3">
+                        <i class="fas fa-cog me-1 fa-spin"></i> Atur Dimensi
+                    </a>
+                    @endif
                 </div>
+ 
+                {{-- Copy Paste Excel Section --}}
+                @if($indikatorDimensis->isNotEmpty())
+                    <div class="collapse mb-3" id="collapsePasteExcel">
+                        <div class="card card-body bg-light border-0 rounded-3">
+                            <h6 class="fw-bold mb-2 text-success"><i class="fas fa-file-excel me-1"></i> Paste Excel Data Matrix</h6>
+                            <p class="text-muted small mb-2">
+                                Copy blok data angka dari Excel (sesuai urutan baris kabupaten dan kolom dimensi di bawah), lalu paste di kotak di bawah ini dan klik tombol untuk mengisi tabel otomatis. Nilai kosong atau tanda (-) akan otomatis dikosongkan.
+                            </p>
+                            <textarea id="excel-paste-area" class="form-control mb-3" rows="5" placeholder="Paste data Excel disini... (Contoh: 115.08	82.08	98.96)"></textarea>
+                            <div class="text-end">
+                                <button type="button" id="btn-parse-excel" class="btn btn-sm btn-success rounded-pill px-3">
+                                    <i class="fas fa-check me-1"></i> Terapkan Nilai ke Tabel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="table-bps-scroll">
-                    <table class="table-bps align-middle">
+                    @php
+                        $dimColCount = $indikatorDimensis->count();
+                        $colspan = $dimColCount > 0 ? $dimColCount : 1;
+                        $isNoneOnly = ($dimColCount === 1 && strtolower(trim($indikatorDimensis->first()->dimensi->nama_dimensi ?? '')) === 'none');
+                    @endphp
+                    <table class="table-bps align-middle {{ $isNoneOnly ? 'table-none-only' : '' }}">
                         <thead>
-                            @php
-                                $dimColCount = $indikatorDimensis->count();
-                                $colspan = $dimColCount > 0 ? $dimColCount : 1;
-                            @endphp
-                            <tr>
-                                <th rowspan="2">Kabupaten/Kota/Provinsi</th>
-                                <th colspan="{{ $colspan }}">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
-                            </tr>
-                            <tr>
-                                @forelse($indikatorDimensis as $indDim)
-                                    <th style="min-width: 120px;">{{ $indDim->dimensi->nama_dimensi ?? '-' }}</th>
-                                @empty
-                                    <th>Dimensi</th>
-                                @endforelse
-                            </tr>
-                            {{-- Column Numbering Row --}}
-                            <tr class="col-num">
-                                <th>(1)</th>
-                                @if($dimColCount > 0)
-                                    @for($i = 0; $i < $dimColCount; $i++)
-                                        <th>({{ $i + 2 }})</th>
-                                    @endfor
-                                @else
+                            @if($isNoneOnly)
+                                <tr>
+                                    <th>Kabupaten/Kota/Provinsi</th>
+                                    <th style="min-width: 150px;">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
+                                </tr>
+                                <tr class="col-num">
+                                    <th>(1)</th>
                                     <th>(2)</th>
-                                @endif
-                            </tr>
+                                </tr>
+                            @else
+                                <tr>
+                                    <th rowspan="2">Kabupaten/Kota/Provinsi</th>
+                                    <th colspan="{{ $colspan }}">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
+                                </tr>
+                                <tr>
+                                    @forelse($indikatorDimensis as $indDim)
+                                        <th style="min-width: 120px;">{{ $indDim->dimensi->nama_dimensi ?? '-' }}</th>
+                                    @empty
+                                        <th>Dimensi Belum Diatur</th>
+                                    @endforelse
+                                </tr>
+                                {{-- Column Numbering Row --}}
+                                <tr class="col-num">
+                                    <th>(1)</th>
+                                    @if($dimColCount > 0)
+                                        @for($i = 0; $i < $dimColCount; $i++)
+                                            <th>({{ $i + 2 }})</th>
+                                        @endfor
+                                    @else
+                                        <th>(2)</th>
+                                    @endif
+                                </tr>
+                            @endif
                         </thead>
                         <tbody>
                             @forelse($kabupatens as $idx => $kab)
@@ -349,7 +385,7 @@
                                     $isIndonesia = ($kab->kode_kab === '1' || strtolower($kab->nama_kabupaten) === 'indonesia');
                                     $rowStyle = ($isProvince || $isIndonesia) ? 'font-weight: bold; background-color: #f9f9f9;' : '';
                                 @endphp
-                                <tr style="{{ $rowStyle }}">
+                                <tr style="{{ $rowStyle }}" data-kode-kab="{{ $kab->kode_kab }}" data-nama-kab="{{ strtolower($kab->nama_kabupaten) }}">
                                     <td>
                                         @if($isIndonesia)
                                             <strong>INDONESIA</strong>
@@ -400,6 +436,137 @@ document.addEventListener('DOMContentLoaded', function () {
     const table = document.querySelector('.table-bps');
     if (!table) return;
 
+    function normalizeName(name) {
+        if (!name) return '';
+        return name.toLowerCase()
+            .replace(/^(kabupaten|kab|kota|provinsi|prov)\.?\s+/ig, '')
+            .replace(/[^a-z0-9]/g, '')
+            .trim();
+    }
+
+    function cleanNumberValue(valText) {
+        let cleanVal = valText.trim();
+        if (cleanVal === '-' || cleanVal === '—' || cleanVal === '') {
+            return '';
+        }
+        
+        // Strip percentage, Rp currency symbol, spaces, and other non-numeric chars except commas, dots, and minus sign
+        cleanVal = cleanVal.replace(/[^0-9,\.\-]/g, '');
+
+        if (cleanVal === '') return '';
+
+        // Standardize decimal numbers
+        if (cleanVal.includes(',') && cleanVal.includes('.')) {
+            if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
+                cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+            } else {
+                cleanVal = cleanVal.replace(/,/g, '');
+            }
+        } else if (cleanVal.includes(',')) {
+            cleanVal = cleanVal.replace(',', '.');
+        }
+        return cleanVal;
+    }
+
+    function findRowByKab(identifier, trs) {
+        const cleanId = identifier.trim().toLowerCase();
+        if (!cleanId) return null;
+
+        // Try exact match on code (extract digits)
+        const codeMatch = cleanId.match(/\b\d{1,4}\b/);
+        const code = codeMatch ? codeMatch[0] : null;
+
+        for (let row of trs) {
+            const rowKode = row.getAttribute('data-kode-kab');
+            const rowNama = row.getAttribute('data-nama-kab'); // pre-lowercased
+            
+            if (code && rowKode === code) {
+                return row;
+            }
+            if (cleanId === rowKode) {
+                return row;
+            }
+            
+            const normRowNama = normalizeName(rowNama);
+            const normPasted = normalizeName(cleanId);
+            if (normRowNama && normPasted && (normPasted.includes(normRowNama) || normRowNama.includes(normPasted))) {
+                return row;
+            }
+        }
+        return null;
+    }
+
+    function processExcelData(pastedText, startElement = null) {
+        const rows = pastedText.split(/\r?\n/).map(r => r.trim()).filter(r => r !== '');
+        if (rows.length === 0) return 0;
+
+        const allTrs = Array.from(table.querySelectorAll('tbody tr'));
+        
+        const firstRowCells = rows[0].split('\t');
+        const isSmartMatch = findRowByKab(firstRowCells[0], allTrs) !== null;
+
+        let count = 0;
+
+        if (isSmartMatch) {
+            // Smart Matching Mode
+            rows.forEach(rowText => {
+                const cells = rowText.split('\t');
+                if (cells.length < 2) return;
+                
+                const targetTr = findRowByKab(cells[0], allTrs);
+                if (!targetTr) return;
+
+                const inputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+                
+                // Fill the inputs of the matched row
+                for (let i = 1; i < cells.length; i++) {
+                    const targetTd = inputTds[i - 1];
+                    if (!targetTd) continue;
+
+                    const input = targetTd.querySelector('input.bps-input-cell');
+                    if (input) {
+                        input.value = cleanNumberValue(cells[i]);
+                        count++;
+                    }
+                }
+            });
+        } else {
+            // Grid-based Mode
+            let startRowIdx = 0;
+            let startColIdx = 0;
+
+            if (startElement) {
+                const activeTd = startElement.closest('td');
+                const activeTr = activeTd.closest('tr');
+                startRowIdx = allTrs.indexOf(activeTr);
+                const allTdsInRow = Array.from(activeTr.querySelectorAll('td'));
+                const inputTds = allTdsInRow.filter(td => td.querySelector('input.bps-input-cell'));
+                startColIdx = inputTds.indexOf(activeTd);
+            }
+
+            rows.forEach((rowText, rowOffset) => {
+                const cells = rowText.split('\t');
+                const targetTr = allTrs[startRowIdx + rowOffset];
+                if (!targetTr) return;
+
+                const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+
+                cells.forEach((valText, colOffset) => {
+                    const targetTd = targetInputTds[startColIdx + colOffset];
+                    if (!targetTd) return;
+
+                    const input = targetTd.querySelector('input.bps-input-cell');
+                    if (input) {
+                        input.value = cleanNumberValue(valText);
+                        count++;
+                    }
+                });
+            });
+        }
+
+        return count;
+    }
+
     // 1. Direct Copy-Paste into Input Cells
     table.addEventListener('paste', function (e) {
         const activeInput = document.activeElement;
@@ -411,62 +578,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const pastedText = clipboardData.getData('Text');
         if (!pastedText) return;
 
-        const rows = pastedText.split(/\r?\n/);
-        const activeTd = activeInput.closest('td');
-        const activeTr = activeTd.closest('tr');
-        const allTrs = Array.from(table.querySelectorAll('tbody tr'));
-        const startRowIdx = allTrs.indexOf(activeTr);
-        const allTdsInRow = Array.from(activeTr.querySelectorAll('td'));
-        
-        // Find input tds
-        const inputTds = allTdsInRow.filter(td => td.querySelector('input.bps-input-cell'));
-        const startColIdx = inputTds.indexOf(activeTd);
-
-        if (startRowIdx === -1 || startColIdx === -1) return;
-
         e.preventDefault();
 
-        rows.forEach((rowText, rowOffset) => {
-            if (rowText.trim() === '') return;
-            const cols = rowText.split('\t');
-            const targetTr = allTrs[startRowIdx + rowOffset];
-            if (!targetTr) return;
+        const count = processExcelData(pastedText, activeInput);
 
-            const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
-
-            cols.forEach((valText, colOffset) => {
-                const targetTd = targetInputTds[startColIdx + colOffset];
-                if (!targetTd) return;
-
-                const input = targetTd.querySelector('input.bps-input-cell');
-                if (input) {
-                    let cleanVal = valText.trim();
-                    if (cleanVal === '-' || cleanVal === '—') {
-                        cleanVal = '';
-                    } else {
-                        // Standardize decimal numbers
-                        if (cleanVal.includes(',') && cleanVal.includes('.')) {
-                            if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
-                                cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
-                            } else {
-                                cleanVal = cleanVal.replace(/,/g, '');
-                            }
-                        } else if (cleanVal.includes(',')) {
-                            cleanVal = cleanVal.replace(',', '.');
-                        }
-                    }
-                    input.value = cleanVal;
-                }
+        if (count > 0) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Data Ditempel!',
+                text: `${count} sel nilai berhasil diisi dari data Excel.`,
+                timer: 1500,
+                showConfirmButton: false
             });
-        });
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Data Ditempel!',
-            text: 'Data Excel berhasil disalin langsung ke tabel input.',
-            timer: 1500,
-            showConfirmButton: false
-        });
+        }
     });
 
     // 2. Parse button from Textarea
@@ -485,43 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const rows = pastedText.split(/\r?\n/);
-            const allTrs = Array.from(table.querySelectorAll('tbody tr'));
-
-            let count = 0;
-            rows.forEach((rowText, rowIdx) => {
-                if (rowText.trim() === '') return;
-                const cols = rowText.split('\t');
-                const targetTr = allTrs[rowIdx];
-                if (!targetTr) return;
-
-                const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
-
-                cols.forEach((valText, colIdx) => {
-                    const targetTd = targetInputTds[colIdx];
-                    if (!targetTd) return;
-
-                    const input = targetTd.querySelector('input.bps-input-cell');
-                    if (input) {
-                        let cleanVal = valText.trim();
-                        if (cleanVal === '-' || cleanVal === '—') {
-                            cleanVal = '';
-                        } else {
-                            if (cleanVal.includes(',') && cleanVal.includes('.')) {
-                                if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
-                                    cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
-                                } else {
-                                    cleanVal = cleanVal.replace(/,/g, '');
-                                }
-                            } else if (cleanVal.includes(',')) {
-                                cleanVal = cleanVal.replace(',', '.');
-                            }
-                        }
-                        input.value = cleanVal;
-                        count++;
-                    }
-                });
-            });
+            const count = processExcelData(pastedText, null);
 
             // Close the collapse area
             const collapseEl = document.getElementById('collapsePasteExcel');
@@ -531,13 +619,21 @@ document.addEventListener('DOMContentLoaded', function () {
             // Clear textarea
             textarea.value = '';
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: `${count} sel nilai berhasil diisi dari data Excel.`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+            if (count > 0) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: `${count} sel nilai berhasil diisi dari data Excel.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Tidak ada data yang berhasil diisi. Periksa kembali kecocokan nama Kabupaten/Kota.'
+                });
+            }
         });
     }
 });

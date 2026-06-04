@@ -375,6 +375,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::delete('/indikator-makro/makro/{id}', [IndikatorMakroController::class, 'destroyMakro'])->name('indikator-makro.makro.destroy');
     Route::post('/indikator-makro/dimensi', [IndikatorMakroController::class, 'storeDimensi'])->name('indikator-makro.dimensi.store');
     Route::patch('/indikator-makro/makro/reorder', [IndikatorMakroController::class, 'reorderMakro'])->name('indikator-makro.makro.reorder');
+    Route::patch('/indikator-makro/makro/{id}/toggle', [IndikatorMakroController::class, 'toggleMakroActive'])->name('indikator-makro.makro.toggle');
     Route::put('/indikator-makro/dimensi/{id}', [IndikatorMakroController::class, 'updateDimensi'])->name('indikator-makro.dimensi.update');
     Route::delete('/indikator-makro/dimensi/{id}', [IndikatorMakroController::class, 'destroyDimensi'])->name('indikator-makro.dimensi.destroy');
     Route::post('/indikator-makro/indikator-dimensi', [IndikatorMakroController::class, 'storeIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.store');

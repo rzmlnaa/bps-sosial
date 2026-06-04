@@ -221,4 +221,115 @@ class IndikatorMakroTest extends TestCase
             'indikator_dimensi_id' => $indDim->id
         ]);
     }
+
+    public function test_kelola_indikator_dimensi_filtered_by_makro()
+    {
+        $user = $this->createProvinceUser();
+
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dimensi = Dimensi::create(['nama_dimensi' => 'Kesehatan']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi->id,
+            'is_active' => true
+        ]);
+
+        // Access without filter
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', ['tab' => 'indikator-dimensi']));
+        $response->assertStatus(200);
+        $response->assertSee('Silakan pilih Indikator Makro terlebih dahulu');
+        $response->assertDontSee('id="sortable-ind-dimensi"', false);
+
+        // Access with filter
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'indikator-dimensi',
+            'filter_makro_id' => $makro->id
+        ]));
+        $response->assertStatus(200);
+        $response->assertDontSee('Silakan pilih Indikator Makro terlebih dahulu');
+        $response->assertSee('id="sortable-ind-dimensi"', false);
+    }
+
+    public function test_can_toggle_makro_active_status()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create([
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang->id,
+            'is_active' => true
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('indikator-makro.makro.toggle', $makro->id));
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'is_active' => false
+        ]);
+
+        $this->assertFalse((bool)$makro->refresh()->is_active);
+    }
+
+    public function test_none_dimension_validation_rules()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        
+        $dimNone = Dimensi::create(['nama_dimensi' => 'None']);
+        $dimNormal = Dimensi::create(['nama_dimensi' => 'Persentase']);
+
+        // Case 1: Macro indicator A has no relations, should be allowed to store "none"
+        $response = $this->actingAs($user)->post(route('indikator-makro.indikator-dimensi.store'), [
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimNone->id
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('indikator_dimensi', [
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimNone->id
+        ]);
+
+        // Case 2: Macro indicator A already has "none", trying to store "Persentase" should fail
+        $response = $this->actingAs($user)->post(route('indikator-makro.indikator-dimensi.store'), [
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimNormal->id
+        ]);
+        $response->assertSessionHasErrors(['indikator_dimensi']);
+
+        // Clear IPM relations
+        \App\Models\IndikatorDimensi::where('indikator_makro_id', $makro->id)->delete();
+
+        // Case 3: Macro indicator A has "Persentase", trying to store "none" should fail
+        \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimNormal->id,
+            'is_active' => true
+        ]);
+
+        $response = $this->actingAs($user)->post(route('indikator-makro.indikator-dimensi.store'), [
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimNone->id
+        ]);
+        $response->assertSessionHasErrors(['indikator_dimensi']);
+    }
+
+    public function test_back_button_behavior_with_from_input_nilai_parameter()
+    {
+        $user = $this->createProvinceUser();
+
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'from' => 'input-nilai',
+            'periode_indikator_id' => 12,
+            'indikator_makro_id' => 34
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('indikator-makro.input-nilai', [
+            'periode_indikator_id' => 12,
+            'indikator_makro_id' => 34
+        ]));
+    }
 }
