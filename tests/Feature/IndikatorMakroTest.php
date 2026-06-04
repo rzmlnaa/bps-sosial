@@ -332,4 +332,51 @@ class IndikatorMakroTest extends TestCase
             'indikator_makro_id' => 34
         ]));
     }
+
+    public function test_can_search_makro_indicators_via_ajax()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        
+        $makro1 = IndikatorMakro::create([
+            'nama_indikator' => 'Indeks Pembangunan Manusia',
+            'indikator_bidang_id' => $bidang->id,
+            'is_active' => true
+        ]);
+        $makro2 = IndikatorMakro::create([
+            'nama_indikator' => 'Tingkat Pengangguran Terbuka',
+            'indikator_bidang_id' => $bidang->id,
+            'is_active' => true
+        ]);
+        $makro3 = IndikatorMakro::create([
+            'nama_indikator' => 'Tingkat Kemiskinan',
+            'indikator_bidang_id' => $bidang->id,
+            'is_active' => true
+        ]);
+        $makro4 = IndikatorMakro::create([
+            'nama_indikator' => 'Gini Ratio',
+            'indikator_bidang_id' => $bidang->id,
+            'is_active' => true
+        ]);
+
+        // Access without authentication
+        $response = $this->getJson(route('indikator-makro.search', ['q' => 'Manusia']));
+        $response->assertStatus(401);
+
+        // Access with authentication
+        $response = $this->actingAs($user)->getJson(route('indikator-makro.search', ['q' => 'Manusia']));
+        $response->assertStatus(200);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'id' => $makro1->id,
+            'nama_indikator' => 'Indeks Pembangunan Manusia'
+        ]);
+
+        // Search with empty query should return at most 3 results
+        $response = $this->actingAs($user)->getJson(route('indikator-makro.search'));
+        $response->assertStatus(200);
+        $response->assertJsonCount(3);
+    }
 }
+
+

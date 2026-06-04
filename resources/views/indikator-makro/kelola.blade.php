@@ -53,7 +53,8 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
                 @if(request('from') === 'input-nilai')
-                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-light btn-sm mb-2 rounded-pill">
+                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                        class="btn btn-light btn-sm mb-2 rounded-pill">
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
                 @else
@@ -156,95 +157,168 @@
                         <hr class="my-4">
                         <h6 class="fw-bold text-muted small mb-3">Daftar Periode:</h6>
                         @if($periodeIndikators->count() > 0)
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th width="10%">No</th>
-                                            <th>Tahun</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Data Digunakan</th>
-                                            <th class="text-end" width="20%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($periodeIndikators as $idx => $item)
-                                            <tr>
-                                                <td>{{ ($periodeIndikators->currentPage() - 1) * $periodeIndikators->perPage() + $idx + 1 }}</td>
-                                                <td class="fw-bold">{{ $item->tahun }}</td>
-                                                <td class="text-center">
-                                                    <div class="form-check form-switch d-inline-block">
-                                                        <input class="form-check-input toggle-periode-status" type="checkbox"
-                                                            data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-info rounded-pill">{{ $item->nilai_indikator_makros_count }} kali</span>
-                                                </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange mb-1 rounded-pill"
-                                                        data-bs-toggle="modal" data-bs-target="#modalEditPeriode{{ $item->id }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    @if($item->nilai_indikator_makros_count > 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i></button>
-                                                    @else
-                                                        <form action="{{ route('indikator-makro.periode.destroy', $item->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                            <!-- Desktop Table View -->
+                                            <div class="table-responsive d-none d-md-block">
+                                                <table class="table table-hover align-middle table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th width="5%" class="text-center">No</th>
+                                                            <th>Tahun</th>
+                                                            <th width="15%" class="text-center">Status</th>
+                                                            <th width="25%" class="text-center">Informasi</th>
+                                                            <th width="15%" class="text-center">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($periodeIndikators as $idx => $item)
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    {{ ($periodeIndikators->currentPage() - 1) * $periodeIndikators->perPage() + $idx + 1 }}
+                                                                </td>
+                                                                <td class="fw-bold">{{ $item->tahun }}</td>
+                                                                <td class="text-center">
+                                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                                        <input class="form-check-input toggle-periode-status" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-start" style="font-size: 0.85rem;">
+                                                                    <div class="d-flex flex-column text-muted">
+                                                                        @if($item->created_at)
+                                                                            <div>
+                                                                                <i class="fas fa-clock me-1 text-success" title="Dibuat"></i>
+                                                                                Dibuat: {{ $item->created_at->format('d/m/Y H:i') }}
+                                                                            </div>
+                                                                        @endif
+                                                                        @if($item->updated_at && $item->updated_at != $item->created_at)
+                                                                            <div class="mt-1 border-top pt-1">
+                                                                                <i class="fas fa-clock me-1 text-primary" title="Diperbarui"></i>
+                                                                                Diperbarui: {{ $item->updated_at->format('d/m/Y H:i') }}
+                                                                            </div>
+                                                                        @endif
+                                                                        <div class="mt-1 @if($item->created_at) border-top pt-1 @endif text-info">
+                                                                            <i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                                class="fw-bold">{{ $item->nilai_indikator_makros_count }}</span>
+                                                                            data nilai
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditPeriode{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    @if($item->nilai_indikator_makros_count > 0)
+                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                            title="Sedang digunakan oleh data nilai"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.periode.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
 
-                                            {{-- Edit Modal --}}
-                                            <div class="modal fade" id="modalEditPeriode{{ $item->id }}" tabindex="-1"
-                                                aria-hidden="true" style="text-align: left;">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content rounded-4 border-0">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title fw-bold">Edit Periode</h5>
-                                                            <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <form action="{{ route('indikator-makro.periode.update', $item->id) }}"
-                                                            method="POST">
-                                                            @csrf @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Tahun <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="number" name="tahun" class="form-control"
-                                                                        value="{{ $item->tahun }}" required min="2000" max="2100">
+                                                            {{-- Edit Modal --}}
+                                                            <div class="modal fade" id="modalEditPeriode{{ $item->id }}" tabindex="-1"
+                                                                aria-hidden="true" style="text-align: left;">
+                                                                <div class="modal-dialog modal-dialog-centered">
+                                                                    <div class="modal-content rounded-4 border-0">
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title fw-bold">Edit Periode</h5>
+                                                                            <button type="button" class="btn-close"
+                                                                                data-bs-dismiss="modal"></button>
+                                                                        </div>
+                                                                        <form action="{{ route('indikator-makro.periode.update', $item->id) }}"
+                                                                            method="POST">
+                                                                            @csrf @method('PUT')
+                                                                            <div class="modal-body">
+                                                                                <div class="mb-3">
+                                                                                    <label class="form-label fw-medium">Tahun <span
+                                                                                            class="text-danger">*</span></label>
+                                                                                    <input type="number" name="tahun" class="form-control"
+                                                                                        value="{{ $item->tahun }}" required min="2000" max="2100">
+                                                                                </div>
+
+                                                                            </div>
+                                                                            <div class="modal-footer pb-2 border-0">
+                                                                                <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                                    data-bs-dismiss="modal">Batal</button>
+                                                                                <button type="submit"
+                                                                                    class="btn btn-orange rounded-pill px-4">Simpan
+                                                                                    Perubahan</button>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
-
                                                             </div>
-                                                            <div class="modal-footer pb-2 border-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Batal</button>
-                                                                <button type="submit"
-                                                                    class="btn btn-orange rounded-pill px-4">Simpan
-                                                                    Perubahan</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $periodeIndikators->appends([
-                                    'tab' => 'periode',
-                                    'from' => request('from'),
-                                    'periode_indikator_id' => request('periode_indikator_id'),
-                                    'indikator_makro_id' => request('indikator_makro_id')
-                                ])->links('pagination::bootstrap-5') }}
-                            </div>
+
+                                            <!-- Mobile Card View -->
+                                            <div class="d-md-none">
+                                                @foreach($periodeIndikators as $idx => $item)
+                                                    <div class="card mb-3 border shadow-sm" style="border-radius: 12px;">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                <span class="badge bg-light text-dark border p-2 fw-bold"
+                                                                    style="font-size: 0.9rem;">
+                                                                    Tahun {{ $item->tahun }}
+                                                                </span>
+                                                                <div class="form-check form-switch p-0 m-0">
+                                                                    <input class="form-check-input toggle-periode-status m-0" type="checkbox"
+                                                                        role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; width: 3.5em; height: 1.75em;">
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                                                                <div class="text-muted" style="font-size: 0.75rem;">
+                                                                    <div class="text-info"><i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                            class="fw-bold">{{ $item->nilai_indikator_makros_count }}</span> data
+                                                                        nilai</div>
+                                                                    @if($item->created_at)
+                                                                        <div class="mt-1"><i class="fas fa-clock me-1"></i>
+                                                                            {{ $item->created_at->format('d/m/y H:i') }}</div>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="d-flex gap-2">
+                                                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditPeriode{{ $item->id }}">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    @if($item->nilai_indikator_makros_count > 0)
+                                                                        <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                            title="Sedang digunakan oleh data nilai"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.periode.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-danger btn-sm"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <div class="mt-3">
+                                                {{ $periodeIndikators->appends([
+                                'tab' => 'periode',
+                                'from' => request('from'),
+                                'periode_indikator_id' => request('periode_indikator_id'),
+                                'indikator_makro_id' => request('indikator_makro_id')
+                            ])->links('pagination::bootstrap-5') }}
+                                            </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
                                 <small>Belum ada daftar periode.</small>
@@ -287,118 +361,194 @@
                         <hr class="my-4">
                         <h6 class="fw-bold text-muted small mb-3">Daftar Bidang (Geser untuk mengatur urutan):</h6>
                         @if($indikatorBidangs->count() > 0)
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th style="width: 50px;"></th>
-                                            <th style="width: 80px;" class="text-center">Urutan</th>
-                                            <th>Nama Bidang</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Data Digunakan</th>
-                                            <th class="text-center">Info User</th>
-                                            <th class="text-end" width="15%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="sortable-bidang">
-                                        @foreach($indikatorBidangs as $idx => $item)
-                                            <tr data-id="{{ $item->id }}">
-                                                <td class="text-center" style="cursor: grab;">
-                                                    <i class="fas fa-grip-vertical text-muted"></i>
-                                                </td>
-                                                <td class="text-center sortable-urutan fw-bold">
-                                                    {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() + $idx + 1 }}
-                                                </td>
-                                                <td class="fw-bold">
-                                                    {{ $item->nama_bidang }}
-                                                </td>
-                                                <td class="text-center">
-                                                    <div class="form-check form-switch d-inline-block">
-                                                        <input class="form-check-input toggle-bidang-status" type="checkbox"
-                                                            data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-info rounded-pill">{{ $item->indikator_makros_count }} kali</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @if($item->updater)
-                                                    <span style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange mb-1 rounded-pill"
-                                                        data-bs-toggle="modal" data-bs-target="#modalEditBidang{{ $item->id }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    @if($item->indikator_makros_count > 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data makro"><i class="fas fa-trash"></i></button>
-                                                    @else
-                                                        <form action="{{ route('indikator-makro.bidang.destroy', $item->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                            <!-- Desktop Table View -->
+                                            <div class="table-responsive d-none d-md-block">
+                                                <table class="table table-hover align-middle table-bordered" id="tableBidang">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width: 50px;"></th>
+                                                            <th style="width: 80px;" class="text-center">Urutan</th>
+                                                            <th>Nama Bidang</th>
+                                                            <th class="text-center" width="15%">Status</th>
+                                                            <th class="text-center" width="25%">Informasi</th>
+                                                            <th class="text-center" width="15%">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="sortable-bidang">
+                                                        @foreach($indikatorBidangs as $idx => $item)
+                                                            <tr data-id="{{ $item->id }}">
+                                                                <td class="text-center" style="cursor: grab;">
+                                                                    <i class="fas fa-grip-vertical text-muted"></i>
+                                                                </td>
+                                                                <td class="text-center sortable-urutan fw-bold">
+                                                                    {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() + $idx + 1 }}
+                                                                </td>
+                                                                <td class="fw-bold">{{ $item->nama_bidang }}</td>
+                                                                <td class="text-center">
+                                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                                        <input class="form-check-input toggle-bidang-status" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-start" style="font-size: 0.85rem;">
+                                                                    <div class="d-flex flex-column text-muted">
+                                                                        @if($item->created_at)
+                                                                            <div>
+                                                                                <i class="fas fa-user-plus me-1 text-success" title="User Add"></i>
+                                                                                {{ $item->creator ? $item->creator->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->created_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
 
-                                            {{-- Edit Modal --}}
-                                            <div class="modal fade" id="modalEditBidang{{ $item->id }}" tabindex="-1"
-                                                aria-hidden="true" style="text-align: left;">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content rounded-4 border-0">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title fw-bold">Edit Bidang</h5>
-                                                            <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <form action="{{ route('indikator-makro.bidang.update', $item->id) }}"
-                                                            method="POST">
-                                                            @csrf @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Nama Bidang <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="text" name="nama_bidang" class="form-control"
-                                                                        value="{{ $item->nama_bidang }}" required>
+                                                                        @if($item->updated_at && $item->updated_at != $item->created_at)
+                                                                            <div class="mt-1 border-top pt-1">
+                                                                                <i class="fas fa-user-edit me-1 text-primary" title="User Edit"></i>
+                                                                                {{ $item->updater ? $item->updater->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
+                                                                        <div class="mt-1 border-top pt-1 text-info">
+                                                                            <i class="fas fa-link me-1"></i>
+                                                                            Digunakan: <span
+                                                                                class="fw-bold">{{ $item->indikator_makros_count }}</span> indikator
+                                                                            makro
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditBidang{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    @if($item->indikator_makros_count > 0)
+                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                            title="Sedang digunakan oleh data makro"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.bidang.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <!-- Mobile Card View -->
+                                            <div class="d-md-none" id="sortable-bidang-mobile">
+                                                @foreach($indikatorBidangs as $idx => $item)
+                                                    <div class="card mb-3 border shadow-sm" style="border-radius: 12px;" data-id="{{ $item->id }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="fas fa-grip-vertical text-muted me-2 grip-handle"
+                                                                        style="cursor: grab;"></i>
+                                                                    <span class="badge bg-light text-dark border p-2 fw-bold badge-sequence"
+                                                                        style="font-size: 0.9rem;">
+                                                                        #{{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() + $idx + 1 }}
+                                                                    </span>
                                                                 </div>
+                                                                <div class="d-flex gap-2 align-items-center">
+                                                                    <div class="form-check form-switch p-0 m-0">
+                                                                        <input class="form-check-input toggle-bidang-status m-0" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; width: 3.5em; height: 1.75em;">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
 
+                                                            <h6 class="fw-bold mb-3">{{ $item->nama_bidang }}</h6>
+
+                                                            <div class="text-muted border-top pt-2 mt-2" style="font-size: 0.75rem;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><i class="fas fa-user-plus me-1 text-success"></i>
+                                                                        {{ $item->creator ? str($item->creator->name)->words(2, '') : 'Sistem' }}</span>
+                                                                    <span>{{ $item->created_at ? $item->created_at->format('d/m/y H:i') : '-' }}</span>
+                                                                </div>
+                                                                @if($item->updater && $item->updater != $item->creator)
+                                                                    <div class="d-flex justify-content-between mt-1">
+                                                                        <span><i class="fas fa-user-edit me-1 text-primary"></i>
+                                                                            {{ $item->updater ? str($item->updater->name)->words(2, '') : 'Sistem' }}</span>
+                                                                        <span>{{ $item->updated_at->format('d/m/y H:i') }}</span>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="text-info mt-1 border-top pt-1">
+                                                                    <i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                        class="fw-bold">{{ $item->indikator_makros_count }}</span> indikator makro
+                                                                </div>
                                                             </div>
-                                                            <div class="modal-footer pb-2 border-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Batal</button>
-                                                                <button type="submit"
-                                                                    class="btn btn-orange rounded-pill px-4">Simpan
-                                                                    Perubahan</button>
+
+                                                            <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
+                                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                    data-bs-target="#modalEditBidang{{ $item->id }}">
+                                                                    <i class="fas fa-edit"></i> Edit
+                                                                </button>
+                                                                @if($item->indikator_makros_count > 0)
+                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                        title="Sedang digunakan oleh data makro"><i class="fas fa-trash"></i>
+                                                                        Hapus</button>
+                                                                @else
+                                                                    <form action="{{ route('indikator-makro.bidang.destroy', $item->id) }}"
+                                                                        method="POST" class="d-inline delete-form">
+                                                                        @csrf @method('DELETE')
+                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                            Hapus</button>
+                                                                    </form>
+                                                                @endif
                                                             </div>
-                                                        </form>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <!-- Edit Modals -->
+                                            @foreach($indikatorBidangs as $item)
+                                                <div class="modal fade" id="modalEditBidang{{ $item->id }}" tabindex="-1" aria-hidden="true"
+                                                    style="text-align: left;">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content rounded-4 border-0">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fw-bold">Edit Bidang</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form action="{{ route('indikator-makro.bidang.update', $item->id) }}" method="POST">
+                                                                @csrf @method('PUT')
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Nama Bidang <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="text" name="nama_bidang" class="form-control"
+                                                                            value="{{ $item->nama_bidang }}" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer pb-2 border-0">
+                                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                                        Perubahan</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            @endforeach
+
+                                            <div class="mt-3">
+                                                {{ $indikatorBidangs->appends([
+                                'tab' => 'bidang',
+                                'from' => request('from'),
+                                'periode_indikator_id' => request('periode_indikator_id'),
+                                'indikator_makro_id' => request('indikator_makro_id')
+                            ])->links('pagination::bootstrap-5') }}
                                             </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $indikatorBidangs->appends([
-                                    'tab' => 'bidang',
-                                    'from' => request('from'),
-                                    'periode_indikator_id' => request('periode_indikator_id'),
-                                    'indikator_makro_id' => request('indikator_makro_id')
-                                ])->links('pagination::bootstrap-5') }}
-                            </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
                                 <small>Belum ada data bidang.</small>
@@ -463,146 +613,237 @@
                         <hr class="my-4">
                         <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Makro (Geser untuk mengatur urutan):</h6>
                         @if($indikatorMakros->count() > 0)
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th style="width: 50px;"></th>
-                                            <th style="width: 80px;" class="text-center">Urutan</th>
-                                            <th>Nama Indikator</th>
-                                            <th>Bidang</th>
-                                            <th>Satuan</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Data Digunakan</th>
-                                            <th class="text-center">Info User</th>
-                                            <th class="text-end" width="15%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="sortable-makro">
-                                        @foreach($indikatorMakros as $idx => $item)
-                                            <tr data-id="{{ $item->id }}">
-                                                <td class="text-center" style="cursor: grab;">
-                                                    <i class="fas fa-grip-vertical text-muted"></i>
-                                                </td>
-                                                <td class="text-center sortable-urutan fw-bold">{{ $item->urutan }}</td>
-                                                <td class="fw-bold">{{ $item->nama_indikator }}</td>
-                                                <td>{{ $item->bidang->nama_bidang ?? '-' }}</td>
-                                                <td>{{ $item->satuan ?? '-' }}</td>
-                                                <td class="text-center">
-                                                    <div class="form-check form-switch d-inline-block">
-                                                        <input class="form-check-input toggle-makro-status" type="checkbox"
-                                                            data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-info rounded-pill">{{ $item->indikator_dimensis_count }} kali</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @if($item->updater)
-                                                    <span style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange mb-1 rounded-pill"
-                                                        data-bs-toggle="modal" data-bs-target="#modalEditMakro{{ $item->id }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    @if($item->indikator_dimensis_count > 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data relasi dimensi"><i class="fas fa-trash"></i></button>
-                                                    @else
-                                                        <form action="{{ route('indikator-makro.makro.destroy', $item->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                            <!-- Desktop Table View -->
+                                            <div class="table-responsive d-none d-md-block">
+                                                <table class="table table-hover align-middle table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width: 50px;"></th>
+                                                            <th style="width: 80px;" class="text-center">Urutan</th>
+                                                            <th>Nama Indikator</th>
+                                                            <th>Bidang</th>
+                                                            <th>Satuan</th>
+                                                            <th class="text-center" width="15%">Status</th>
+                                                            <th class="text-center" width="25%">Informasi</th>
+                                                            <th class="text-center" width="15%">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="sortable-makro">
+                                                        @foreach($indikatorMakros as $idx => $item)
+                                                            <tr data-id="{{ $item->id }}">
+                                                                <td class="text-center" style="cursor: grab;">
+                                                                    <i class="fas fa-grip-vertical text-muted"></i>
+                                                                </td>
+                                                                <td class="text-center sortable-urutan fw-bold">{{ $item->urutan }}</td>
+                                                                <td class="fw-bold">{{ $item->nama_indikator }}</td>
+                                                                <td>{{ $item->bidang->nama_bidang ?? '-' }}</td>
+                                                                <td>{{ $item->satuan ?? '-' }}</td>
+                                                                <td class="text-center">
+                                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                                        <input class="form-check-input toggle-makro-status" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-start" style="font-size: 0.85rem;">
+                                                                    <div class="d-flex flex-column text-muted">
+                                                                        @if($item->created_at)
+                                                                            <div>
+                                                                                <i class="fas fa-user-plus me-1 text-success" title="User Add"></i>
+                                                                                {{ $item->creator ? $item->creator->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->created_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
 
-                                            {{-- Edit Modal --}}
-                                            <div class="modal fade" id="modalEditMakro{{ $item->id }}" tabindex="-1"
-                                                aria-hidden="true" style="text-align: left;">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content rounded-4 border-0">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title fw-bold">Edit Indikator Makro</h5>
-                                                            <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <form action="{{ route('indikator-makro.makro.update', $item->id) }}"
-                                                            method="POST">
-                                                            @csrf @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Bidang <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <select name="indikator_bidang_id" class="form-select" required>
-                                                                        <option value="">-- Pilih Bidang --</option>
-                                                                        @foreach($allIndikatorBidangs as $bidang)
-                                                                            <option value="{{ $bidang->id }}" {{ $item->indikator_bidang_id == $bidang->id ? 'selected' : '' }}>{{ $bidang->nama_bidang }}</option>
-                                                                        @endforeach
-                                                                    </select>
+                                                                        @if($item->updated_at && $item->updated_at != $item->created_at)
+                                                                            <div class="mt-1 border-top pt-1">
+                                                                                <i class="fas fa-user-edit me-1 text-primary" title="User Edit"></i>
+                                                                                {{ $item->updater ? $item->updater->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
+                                                                        <div class="mt-1 border-top pt-1 text-info">
+                                                                            <i class="fas fa-link me-1"></i>
+                                                                            Digunakan: <span
+                                                                                class="fw-bold">{{ $item->indikator_dimensis_count }}</span>
+                                                                            indikator dimensi
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditMakro{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    @if($item->indikator_dimensis_count > 0)
+                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                            title="Sedang digunakan oleh data relasi dimensi"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.makro.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <!-- Mobile Card View -->
+                                            <div class="d-md-none" id="sortable-makro-mobile">
+                                                @foreach($indikatorMakros as $idx => $item)
+                                                    <div class="card mb-3 border shadow-sm" style="border-radius: 12px;" data-id="{{ $item->id }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                <div>
+                                                                    <i class="fas fa-grip-vertical text-muted me-2 grip-handle"
+                                                                        style="cursor: grab;"></i>
+                                                                    <span class="badge bg-light text-dark border p-2 fw-bold badge-sequence"
+                                                                        style="font-size: 0.9rem;">
+                                                                        #{{ $item->urutan }}
+                                                                    </span>
+                                                                    <span class="badge bg-info text-dark">
+                                                                        {{ $item->bidang->nama_bidang ?? '-' }}
+                                                                    </span>
+                                                                    @if($item->satuan)
+                                                                        <span class="badge bg-secondary text-white">
+                                                                            {{ $item->satuan }}
+                                                                        </span>
+                                                                    @endif
                                                                 </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Nama Indikator <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="text" name="nama_indikator" class="form-control"
-                                                                        value="{{ $item->nama_indikator }}" required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Satuan</label>
-                                                                    <input type="text" name="satuan" class="form-control"
-                                                                        value="{{ $item->satuan }}">
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Deskripsi</label>
-                                                                    <textarea name="deskripsi" class="form-control"
-                                                                        rows="2">{{ $item->deskripsi }}</textarea>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="checkbox"
-                                                                            name="is_active" value="1"
-                                                                            id="editIsActiveMakro{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
-                                                                        <label class="form-check-label fw-medium"
-                                                                            for="editIsActiveMakro{{ $item->id }}">Aktif</label>
+                                                                <div class="d-flex gap-2 align-items-center">
+                                                                    <div class="form-check form-switch p-0 m-0">
+                                                                        <input class="form-check-input toggle-makro-status m-0" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; width: 3.5em; height: 1.75em;">
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div class="modal-footer pb-2 border-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Batal</button>
-                                                                <button type="submit"
-                                                                    class="btn btn-orange rounded-pill px-4">Simpan
-                                                                    Perubahan</button>
+
+                                                            <h6 class="fw-bold mb-2">{{ $item->nama_indikator }}</h6>
+                                                            @if($item->deskripsi)
+                                                                <p class="text-secondary small mb-2">{{ $item->deskripsi }}</p>
+                                                            @endif
+
+                                                            <div class="text-muted border-top pt-2 mt-2" style="font-size: 0.75rem;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><i class="fas fa-user-plus me-1 text-success"></i>
+                                                                        {{ $item->creator ? str($item->creator->name)->words(2, '') : 'Sistem' }}</span>
+                                                                    <span>{{ $item->created_at ? $item->created_at->format('d/m/y H:i') : '-' }}</span>
+                                                                </div>
+                                                                @if($item->updater && $item->updater != $item->creator)
+                                                                    <div class="d-flex justify-content-between mt-1">
+                                                                        <span><i class="fas fa-user-edit me-1 text-primary"></i>
+                                                                            {{ $item->updater ? str($item->updater->name)->words(2, '') : 'Sistem' }}</span>
+                                                                        <span>{{ $item->updated_at->format('d/m/y H:i') }}</span>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="text-info mt-1 border-top pt-1">
+                                                                    <i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                        class="fw-bold">{{ $item->indikator_dimensis_count }}</span> indikator
+                                                                    dimensi
+                                                                </div>
                                                             </div>
-                                                        </form>
+
+                                                            <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
+                                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                    data-bs-target="#modalEditMakro{{ $item->id }}">
+                                                                    <i class="fas fa-edit"></i> Edit
+                                                                </button>
+                                                                @if($item->indikator_dimensis_count > 0)
+                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                        title="Sedang digunakan oleh data relasi dimensi"><i class="fas fa-trash"></i>
+                                                                        Hapus</button>
+                                                                @else
+                                                                    <form action="{{ route('indikator-makro.makro.destroy', $item->id) }}" method="POST"
+                                                                        class="d-inline delete-form">
+                                                                        @csrf @method('DELETE')
+                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                            Hapus</button>
+                                                                    </form>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <!-- Edit Modals -->
+                                            @foreach($indikatorMakros as $item)
+                                                <div class="modal fade" id="modalEditMakro{{ $item->id }}" tabindex="-1" aria-hidden="true"
+                                                    style="text-align: left;">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content rounded-4 border-0">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fw-bold">Edit Indikator Makro</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form action="{{ route('indikator-makro.makro.update', $item->id) }}" method="POST">
+                                                                @csrf @method('PUT')
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Bidang <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <select name="indikator_bidang_id" class="form-select" required>
+                                                                            <option value="">-- Pilih Bidang --</option>
+                                                                            @foreach($allIndikatorBidangs as $bidang)
+                                                                                <option value="{{ $bidang->id }}" {{ $item->indikator_bidang_id == $bidang->id ? 'selected' : '' }}>
+                                                                                    {{ $bidang->nama_bidang }}</option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Nama Indikator <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="text" name="nama_indikator" class="form-control"
+                                                                            value="{{ $item->nama_indikator }}" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Satuan</label>
+                                                                        <input type="text" name="satuan" class="form-control"
+                                                                            value="{{ $item->satuan }}">
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Deskripsi</label>
+                                                                        <textarea name="deskripsi" class="form-control"
+                                                                            rows="2">{{ $item->deskripsi }}</textarea>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="checkbox" name="is_active"
+                                                                                value="1" id="editIsActiveMakro{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
+                                                                            <label class="form-check-label fw-medium"
+                                                                                for="editIsActiveMakro{{ $item->id }}">Aktif</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer pb-2 border-0">
+                                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                                        Perubahan</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            @endforeach
+
+                                            <div class="mt-3">
+                                                {{ $indikatorMakros->appends([
+                                'tab' => 'makro',
+                                'from' => request('from'),
+                                'periode_indikator_id' => request('periode_indikator_id'),
+                                'indikator_makro_id' => request('indikator_makro_id')
+                            ])->links('pagination::bootstrap-5') }}
                                             </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $indikatorMakros->appends([
-                                    'tab' => 'makro',
-                                    'from' => request('from'),
-                                    'periode_indikator_id' => request('periode_indikator_id'),
-                                    'indikator_makro_id' => request('indikator_makro_id')
-                                ])->links('pagination::bootstrap-5') }}
-                            </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
                                 <small>Belum ada data indikator makro.</small>
@@ -628,7 +869,7 @@
                                     <label class="form-label fw-bold small">Nama Dimensi <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="nama_dimensi" required
-                                        placeholder="Contoh: Persentase">
+                                        placeholder="Contoh: SD/SMP/SMA">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah Dimensi</button>
@@ -638,102 +879,173 @@
                         <hr class="my-4">
                         <h6 class="fw-bold text-muted small mb-3">Daftar Dimensi:</h6>
                         @if($dimensis->count() > 0)
-                            <div class="table-responsive table-scrollable">
-                                <table class="table table-hover align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th width="10%">No</th>
-                                            <th>Nama Dimensi</th>
-                                            <th class="text-center">Data Digunakan</th>
-                                            <th class="text-center">Info User</th>
-                                            <th class="text-end" width="15%">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($dimensis as $idx => $item)
-                                            <tr>
-                                                <td>{{ ($dimensis->currentPage() - 1) * $dimensis->perPage() + $idx + 1 }}</td>
-                                                <td class="fw-bold">{{ $item->nama_dimensi }}</td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-info rounded-pill">{{ $item->indikator_dimensis_count }} kali</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @if($item->updater)
-                                                    <span style="font-size: 1.1rem; cursor: pointer;">
-                                                        <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                    </span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-orange mb-1 rounded-pill"
-                                                        data-bs-toggle="modal" data-bs-target="#modalEditDimensi{{ $item->id }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    @if($item->indikator_dimensis_count > 0)
-                                                        <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i></button>
-                                                    @else
-                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                            <!-- Desktop Table View -->
+                                            <div class="table-responsive d-none d-md-block">
+                                                <table class="table table-hover align-middle table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th width="10%" class="text-center">No</th>
+                                                            <th>Nama Dimensi</th>
+                                                            <th class="text-center" width="25%">Informasi</th>
+                                                            <th class="text-center" width="15%">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($dimensis as $idx => $item)
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    {{ ($dimensis->currentPage() - 1) * $dimensis->perPage() + $idx + 1 }}</td>
+                                                                <td class="fw-bold">{{ $item->nama_dimensi }}</td>
+                                                                <td class="text-start" style="font-size: 0.85rem;">
+                                                                    <div class="d-flex flex-column text-muted">
+                                                                        @if($item->created_at)
+                                                                            <div>
+                                                                                <i class="fas fa-user-plus me-1 text-success" title="User Add"></i>
+                                                                                {{ $item->creator ? $item->creator->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->created_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
 
-                                            {{-- Edit Modal --}}
-                                            <div class="modal fade" id="modalEditDimensi{{ $item->id }}" tabindex="-1"
-                                                aria-hidden="true" style="text-align: left;">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content rounded-4 border-0">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title fw-bold">Edit Dimensi</h5>
-                                                            <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <form action="{{ route('indikator-makro.dimensi.update', $item->id) }}"
-                                                            method="POST">
-                                                            @csrf @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label fw-medium">Nama Dimensi <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <input type="text" name="nama_dimensi" class="form-control"
-                                                                        value="{{ $item->nama_dimensi }}" required>
+                                                                        @if($item->updated_at && $item->updated_at != $item->created_at)
+                                                                            <div class="mt-1 border-top pt-1">
+                                                                                <i class="fas fa-user-edit me-1 text-primary" title="User Edit"></i>
+                                                                                {{ $item->updater ? $item->updater->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
+                                                                        <div class="mt-1 border-top pt-1 text-info">
+                                                                            <i class="fas fa-link me-1"></i>
+                                                                            Digunakan: <span
+                                                                                class="fw-bold">{{ $item->indikator_dimensis_count }}</span>
+                                                                            indikator dimensi
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditDimensi{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    @if($item->indikator_dimensis_count > 0)
+                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                            title="Sedang digunakan oleh data relasi indikator"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <!-- Mobile Card View -->
+                                            <div class="d-md-none">
+                                                @foreach($dimensis as $idx => $item)
+                                                    <div class="card mb-3 border shadow-sm" style="border-radius: 12px;">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                <span class="badge bg-light text-dark border p-2 fw-bold"
+                                                                    style="font-size: 0.9rem;">
+                                                                    #{{ ($dimensis->currentPage() - 1) * $dimensis->perPage() + $idx + 1 }}
+                                                                </span>
+                                                            </div>
+
+                                                            <h6 class="fw-bold mb-3">{{ $item->nama_dimensi }}</h6>
+
+                                                            <div class="text-muted border-top pt-2 mt-2" style="font-size: 0.75rem;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><i class="fas fa-user-plus me-1 text-success"></i>
+                                                                        {{ $item->creator ? str($item->creator->name)->words(2, '') : 'Sistem' }}</span>
+                                                                    <span>{{ $item->created_at ? $item->created_at->format('d/m/y H:i') : '-' }}</span>
+                                                                </div>
+                                                                @if($item->updater && $item->updater != $item->creator)
+                                                                    <div class="d-flex justify-content-between mt-1">
+                                                                        <span><i class="fas fa-user-edit me-1 text-primary"></i>
+                                                                            {{ $item->updater ? str($item->updater->name)->words(2, '') : 'Sistem' }}</span>
+                                                                        <span>{{ $item->updated_at->format('d/m/y H:i') }}</span>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="text-info mt-1 border-top pt-1">
+                                                                    <i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                        class="fw-bold">{{ $item->indikator_dimensis_count }}</span> indikator
+                                                                    dimensi
                                                                 </div>
                                                             </div>
-                                                            <div class="modal-footer pb-2 border-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Batal</button>
-                                                                <button type="submit"
-                                                                    class="btn btn-orange rounded-pill px-4">Simpan
-                                                                    Perubahan</button>
+
+                                                            <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
+                                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                    data-bs-target="#modalEditDimensi{{ $item->id }}">
+                                                                    <i class="fas fa-edit"></i> Edit
+                                                                </button>
+                                                                @if($item->indikator_dimensis_count > 0)
+                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                        title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i>
+                                                                        Hapus</button>
+                                                                @else
+                                                                    <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                        method="POST" class="d-inline delete-form">
+                                                                        @csrf @method('DELETE')
+                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                            Hapus</button>
+                                                                    </form>
+                                                                @endif
                                                             </div>
-                                                        </form>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <!-- Edit Modals -->
+                                            @foreach($dimensis as $item)
+                                                <div class="modal fade" id="modalEditDimensi{{ $item->id }}" tabindex="-1" aria-hidden="true"
+                                                    style="text-align: left;">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content rounded-4 border-0">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fw-bold">Edit Dimensi</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form action="{{ route('indikator-makro.dimensi.update', $item->id) }}" method="POST">
+                                                                @csrf @method('PUT')
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Nama Dimensi <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="text" name="nama_dimensi" class="form-control"
+                                                                            value="{{ $item->nama_dimensi }}" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer pb-2 border-0">
+                                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                                        Perubahan</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            @endforeach
+
+                                            <div class="mt-3">
+                                                {{ $dimensis->appends([
+                                'tab' => 'dimensi',
+                                'from' => request('from'),
+                                'periode_indikator_id' => request('periode_indikator_id'),
+                                'indikator_makro_id' => request('indikator_makro_id')
+                            ])->links('pagination::bootstrap-5') }}
                                             </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                {{ $dimensis->appends([
-                                    'tab' => 'dimensi',
-                                    'from' => request('from'),
-                                    'periode_indikator_id' => request('periode_indikator_id'),
-                                    'indikator_makro_id' => request('indikator_makro_id')
-                                ])->links('pagination::bootstrap-5') }}
-                            </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
                                 <small>Belum ada data dimensi.</small>
@@ -759,12 +1071,30 @@
                                 <div class="col-md-5 mb-3">
                                     <label class="form-label fw-bold small">Indikator Makro <span
                                             class="text-danger">*</span></label>
-                                    <select name="indikator_makro_id" class="form-select" required onchange="filterByMakro(this.value)">
-                                        <option value="">-- Pilih Indikator --</option>
-                                        @foreach($allIndikatorMakros as $makro)
-                                            <option value="{{ $makro->id }}" {{ $selectedMakroId == $makro->id ? 'selected' : '' }}>{{ $makro->nama_indikator }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="position-relative" id="indikator-search-wrapper">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-search text-muted"></i>
+                                            </span>
+                                            <input type="text" id="indikator-search-input"
+                                                class="form-control border-start-0 ps-1"
+                                                placeholder="Cari Indikator Makro..."
+                                                value="{{ $selectedMakro ? $selectedMakro->nama_indikator : '' }}"
+                                                autocomplete="off" required>
+                                            @if($selectedMakro)
+                                                <button class="btn btn-outline-secondary border-start-0" type="button"
+                                                    id="btn-clear-search" title="Bersihkan Pilihan">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        <input type="hidden" name="indikator_makro_id" id="indikator-search-id"
+                                            value="{{ $selectedMakroId ?? '' }}">
+                                        <div id="indikator-search-results" class="dropdown-menu w-100 shadow border-0 py-1"
+                                            style="max-height: 250px; overflow-y: auto; display: none; position: absolute; z-index: 1050; top: 100%;">
+                                            <!-- AJAX results will be loaded here -->
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold small">Dimensi <span
@@ -781,7 +1111,7 @@
                                 </div>
                             </div>
                         </form>
- 
+
                         @if($errors->has('indikator_dimensi'))
                             <div class="alert alert-danger alert-dismissible fade show rounded-3 py-2" role="alert">
                                 <i class="fas fa-exclamation-circle me-2"></i>
@@ -789,79 +1119,154 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         @endif
- 
+
                         <hr class="my-4">
 
                         @if($selectedMakroId)
                             <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:</h6>
                             @if($indikatorDimensis->count() > 0)
-                                <div class="table-responsive table-scrollable">
-                                    <table class="table table-hover align-middle">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th style="width: 50px;"></th>
-                                                <th style="width: 80px;" class="text-center">Urutan</th>
-                                                <th>Indikator Makro</th>
-                                                <th>Dimensi</th>
-                                                <th class="text-center">Data Digunakan</th>
-                                                <th class="text-center">Info User</th>
-                                                <th class="text-end" width="15%">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="sortable-ind-dimensi">
-                                            @foreach($indikatorDimensis as $idx => $item)
-                                                <tr data-id="{{ $item->id }}">
-                                                    <td class="text-center" style="cursor: grab;">
-                                                        <i class="fas fa-grip-vertical text-muted"></i>
-                                                    </td>
-                                                    <td class="text-center sortable-urutan fw-bold">{{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}</td>
-                                                    <td class="fw-bold">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</td>
-                                                    <td class="fw-bold">{{ $item->dimensi->nama_dimensi ?? '-' }}</td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-info rounded-pill">{{ $item->nilai_indikator_makros_count }} kali</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="me-2" style="font-size: 1.1rem; cursor: pointer;">
-                                                            <i class="fas fa-user-plus text-primary" data-bs-toggle="tooltip"
-                                                                data-bs-placement="top"
-                                                                title="Dibuat oleh: {{ $item->creator->name ?? 'System' }} pada {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                        </span>
-                                                        @if($item->updater)
-                                                        <span style="font-size: 1.1rem; cursor: pointer;">
-                                                            <i class="fas fa-user-edit text-success" data-bs-toggle="tooltip"
-                                                                data-bs-placement="top"
-                                                                title="Diperbarui oleh: {{ $item->updater->name }} pada {{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '-' }}"></i>
-                                                        </span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-end">
-                                                        @if($item->nilai_indikator_makros_count > 0)
-                                                            <button type="button" class="btn btn-sm btn-outline-danger mb-1 rounded-pill" disabled title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i></button>
-                                                        @else
-                                                            <form
-                                                                action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
-                                                                method="POST" class="d-inline delete-form">
-                                                                @csrf @method('DELETE')
-                                                                <button type="submit"
-                                                                    class="btn btn-sm btn-outline-danger mb-1 rounded-pill"><i
-                                                                        class="fas fa-trash"></i></button>
-                                                            </form>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-3">
-                                    {{ $indikatorDimensis->appends([
-                                        'tab' => 'indikator-dimensi',
-                                        'filter_makro_id' => $selectedMakroId,
-                                        'from' => request('from'),
-                                        'periode_indikator_id' => request('periode_indikator_id'),
-                                        'indikator_makro_id' => request('indikator_makro_id')
-                                    ])->links('pagination::bootstrap-5') }}
-                                </div>
+                                            <!-- Desktop Table View -->
+                                            <div class="table-responsive d-none d-md-block">
+                                                <table class="table table-hover align-middle table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width: 50px;"></th>
+                                                            <th style="width: 80px;" class="text-center">Urutan</th>
+                                                            <th>Indikator Makro</th>
+                                                            <th>Dimensi</th>
+                                                            <th class="text-center" width="25%">Informasi</th>
+                                                            <th class="text-center" width="15%">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="sortable-ind-dimensi">
+                                                        @foreach($indikatorDimensis as $idx => $item)
+                                                            <tr data-id="{{ $item->id }}">
+                                                                <td class="text-center" style="cursor: grab;">
+                                                                    <i class="fas fa-grip-vertical text-muted"></i>
+                                                                </td>
+                                                                <td class="text-center sortable-urutan fw-bold">
+                                                                    {{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}
+                                                                </td>
+                                                                <td class="fw-bold">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</td>
+                                                                <td class="fw-bold">{{ $item->dimensi->nama_dimensi ?? '-' }}</td>
+                                                                <td class="text-start" style="font-size: 0.85rem;">
+                                                                    <div class="d-flex flex-column text-muted">
+                                                                        @if($item->created_at)
+                                                                            <div>
+                                                                                <i class="fas fa-user-plus me-1 text-success" title="User Add"></i>
+                                                                                {{ $item->creator ? $item->creator->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->created_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
+
+                                                                        @if($item->updated_at && $item->updated_at != $item->created_at)
+                                                                            <div class="mt-1 border-top pt-1">
+                                                                                <i class="fas fa-user-edit me-1 text-primary" title="User Edit"></i>
+                                                                                {{ $item->updater ? $item->updater->name : 'Sistem' }}
+                                                                                <br>
+                                                                                <small
+                                                                                    class="ms-4 text-secondary">{{ $item->updated_at->format('d/m/Y H:i') }}</small>
+                                                                            </div>
+                                                                        @endif
+                                                                        <div class="mt-1 border-top pt-1 text-info">
+                                                                            <i class="fas fa-link me-1"></i>
+                                                                            Digunakan: <span
+                                                                                class="fw-bold">{{ $item->nilai_indikator_makros_count }}</span>
+                                                                            data nilai
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    @if($item->nilai_indikator_makros_count > 0)
+                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                            title="Sedang digunakan oleh data nilai"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    @else
+                                                                        <form
+                                                                            action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                    class="fas fa-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <!-- Mobile Card View -->
+                                            <div class="d-md-none" id="sortable-ind-dimensi-mobile">
+                                                @foreach($indikatorDimensis as $idx => $item)
+                                                    <div class="card mb-3 border shadow-sm" style="border-radius: 12px;" data-id="{{ $item->id }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                <div>
+                                                                    <i class="fas fa-grip-vertical text-muted me-2 grip-handle"
+                                                                        style="cursor: grab;"></i>
+                                                                    <span class="badge bg-light text-dark border p-2 fw-bold badge-sequence"
+                                                                        style="font-size: 0.9rem;">
+                                                                        #{{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}
+                                                                    </span>
+                                                                    <span class="badge bg-orange text-white">
+                                                                        {{ $item->dimensi->nama_dimensi ?? '-' }}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <h6 class="fw-bold mb-2">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</h6>
+
+                                                            <div class="text-muted border-top pt-2 mt-2" style="font-size: 0.75rem;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><i class="fas fa-user-plus me-1 text-success"></i>
+                                                                        {{ $item->creator ? str($item->creator->name)->words(2, '') : 'Sistem' }}</span>
+                                                                    <span>{{ $item->created_at ? $item->created_at->format('d/m/y H:i') : '-' }}</span>
+                                                                </div>
+                                                                @if($item->updater && $item->updater != $item->creator)
+                                                                    <div class="d-flex justify-content-between mt-1">
+                                                                        <span><i class="fas fa-user-edit me-1 text-primary"></i>
+                                                                            {{ $item->updater ? str($item->updater->name)->words(2, '') : 'Sistem' }}</span>
+                                                                        <span>{{ $item->updated_at->format('d/m/y H:i') }}</span>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="text-info mt-1 border-top pt-1">
+                                                                    <i class="fas fa-link me-1"></i>Digunakan: <span
+                                                                        class="fw-bold">{{ $item->nilai_indikator_makros_count }}</span> data nilai
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
+                                                                @if($item->nilai_indikator_makros_count > 0)
+                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                        title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i>
+                                                                        Hapus</button>
+                                                                @else
+                                                                    <form action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
+                                                                        method="POST" class="d-inline delete-form">
+                                                                        @csrf @method('DELETE')
+                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                            Hapus</button>
+                                                                    </form>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <div class="mt-3">
+                                                {{ $indikatorDimensis->appends([
+                                    'tab' => 'indikator-dimensi',
+                                    'filter_makro_id' => $selectedMakroId,
+                                    'from' => request('from'),
+                                    'periode_indikator_id' => request('periode_indikator_id'),
+                                    'indikator_makro_id' => request('indikator_makro_id')
+                                ])->links('pagination::bootstrap-5') }}
+                                            </div>
                             @else
                                 <div class="text-center text-muted p-3 bg-light rounded">
                                     <small>Belum ada relasi indikator dimensi untuk indikator makro yang dipilih.</small>
@@ -870,7 +1275,8 @@
                         @else
                             <div class="text-center text-muted p-4 bg-light rounded-3 border">
                                 <i class="fas fa-info-circle fa-2x mb-2 text-warning text-opacity-75"></i>
-                                <p class="mb-0 fw-medium">Silakan pilih Indikator Makro terlebih dahulu pada dropdown di atas untuk menampilkan daftar Indikator Dimensi.</p>
+                                <p class="mb-0 fw-medium">Silakan pilih Indikator Makro terlebih dahulu pada dropdown di atas
+                                    untuk menampilkan daftar Indikator Dimensi.</p>
                             </div>
                         @endif
                     </div>
@@ -892,98 +1298,109 @@
                 return new bootstrap.Tooltip(tooltipTriggerEl)
             });
 
-            // 2. Drag & Drop Indikator Makro
-            const sortableMakroEl = document.getElementById('sortable-makro');
-            if (sortableMakroEl) {
-                new Sortable(sortableMakroEl, {
-                    animation: 150,
-                    handle: '.fa-grip-vertical',
-                    ghostClass: 'table-warning',
-                    onEnd: function () {
-                        const order = [];
-                        sortableMakroEl.querySelectorAll('tr[data-id]').forEach(function (row) {
-                            order.push(row.getAttribute('data-id'));
-                        });
+            // Helper function to update both desktop table rows and mobile card sequence numbers
+            const updateSequenceNumbers = (desktopElId, mobileElId, startIdx, numberSelector) => {
+                const desktopEl = document.getElementById(desktopElId);
+                if (desktopEl) {
+                    desktopEl.querySelectorAll('.sortable-urutan').forEach(function (cell, i) {
+                        cell.textContent = startIdx + i + 1;
+                    });
+                }
+                const mobileEl = document.getElementById(mobileElId);
+                if (mobileEl) {
+                    mobileEl.querySelectorAll(numberSelector).forEach(function (el, i) {
+                        el.textContent = '#' + (startIdx + i + 1);
+                    });
+                }
+            };
 
-                        fetch('{{ route("indikator-makro.makro.reorder") }}', {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({ order: order })
-                        }).then(function (response) {
-                            if (response.ok) {
-                                sortableMakroEl.querySelectorAll('.sortable-urutan').forEach(function (cell, i) {
-                                    cell.textContent = i + 1;
+            // Drag & Drop helper for both desktop and mobile containers
+            const initBidirectionalSortable = (desktopElId, mobileElId, routeUrl, startIdx, numberSelector) => {
+                const desktopEl = document.getElementById(desktopElId);
+                if (desktopEl) {
+                    new Sortable(desktopEl, {
+                        animation: 150,
+                        handle: '.fa-grip-vertical',
+                        ghostClass: 'table-warning',
+                        onEnd: function () {
+                            const order = [];
+                            desktopEl.querySelectorAll('tr[data-id]').forEach(function (row) {
+                                order.push(row.getAttribute('data-id'));
+                            });
+
+                            // Synchronize mobile cards order in DOM before fetching
+                            const mobileEl = document.getElementById(mobileElId);
+                            if (mobileEl) {
+                                order.forEach(id => {
+                                    const card = mobileEl.querySelector(`.card[data-id="${id}"]`);
+                                    if (card) mobileEl.appendChild(card);
                                 });
                             }
-                        });
-                    }
-                });
-            }
+
+                            fetch(routeUrl, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ order: order })
+                            }).then(function (response) {
+                                if (response.ok) {
+                                    updateSequenceNumbers(desktopElId, mobileElId, startIdx, numberSelector);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                const mobileEl = document.getElementById(mobileElId);
+                if (mobileEl) {
+                    new Sortable(mobileEl, {
+                        animation: 150,
+                        handle: '.grip-handle',
+                        ghostClass: 'bg-warning-subtle',
+                        onEnd: function () {
+                            const order = [];
+                            mobileEl.querySelectorAll('.card[data-id]').forEach(function (card) {
+                                order.push(card.getAttribute('data-id'));
+                            });
+
+                            // Synchronize desktop table rows order in DOM before fetching
+                            if (desktopEl) {
+                                order.forEach(id => {
+                                    const row = desktopEl.querySelector(`tr[data-id="${id}"]`);
+                                    if (row) desktopEl.appendChild(row);
+                                });
+                            }
+
+                            fetch(routeUrl, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ order: order })
+                            }).then(function (response) {
+                                if (response.ok) {
+                                    updateSequenceNumbers(desktopElId, mobileElId, startIdx, numberSelector);
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+
+            // 2. Drag & Drop Indikator Makro
+            const startIdxMakro = {{ ($indikatorMakros->currentPage() - 1) * $indikatorMakros->perPage() }};
+            initBidirectionalSortable('sortable-makro', 'sortable-makro-mobile', '{{ route("indikator-makro.makro.reorder") }}', startIdxMakro, '.badge-sequence');
 
             // 3. Drag & Drop Indikator Bidang
-            const sortableBidangEl = document.getElementById('sortable-bidang');
-            if (sortableBidangEl) {
-                new Sortable(sortableBidangEl, {
-                    animation: 150,
-                    handle: '.fa-grip-vertical',
-                    ghostClass: 'table-warning',
-                    onEnd: function () {
-                        const order = [];
-                        sortableBidangEl.querySelectorAll('tr[data-id]').forEach(function (row) {
-                            order.push(row.getAttribute('data-id'));
-                        });
-
-                        fetch('{{ route("indikator-makro.bidang.reorder") }}', {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({ order: order })
-                        }).then(function (response) {
-                            if (response.ok) {
-                                sortableBidangEl.querySelectorAll('.sortable-urutan').forEach(function (cell, i) {
-                                    cell.textContent = i + 1;
-                                });
-                            }
-                        });
-                    }
-                });
-            }
+            const startIdxBidang = {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() }};
+            initBidirectionalSortable('sortable-bidang', 'sortable-bidang-mobile', '{{ route("indikator-makro.bidang.reorder") }}', startIdxBidang, '.badge-sequence');
 
             // 3b. Drag & Drop Indikator Dimensi
-            const sortableIndDimensiEl = document.getElementById('sortable-ind-dimensi');
-            if (sortableIndDimensiEl) {
-                new Sortable(sortableIndDimensiEl, {
-                    animation: 150,
-                    handle: '.fa-grip-vertical',
-                    ghostClass: 'table-warning',
-                    onEnd: function () {
-                        const order = [];
-                        sortableIndDimensiEl.querySelectorAll('tr[data-id]').forEach(function (row) {
-                            order.push(row.getAttribute('data-id'));
-                        });
-
-                        fetch('{{ route("indikator-makro.indikator-dimensi.reorder") }}', {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({ order: order })
-                        }).then(function (response) {
-                            if (response.ok) {
-                                sortableIndDimensiEl.querySelectorAll('.sortable-urutan').forEach(function (cell, i) {
-                                    cell.textContent = i + 1;
-                                });
-                            }
-                        });
-                    }
-                });
-            }
+            const startIdxIndDimensi = {{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() }};
+            initBidirectionalSortable('sortable-ind-dimensi', 'sortable-ind-dimensi-mobile', '{{ route("indikator-makro.indikator-dimensi.reorder") }}', startIdxIndDimensi, '.badge-sequence');
 
             // 4. Toggle Periode Status Switch
             document.querySelectorAll('.toggle-periode-status').forEach(function (toggle) {
@@ -1080,6 +1497,81 @@
                 url.searchParams.delete('ind_dimensi_page');
                 window.location.href = url.toString();
             };
+
+            // 7. Live AJAX Search Autocomplete for Indikator Makro Selection
+            const searchInput = document.getElementById('indikator-search-input');
+            const searchId = document.getElementById('indikator-search-id');
+            const searchResults = document.getElementById('indikator-search-results');
+            const btnClearSearch = document.getElementById('btn-clear-search');
+            let lastSelectedName = '{{ $selectedMakro ? $selectedMakro->nama_indikator : "" }}';
+            let lastSelectedId = '{{ $selectedMakroId ?? "" }}';
+            let debounceTimer;
+
+            const performSearch = (query) => {
+                fetch('{{ route("indikator-makro.search") }}?q=' + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(item => {
+                                const btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'dropdown-item d-flex justify-content-between align-items-center py-2';
+                                btn.innerHTML = `<span>${item.nama_indikator}</span>`;
+                                btn.addEventListener('click', function () {
+                                    searchInput.value = item.nama_indikator;
+                                    searchId.value = item.id;
+                                    searchResults.style.display = 'none';
+                                    lastSelectedName = item.nama_indikator;
+                                    lastSelectedId = item.id;
+                                    filterByMakro(item.id);
+                                });
+                                searchResults.appendChild(btn);
+                            });
+                            searchResults.style.display = 'block';
+                        } else {
+                            searchResults.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Tidak ada indikator yang cocok</div>';
+                            searchResults.style.display = 'block';
+                        }
+                    });
+            };
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    searchId.value = ''; // clear ID on input to force choosing from suggestion
+                    const query = this.value;
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        performSearch(query);
+                    }, 300);
+                });
+
+                searchInput.addEventListener('focus', function () {
+                    performSearch(this.value);
+                });
+
+                document.addEventListener('click', function (e) {
+                    const wrapper = document.getElementById('indikator-search-wrapper');
+                    if (wrapper && !wrapper.contains(e.target)) {
+                        searchResults.style.display = 'none';
+                        // Revert back if no suggestion chosen
+                        if (!searchId.value) {
+                            searchInput.value = lastSelectedName;
+                            searchId.value = lastSelectedId;
+                        }
+                    }
+                });
+            }
+
+            if (btnClearSearch) {
+                btnClearSearch.addEventListener('click', function () {
+                    searchInput.value = '';
+                    searchId.value = '';
+                    lastSelectedName = '';
+                    lastSelectedId = '';
+                    filterByMakro('');
+                });
+            }
 
             // 6. SweetAlert2 Delete Confirmation
             document.querySelectorAll('.delete-form').forEach(function (form) {

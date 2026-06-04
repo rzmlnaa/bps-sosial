@@ -358,6 +358,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     //Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
 
     // Kelola Indikator Makro
+    Route::get('/indikator-makro/search', [IndikatorMakroController::class, 'searchMakro'])->name('indikator-makro.search');
     Route::get('/indikator-makro/kelola', [IndikatorMakroController::class, 'kelola'])->name('indikator-makro.kelola');
     Route::get('/indikator-makro/input-nilai', [IndikatorMakroController::class, 'inputNilai'])->name('indikator-makro.input-nilai');
     Route::post('/indikator-makro/input-nilai', [IndikatorMakroController::class, 'storeNilai'])->name('indikator-makro.store-nilai');

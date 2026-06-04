@@ -148,6 +148,18 @@ class IndikatorMakroController extends Controller
         ])->with('success', 'Nilai Indikator Makro berhasil disimpan.');
     }
 
+    public function searchMakro(Request $request)
+    {
+        $search = $request->query('q', '');
+        $limit = $search === '' ? 3 : 20;
+        $makros = IndikatorMakro::where('nama_indikator', 'like', '%' . $search . '%')
+            ->orderBy('nama_indikator', 'asc')
+            ->limit($limit)
+            ->get(['id', 'nama_indikator']);
+
+        return response()->json($makros);
+    }
+
     public function kelola(Request $request)
     {
         $periodeIndikators = PeriodeIndikator::withCount('nilaiIndikatorMakros')
@@ -172,8 +184,10 @@ class IndikatorMakroController extends Controller
             ->paginate(10, ['*'], 'dimensi_page');
 
         $selectedMakroId = $request->query('filter_makro_id');
+        $selectedMakro = null;
 
         if ($selectedMakroId) {
+            $selectedMakro = IndikatorMakro::find($selectedMakroId);
             $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedMakroId)
                 ->with(['indikatorMakro', 'dimensi', 'creator', 'updater'])
                 ->withCount('nilaiIndikatorMakros')
@@ -186,7 +200,6 @@ class IndikatorMakroController extends Controller
         }
 
         $allIndikatorBidangs = IndikatorBidang::orderBy('urutan', 'asc')->get();
-        $allIndikatorMakros = IndikatorMakro::orderBy('urutan', 'asc')->get();
         $allDimensis = Dimensi::all();
 
         return view('indikator-makro.kelola', compact(
@@ -196,9 +209,9 @@ class IndikatorMakroController extends Controller
             'dimensis',
             'indikatorDimensis',
             'allIndikatorBidangs',
-            'allIndikatorMakros',
             'allDimensis',
-            'selectedMakroId'
+            'selectedMakroId',
+            'selectedMakro'
         ));
     }
 
