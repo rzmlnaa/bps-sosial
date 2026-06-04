@@ -102,6 +102,9 @@
                         <a href="{{ route('indikator-makro.kelola') }}" class="fi-btn-action">
                             <i class="fas fa-cog fa-spin"></i> Kelola Indikator
                         </a>
+                        <a href="{{ route('indikator-makro.input-nilai') }}" class="fi-btn-action" style="background: #2ecc71; box-shadow: 0 2px 8px rgba(46, 204, 113, .3); margin-left: 0.5rem;">
+                            <i class="fas fa-edit"></i> Input Nilai Indikator
+                        </a>
                     </div>
                 @endif
             @endauth

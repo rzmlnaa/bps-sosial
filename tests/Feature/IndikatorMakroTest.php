@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\PeriodeIndikator;
 use App\Models\IndikatorBidang;
+use App\Models\IndikatorMakro;
+use App\Models\Dimensi;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -95,7 +97,6 @@ class IndikatorMakroTest extends TestCase
 
         $this->assertDatabaseHas('indikator_bidangs', [
             'nama_bidang' => 'Sosial Budaya',
-            'slug' => 'sosial-budaya',
             'created_by' => $user->id,
             'is_active' => true
         ]);
@@ -107,7 +108,6 @@ class IndikatorMakroTest extends TestCase
 
         IndikatorBidang::create([
             'nama_bidang' => 'Sosial Budaya',
-            'slug' => 'sosial-budaya',
             'is_active' => true,
             'created_by' => $user->id
         ]);
@@ -118,7 +118,7 @@ class IndikatorMakroTest extends TestCase
             'is_active' => '1'
         ]);
 
-        $response->assertSessionHasErrors(['slug']);
+        $response->assertSessionHasErrors(['nama_bidang']);
     }
 
     public function test_can_toggle_bidang_active_status()
@@ -126,7 +126,6 @@ class IndikatorMakroTest extends TestCase
         $user = $this->createProvinceUser();
         $bidang = IndikatorBidang::create([
             'nama_bidang' => 'Sosial Budaya',
-            'slug' => 'sosial-budaya',
             'is_active' => true,
             'created_by' => $user->id
         ]);
@@ -143,8 +142,8 @@ class IndikatorMakroTest extends TestCase
     public function test_can_reorder_bidangs()
     {
         $user = $this->createProvinceUser();
-        $b1 = IndikatorBidang::create(['nama_bidang' => 'B1', 'slug' => 'b1', 'urutan' => 1]);
-        $b2 = IndikatorBidang::create(['nama_bidang' => 'B2', 'slug' => 'b2', 'urutan' => 2]);
+        $b1 = IndikatorBidang::create(['nama_bidang' => 'B1', 'urutan' => 1]);
+        $b2 = IndikatorBidang::create(['nama_bidang' => 'B2', 'urutan' => 2]);
 
         $response = $this->actingAs($user)->patch(route('indikator-makro.bidang.reorder'), [
             'order' => [$b2->id, $b1->id]
@@ -155,5 +154,71 @@ class IndikatorMakroTest extends TestCase
 
         $this->assertEquals(1, $b2->refresh()->urutan);
         $this->assertEquals(2, $b1->refresh()->urutan);
+    }
+
+    public function test_can_access_input_nilai_page()
+    {
+        $user = $this->createProvinceUser();
+
+        $response = $this->actingAs($user)->get(route('indikator-makro.input-nilai'));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('indikator-makro.input-nilai');
+        $response->assertViewHas('periodeIndikators');
+        $response->assertViewHas('kabupatens');
+    }
+
+    public function test_can_store_and_update_nilai_indikator_makros()
+    {
+        $user = $this->createProvinceUser();
+
+        $periode = PeriodeIndikator::create(['tahun' => 2026, 'is_active' => true]);
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dimensi = Dimensi::create(['nama_dimensi' => 'Kesehatan']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi->id,
+            'is_active' => true
+        ]);
+
+        // Post new value
+        $response = $this->actingAs($user)->post(route('indikator-makro.store-nilai'), [
+            'periode_indikator_id' => $periode->id,
+            'indikator_makro_id' => $makro->id,
+            'nilai' => [
+                $user->kabupaten_id => [
+                    $indDim->id => '82.5'
+                ]
+            ]
+        ]);
+
+        $response->assertRedirect();
+        
+        $this->assertDatabaseHas('nilai_indikator_makros', [
+            'periode_indikator_id' => $periode->id,
+            'kabupaten_id' => $user->kabupaten_id,
+            'indikator_dimensi_id' => $indDim->id,
+            'nilai' => 82.5
+        ]);
+
+        // Post empty value (should delete the record)
+        $response = $this->actingAs($user)->post(route('indikator-makro.store-nilai'), [
+            'periode_indikator_id' => $periode->id,
+            'indikator_makro_id' => $makro->id,
+            'nilai' => [
+                $user->kabupaten_id => [
+                    $indDim->id => ''
+                ]
+            ]
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseMissing('nilai_indikator_makros', [
+            'periode_indikator_id' => $periode->id,
+            'kabupaten_id' => $user->kabupaten_id,
+            'indikator_dimensi_id' => $indDim->id
+        ]);
     }
 }

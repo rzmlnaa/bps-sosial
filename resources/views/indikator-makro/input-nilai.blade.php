@@ -1,0 +1,545 @@
+@extends('layouts.admin')
+
+@section('title', 'Input Nilai Indikator Makro')
+
+@push('styles')
+    <style>
+        :root {
+            --fi-primary: #f58220;
+            --fi-primary-lt: #fff4eb;
+            --fi-border: #e2e8f0;
+            --fi-surface: #f8fafc;
+            --fi-text: #0f172a;
+            --fi-muted: #64748b;
+        }
+
+        .fi-page {
+            font-family: 'Inter', sans-serif;
+            color: var(--fi-text);
+        }
+
+        .fi-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .fi-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--fi-primary);
+            margin: 0;
+        }
+
+        .fi-subtitle {
+            font-size: .875rem;
+            color: var(--fi-muted);
+            margin: .25rem 0 0;
+        }
+
+        .card-custom {
+            border: 1px solid var(--fi-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+            background: #fff;
+        }
+
+        .form-select-custom {
+            background-color: var(--fi-surface);
+            border: 1px solid var(--fi-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--fi-text);
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-select-custom:focus {
+            border-color: var(--fi-primary);
+            box-shadow: 0 0 0 3px rgba(245, 130, 32, 0.15);
+            outline: none;
+        }
+
+        /* Official BPS Table Style */
+        .table-bps-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--fi-border);
+        }
+
+        .table-bps-scroll {
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 1px solid var(--fi-border);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .table-bps {
+            border-collapse: collapse;
+            width: 100%;
+            border-top: 3px double #000;
+            border-bottom: 3px double #000;
+        }
+
+        .table-bps th {
+            border: 1px solid #bbb;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 10px 8px;
+            background-color: #fafafa;
+        }
+
+        .table-bps td {
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table-bps tr.col-num th {
+            font-weight: normal;
+            font-style: italic;
+            font-size: 0.75rem;
+            background-color: #fafafa;
+            border-bottom: 1.5px solid #000;
+            padding: 3px;
+        }
+
+        /* Sticky headers for scrollable container */
+        .table-bps thead tr:nth-child(1) th {
+            position: sticky;
+            top: 0;
+            z-index: 1022;
+            background-color: #fafafa !important;
+            box-shadow: inset 0 -1px 0 #bbb;
+        }
+
+        .table-bps thead tr:nth-child(2) th {
+            position: sticky;
+            top: 41px;
+            /* Height of the first header row */
+            z-index: 1022;
+            background-color: #fafafa !important;
+            box-shadow: inset 0 -1px 0 #bbb;
+        }
+
+        .table-bps thead tr.col-num th {
+            position: sticky;
+            top: 80px;
+            /* Height of first + second header rows */
+            z-index: 1022;
+            background-color: #fafafa !important;
+            box-shadow: inset 0 -1.5px 0 #000;
+        }
+
+        .bps-input-cell {
+            width: 100%;
+            border: 1px solid var(--fi-border);
+            border-radius: 6px;
+            background-color: var(--fi-surface);
+            text-align: right;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .bps-input-cell:focus {
+            background-color: #fff;
+            border-color: var(--fi-primary);
+            box-shadow: 0 0 0 3px rgba(245, 130, 32, 0.15);
+            outline: none;
+        }
+
+        .bps-input-cell::placeholder {
+            color: #bbb;
+            text-align: right;
+        }
+
+        .btn-primary-custom {
+            background-color: var(--fi-primary);
+            border-color: var(--fi-primary);
+            color: #fff;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(245, 130, 32, .3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #E9861A;
+            color: #fff;
+        }
+
+        .table-title-bps {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #000;
+            margin-bottom: 0.25rem;
+        }
+
+        .table-unit-bps {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+    </style>
+@endpush
+
+@section('content')
+    <div class="fi-page mt-2">
+
+        {{-- HEADER --}}
+        <div class="fi-header fade-in-up">
+            <div>
+                <h1 class="fi-title">INPUT NILAI INDIKATOR MAKRO</h1>
+                <p class="fi-subtitle">Input nilai indikator makro menggunakan format tabel grid BPS</p>
+            </div>
+            <div>
+                <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+
+        {{-- ALERTS --}}
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 rounded-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2 fs-5 text-success"></i>
+                    <div>
+                        {{ session('success') }}
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        {{-- FILTERS CARD --}}
+        <div class="card card-custom border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <form action="{{ route('indikator-makro.input-nilai') }}" method="GET" class="row g-3 align-items-end"
+                    id="filter-form">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Tahun Periode</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i
+                                    class="fas fa-calendar-alt text-muted"></i></span>
+                            <select name="periode_indikator_id"
+                                class="form-select form-select-custom border-0 shadow-none bg-light"
+                                onchange="this.form.submit()">
+                                @foreach($periodeIndikators as $periode)
+                                    <option value="{{ $periode->id }}" {{ $selectedPeriodeId == $periode->id ? 'selected' : '' }}>
+                                        {{ $periode->tahun }} {{ $periode->is_active ? '(Aktif)' : '(Non-aktif)' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Indikator Makro</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i
+                                    class="fas fa-chart-line text-muted"></i></span>
+                            <select name="indikator_makro_id"
+                                class="form-select form-select-custom border-0 shadow-none bg-light"
+                                onchange="this.form.submit()">
+                                @foreach($indikatorMakros as $makro)
+                                    <option value="{{ $makro->id }}" {{ $selectedIndikatorMakroId == $makro->id ? 'selected' : '' }}>
+                                        {{ $makro->nama_indikator }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- BPS MATRIX TABLE --}}
+        <div class="table-bps-container shadow-sm">
+            <form action="{{ route('indikator-makro.store-nilai') }}" method="POST" id="nilai-form">
+                @csrf
+                <input type="hidden" name="periode_indikator_id" value="{{ $selectedPeriodeId }}">
+                <input type="hidden" name="indikator_makro_id" value="{{ $selectedIndikatorMakroId }}">
+
+                {{-- Table Meta/Header Title --}}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="table-title-bps mb-1">
+                            Tabel {{ $selectedIndikator ? $selectedIndikator->nama_indikator : 'Indikator Makro' }} menurut
+                            Kabupaten/Kota/Provinsi
+                        </h4>
+                        <div class="table-unit-bps mb-0">
+                            Satuan: {{ $selectedIndikator->satuan ?? '-' }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapsePasteExcel">
+                            <i class="fas fa-file-excel me-1"></i> Paste Excel
+                        </button>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="fas fa-save me-1"></i> Simpan
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Copy Paste Excel Section --}}
+                <div class="collapse mb-3" id="collapsePasteExcel">
+                    <div class="card card-body bg-light border-0 rounded-3">
+                        <h6 class="fw-bold mb-2 text-success"><i class="fas fa-file-excel me-1"></i> Paste Excel Data Matrix</h6>
+                        <p class="text-muted small mb-2">
+                            Copy blok data angka dari Excel (sesuai urutan baris kabupaten dan kolom dimensi di bawah), lalu paste di kotak di bawah ini dan klik tombol untuk mengisi tabel otomatis. Nilai kosong atau tanda (-) akan otomatis dikosongkan.
+                        </p>
+                        <textarea id="excel-paste-area" class="form-control mb-3" rows="5" placeholder="Paste data Excel disini... (Contoh: 115.08	82.08	98.96)"></textarea>
+                        <div class="text-end">
+                            <button type="button" id="btn-parse-excel" class="btn btn-sm btn-success rounded-pill px-3">
+                                <i class="fas fa-check me-1"></i> Terapkan Nilai ke Tabel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-bps-scroll">
+                    <table class="table-bps align-middle">
+                        <thead>
+                            @php
+                                $dimColCount = $indikatorDimensis->count();
+                                $colspan = $dimColCount > 0 ? $dimColCount : 1;
+                            @endphp
+                            <tr>
+                                <th rowspan="2">Kabupaten/Kota/Provinsi</th>
+                                <th colspan="{{ $colspan }}">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
+                            </tr>
+                            <tr>
+                                @forelse($indikatorDimensis as $indDim)
+                                    <th style="min-width: 120px;">{{ $indDim->dimensi->nama_dimensi ?? '-' }}</th>
+                                @empty
+                                    <th>Dimensi</th>
+                                @endforelse
+                            </tr>
+                            {{-- Column Numbering Row --}}
+                            <tr class="col-num">
+                                <th>(1)</th>
+                                @if($dimColCount > 0)
+                                    @for($i = 0; $i < $dimColCount; $i++)
+                                        <th>({{ $i + 2 }})</th>
+                                    @endfor
+                                @else
+                                    <th>(2)</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($kabupatens as $idx => $kab)
+                                @php
+                                    $isProvince = $kab->kode_kab === '6100';
+                                    $isIndonesia = ($kab->kode_kab === '1' || strtolower($kab->nama_kabupaten) === 'indonesia');
+                                    $rowStyle = ($isProvince || $isIndonesia) ? 'font-weight: bold; background-color: #f9f9f9;' : '';
+                                @endphp
+                                <tr style="{{ $rowStyle }}">
+                                    <td>
+                                        @if($isIndonesia)
+                                            <strong>INDONESIA</strong>
+                                        @elseif($isProvince)
+                                            <strong>[{{ $kab->kode_kab }}] Provinsi {{ $kab->nama_kabupaten }}</strong>
+                                        @else
+                                            [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                        @endif
+                                    </td>
+                                    @forelse($indikatorDimensis as $indDim)
+                                        @php
+                                            $val = $existingValues[$kab->id][$indDim->id] ?? '';
+                                            // Format value for display if exists
+                                            if (is_numeric($val)) {
+                                                // float format check
+                                                $val = (float) $val;
+                                            }
+                                        @endphp
+                                        <td class="p-1">
+                                            <input type="number" step="any" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
+                                                class="bps-input-cell fw-medium" placeholder="-" value="{{ $val }}">
+                                        </td>
+                                    @empty
+                                        <td class="text-center text-muted small italic">-</td>
+                                    @endforelse
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ $colspan + 2 }}" class="text-center py-5 text-muted">
+                                        Belum ada data wilayah kabupaten.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Simpan Semua button is at the top right of the card header --}}
+            </form>
+        </div>
+
+    </div>
+@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const table = document.querySelector('.table-bps');
+    if (!table) return;
+
+    // 1. Direct Copy-Paste into Input Cells
+    table.addEventListener('paste', function (e) {
+        const activeInput = document.activeElement;
+        if (!activeInput || !activeInput.classList.contains('bps-input-cell')) return;
+
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const pastedText = clipboardData.getData('Text');
+        if (!pastedText) return;
+
+        const rows = pastedText.split(/\r?\n/);
+        const activeTd = activeInput.closest('td');
+        const activeTr = activeTd.closest('tr');
+        const allTrs = Array.from(table.querySelectorAll('tbody tr'));
+        const startRowIdx = allTrs.indexOf(activeTr);
+        const allTdsInRow = Array.from(activeTr.querySelectorAll('td'));
+        
+        // Find input tds
+        const inputTds = allTdsInRow.filter(td => td.querySelector('input.bps-input-cell'));
+        const startColIdx = inputTds.indexOf(activeTd);
+
+        if (startRowIdx === -1 || startColIdx === -1) return;
+
+        e.preventDefault();
+
+        rows.forEach((rowText, rowOffset) => {
+            if (rowText.trim() === '') return;
+            const cols = rowText.split('\t');
+            const targetTr = allTrs[startRowIdx + rowOffset];
+            if (!targetTr) return;
+
+            const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+
+            cols.forEach((valText, colOffset) => {
+                const targetTd = targetInputTds[startColIdx + colOffset];
+                if (!targetTd) return;
+
+                const input = targetTd.querySelector('input.bps-input-cell');
+                if (input) {
+                    let cleanVal = valText.trim();
+                    if (cleanVal === '-' || cleanVal === '—') {
+                        cleanVal = '';
+                    } else {
+                        // Standardize decimal numbers
+                        if (cleanVal.includes(',') && cleanVal.includes('.')) {
+                            if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
+                                cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+                            } else {
+                                cleanVal = cleanVal.replace(/,/g, '');
+                            }
+                        } else if (cleanVal.includes(',')) {
+                            cleanVal = cleanVal.replace(',', '.');
+                        }
+                    }
+                    input.value = cleanVal;
+                }
+            });
+        });
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Data Ditempel!',
+            text: 'Data Excel berhasil disalin langsung ke tabel input.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    });
+
+    // 2. Parse button from Textarea
+    const btnParse = document.getElementById('btn-parse-excel');
+    const textarea = document.getElementById('excel-paste-area');
+
+    if (btnParse && textarea) {
+        btnParse.addEventListener('click', function () {
+            const pastedText = textarea.value;
+            if (!pastedText.trim()) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kosong',
+                    text: 'Silakan paste data dari Excel terlebih dahulu.'
+                });
+                return;
+            }
+
+            const rows = pastedText.split(/\r?\n/);
+            const allTrs = Array.from(table.querySelectorAll('tbody tr'));
+
+            let count = 0;
+            rows.forEach((rowText, rowIdx) => {
+                if (rowText.trim() === '') return;
+                const cols = rowText.split('\t');
+                const targetTr = allTrs[rowIdx];
+                if (!targetTr) return;
+
+                const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+
+                cols.forEach((valText, colIdx) => {
+                    const targetTd = targetInputTds[colIdx];
+                    if (!targetTd) return;
+
+                    const input = targetTd.querySelector('input.bps-input-cell');
+                    if (input) {
+                        let cleanVal = valText.trim();
+                        if (cleanVal === '-' || cleanVal === '—') {
+                            cleanVal = '';
+                        } else {
+                            if (cleanVal.includes(',') && cleanVal.includes('.')) {
+                                if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
+                                    cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+                                } else {
+                                    cleanVal = cleanVal.replace(/,/g, '');
+                                }
+                            } else if (cleanVal.includes(',')) {
+                                cleanVal = cleanVal.replace(',', '.');
+                            }
+                        }
+                        input.value = cleanVal;
+                        count++;
+                    }
+                });
+            });
+
+            // Close the collapse area
+            const collapseEl = document.getElementById('collapsePasteExcel');
+            const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl);
+            bsCollapse.hide();
+
+            // Clear textarea
+            textarea.value = '';
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: `${count} sel nilai berhasil diisi dari data Excel.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        });
+    }
+});
+</script>
+@endpush

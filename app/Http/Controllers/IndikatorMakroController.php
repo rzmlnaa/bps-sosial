@@ -8,12 +8,144 @@ use App\Models\IndikatorBidang;
 use App\Models\IndikatorMakro;
 use App\Models\Dimensi;
 use App\Models\IndikatorDimensi;
+use App\Models\Kabupaten;
+use App\Models\NilaiIndikatorMakro;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class IndikatorMakroController extends Controller
 {
     public function index()
     {
         return view('indikator-makro.index');
+    }
+
+    public function inputNilai(Request $request)
+    {
+        // 1. Fetch all PeriodeIndikator (ordered by tahun desc)
+        $periodeIndikators = PeriodeIndikator::orderBy('tahun', 'desc')->get();
+        
+        // 2. Fetch all IndikatorMakro (ordered by urutan asc, then created_at desc)
+        $indikatorMakros = IndikatorMakro::where('is_active', true)
+            ->orderBy('urutan', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 3. Fetch all Kabupaten (ordered by BPS standard: kab/kota first, then province 6100, then Indonesia at the absolute bottom)
+        $kabupatens = Kabupaten::orderByRaw("
+            CASE 
+                WHEN kode_kab = '6100' THEN 1 
+                WHEN kode_kab = '1' OR LOWER(nama_kabupaten) = 'indonesia' THEN 2 
+                ELSE 0 
+            END ASC, 
+            kode_kab ASC
+        ")->get();
+
+        // Determine selected Periode
+        // Determine selected Periode
+        $selectedPeriodeId = $request->query('periode_indikator_id') ?? ($periodeIndikators->where('is_active', true)->first()->id ?? $periodeIndikators->first()->id ?? null);
+        $selectedPeriode = PeriodeIndikator::find($selectedPeriodeId);
+        
+        // Determine selected Indikator Makro
+        $selectedIndikatorMakroId = $request->query('indikator_makro_id') ?? ($indikatorMakros->first()->id ?? null);
+
+        $selectedIndikator = IndikatorMakro::find($selectedIndikatorMakroId);
+
+        // 4. Fetch active IndikatorDimensi for this specific macro indicator
+        $indikatorDimensis = collect();
+        if ($selectedIndikatorMakroId) {
+            $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedIndikatorMakroId)
+                ->where('is_active', true)
+                ->with(['dimensi'])
+                ->orderBy('urutan', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        // 5. Fetch existing values in nilai_indikator_makros for the selected Periode and the dimensions of this indicator
+        $existingValues = [];
+        if ($selectedPeriodeId && $indikatorDimensis->isNotEmpty()) {
+            $existingValues = NilaiIndikatorMakro::where('periode_indikator_id', $selectedPeriodeId)
+                ->whereIn('indikator_dimensi_id', $indikatorDimensis->pluck('id'))
+                ->get()
+                ->groupBy('kabupaten_id')
+                ->map(function ($items) {
+                    return $items->pluck('nilai', 'indikator_dimensi_id');
+                })
+                ->toArray();
+        }
+
+        return view('indikator-makro.input-nilai', compact(
+            'periodeIndikators',
+            'indikatorMakros',
+            'kabupatens',
+            'selectedPeriodeId',
+            'selectedIndikatorMakroId',
+            'selectedPeriode',
+            'selectedIndikator',
+            'indikatorDimensis',
+            'existingValues'
+        ));
+    }
+
+    public function storeNilai(Request $request)
+    {
+        $request->validate([
+            'periode_indikator_id' => 'required|exists:periode_indikators,id',
+            'indikator_makro_id' => 'required|exists:indikator_makros,id',
+            'nilai' => 'nullable|array',
+        ]);
+
+        $periodeId = $request->periode_indikator_id;
+        $indikatorMakroId = $request->indikator_makro_id;
+        $userId = auth()->id();
+
+        if ($request->has('nilai')) {
+            foreach ($request->nilai as $kabupatenId => $dimensiValues) {
+                // Ensure kabupaten exists
+                if (!Kabupaten::where('id', $kabupatenId)->exists()) {
+                    continue;
+                }
+
+                foreach ($dimensiValues as $indikatorDimensiId => $nilaiRaw) {
+                    // Ensure IndikatorDimensi exists and belongs to this indicator
+                    $indDim = IndikatorDimensi::where('id', $indikatorDimensiId)
+                        ->where('indikator_makro_id', $indikatorMakroId)
+                        ->first();
+                    if (!$indDim) {
+                        continue;
+                    }
+
+                    if ($nilaiRaw === null || $nilaiRaw === '') {
+                        NilaiIndikatorMakro::where([
+                            'periode_indikator_id' => $periodeId,
+                            'kabupaten_id' => $kabupatenId,
+                            'indikator_dimensi_id' => $indikatorDimensiId,
+                        ])->delete();
+                    } else {
+                        $nilaiClean = str_replace(',', '.', $nilaiRaw);
+
+                        $record = NilaiIndikatorMakro::firstOrNew([
+                            'periode_indikator_id' => $periodeId,
+                            'kabupaten_id' => $kabupatenId,
+                            'indikator_dimensi_id' => $indikatorDimensiId,
+                        ]);
+
+                        if (!$record->exists) {
+                            $record->created_by = $userId;
+                        }
+                        $record->nilai = (float)$nilaiClean;
+                        $record->updated_by = $userId;
+                        $record->save();
+                    }
+                }
+            }
+        }
+
+        return redirect()->route('indikator-makro.input-nilai', [
+            'periode_indikator_id' => $periodeId,
+            'indikator_makro_id' => $indikatorMakroId
+        ])->with('success', 'Nilai Indikator Makro berhasil disimpan.');
     }
 
     public function kelola()
