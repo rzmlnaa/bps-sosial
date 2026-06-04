@@ -326,6 +326,12 @@
                     </ul>
                 </div>
 
+                <a href="{{ route('indikator-makro.index') }}"
+                    class="nav-link {{ request()->routeIs('indikator-makro.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-area"></i>
+                    <span>Indikator Makro</span>
+                </a>
+
 
 
 
