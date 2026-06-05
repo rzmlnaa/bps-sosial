@@ -67,6 +67,29 @@
             </div>
         </div>
 
+        {{-- Status Legend/Info --}}
+        <div class="card border-0 shadow-sm mb-4"
+            style="border-radius: 12px; background-color: #fff8f3; border-left: 5px solid #f58220 !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 fs-5 mt-1" style="color: #f58220;"></i>
+                    <div>
+                        <h6 class="fw-bold mb-2 text-dark">Panduan Status Aktif / Non-aktif:</h6>
+                        <div class="row g-2 text-secondary small">
+                            <div class="col-md-4">
+                                <span class="badge bg-danger me-1">Non-aktif Periode</span> Mengunci (disable) seluruh
+                                pengisian nilai tabel indikator makro pada tahun bersangkutan.
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger me-1">Non-aktif Indikator/Dimensi</span> Mengunci (disable)
+                                isian input nilai indikator makro atau dimensi spesifik tersebut.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm" role="alert">
                 <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -795,7 +818,8 @@
                                                                             <option value="">-- Pilih Bidang --</option>
                                                                             @foreach($allIndikatorBidangs as $bidang)
                                                                                 <option value="{{ $bidang->id }}" {{ $item->indikator_bidang_id == $bidang->id ? 'selected' : '' }}>
-                                                                                    {{ $bidang->nama_bidang }}</option>
+                                                                                    {{ $bidang->nama_bidang }}
+                                                                                </option>
                                                                             @endforeach
                                                                         </select>
                                                                     </div>
@@ -894,7 +918,8 @@
                                                         @foreach($dimensis as $idx => $item)
                                                             <tr>
                                                                 <td class="text-center">
-                                                                    {{ ($dimensis->currentPage() - 1) * $dimensis->perPage() + $idx + 1 }}</td>
+                                                                    {{ ($dimensis->currentPage() - 1) * $dimensis->perPage() + $idx + 1 }}
+                                                                </td>
                                                                 <td class="fw-bold">{{ $item->nama_dimensi }}</td>
                                                                 <td class="text-start" style="font-size: 0.85rem;">
                                                                     <div class="d-flex flex-column text-muted">
@@ -1123,7 +1148,8 @@
                         <hr class="my-4">
 
                         @if($selectedMakroId)
-                            <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:</h6>
+                            <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:
+                                {{ $selectedMakro->nama_indikator ?? '-' }}</h6>
                             @if($indikatorDimensis->count() > 0)
                                             <!-- Desktop Table View -->
                                             <div class="table-responsive d-none d-md-block">
@@ -1132,8 +1158,8 @@
                                                         <tr>
                                                             <th style="width: 50px;"></th>
                                                             <th style="width: 80px;" class="text-center">Urutan</th>
-                                                            <th>Indikator Makro</th>
                                                             <th>Dimensi</th>
+                                                            <th class="text-center" style="width: 100px;">Status</th>
                                                             <th class="text-center" width="25%">Informasi</th>
                                                             <th class="text-center" width="15%">Aksi</th>
                                                         </tr>
@@ -1147,8 +1173,13 @@
                                                                 <td class="text-center sortable-urutan fw-bold">
                                                                     {{ ($indikatorDimensis->currentPage() - 1) * $indikatorDimensis->perPage() + $idx + 1 }}
                                                                 </td>
-                                                                <td class="fw-bold">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</td>
                                                                 <td class="fw-bold">{{ $item->dimensi->nama_dimensi ?? '-' }}</td>
+                                                                <td class="text-center">
+                                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                                        <input class="form-check-input toggle-ind-dim-status" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
+                                                                    </div>
+                                                                </td>
                                                                 <td class="text-start" style="font-size: 0.85rem;">
                                                                     <div class="d-flex flex-column text-muted">
                                                                         @if($item->created_at)
@@ -1216,9 +1247,13 @@
                                                                         {{ $item->dimensi->nama_dimensi ?? '-' }}
                                                                     </span>
                                                                 </div>
+                                                                <div class="d-flex gap-2 align-items-center">
+                                                                    <div class="form-check form-switch p-0 m-0">
+                                                                        <input class="form-check-input toggle-ind-dim-status m-0" type="checkbox"
+                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; width: 3.5em; height: 1.75em;">
+                                                                    </div>
+                                                                </div>
                                                             </div>
-
-                                                            <h6 class="fw-bold mb-2">{{ $item->indikatorMakro->nama_indikator ?? '-' }}</h6>
 
                                                             <div class="text-muted border-top pt-2 mt-2" style="font-size: 0.75rem;">
                                                                 <div class="d-flex justify-content-between">
@@ -1478,6 +1513,34 @@
                                     position: 'top-end',
                                     icon: 'success',
                                     title: 'Status indikator makro diperbarui',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                });
+                            }
+                        });
+                });
+            });
+
+            // 5c. Toggle Indikator Dimensi Status Switch
+            document.querySelectorAll('.toggle-ind-dim-status').forEach(function (toggle) {
+                toggle.addEventListener('change', function () {
+                    const id = this.getAttribute('data-id');
+                    const url = '/indikator-makro/indikator-dimensi/' + id + '/toggle';
+
+                    fetch(url, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    }).then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: 'Status dimensi diperbarui',
                                     showConfirmButton: false,
                                     timer: 1500
                                 });

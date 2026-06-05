@@ -295,7 +295,7 @@
                                 onchange="this.form.submit()">
                                 @foreach($indikatorMakros as $makro)
                                     <option value="{{ $makro->id }}" {{ $selectedIndikatorMakroId == $makro->id ? 'selected' : '' }}>
-                                        {{ $makro->nama_indikator }}
+                                        {{ $makro->nama_indikator }} {{ $makro->is_active ? '' : '(Non-aktif oleh Admin)' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -307,6 +307,22 @@
 
         {{-- BPS MATRIX TABLE --}}
         <div class="table-bps-container shadow-sm" id="tabel">
+            @if($selectedPeriode && !$selectedPeriode->is_active)
+                <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-3 d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-4 text-danger"></i>
+                    <div>
+                        <strong>Periode Dinonaktifkan:</strong> Tahun Periode {{ $selectedPeriode->tahun }} telah dinonaktifkan oleh Admin. Anda tidak dapat menginput atau mengubah nilai pada tabel di bawah ini.
+                    </div>
+                </div>
+            @elseif($selectedIndikator && !$selectedIndikator->is_active)
+                <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-3 d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-4 text-danger"></i>
+                    <div>
+                        <strong>Indikator Dinonaktifkan:</strong> Indikator makro ini telah dinonaktifkan oleh Admin. Anda tidak dapat menginput atau mengubah nilai pada tabel di bawah ini.
+                    </div>
+                </div>
+            @endif
+
             <form action="{{ route('indikator-makro.store-nilai') }}" method="POST" id="nilai-form">
                 @csrf
                 <input type="hidden" name="periode_indikator_id" value="{{ $selectedPeriodeId }}">
@@ -332,12 +348,18 @@
                     </div>
                     @if($indikatorDimensis->isNotEmpty())
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapsePasteExcel">
-                                <i class="fas fa-file-excel me-1"></i> Paste Excel
-                            </button>
-                            <button type="submit" class="btn btn-primary-custom">
-                                <i class="fas fa-save me-1"></i> Simpan
-                            </button>
+                            @if($selectedPeriode && $selectedPeriode->is_active && $selectedIndikator && $selectedIndikator->is_active)
+                                <button type="button" class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapsePasteExcel">
+                                    <i class="fas fa-file-excel me-1"></i> Paste Excel
+                                </button>
+                                <button type="submit" class="btn btn-primary-custom">
+                                    <i class="fas fa-save me-1"></i> Simpan
+                                </button>
+                            @else
+                                <span class="badge bg-danger p-2 px-3 fs-7 d-flex align-items-center rounded-pill">
+                                    <i class="fas fa-ban me-1"></i> Dinonaktifkan oleh Admin
+                                </span>
+                            @endif
                         </div>
                     @else
                     <a href="/indikator-makro/kelola?tab=indikator-dimensi&filter_makro_id={{ $selectedIndikatorMakroId }}&from=input-nilai&periode_indikator_id={{ $selectedPeriodeId }}&indikator_makro_id={{ $selectedIndikatorMakroId }}" class="btn btn-outline-warning rounded-pill px-3">
@@ -375,7 +397,12 @@
                             @if($isNoneOnly)
                                 <tr>
                                     <th class="sticky-col">Kabupaten/Kota/Provinsi</th>
-                                    <th style="min-width: 150px;">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
+                                    <th style="min-width: 150px;">
+                                        {{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}
+                                        @if($indikatorDimensis->isNotEmpty() && !$indikatorDimensis->first()->is_active)
+                                            <br><span class="badge bg-danger p-1 fs-8 text-uppercase" style="font-size: 0.65rem;">Non-aktif oleh Admin</span>
+                                        @endif
+                                    </th>
                                 </tr>
                                 <tr class="col-num">
                                     <th class="sticky-col">(1)</th>
@@ -388,7 +415,12 @@
                                 </tr>
                                 <tr>
                                     @forelse($indikatorDimensis as $indDim)
-                                        <th style="min-width: 120px;">{{ $indDim->dimensi->nama_dimensi ?? '-' }}</th>
+                                        <th style="min-width: 120px;">
+                                            {{ $indDim->dimensi->nama_dimensi ?? '-' }}
+                                            @if(!$indDim->is_active)
+                                                <br><span class="badge bg-danger p-1 fs-8 text-uppercase" style="font-size: 0.65rem;">Non-aktif oleh Admin</span>
+                                            @endif
+                                        </th>
                                     @empty
                                         <th>Dimensi Belum Diatur</th>
                                     @endforelse
@@ -440,10 +472,13 @@
                                                     $val = number_format($floatVal, $decimals, '.', ',');
                                                 }
                                             }
+                                            $isDisabled = !$selectedPeriode->is_active || !$selectedIndikator->is_active || !$indDim->is_active;
                                         @endphp
                                         <td class="p-1">
                                             <input type="text" inputmode="decimal" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
-                                                class="bps-input-cell fw-medium" placeholder="-" value="{{ $val }}">
+                                                class="bps-input-cell fw-medium" placeholder="{{ $isDisabled ? 'Non-aktif' : '-' }}" value="{{ $val }}"
+                                                {{ $isDisabled ? 'disabled' : '' }}
+                                                style="{{ $isDisabled ? 'background-color: #e2e8f0; color: #64748b; cursor: not-allowed;' : '' }}">
                                         </td>
                                     @empty
                                         <td class="text-center text-muted small italic">-</td>

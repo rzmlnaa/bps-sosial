@@ -554,6 +554,29 @@ class IndikatorMakroTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('value="4,685,371.26"', false);
     }
+
+    public function test_can_toggle_indikator_dimensi_active_status()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dim = Dimensi::create(['nama_dimensi' => 'D1']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dim->id,
+            'is_active' => true
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('indikator-makro.indikator-dimensi.toggle', $indDim->id));
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'is_active' => false
+        ]);
+
+        $this->assertFalse((bool)$indDim->refresh()->is_active);
+    }
 }
 
 

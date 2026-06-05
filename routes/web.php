@@ -382,6 +382,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/indikator-makro/indikator-dimensi', [IndikatorMakroController::class, 'storeIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.store');
     Route::put('/indikator-makro/indikator-dimensi/{id}', [IndikatorMakroController::class, 'updateIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.update');
     Route::patch('/indikator-makro/indikator-dimensi/reorder', [IndikatorMakroController::class, 'reorderIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.reorder');
+    Route::patch('/indikator-makro/indikator-dimensi/{id}/toggle', [IndikatorMakroController::class, 'toggleIndikatorDimensiActive'])->name('indikator-makro.indikator-dimensi.toggle');
     Route::delete('/indikator-makro/indikator-dimensi/{id}', [IndikatorMakroController::class, 'destroyIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.destroy');
 
     // Sektor Usaha

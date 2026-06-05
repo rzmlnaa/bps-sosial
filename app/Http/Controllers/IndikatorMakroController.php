@@ -15,9 +15,123 @@ use Illuminate\Support\Str;
 
 class IndikatorMakroController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('indikator-makro.index');
+        // 1. Fetch the selected IndikatorMakro (from query param or default to first active)
+        $selectedId = $request->query('indikator_makro_id');
+        $selectedIndikator = null;
+        if ($selectedId) {
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])->find($selectedId);
+        }
+        if (!$selectedIndikator) {
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])
+                ->orderBy('urutan', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
+        $allPeriodes = PeriodeIndikator::select(['id', 'tahun', 'is_active'])
+            ->orderBy('tahun', 'asc')
+            ->get();
+        // Years filter (default to latest year only to optimize performance)
+        $latestYear = $allPeriodes->isNotEmpty() ? $allPeriodes->max('tahun') : null;
+        $defaultYears = $latestYear ? [$latestYear] : [];
+        $selectedYears = $request->query('tahun', $defaultYears);
+        if (!is_array($selectedYears)) {
+            $selectedYears = [$selectedYears];
+        }
+        $periodes = $allPeriodes->filter(function($p) use ($selectedYears) {
+            return in_array($p->tahun, $selectedYears);
+        });
+
+        $indikatorDimensis = collect();
+        $selectedDimensiIds = $request->query('indikator_dimensi_ids', []);
+        
+        if ($selectedIndikator) {
+            $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedIndikator->id)
+                ->with(['dimensi:id,nama_dimensi'])
+                ->orderBy('urutan', 'asc')
+                ->get(['id', 'indikator_makro_id', 'dimensi_id', 'is_active', 'urutan']);
+
+            $isNoneOnly = ($indikatorDimensis->count() === 1 && strtolower(trim($indikatorDimensis->first()->dimensi->nama_dimensi ?? '')) === 'none');
+
+            if ($isNoneOnly) {
+                $selectedDimensiIds = [$indikatorDimensis->first()->id];
+            } else {
+                if (empty($selectedDimensiIds)) {
+                    $selectedDimensiIds = $indikatorDimensis->pluck('id')->toArray();
+                } else if (!is_array($selectedDimensiIds)) {
+                    $selectedDimensiIds = [$selectedDimensiIds];
+                }
+            }
+        } else {
+            $isNoneOnly = false;
+        }
+
+        // Fetch regions (order by BPS standard)
+        $kabupatens = Kabupaten::select(['id', 'kode_kab', 'nama_kabupaten'])
+            ->orderByRaw("
+                CASE 
+                    WHEN kode_kab = '6100' THEN 1 
+                    WHEN kode_kab = '1' OR LOWER(nama_kabupaten) = 'indonesia' THEN 2 
+                    ELSE 0 
+                END ASC, 
+                kode_kab ASC
+            ")->get();
+
+        // Fetch values: $values[kabupaten_id][periode_id][indikator_dimensi_id] = nilai
+        $values = [];
+        if (!empty($selectedDimensiIds)) {
+            $rawValues = NilaiIndikatorMakro::select(['id', 'kabupaten_id', 'periode_indikator_id', 'indikator_dimensi_id', 'nilai'])
+                ->whereIn('indikator_dimensi_id', $selectedDimensiIds)
+                ->whereIn('periode_indikator_id', $periodes->pluck('id'))
+                ->get();
+            foreach ($rawValues as $v) {
+                $values[$v->kabupaten_id][$v->periode_indikator_id][$v->indikator_dimensi_id] = $v->nilai;
+            }
+        }
+
+        // Selected dimensions records
+        $selectedDimensis = $indikatorDimensis->whereIn('id', $selectedDimensiIds);
+
+        // Prepare chart data: datasets for combination of Region and Dimension
+        $chartData = [];
+        foreach ($kabupatens as $kab) {
+            foreach ($selectedDimensis as $indDim) {
+                $dataPoints = [];
+                foreach ($periodes as $p) {
+                    $val = $values[$kab->id][$p->id][$indDim->id] ?? null;
+                    $dataPoints[] = ($val !== null) ? (float)$val : null;
+                }
+                
+                $hasData = collect($dataPoints)->filter(fn($v) => $v !== null)->isNotEmpty();
+                if ($hasData) {
+                    $dimName = !$isNoneOnly ? ' - ' . ($indDim->dimensi->nama_dimensi ?? '') : '';
+                    $chartData[] = [
+                        'id' => $kab->id,
+                        'indikator_dimensi_id' => $indDim->id,
+                        'kode_kab' => $kab->kode_kab,
+                        'region_name' => $kab->kode_kab === '6100' ? 'Provinsi Kalimantan Barat' : ($kab->kode_kab === '1' ? 'Indonesia' : $kab->nama_kabupaten),
+                        'name' => ($kab->kode_kab === '6100' ? 'Provinsi Kalimantan Barat' : ($kab->kode_kab === '1' ? 'Indonesia' : $kab->nama_kabupaten)) . $dimName,
+                        'data' => $dataPoints,
+                    ];
+                }
+            }
+        }
+
+        return view('indikator-makro.index', compact(
+            'selectedIndikator',
+            'allPeriodes',
+            'selectedYears',
+            'periodes',
+            'indikatorDimensis',
+            'selectedDimensiIds',
+            'selectedDimensis',
+            'isNoneOnly',
+            'kabupatens',
+            'values',
+            'chartData'
+        ));
     }
 
     public function inputNilai(Request $request)
@@ -26,8 +140,7 @@ class IndikatorMakroController extends Controller
         $periodeIndikators = PeriodeIndikator::orderBy('tahun', 'desc')->get();
 
         // 2. Fetch all IndikatorMakro (ordered by urutan asc, then created_at desc)
-        $indikatorMakros = IndikatorMakro::where('is_active', true)
-            ->orderBy('urutan', 'asc')
+        $indikatorMakros = IndikatorMakro::orderBy('urutan', 'asc')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -51,11 +164,10 @@ class IndikatorMakroController extends Controller
 
         $selectedIndikator = IndikatorMakro::find($selectedIndikatorMakroId);
 
-        // 4. Fetch active IndikatorDimensi for this specific macro indicator
+        // 4. Fetch IndikatorDimensi for this specific macro indicator
         $indikatorDimensis = collect();
         if ($selectedIndikatorMakroId) {
             $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedIndikatorMakroId)
-                ->where('is_active', true)
                 ->with(['dimensi'])
                 ->orderBy('urutan', 'asc')
                 ->orderBy('created_at', 'desc')
@@ -596,6 +708,19 @@ class IndikatorMakroController extends Controller
             ]);
         }
         return response()->json(['success' => true]);
+    }
+
+    public function toggleIndikatorDimensiActive($id)
+    {
+        $indDim = IndikatorDimensi::findOrFail($id);
+        $indDim->is_active = !$indDim->is_active;
+        $indDim->updated_by = auth()->id();
+        $indDim->save();
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $indDim->is_active
+        ]);
     }
 
     public function destroyIndikatorDimensi($id)
