@@ -40,13 +40,13 @@ class IndikatorMakroController extends Controller
         if (!is_array($selectedYears)) {
             $selectedYears = [$selectedYears];
         }
-        $periodes = $allPeriodes->filter(function($p) use ($selectedYears) {
+        $periodes = $allPeriodes->filter(function ($p) use ($selectedYears) {
             return in_array($p->tahun, $selectedYears);
         });
 
         $indikatorDimensis = collect();
         $selectedDimensiIds = $request->query('indikator_dimensi_ids', []);
-        
+
         if ($selectedIndikator) {
             $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedIndikator->id)
                 ->with(['dimensi:id,nama_dimensi'])
@@ -101,9 +101,9 @@ class IndikatorMakroController extends Controller
                 $dataPoints = [];
                 foreach ($periodes as $p) {
                     $val = $values[$kab->id][$p->id][$indDim->id] ?? null;
-                    $dataPoints[] = ($val !== null) ? (float)$val : null;
+                    $dataPoints[] = ($val !== null) ? (float) $val : null;
                 }
-                
+
                 $hasData = collect($dataPoints)->filter(fn($v) => $v !== null)->isNotEmpty();
                 if ($hasData) {
                     $dimName = !$isNoneOnly ? ' - ' . ($indDim->dimensi->nama_dimensi ?? '') : '';
@@ -271,6 +271,15 @@ class IndikatorMakroController extends Controller
             ->get(['id', 'nama_indikator']);
 
         return response()->json($makros);
+    }
+
+    public function katalog()
+    {
+        $bidangs = IndikatorBidang::with(['indikatorMakros:id,indikator_bidang_id,nama_indikator,is_active'])
+            ->orderBy('urutan', 'asc')
+            ->get(['id', 'nama_bidang', 'is_active']);
+
+        return response()->json($bidangs);
     }
 
     public function kelola(Request $request)

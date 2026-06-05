@@ -246,7 +246,13 @@
                 <form action="{{ route('indikator-makro.index') }}" method="GET" class="row g-3" id="filter-form">
                     {{-- Live Autocomplete Search for Indikator Makro --}}
                     <div class="col-md-12 mb-2">
-                        <label class="form-label text-muted small fw-bold text-uppercase">Pilih Indikator Makro</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label text-muted small fw-bold text-uppercase mb-0">Pilih Indikator Makro</label>
+                            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1" 
+                                id="btn-open-katalog" data-bs-toggle="modal" data-bs-target="#katalogModal" style="font-size: 0.75rem; font-weight: 600;">
+                                <i class="fas fa-list me-1"></i> Lihat Katalog Indikator
+                            </button>
+                        </div>
                         <div class="position-relative" id="indikator-search-wrapper">
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0">
@@ -549,6 +555,34 @@
                 <p class="text-muted small">Silakan tambahkan atau aktifkan Indikator Makro terlebih dahulu di halaman kelola.</p>
             </div>
         @endif
+
+        {{-- ══ MODAL KATALOG INDIKATOR ══ --}}
+        <div class="modal fade" id="katalogModal" tabindex="-1" aria-labelledby="katalogModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark" id="katalogModalLabel" style="color: var(--fi-primary) !important;">
+                                <i class="fas fa-list-ul me-2"></i> Katalog Indikator Makro
+                            </h5>
+                            <p class="text-muted small mb-0">Silakan pilih indikator makro berdasarkan bidang di bawah ini</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 pt-3">
+                        <div id="katalog-loading" class="text-center py-5">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted small mt-2">Memuat Katalog Indikator...</p>
+                        </div>
+                        <div id="katalog-content" class="accordion" style="display: none;">
+                            {{-- Accordion dynamically populated via AJAX --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 @endsection
@@ -883,6 +917,85 @@ document.addEventListener('DOMContentLoaded', function () {
         // Run initial configuration
         updateChartData();
     @endif
+
+    // ════════ 1b. KATALOG INDIKATOR ON-DEMAND LOAD ════════
+    const katalogModal = document.getElementById('katalogModal');
+    let isKatalogLoaded = false;
+
+    if (katalogModal) {
+        katalogModal.addEventListener('show.bs.modal', function () {
+            if (isKatalogLoaded) return; // Cache: do not query database if already loaded once
+
+            const loading = document.getElementById('katalog-loading');
+            const content = document.getElementById('katalog-content');
+
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            fetch('/indikator-makro/katalog')
+                .then(response => response.json())
+                .then(data => {
+                    content.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach((bidang, index) => {
+                            const isFirst = index === 0;
+                            const accordionItem = document.createElement('div');
+                            accordionItem.className = 'accordion-item border shadow-sm mb-3';
+                            accordionItem.style.borderRadius = '12px';
+                            accordionItem.style.overflow = 'hidden';
+
+                            // Filter macro indicators for this bidang
+                            const indicators = bidang.indikator_makros || [];
+                            
+                            let indicatorsListHtml = '';
+                            if (indicators.length > 0) {
+                                indicators.forEach(item => {
+                                    indicatorsListHtml += `
+                                        <a href="?indikator_makro_id=${item.id}" class="list-group-item list-group-item-action border-0 py-2 d-flex align-items-center justify-content-between text-decoration-none">
+                                            <span class="small fw-semibold text-dark"><i class="fas fa-file-alt text-muted me-2"></i>${item.nama_indikator}</span>
+                                            <i class="fas fa-chevron-right text-muted small"></i>
+                                        </a>
+                                    `;
+                                });
+                            } else {
+                                indicatorsListHtml = '<div class="list-group-item border-0 text-muted small py-2">Belum ada indikator makro di bidang ini.</div>';
+                            }
+
+                            accordionItem.innerHTML = `
+                                <h2 class="accordion-header" id="heading_bidang_${bidang.id}">
+                                    <button class="accordion-button fw-bold text-dark ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse_bidang_${bidang.id}" aria-expanded="${isFirst ? 'true' : 'false'}" aria-controls="collapse_bidang_${bidang.id}"
+                                        style="background-color: var(--fi-surface); font-size: 0.9rem;">
+                                        <i class="fas fa-folder text-warning me-2"></i>${bidang.nama_bidang}
+                                        <span class="badge bg-secondary ms-2 small" style="font-size: 0.75rem;">${indicators.length}</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse_bidang_${bidang.id}" class="accordion-collapse collapse ${isFirst ? 'show' : ''}" aria-labelledby="heading_bidang_${bidang.id}" data-bs-parent="#katalog-content">
+                                    <div class="accordion-body p-0">
+                                        <div class="list-group list-group-flush">
+                                            ${indicatorsListHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            content.appendChild(accordionItem);
+                        });
+                        loading.style.display = 'none';
+                        content.style.display = 'block';
+                        isKatalogLoaded = true; // Set loaded cache to true
+                    } else {
+                        content.innerHTML = '<div class="text-center py-4 text-muted small">Belum ada bidang atau indikator terdaftar.</div>';
+                        loading.style.display = 'none';
+                        content.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    content.innerHTML = '<div class="text-center py-4 text-danger small">Gagal memuat katalog. Silakan coba lagi.</div>';
+                    loading.style.display = 'none';
+                    content.style.display = 'block';
+                });
+        });
+    }
 });
 </script>
 @endpush

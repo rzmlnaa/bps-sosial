@@ -263,6 +263,7 @@ Route::middleware(['check.status'])->group(function () {
 
     // Menu Indikator Makro
     Route::get('/indikator-makro', [IndikatorMakroController::class, 'index'])->name('indikator-makro.index');
+    Route::get('/indikator-makro/katalog', [IndikatorMakroController::class, 'katalog'])->name('indikator-makro.katalog');
 
     // Panduan Pengguna
     Route::get('/panduan', function () {
