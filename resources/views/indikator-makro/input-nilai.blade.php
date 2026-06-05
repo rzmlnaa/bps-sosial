@@ -202,6 +202,35 @@
             margin-bottom: 1rem;
             font-style: italic;
         }
+
+        /* Sticky Column (Kabupaten/Kota/Provinsi) */
+        .table-bps tbody tr {
+            background-color: #fff;
+        }
+        
+        .table-bps .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 1020;
+            background-color: inherit;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            border-right: 2px solid #aaa !important;
+        }
+        
+        .table-bps thead th.sticky-col {
+            z-index: 1024 !important;
+            background-color: #fafafa !important;
+            box-shadow: inset 0 -1px 0 #bbb, 2px 0 5px rgba(0,0,0,0.05) !important;
+            border-right: 2px solid #aaa !important;
+        }
+
+        .table-bps:not(.table-none-only) thead tr.col-num th.sticky-col {
+            box-shadow: inset 0 -1.5px 0 #000, 2px 0 5px rgba(0,0,0,0.05) !important;
+        }
+
+        .table-bps.table-none-only thead tr.col-num th.sticky-col {
+            box-shadow: inset 0 -1.5px 0 #000, 2px 0 5px rgba(0,0,0,0.05) !important;
+        }
     </style>
 @endpush
 
@@ -277,7 +306,7 @@
         </div>
 
         {{-- BPS MATRIX TABLE --}}
-        <div class="table-bps-container shadow-sm">
+        <div class="table-bps-container shadow-sm" id="tabel">
             <form action="{{ route('indikator-makro.store-nilai') }}" method="POST" id="nilai-form">
                 @csrf
                 <input type="hidden" name="periode_indikator_id" value="{{ $selectedPeriodeId }}">
@@ -287,8 +316,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <h4 class="table-title-bps mb-1">
-                            Tabel {{ $selectedIndikator ? $selectedIndikator->nama_indikator : 'Indikator Makro' }} menurut
-                            Kabupaten/Kota/Provinsi
+                            Tabel {{ $selectedIndikator ? $selectedIndikator->nama_indikator : 'Indikator Makro' }} Tahun {{ $selectedPeriode ? $selectedPeriode->tahun : '' }}
                         </h4>
                         
                     </div>
@@ -346,16 +374,16 @@
                         <thead>
                             @if($isNoneOnly)
                                 <tr>
-                                    <th>Kabupaten/Kota/Provinsi</th>
+                                    <th class="sticky-col">Kabupaten/Kota/Provinsi</th>
                                     <th style="min-width: 150px;">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
                                 </tr>
                                 <tr class="col-num">
-                                    <th>(1)</th>
+                                    <th class="sticky-col">(1)</th>
                                     <th>(2)</th>
                                 </tr>
                             @else
                                 <tr>
-                                    <th rowspan="2">Kabupaten/Kota/Provinsi</th>
+                                    <th rowspan="2" class="sticky-col">Kabupaten/Kota/Provinsi</th>
                                     <th colspan="{{ $colspan }}">{{ $selectedPeriode ? $selectedPeriode->tahun : '-' }}</th>
                                 </tr>
                                 <tr>
@@ -367,7 +395,7 @@
                                 </tr>
                                 {{-- Column Numbering Row --}}
                                 <tr class="col-num">
-                                    <th>(1)</th>
+                                    <th class="sticky-col">(1)</th>
                                     @if($dimColCount > 0)
                                         @for($i = 0; $i < $dimColCount; $i++)
                                             <th>({{ $i + 2 }})</th>
@@ -386,7 +414,7 @@
                                     $rowStyle = ($isProvince || $isIndonesia) ? 'font-weight: bold; background-color: #f9f9f9;' : '';
                                 @endphp
                                 <tr style="{{ $rowStyle }}" data-kode-kab="{{ $kab->kode_kab }}" data-nama-kab="{{ strtolower($kab->nama_kabupaten) }}">
-                                    <td>
+                                    <td class="sticky-col">
                                         @if($isIndonesia)
                                             <strong>INDONESIA</strong>
                                         @elseif($isProvince)
@@ -398,14 +426,23 @@
                                     @forelse($indikatorDimensis as $indDim)
                                         @php
                                             $val = $existingValues[$kab->id][$indDim->id] ?? '';
-                                            // Format value for display if exists
                                             if (is_numeric($val)) {
-                                                // float format check
-                                                $val = (float) $val;
+                                                $floatVal = (float)$val;
+                                                if (floor($floatVal) == $floatVal) {
+                                                    $val = number_format($floatVal, 0, '.', ',');
+                                                } else {
+                                                    $strVal = (string)$floatVal;
+                                                    $dotPos = strpos($strVal, '.');
+                                                    $decimals = 2;
+                                                    if ($dotPos !== false) {
+                                                        $decimals = strlen($strVal) - $dotPos - 1;
+                                                    }
+                                                    $val = number_format($floatVal, $decimals, '.', ',');
+                                                }
                                             }
                                         @endphp
                                         <td class="p-1">
-                                            <input type="number" step="any" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
+                                            <input type="text" inputmode="decimal" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
                                                 class="bps-input-cell fw-medium" placeholder="-" value="{{ $val }}">
                                         </td>
                                     @empty
@@ -436,6 +473,85 @@ document.addEventListener('DOMContentLoaded', function () {
     const table = document.querySelector('.table-bps');
     if (!table) return;
 
+    let isDirty = false;
+
+    // Monitor typing / manual changes
+    table.addEventListener('input', function (e) {
+        if (e.target.classList.contains('bps-input-cell')) {
+            isDirty = true;
+        }
+    });
+
+    // Reset isDirty flag when form is submitted for saving
+    const nilaiForm = document.getElementById('nilai-form');
+    if (nilaiForm) {
+        nilaiForm.addEventListener('submit', function () {
+            isDirty = false;
+        });
+    }
+
+    // Intercept filter dropdown form submissions
+    const filterForm = document.getElementById('filter-form');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function (e) {
+            if (isDirty) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Data Belum Disimpan!',
+                    text: 'Ada perubahan data yang belum disimpan. Apakah Anda yakin ingin mengubah filter dan membuang perubahan?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f58220',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Ubah Filter',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        isDirty = false;
+                        filterForm.submit();
+                    }
+                });
+            }
+        });
+    }
+
+    // Intercept browser reload / tab close / back buttons (standard browser prompts)
+    window.addEventListener('beforeunload', function (e) {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = ''; // Trigger browser built-in warning popup
+        }
+    });
+
+    // Intercept clicks on local menu/navigation links
+    document.addEventListener('click', function (e) {
+        const anchor = e.target.closest('a');
+        if (anchor && isDirty) {
+            const href = anchor.getAttribute('href');
+            // Ignore blank targets, hash links, javascript actions, etc.
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || anchor.getAttribute('target') === '_blank') {
+                return;
+            }
+
+            e.preventDefault();
+            Swal.fire({
+                title: 'Data Belum Disimpan!',
+                text: 'Ada perubahan data yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f58220',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Tinggalkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    isDirty = false;
+                    window.location.href = anchor.href;
+                }
+            });
+        }
+    });
+
     function normalizeName(name) {
         if (!name) return '';
         return name.toLowerCase()
@@ -452,19 +568,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Strip percentage, Rp currency symbol, spaces, and other non-numeric chars except commas, dots, and minus sign
         cleanVal = cleanVal.replace(/[^0-9,\.\-]/g, '');
-
-        if (cleanVal === '') return '';
-
-        // Standardize decimal numbers
-        if (cleanVal.includes(',') && cleanVal.includes('.')) {
-            if (cleanVal.indexOf('.') < cleanVal.indexOf(',')) {
-                cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
-            } else {
-                cleanVal = cleanVal.replace(/,/g, '');
-            }
-        } else if (cleanVal.includes(',')) {
-            cleanVal = cleanVal.replace(',', '.');
-        }
         return cleanVal;
     }
 
@@ -562,6 +665,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
             });
+        }
+
+        if (count > 0) {
+            isDirty = true;
         }
 
         return count;

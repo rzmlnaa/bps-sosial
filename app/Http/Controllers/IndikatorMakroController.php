@@ -123,7 +123,7 @@ class IndikatorMakroController extends Controller
                             'indikator_dimensi_id' => $indikatorDimensiId,
                         ])->delete();
                     } else {
-                        $nilaiClean = str_replace(',', '.', $nilaiRaw);
+                        $nilaiClean = $this->cleanFloatValue($nilaiRaw);
 
                         $record = NilaiIndikatorMakro::firstOrNew([
                             'periode_indikator_id' => $periodeId,
@@ -134,7 +134,7 @@ class IndikatorMakroController extends Controller
                         if (!$record->exists) {
                             $record->created_by = $userId;
                         }
-                        $record->nilai = (float) $nilaiClean;
+                        $record->nilai = $nilaiClean;
                         $record->updated_by = $userId;
                         $record->save();
                     }
@@ -142,10 +142,11 @@ class IndikatorMakroController extends Controller
             }
         }
 
-        return redirect()->route('indikator-makro.input-nilai', [
-            'periode_indikator_id' => $periodeId,
-            'indikator_makro_id' => $indikatorMakroId
-        ])->with('success', 'Nilai Indikator Makro berhasil disimpan.');
+        $previousUrl = url()->previous();
+        if (!str_contains($previousUrl, '#tabel')) {
+            $previousUrl = preg_replace('/#.*$/', '', $previousUrl) . '#tabel';
+        }
+        return redirect($previousUrl)->with('success', 'Nilai Indikator Makro berhasil disimpan.');
     }
 
     public function searchMakro(Request $request)
@@ -605,5 +606,54 @@ class IndikatorMakroController extends Controller
         }
         IndikatorDimensi::findOrFail($id)->delete();
         return back()->with('success', 'Indikator Dimensi berhasil dihapus')->with('tab', 'indikator-dimensi');
+    }
+
+    private function cleanFloatValue($val)
+    {
+        if ($val === null || $val === '') {
+            return null;
+        }
+
+        $val = trim($val);
+
+        // Remove Rp currency symbol, space, percentage, etc.
+        $val = preg_replace('/[^0-9,\.\-]/', '', $val);
+
+        // Standardize based on existence of both separators
+        if (strpos($val, '.') !== false && strpos($val, ',') !== false) {
+            if (strpos($val, '.') < strpos($val, ',')) {
+                // dot is thousands, comma is decimal (Indonesian format: 54.748.977,00)
+                $val = str_replace('.', '', $val);
+                $val = str_replace(',', '.', $val);
+            } else {
+                // comma is thousands, dot is decimal (US format: 54,748,977.00)
+                $val = str_replace(',', '', $val);
+            }
+        } else {
+            // Only one type of separator or none
+            if (strpos($val, ',') !== false) {
+                // Comma could be decimal or thousands
+                $parts = explode(',', $val);
+                if (count($parts) === 2 && strlen($parts[1]) !== 3) {
+                    // Decimal: e.g. 12,34
+                    $val = str_replace(',', '.', $val);
+                } else {
+                    // Thousands: e.g. 12,345 or multiple commas
+                    $val = str_replace(',', '', $val);
+                }
+            } elseif (strpos($val, '.') !== false) {
+                // Dot could be decimal or thousands
+                $parts = explode('.', $val);
+                if (count($parts) === 2 && strlen($parts[1]) !== 3) {
+                    // Decimal: e.g. 12.34
+                    // Keep dot
+                } else {
+                    // Thousands: e.g. 12.345 or multiple dots
+                    $val = str_replace('.', '', $val);
+                }
+            }
+        }
+
+        return (float) $val;
     }
 }

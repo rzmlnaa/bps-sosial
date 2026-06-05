@@ -457,7 +457,11 @@ class RhNilaiController extends Controller
             }
         }
 
-        return back()->with('success', 'Data rentang harga berhasil disimpan.');
+        $previousUrl = url()->previous();
+        if (!str_contains($previousUrl, '#table')) {
+            $previousUrl .= '#table';
+        }
+        return redirect($previousUrl)->with('success', 'Data rentang harga berhasil disimpan.');
     }
 
 

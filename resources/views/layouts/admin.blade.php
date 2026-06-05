@@ -66,8 +66,9 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            background: #fff;
+            background: transparent;
             margin-bottom: 0;
+            animation: fadeIn 0.8s ease-in-out;
         }
 
         .logo-icon-sidebar img {
@@ -78,6 +79,16 @@
 
         .logo-text {
             margin-top: -20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 

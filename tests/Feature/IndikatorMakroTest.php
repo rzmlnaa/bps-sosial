@@ -413,6 +413,147 @@ class IndikatorMakroTest extends TestCase
         $this->assertEquals($user->id, $id2->refresh()->updated_by);
         $this->assertEquals($user->id, $id1->refresh()->updated_by);
     }
+
+    public function test_can_store_formatted_values_with_dots_and_commas()
+    {
+        $user = $this->createProvinceUser();
+
+        $periode = PeriodeIndikator::create(['tahun' => 2026, 'is_active' => true]);
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dimensi = Dimensi::create(['nama_dimensi' => 'Kesehatan']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi->id,
+            'is_active' => true
+        ]);
+
+        // Post standard US format: 54,748,977.00
+        $response = $this->actingAs($user)->post(route('indikator-makro.store-nilai'), [
+            'periode_indikator_id' => $periode->id,
+            'indikator_makro_id' => $makro->id,
+            'nilai' => [
+                $user->kabupaten_id => [
+                    $indDim->id => '54,748,977.00'
+                ]
+            ]
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('nilai_indikator_makros', [
+            'periode_indikator_id' => $periode->id,
+            'kabupaten_id' => $user->kabupaten_id,
+            'indikator_dimensi_id' => $indDim->id,
+            'nilai' => 54748977.00
+        ]);
+
+        // Post Indonesian format: 54.748.977,00
+        $response = $this->actingAs($user)->post(route('indikator-makro.store-nilai'), [
+            'periode_indikator_id' => $periode->id,
+            'indikator_makro_id' => $makro->id,
+            'nilai' => [
+                $user->kabupaten_id => [
+                    $indDim->id => '54.748.977,00'
+                ]
+            ]
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('nilai_indikator_makros', [
+            'periode_indikator_id' => $periode->id,
+            'kabupaten_id' => $user->kabupaten_id,
+            'indikator_dimensi_id' => $indDim->id,
+            'nilai' => 54748977.00
+        ]);
+    }
+
+    public function test_can_store_all_user_format_variations()
+    {
+        $user = $this->createProvinceUser();
+
+        $periode = PeriodeIndikator::create(['tahun' => 2026, 'is_active' => true]);
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dimensi = Dimensi::create(['nama_dimensi' => 'Kesehatan']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi->id,
+            'is_active' => true
+        ]);
+
+        $variations = [
+            // Standard US Formats
+            '9,206.00' => 9206.00,
+            '111.53' => 111.53,
+            '72.88' => 72.88,
+            '7.93' => 7.93,
+            '4,685,371.26' => 4685371.26,
+            '13,172' => 13172.00,
+            '11,377,934.44' => 11377934.44,
+
+            // Indonesian Formats
+            '9.206,00' => 9206.00,
+            '111,53' => 111.53,
+            '72,88' => 72.88,
+            '7,93' => 7.93,
+            '4.685.371,26' => 4685371.26,
+            '13.172' => 13172.00,
+            '11.377.934,44' => 11377934.44,
+        ];
+
+        foreach ($variations as $raw => $expected) {
+            $response = $this->actingAs($user)->post(route('indikator-makro.store-nilai'), [
+                'periode_indikator_id' => $periode->id,
+                'indikator_makro_id' => $makro->id,
+                'nilai' => [
+                    $user->kabupaten_id => [
+                        $indDim->id => $raw
+                    ]
+                ]
+            ]);
+
+            $response->assertRedirect();
+            $this->assertDatabaseHas('nilai_indikator_makros', [
+                'periode_indikator_id' => $periode->id,
+                'kabupaten_id' => $user->kabupaten_id,
+                'indikator_dimensi_id' => $indDim->id,
+                'nilai' => $expected
+            ]);
+        }
+    }
+
+    public function test_rendered_values_are_formatted_in_us_format()
+    {
+        $user = $this->createProvinceUser();
+
+        $periode = PeriodeIndikator::create(['tahun' => 2026, 'is_active' => true]);
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+        $dimensi = Dimensi::create(['nama_dimensi' => 'Kesehatan']);
+        $indDim = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi->id,
+            'is_active' => true
+        ]);
+
+        // Create an existing value
+        \App\Models\NilaiIndikatorMakro::create([
+            'periode_indikator_id' => $periode->id,
+            'kabupaten_id' => $user->kabupaten_id,
+            'indikator_dimensi_id' => $indDim->id,
+            'nilai' => 4685371.2600,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('indikator-makro.input-nilai', [
+            'periode_indikator_id' => $periode->id,
+            'indikator_makro_id' => $makro->id,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('value="4,685,371.26"', false);
+    }
 }
 
 

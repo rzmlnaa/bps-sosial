@@ -133,13 +133,13 @@
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Kabupaten/Kota</label>
                                 <!-- <select name="kabupaten_id" class="form-select border-0 bg-light shadow-none"
-                                                                                                                                                    onchange="this.form.submit()">
-                                                                                                                                                    @foreach($kabupatens as $kab)
-                                                                                                                                                        <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
-                                                                                                                                                            [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
-                                                                                                                                                        </option>
-                                                                                                                                                    @endforeach
-                                                                                                                                                </select> -->
+                                                                                                                                                        onchange="this.form.submit()">
+                                                                                                                                                        @foreach($kabupatens as $kab)
+                                                                                                                                                            <option value="{{ $kab->id }}" {{ $selectedKabupatenId == $kab->id ? 'selected' : '' }}>
+                                                                                                                                                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
+                                                                                                                                                            </option>
+                                                                                                                                                        @endforeach
+                                                                                                                                                    </select> -->
 
 
                                 @if (auth()->user()->kabupaten->kode_kab == '6100')
@@ -213,7 +213,7 @@
             </button>
         </div>
 
-        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;" id="table">
             <form action="{{ route('rh-nilai.save') }}" method="POST" id="form-save-nilai">
                 @csrf
                 <input type="hidden" name="rh_tahun_id" value="{{ $activeYear->id }}">
@@ -224,18 +224,10 @@
                     <table class="table table-bordered align-middle mb-0">
                         <thead class="bg-light text-center align-middle">
                             @php
-                                // Show Master if:
-                                // 1. "All" is selected.
-                                // 2. No specific revision is selected (Default view, or Revision ID empty).
-                                // 3. A specific revision is selected BUT it is the first one (count < 2, so comparisons need Master).
                                 $latestRevisionId = $latestRevisionId ?? null; // Ensure variable exists
                                 $isMasterEditable = empty($latestRevisionId);
 
                                 $showMaster = ($selectedRevisionId === 'all' || !$selectedRevisionId || $displayRevisions->count() < 2);
-                                // Only show Prev Year if:
-                                // 1. Master is selected (Input Utama) OR
-                                // 2. All Revisions are selected.
-                                // (If a specific revision is selected, we hide Prev Year to save space/reduce redundancy as per Step 23).
                                 $showPrev = !empty($prevYearFinal) && (
                                     $selectedRevisionId === 'all' ||
                                     !$selectedRevisionId
@@ -439,8 +431,6 @@
                                                     $valMin = $effData['min'] ?? '-';
                                                     $valMax = $effData['max'] ?? '-';
                                                     $valAlasan = '-'; // We don't track historical reasons strictly in effective array, usually shown if relevant or just skip for readonly summary.
-                                                    // Note: You might want to fetch reason if needed, but for "Price Range" view style, usually just numbers.
-                                                    // Let's stick to numbers for Read-Only as per request "view readonly but values same as Price Range".
                                                 }
                                             @endphp
 
@@ -598,6 +588,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('form-save-nilai');
+            let isDirty = false;
 
             // Format Ribuan Function
             function formatRibuan(input) {
@@ -608,13 +599,76 @@
                 input.value = value;
             }
 
-            // Apply formatter listener
+            // Apply formatter listener and track dirtiness
             form.addEventListener('input', function (e) {
+                isDirty = true;
                 if (e.target.classList.contains('format-ribuan')) {
                     formatRibuan(e.target);
                     validateTrio(e.target);
                 } else if (e.target.tagName === 'TEXTAREA') {
                     validateTrio(e.target);
+                }
+            });
+
+            // Intercept filter dropdown form submissions
+            const filterForm = document.getElementById('filter-form');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function (e) {
+                    if (isDirty) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Data Belum Disimpan!',
+                            text: 'Ada perubahan data yang belum disimpan. Apakah Anda yakin ingin mengubah filter dan membuang perubahan?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#f58220',
+                            cancelButtonColor: '#64748b',
+                            confirmButtonText: 'Ya, Ubah Filter',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                isDirty = false;
+                                filterForm.submit();
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Intercept browser reload / tab close / back buttons (standard browser prompts)
+            window.addEventListener('beforeunload', function (e) {
+                if (isDirty) {
+                    e.preventDefault();
+                    e.returnValue = ''; // Trigger browser built-in warning popup
+                }
+            });
+
+            // Intercept clicks on local menu/navigation links
+            document.addEventListener('click', function (e) {
+                const anchor = e.target.closest('a');
+                if (anchor && isDirty) {
+                    const href = anchor.getAttribute('href');
+                    // Ignore blank targets, hash links, javascript actions, etc.
+                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || anchor.getAttribute('target') === '_blank') {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Data Belum Disimpan!',
+                        text: 'Ada perubahan data yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f58220',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Ya, Tinggalkan',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            isDirty = false;
+                            window.location.href = anchor.href;
+                        }
+                    });
                 }
             });
 
@@ -733,6 +787,8 @@
                         });
                         firstError.focus();
                     }
+                } else {
+                    isDirty = false;
                 }
             });
         });
