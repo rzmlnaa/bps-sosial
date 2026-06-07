@@ -9,10 +9,6 @@
             <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">
                 {{ $menu->name }}
             </h2>
-
-            @if($title)
-                <p class="text-muted mb-0">{{ $title }}</p>
-            @endif
         </div>
 
         @if($menu->type !== 'external' && ($menu->url || $menu->embed_url))
@@ -178,19 +174,31 @@
                 } else if (type === 'spreadsheet') {
                     const idMatch = url ? url.match(/\/d\/([a-zA-Z0-9-_]+)/) : null;
                     if (idMatch && idMatch[1]) {
-                        let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
-                        let params = [];
                         const gid = meta ? (meta.gid || '') : '';
                         const mode = meta ? (meta.sheet_mode || '') : '';
+                        const allowEdit = meta ? (meta.allow_edit === true || meta.allow_edit === '1' || meta.allow_edit === 1 || meta.allow_edit === 'true') : false;
 
-                        if (mode === 'single' && gid !== '') {
-                            params.push(`gid=${gid}`);
-                            params.push('single=true');
-                        } else {
+                        if (allowEdit) {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/edit`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                            }
                             params.push('widget=true');
                             params.push('headers=false');
+                            return embed + (params.length ? '?' + params.join('&') : '');
+                        } else {
+                            let embed = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/htmlembed`;
+                            let params = [];
+                            if (mode === 'single' && gid !== '') {
+                                params.push(`gid=${gid}`);
+                                params.push('single=true');
+                            } else {
+                                params.push('widget=true');
+                                params.push('headers=false');
+                            }
+                            return embed + (params.length ? '?' + params.join('&') : '');
                         }
-                        return embed + (params.length ? '?' + params.join('&') : '');
                     }
                 } else if (type === 'drive') {
                     // Google Drive Folders

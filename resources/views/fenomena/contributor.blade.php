@@ -329,6 +329,28 @@
             }
 
             @media (max-width: 768px) {
+                .stats-overview {
+                    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                    gap: 0.75rem;
+                }
+                .stat-box {
+                    padding: 1rem;
+                    gap: 0.75rem;
+                    border-radius: 14px;
+                }
+                .stat-box i {
+                    width: 42px;
+                    height: 42px;
+                    font-size: 1.2rem;
+                    border-radius: 10px;
+                    flex-shrink: 0;
+                }
+                .stat-info h6 {
+                    font-size: 0.78rem;
+                }
+                .stat-info h4 {
+                    font-size: 1.2rem;
+                }
                 .top-three-grid { display: none; }
                 .lb-title { font-size: 2rem; }
                 .lb-item { padding: 1.5rem 1.25rem; }
@@ -336,8 +358,6 @@
                 .lb-stats-box { min-width: auto; }
                 .lb-progress-container { display: none; }
                 .lb-rank-box { margin-right: 1rem; width: 44px; }
-                .stat-box { padding: 1.25rem; }
-                .stats-overview { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
                 .lb-info h5 { font-size: 1.05rem; }
                 .lb-count-text { font-size: 1.05rem; }
             }
@@ -362,7 +382,7 @@
                     <h4>{{ number_format($totalContributors) }}</h4>
                 </div>
             </div>
-            <div class="stat-box d-none d-md-flex">
+            <div class="stat-box">
                 <i class="fas fa-medal"></i>
                 <div class="stat-info">
                     <h6>Top Kontribusi</h6>
@@ -375,7 +395,7 @@
             <h1 class="lb-title">
                 🏆 Top 10 Kontributor
             </h1>
-            <p class="lb-subtitle">Apresiasi bagi insan BPS yang paling aktif mendokumentasikan fenomena</p>
+            <p class="lb-subtitle">Apresiasi bagi insan BPS yang paling aktif mendokumentasikan fenomena terverifikasi</p>
         </div>
 
         @if($topContributors->isEmpty())

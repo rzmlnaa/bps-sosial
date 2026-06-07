@@ -15,12 +15,12 @@
         $hasVideo = !empty($videoEmbedUrl);
     @endphp
 
-    <div class="container-fluid mt-3 animate-fade-in">
+    <div class="mt-2 fade-in-up">
         <!-- Header -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <h1 class="fw-bold mb-1" style="color: var(--bps-orange);">Panduan Pengguna</h1>
-                <p class="text-dark lead mb-0 small-description">Petunjuk penggunaan sistem informasi SISOKA</p>
+                <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Panduan Pengguna</h2>
+                <p class="text-muted mb-0">Petunjuk penggunaan sistem informasi SISOKA</p>
             </div>
             @if($hasPdf)
                 <div class="mt-3 mt-md-0">
@@ -36,7 +36,7 @@
             <div class="row g-4">
                 @if($hasPdf)
                     <!-- PDF Viewer Column -->
-                    <div class="{{ $hasVideo ? 'col-lg-7' : 'col-12' }}">
+                    <div class="{{ $hasVideo ? 'col-lg-7' : 'col-12' }} fade-in-up">
                         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100"
                             style="min-height: calc(100vh - 250px);">
                             <div class="card-body p-0 d-flex flex-column">
@@ -66,7 +66,7 @@
 
                 @if($hasVideo)
                     <!-- YouTube Video Column -->
-                    <div class="{{ $hasPdf ? 'col-lg-5' : 'col-lg-8 mx-auto col-md-10' }}">
+                    <div class="{{ $hasPdf ? 'col-lg-5' : 'col-lg-8 mx-auto col-md-10' }} fade-in-up">
                         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
                             <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
                                 <div>
@@ -247,15 +247,15 @@
                             setTimeout(() => {
                                 if (loadingPreview && !loadingPreview.classList.contains('d-none')) {
                                     loadingPreview.innerHTML = `
-                                                    <div class="text-center p-5">
-                                                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                                                        <h5 class="fw-bold">Preview Tidak Dapat Dimuat</h5>
-                                                        <p class="text-muted">Browser Anda memblokir tampilan PDF secara langsung atau koneksi lambat.</p>
-                                                        <a href="${rawUrl}" target="_blank" class="btn btn-primary rounded-pill px-4 mt-2">
-                                                            <i class="fas fa-external-link-alt me-2"></i> Klik Untuk Membuka Panduan
-                                                        </a>
-                                                    </div>
-                                                `;
+                                                                                                                                                                <div class="text-center p-5">
+                                                                                                                                                                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                    <h5 class="fw-bold">Preview Tidak Dapat Dimuat</h5>
+                                                                                                                                                                    <p class="text-muted">Browser Anda memblokir tampilan PDF secara langsung atau koneksi lambat.</p>
+                                                                                                                                                                    <a href="${rawUrl}" target="_blank" class="btn btn-primary rounded-pill px-4 mt-2">
+                                                                                                                                                                        <i class="fas fa-external-link-alt me-2"></i> Klik Untuk Membuka Panduan
+                                                                                                                                                                    </a>
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
                                 }
                             }, 7000);
                         }

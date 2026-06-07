@@ -16,6 +16,12 @@ class AdminController extends Controller
             'admins_count' => User::where('role', 'admin')->count(),
             'kabupatens_count' => Kabupaten::count(),
             'menus_count' => DynamicMenu::where('is_active', true)
+                ->whereNotIn('type', ['logo', 'panduan_pengguna', 'video_panduan'])
+                ->whereNotIn('id', function ($query) {
+                    $query->select('parent_id')
+                        ->from('dynamic_menus')
+                        ->whereNotNull('parent_id');
+                })
                 ->where(function ($query) {
                     $query->where(function ($q) {
                         $q->whereNotNull('url')->where('url', '!=', '');

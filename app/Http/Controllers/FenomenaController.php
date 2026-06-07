@@ -71,7 +71,7 @@ class FenomenaController extends Controller
         }
 
         $query->orderBy('tanggal_berita', 'desc');
-        $fenomenas = $query->paginate(10)->withQueryString();
+        $fenomenas = $query->paginate(12)->withQueryString();
         $totalFiltered = $fenomenas->total();
         $totalVerified = Fenomena::where('status_verifikasi', 'Y')->count();
         $myCount = auth()->check()
@@ -169,7 +169,7 @@ class FenomenaController extends Controller
         $fenomena->indikators()->sync([$request->indikator_id]);
         $fenomena->jenisFenomenas()->sync($request->jenis_fenomena_ids);
 
-        return redirect()->route('fenomena.index')->with('success', 'Data fenomena berhasil disimpan.');
+        return redirect('/fenomena')->with('success', 'Data fenomena berhasil disimpan.');
     }
 
     public function kelola()

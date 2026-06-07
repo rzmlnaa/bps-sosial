@@ -57,13 +57,9 @@
                             <a href="{{ route('admin.dynamic-menus.edit', $panduan->id) }}" class="btn btn-outline-primary rounded-pill px-4 btn-sm">
                                 <i class="fas fa-edit me-1"></i> Edit Link
                             </a>
-                            <form action="{{ route('admin.dynamic-menus.destroy', $panduan->id) }}" method="POST" id="delete-panduan" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-panduan', 'Panduan Pengguna')">
-                                    <i class="fas fa-trash me-1"></i> Hapus
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDelete('{{ url('/admin/dynamic-menus/' . $panduan->id) }}', 'Panduan Pengguna')">
+                                <i class="fas fa-trash me-1"></i> Hapus
+                            </button>
                         @else
                             <a href="{{ route('admin.dynamic-menus.create', ['type' => 'panduan_pengguna']) }}" class="btn btn-primary bg-navy border-0 rounded-pill px-4 btn-sm">
                                 <i class="fas fa-plus me-1"></i> Set Panduan Pengguna
@@ -121,13 +117,9 @@
                             <a href="{{ route('admin.dynamic-menus.edit', $logo->id) }}" class="btn btn-outline-info rounded-pill px-4 btn-sm">
                                 <i class="fas fa-edit me-1"></i> Edit Logo
                             </a>
-                            <form action="{{ route('admin.dynamic-menus.destroy', $logo->id) }}" method="POST" id="delete-logo" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-logo', 'Logo Sisoka')">
-                                    <i class="fas fa-trash me-1"></i> Hapus
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDelete('{{ url('/admin/dynamic-menus/' . $logo->id) }}', 'Logo Sisoka')">
+                                <i class="fas fa-trash me-1"></i> Hapus
+                            </button>
                         @else
                             <a href="{{ route('admin.dynamic-menus.create', ['type' => 'logo']) }}" class="btn btn-info text-white rounded-pill px-4 btn-sm">
                                 <i class="fas fa-plus me-1"></i> Set Logo Sisoka
@@ -176,13 +168,9 @@
                             <a href="{{ route('admin.dynamic-menus.edit', $videoPanduan->id) }}" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
                                 <i class="fas fa-edit me-1"></i> Edit Video
                             </a>
-                            <form action="{{ route('admin.dynamic-menus.destroy', $videoPanduan->id) }}" method="POST" id="delete-video-panduan" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDeleteSpecial('delete-video-panduan', 'Video Panduan')">
-                                    <i class="fas fa-trash me-1"></i> Hapus
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-4 btn-sm" onclick="confirmDelete('{{ url('/admin/dynamic-menus/' . $videoPanduan->id) }}', 'Video Panduan')">
+                                <i class="fas fa-trash me-1"></i> Hapus
+                            </button>
                         @else
                             <a href="{{ route('admin.dynamic-menus.create', ['type' => 'video_panduan']) }}" class="btn btn-danger text-white rounded-pill px-4 btn-sm">
                                 <i class="fas fa-plus me-1"></i> Set Video Panduan
@@ -315,13 +303,9 @@
                                             <a href="{{ route('admin.dynamic-menus.edit', $parent->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
                                                 <i class="fas fa-edit"></i> Edit
                                             </a>
-                                            <form action="{{ route('admin.dynamic-menus.destroy', $parent->id) }}" method="POST" id="delete-form-{{ $parent->id }}">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="confirmDelete({{ $parent->id }})">
-                                                    <i class="fas fa-trash"></i> Hapus
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="confirmDelete('{{ url('/admin/dynamic-menus/' . $parent->id) }}', '{{ $parent->name }}')">
+                                                <i class="fas fa-trash"></i> Hapus
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -405,13 +389,9 @@
                                                 <a href="{{ route('admin.dynamic-menus.edit', $child->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
-                                                <form action="{{ route('admin.dynamic-menus.destroy', $child->id) }}" method="POST" id="delete-form-{{ $child->id }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="confirmDelete({{ $child->id }})">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="confirmDelete('{{ url('/admin/dynamic-menus/' . $child->id) }}', '{{ $child->name }}')">
+                                                    <i class="fas fa-trash"></i> Hapus
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -429,44 +409,35 @@
             </div>
         </div>
     </div>
+
+    <form id="global-delete-form" method="POST" style="display:none;">
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
-    function confirmDelete(id) {
+    function confirmDelete(url, itemName) {
         Swal.fire({
             title: 'Apakah Anda yakin?',
-            text: "Menu yang dihapus tidak dapat dikembalikan!",
+            text: `Anda akan menghapus "${itemName}". Tindakan ini tidak dapat dibatalkan!`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('delete-form-' + id).submit();
+                const form = document.getElementById('global-delete-form');
+                form.action = url;
+                form.submit();
             }
-        })
-    }
-
-    function confirmDeleteSpecial(formId, itemName) {
-        Swal.fire({
-            title: 'Apakah Anda yakin?',
-            text: itemName + " yang dihapus tidak dapat dikembalikan!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById(formId).submit();
-            }
-        })
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function () {

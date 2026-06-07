@@ -23,9 +23,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon"
-        href="{{ $logoUrl }}"
-        type="image/x-icon">
+    <link rel="icon" href="{{ $logoUrl }}" type="image/x-icon">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -41,8 +39,8 @@
 
     <style>
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -60,6 +58,38 @@
             object-fit: contain;
             /* AGAR LOGO TIDAK TERPOTONG */
         }
+
+        .logo-icon-sidebar {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: transparent;
+            margin-bottom: 0;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .logo-icon-sidebar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            margin-top: -20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 
     @stack('styles')
@@ -71,11 +101,10 @@
     <div class="mobile-nav d-lg-none">
         <div class="d-flex align-items-center gap-2">
             <div class="logo-icon">
-                <img src="{{ $logoUrl }}"
-                    alt="Logo BPS"
+                <img src="{{ $logoUrl }}" alt="Logo BPS"
                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
-            <span class="fw-bold text-navy">BPS Kalbar</span>
+            <span class="fw-bold text-navy">Sistem Informasi Sosial Kalbar</span>
         </div>
         <button class="btn btn-link text-dark" id="sidebarToggle">
             <i class="fas fa-bars fa-lg"></i>
@@ -84,15 +113,15 @@
 
     <!-- Sidebar -->
     <nav class="sidebar client-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo-icon">
-                <img src="{{ $logoUrl }}"
-                    alt="Logo BPS"
+        <div class="sidebar-header d-flex flex-column align-items-center text-center pb-2">
+            <div class="logo-icon-sidebar mb-0">
+                <img src="{{ $logoUrl }}" alt="Logo BPS"
                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg';">
             </div>
-            <div>
-                <h5 class="mb-0 fw-bold" style="font-size: 1rem; color: var(--primary-navy);">SISOKA</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">BPS Prov. Kalimantan Barat</small>
+            <div class="logo-text mb-3">
+                <h5 class="fw-bold mb-0" style="font-size: 1.15rem; color: var(--primary-navy); letter-spacing: 0.5px;">
+                    SISOKA</h5>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">BPS Prov. Kalimantan Barat</small>
             </div>
         </div>
         @php
@@ -107,7 +136,7 @@
         @endphp
         <div class="px-4 mb-3">
             <span class="fw-bold d-block" style="color: var(--primary-navy); font-size: 0.9rem;">
-                {{ $greeting }}@auth, {{ Auth::user()->name }}@endauth 👋
+                {{ $greeting }}@auth, {{ Str::of(Auth::user()->name)->before(' ') }}@endauth 👋
             </span>
             <small class="text-muted d-block">
 
@@ -330,6 +359,12 @@
                     </ul>
                 </div>
 
+                <a href="{{ route('indikator-makro.index') }}"
+                    class="nav-link {{ request()->routeIs('indikator-makro.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-area"></i>
+                    <span>Indikator Makro</span>
+                </a>
+
 
 
 
@@ -347,7 +382,7 @@
 
                     if (!auth()->check()) {
                         // Filter out spreadsheets with allow_edit enabled for guest users
-                        $dynamicMenus = $dynamicMenus->filter(function($menu) {
+                        $dynamicMenus = $dynamicMenus->filter(function ($menu) {
                             $meta = is_array($menu->meta) ? $menu->meta : json_decode($menu->meta ?? '[]', true);
                             if ($menu->type === 'spreadsheet' && !empty($meta['allow_edit'])) {
                                 return false;
@@ -356,7 +391,7 @@
                         });
 
                         foreach ($dynamicMenus as $menu) {
-                            $menu->setRelation('children', $menu->children->filter(function($child) {
+                            $menu->setRelation('children', $menu->children->filter(function ($child) {
                                 $childMeta = is_array($child->meta) ? $child->meta : json_decode($child->meta ?? '[]', true);
                                 if ($child->type === 'spreadsheet' && !empty($childMeta['allow_edit'])) {
                                     return false;
@@ -540,6 +575,24 @@
                     sidebar.classList.remove('active');
                 }
             });
+
+            // Restore and persist sidebar scroll position
+            if (sidebar) {
+                const scrollPos = localStorage.getItem('sidebar-scroll-pos');
+                if (scrollPos) {
+                    sidebar.scrollTop = parseInt(scrollPos, 10);
+                }
+
+                // Save scroll position on scroll
+                sidebar.addEventListener('scroll', function () {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+
+                // Save scroll position before unload
+                window.addEventListener('beforeunload', function () {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+            }
         });
     </script>
 

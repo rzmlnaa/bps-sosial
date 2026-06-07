@@ -6,6 +6,7 @@ use App\Models\Fenomena;
 use App\Models\Indikator;
 use App\Models\SektorUsaha;
 use App\Models\SumberBerita;
+use App\Models\JenisFenomena;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -118,30 +119,78 @@ class FenomenaVerificationController extends Controller
             ->find($id);
 
         if (!$fenomena) {
-            return redirect()->route('fenomena.verification.index')
+            return redirect('/verification-fenomena')
                 ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
         }
+
+        $sektorUsahas = SektorUsaha::orderBy('kode', 'asc')->get();
+        $sumberBeritas = SumberBerita::orderBy('nama', 'asc')->get();
+        $jenisFenomenas = JenisFenomena::orderBy('nama', 'asc')->get();
+        $utamaIndikators = Indikator::where('kelompok', 'utama')
+            ->where('is_active', true)
+            ->orderBy('kode', 'asc')
+            ->get();
 
         $impactIndikators = Indikator::where('kelompok', 'dampak')
             ->where('is_active', true)
             ->orderBy('kode', 'asc')
             ->get();
 
-        return view('fenomena.verification.form', compact('fenomena', 'impactIndikators'));
+        return view('fenomena.verification.form', compact(
+            'fenomena',
+            'sektorUsahas',
+            'sumberBeritas',
+            'jenisFenomenas',
+            'utamaIndikators',
+            'impactIndikators'
+        ));
     }
 
     public function store(Request $request, $id)
     {
-        $request->validate([
+        $rules = [
+            // Edit Fenomena Details
+            'judul' => 'required|string|max:255|unique:fenomenas,judul,' . $id,
+            'tanggal_berita' => 'required|date',
+            'sumber_berita_id' => 'required|exists:sumber_beritas,id',
+            'penjelasan' => 'required|string',
+            'sektor_usaha_id' => 'required|exists:sektor_usahas,id',
+            'jenis_fenomena_ids' => 'required|array',
+            'jenis_fenomena_ids.*' => 'exists:jenis_fenomenas,id',
+            'indikator_id' => 'required|exists:indikators,id,is_active,1',
+
+            // Verification Details
             'status_verifikasi' => 'required|in:Y,T',
             'arah_utama' => 'required_if:status_verifikasi,Y|in:naik,turun,tetap',
             'impact_directions' => 'array',
+        ];
+
+        // Conditional validation for link_berita
+        $sumberBerita = SumberBerita::find($request->sumber_berita_id);
+        if ($sumberBerita && $sumberBerita->is_online) {
+            $rules['link_berita'] = 'required|url|unique:fenomenas,link_berita,' . $id;
+        } else {
+            $rules['link_berita'] = 'nullable|url|unique:fenomenas,link_berita,' . $id;
+        }
+
+        $request->validate($rules, [
+            'judul.required' => 'Judul fenomena wajib diisi.',
+            'judul.unique' => 'Judul fenomena sudah pernah dimasukkan.',
+            'tanggal_berita.required' => 'Tanggal berita wajib diisi.',
+            'sumber_berita_id.required' => 'Sumber berita wajib dipilih.',
+            'penjelasan.required' => 'Penjelasan fenomena wajib diisi.',
+            'sektor_usaha_id.required' => 'Lapangan usaha wajib dipilih.',
+            'jenis_fenomena_ids.required' => 'Jenis fenomena wajib dipilih.',
+            'indikator_id.required' => 'Indikator utama wajib dipilih.',
+            'link_berita.required' => 'Link berita wajib diisi untuk sumber berita online.',
+            'link_berita.url' => 'Format link berita tidak valid.',
+            'link_berita.unique' => 'Link berita sudah pernah digunakan.',
         ]);
 
         $fenomena = Fenomena::where('status_verifikasi', 'P')->find($id);
 
         if (!$fenomena) {
-            return redirect()->route('fenomena.verification.index')
+            return redirect('/verification-fenomena')
                 ->with('error', 'Data fenomena ini sudah diverifikasi atau tidak ditemukan.');
         }
 
@@ -149,52 +198,208 @@ class FenomenaVerificationController extends Controller
             $status = $request->status_verifikasi;
 
             $fenomena->update([
+                'judul' => $request->judul,
+                'tanggal_berita' => $request->tanggal_berita,
+                'sumber_berita_id' => $request->sumber_berita_id,
+                'link_berita' => $request->link_berita,
+                'penjelasan' => $request->penjelasan,
                 'status_verifikasi' => $status,
                 'verified_by' => Auth::id(),
                 'verified_at' => now(),
             ]);
 
-            if ($status === 'Y') {
-                // Update direction for the primary (utama) indicator
-                $utamaIndikator = $fenomena->indikators()->where('kelompok', 'utama')->first();
-                if ($utamaIndikator) {
-                    $fenomena->indikators()->updateExistingPivot($utamaIndikator->id, [
+            // Sync Sektor
+            $fenomena->sektors()->sync([$request->sektor_usaha_id]);
+
+            // Sync Jenis Fenomena
+            $fenomena->jenisFenomenas()->sync($request->jenis_fenomena_ids);
+
+            $syncData = [];
+
+            // Primary indicator (kelompok = 'utama')
+            $primaryId = $request->indikator_id;
+            if ($primaryId) {
+                if ($status === 'Y') {
+                    $syncData[$primaryId] = [
                         'arah' => $request->arah_utama,
                         'ditetapkan_oleh' => Auth::id(),
                         'ditetapkan_at' => now(),
-                    ]);
+                    ];
+                } else {
+                    $syncData[$primaryId] = [
+                        'arah' => null,
+                        'ditetapkan_oleh' => null,
+                        'ditetapkan_at' => null,
+                    ];
                 }
+            }
 
-                // Sync impact indicators
-                if ($request->has('impact_directions')) {
-                    $impactsToSync = [];
+            // Impact indicators (only if status === 'Y')
+            if ($status === 'Y' && $request->has('impact_directions')) {
+                $activeImpactIds = Indikator::where('is_active', true)
+                    ->whereIn('id', array_keys($request->impact_directions))
+                    ->pluck('id')->toArray();
 
-                    // Filter: only process impact indicators that are active
-                    $activeImpactIds = Indikator::where('is_active', true)
-                        ->whereIn('id', array_keys($request->impact_directions))
-                        ->pluck('id')->toArray();
-
-                    foreach ($request->impact_directions as $indikatorId => $arah) {
-                        if (in_array($indikatorId, $activeImpactIds) && $arah) {
-                            $impactsToSync[$indikatorId] = [
-                                'arah' => $arah,
-                                'ditetapkan_oleh' => Auth::id(),
-                                'ditetapkan_at' => now(),
-                            ];
-                        }
-                    }
-
-                    // We only want to attach impacts, but pivot table might already have the 'utama' one.
-                    // To avoid removing the 'utama' one, we use syncWithoutDetaching or manually manage it.
-                    // Since we want to update impacts if they exist or add new ones, syncWithoutDetaching is good.
-                    if (!empty($impactsToSync)) {
-                        $fenomena->indikators()->syncWithoutDetaching($impactsToSync);
+                foreach ($request->impact_directions as $indikatorId => $arah) {
+                    if (in_array($indikatorId, $activeImpactIds) && $arah) {
+                        $syncData[$indikatorId] = [
+                            'arah' => $arah,
+                            'ditetapkan_oleh' => Auth::id(),
+                            'ditetapkan_at' => now(),
+                        ];
                     }
                 }
             }
+
+            $fenomena->indikators()->sync($syncData);
         });
 
-        return redirect()->route('fenomena.verification.index')
+        return redirect('/verification-fenomena')
             ->with('success', 'Verifikasi fenomena berhasil disimpan.');
+    }
+
+    public function edit($id)
+    {
+        $fenomena = Fenomena::with(['creator', 'sumberBerita', 'sektors', 'indikators', 'jenisFenomenas'])
+            ->find($id);
+
+        if (!$fenomena) {
+            return redirect('/verification-fenomena')
+                ->with('error', 'Data fenomena tidak ditemukan.');
+        }
+
+        $sektorUsahas = SektorUsaha::orderBy('kode', 'asc')->get();
+        $sumberBeritas = SumberBerita::orderBy('nama', 'asc')->get();
+        $jenisFenomenas = JenisFenomena::orderBy('nama', 'asc')->get();
+        $utamaIndikators = Indikator::where('kelompok', 'utama')
+            ->where('is_active', true)
+            ->orderBy('kode', 'asc')
+            ->get();
+
+        $impactIndikators = Indikator::where('kelompok', 'dampak')
+            ->where('is_active', true)
+            ->orderBy('kode', 'asc')
+            ->get();
+
+        return view('fenomena.verification.edit', compact(
+            'fenomena',
+            'sektorUsahas',
+            'sumberBeritas',
+            'jenisFenomenas',
+            'utamaIndikators',
+            'impactIndikators'
+        ));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $rules = [
+            // Edit Fenomena Details
+            'judul' => 'required|string|max:255|unique:fenomenas,judul,' . $id,
+            'tanggal_berita' => 'required|date',
+            'sumber_berita_id' => 'required|exists:sumber_beritas,id',
+            'penjelasan' => 'required|string',
+            'sektor_usaha_id' => 'required|exists:sektor_usahas,id',
+            'jenis_fenomena_ids' => 'required|array',
+            'jenis_fenomena_ids.*' => 'exists:jenis_fenomenas,id',
+            'indikator_id' => 'required|exists:indikators,id,is_active,1',
+
+            // Verification Details
+            'status_verifikasi' => 'required|in:Y,T',
+            'arah_utama' => 'required_if:status_verifikasi,Y|in:naik,turun,tetap',
+            'impact_directions' => 'array',
+        ];
+
+        // Conditional validation for link_berita
+        $sumberBerita = SumberBerita::find($request->sumber_berita_id);
+        if ($sumberBerita && $sumberBerita->is_online) {
+            $rules['link_berita'] = 'required|url|unique:fenomenas,link_berita,' . $id;
+        } else {
+            $rules['link_berita'] = 'nullable|url|unique:fenomenas,link_berita,' . $id;
+        }
+
+        $request->validate($rules, [
+            'judul.required' => 'Judul fenomena wajib diisi.',
+            'judul.unique' => 'Judul fenomena sudah pernah dimasukkan.',
+            'tanggal_berita.required' => 'Tanggal berita wajib diisi.',
+            'sumber_berita_id.required' => 'Sumber berita wajib dipilih.',
+            'penjelasan.required' => 'Penjelasan fenomena wajib diisi.',
+            'sektor_usaha_id.required' => 'Lapangan usaha wajib dipilih.',
+            'jenis_fenomena_ids.required' => 'Jenis fenomena wajib dipilih.',
+            'indikator_id.required' => 'Indikator utama wajib dipilih.',
+            'link_berita.required' => 'Link berita wajib diisi untuk sumber berita online.',
+            'link_berita.url' => 'Format link berita tidak valid.',
+            'link_berita.unique' => 'Link berita sudah pernah digunakan.',
+        ]);
+
+        $fenomena = Fenomena::find($id);
+
+        if (!$fenomena) {
+            return redirect('/verification-fenomena')
+                ->with('error', 'Data fenomena tidak ditemukan.');
+        }
+
+        DB::transaction(function () use ($request, $fenomena) {
+            $status = $request->status_verifikasi;
+
+            $fenomena->update([
+                'judul' => $request->judul,
+                'tanggal_berita' => $request->tanggal_berita,
+                'sumber_berita_id' => $request->sumber_berita_id,
+                'link_berita' => $request->link_berita,
+                'penjelasan' => $request->penjelasan,
+                'status_verifikasi' => $status,
+                'verified_by' => Auth::id(),
+                'verified_at' => now(),
+            ]);
+
+            // Sync Sektor
+            $fenomena->sektors()->sync([$request->sektor_usaha_id]);
+
+            // Sync Jenis Fenomena
+            $fenomena->jenisFenomenas()->sync($request->jenis_fenomena_ids);
+
+            $syncData = [];
+
+            // Primary indicator (kelompok = 'utama')
+            $primaryId = $request->indikator_id;
+            if ($primaryId) {
+                if ($status === 'Y') {
+                    $syncData[$primaryId] = [
+                        'arah' => $request->arah_utama,
+                        'ditetapkan_oleh' => Auth::id(),
+                        'ditetapkan_at' => now(),
+                    ];
+                } else {
+                    $syncData[$primaryId] = [
+                        'arah' => null,
+                        'ditetapkan_oleh' => null,
+                        'ditetapkan_at' => null,
+                    ];
+                }
+            }
+
+            // Impact indicators (only if status === 'Y')
+            if ($status === 'Y' && $request->has('impact_directions')) {
+                $activeImpactIds = Indikator::where('is_active', true)
+                    ->whereIn('id', array_keys($request->impact_directions))
+                    ->pluck('id')->toArray();
+
+                foreach ($request->impact_directions as $indikatorId => $arah) {
+                    if (in_array($indikatorId, $activeImpactIds) && $arah) {
+                        $syncData[$indikatorId] = [
+                            'arah' => $arah,
+                            'ditetapkan_oleh' => Auth::id(),
+                            'ditetapkan_at' => now(),
+                        ];
+                    }
+                }
+            }
+
+            $fenomena->indikators()->sync($syncData);
+        });
+
+        return redirect('/verification-fenomena?tab=riwayat')
+            ->with('success', 'Verifikasi fenomena berhasil diubah.');
     }
 }

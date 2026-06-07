@@ -371,9 +371,16 @@ class RhNilaiController extends Controller
                         continue;
                     }
                 }
-                // if ($min == null && $max == null) {
-                //     continue;
-                // }
+                if ($min == null && $max == null) {
+                    // Hapus record jika sudah ada, untuk mengosongkan tanpa menyimpan nilai null
+                    RhPerubahanDetail::where([
+                        'rh_tahun_id' => $tahunId,
+                        'rh_perubahan_header_id' => null, // MASTER
+                        'kabupaten_id' => $kabupatenId,
+                        'komoditas_id' => $komoditasId,
+                    ])->delete();
+                    continue; // Skip updateOrCreate agar tidak insert null
+                }
 
                 RhPerubahanDetail::updateOrCreate(
                     [
@@ -421,9 +428,15 @@ class RhNilaiController extends Controller
                         }
                     }
                     // dd($request);
-                    // if ($min == null && $max == null) {
-                    //     continue;
-                    // }
+                    if ($min == null && $max == null) {
+                        // Hapus record jika sudah ada, untuk mengosongkan tanpa menyimpan nilai null
+                        RhPerubahanDetail::where([
+                            'rh_perubahan_header_id' => $revHeaderId,
+                            'kabupaten_id' => $kabupatenId,
+                            'komoditas_id' => $komoditasId,
+                        ])->delete();
+                        continue; // Skip updateOrCreate agar tidak insert null
+                    }
 
                     RhPerubahanDetail::updateOrCreate(
                         [
@@ -444,7 +457,11 @@ class RhNilaiController extends Controller
             }
         }
 
-        return back()->with('success', 'Data rentang harga berhasil disimpan.');
+        $previousUrl = url()->previous();
+        if (!str_contains($previousUrl, '#table')) {
+            $previousUrl .= '#table';
+        }
+        return redirect($previousUrl)->with('success', 'Data rentang harga berhasil disimpan.');
     }
 
 

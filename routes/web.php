@@ -29,8 +29,16 @@ use App\Http\Controllers\MyTeamController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\DescanController;
+use App\Http\Controllers\IndikatorMakroController;
 
 
+// --- Temporary Cleanup RH Route ---
+Route::get('/cleanup-null-rh', function () {
+    $deleted = \App\Models\RhPerubahanDetail::whereNull('min_edit')
+        ->whereNull('max_edit')
+        ->delete();
+    return "Berhasil menghapus " . $deleted . " data kosong.";
+});
 
 // --- Authentication Routes (Public/Guest) ---
 
@@ -253,6 +261,10 @@ Route::middleware(['check.status'])->group(function () {
     // Menu Desa Cantik
     Route::get('/desa-cantik', [DescanController::class, 'index'])->name('desa-cantik.index');
 
+    // Menu Indikator Makro
+    Route::get('/indikator-makro', [IndikatorMakroController::class, 'index'])->name('indikator-makro.index');
+    Route::get('/indikator-makro/katalog', [IndikatorMakroController::class, 'katalog'])->name('indikator-makro.katalog');
+
     // Panduan Pengguna
     Route::get('/panduan', function () {
         return view('panduan.index');
@@ -346,6 +358,34 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     // Detail Fenomena (setelah /kelola agar route statis tidak tertangkap oleh {id})
     //Route::get('/fenomena/{id}', [FenomenaController::class, 'show'])->name('fenomena.show');
 
+    // Kelola Indikator Makro
+    Route::get('/indikator-makro/search', [IndikatorMakroController::class, 'searchMakro'])->name('indikator-makro.search');
+    Route::get('/indikator-makro/kelola', [IndikatorMakroController::class, 'kelola'])->name('indikator-makro.kelola');
+    Route::get('/indikator-makro/input-nilai', [IndikatorMakroController::class, 'inputNilai'])->name('indikator-makro.input-nilai');
+    Route::post('/indikator-makro/input-nilai', [IndikatorMakroController::class, 'storeNilai'])->name('indikator-makro.store-nilai');
+    Route::post('/indikator-makro/periode', [IndikatorMakroController::class, 'storePeriode'])->name('indikator-makro.periode.store');
+    Route::put('/indikator-makro/periode/{id}', [IndikatorMakroController::class, 'updatePeriode'])->name('indikator-makro.periode.update');
+    Route::patch('/indikator-makro/periode/{id}/toggle', [IndikatorMakroController::class, 'togglePeriodeActive'])->name('indikator-makro.periode.toggle');
+    Route::delete('/indikator-makro/periode/{id}', [IndikatorMakroController::class, 'destroyPeriode'])->name('indikator-makro.periode.destroy');
+    Route::post('/indikator-makro/bidang', [IndikatorMakroController::class, 'storeBidang'])->name('indikator-makro.bidang.store');
+    Route::put('/indikator-makro/bidang/{id}', [IndikatorMakroController::class, 'updateBidang'])->name('indikator-makro.bidang.update');
+    Route::patch('/indikator-makro/bidang/reorder', [IndikatorMakroController::class, 'reorderBidang'])->name('indikator-makro.bidang.reorder');
+    Route::patch('/indikator-makro/bidang/{id}/toggle', [IndikatorMakroController::class, 'toggleBidangActive'])->name('indikator-makro.bidang.toggle');
+    Route::delete('/indikator-makro/bidang/{id}', [IndikatorMakroController::class, 'destroyBidang'])->name('indikator-makro.bidang.destroy');
+    Route::post('/indikator-makro/makro', [IndikatorMakroController::class, 'storeMakro'])->name('indikator-makro.makro.store');
+    Route::put('/indikator-makro/makro/{id}', [IndikatorMakroController::class, 'updateMakro'])->name('indikator-makro.makro.update');
+    Route::delete('/indikator-makro/makro/{id}', [IndikatorMakroController::class, 'destroyMakro'])->name('indikator-makro.makro.destroy');
+    Route::post('/indikator-makro/dimensi', [IndikatorMakroController::class, 'storeDimensi'])->name('indikator-makro.dimensi.store');
+    Route::patch('/indikator-makro/makro/reorder', [IndikatorMakroController::class, 'reorderMakro'])->name('indikator-makro.makro.reorder');
+    Route::patch('/indikator-makro/makro/{id}/toggle', [IndikatorMakroController::class, 'toggleMakroActive'])->name('indikator-makro.makro.toggle');
+    Route::put('/indikator-makro/dimensi/{id}', [IndikatorMakroController::class, 'updateDimensi'])->name('indikator-makro.dimensi.update');
+    Route::delete('/indikator-makro/dimensi/{id}', [IndikatorMakroController::class, 'destroyDimensi'])->name('indikator-makro.dimensi.destroy');
+    Route::post('/indikator-makro/indikator-dimensi', [IndikatorMakroController::class, 'storeIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.store');
+    Route::put('/indikator-makro/indikator-dimensi/{id}', [IndikatorMakroController::class, 'updateIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.update');
+    Route::patch('/indikator-makro/indikator-dimensi/reorder', [IndikatorMakroController::class, 'reorderIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.reorder');
+    Route::patch('/indikator-makro/indikator-dimensi/{id}/toggle', [IndikatorMakroController::class, 'toggleIndikatorDimensiActive'])->name('indikator-makro.indikator-dimensi.toggle');
+    Route::delete('/indikator-makro/indikator-dimensi/{id}', [IndikatorMakroController::class, 'destroyIndikatorDimensi'])->name('indikator-makro.indikator-dimensi.destroy');
+
     // Sektor Usaha
     Route::post('/sektor-usaha', [SektorUsahaController::class, 'store'])->name('sektor-usaha.store');
     Route::put('/sektor-usaha/{id}', [SektorUsahaController::class, 'update'])->name('sektor-usaha.update');
@@ -371,6 +411,8 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::get('/verification-fenomena', [FenomenaVerificationController::class, 'index'])->name('fenomena.verification.index');
     Route::get('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'show'])->name('fenomena.verification.show');
     Route::post('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'store'])->name('fenomena.verification.store');
+    Route::get('/verification-fenomena/{id}/edit', [FenomenaVerificationController::class, 'edit'])->name('fenomena.verification.edit');
+    Route::put('/verification-fenomena/{id}', [FenomenaVerificationController::class, 'update'])->name('fenomena.verification.update');
 
     // Pra Ekspor
     Route::get('/pra-ekspor', [\App\Http\Controllers\PraEksporController::class, 'index'])->name('pra-ekspor.index');

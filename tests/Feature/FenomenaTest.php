@@ -43,7 +43,7 @@ class FenomenaTest extends TestCase
     {
         $user = $this->createProvinceUser();
         $sektor = SektorUsaha::create(['kode' => 'A', 'nama' => 'Sektor A']);
-        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama']);
+        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama', 'is_active' => 1]);
         $jenis = JenisFenomena::create(['nama' => 'Jenis 1']);
         $sumber = SumberBerita::create(['nama' => 'Sumber 1']);
 
@@ -102,7 +102,7 @@ class FenomenaTest extends TestCase
     {
         $user = $this->createProvinceUser();
         $sektor = SektorUsaha::create(['kode' => 'A', 'nama' => 'Sektor A']);
-        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama']);
+        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama', 'is_active' => 1]);
         $jenis = JenisFenomena::create(['nama' => 'Jenis 1']);
         $onlineSource = SumberBerita::create(['nama' => 'Sumber Online', 'is_online' => true]);
 
@@ -129,7 +129,7 @@ class FenomenaTest extends TestCase
     {
         $user = $this->createProvinceUser();
         $sektor = SektorUsaha::create(['kode' => 'A', 'nama' => 'Sektor A']);
-        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama']);
+        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama', 'is_active' => 1]);
         $jenis = JenisFenomena::create(['nama' => 'Jenis 1']);
         $offlineSource = SumberBerita::create(['nama' => 'Sumber Offline', 'is_online' => false]);
 
@@ -156,7 +156,7 @@ class FenomenaTest extends TestCase
     {
         $user = $this->createProvinceUser();
         $sektor = SektorUsaha::create(['kode' => 'A', 'nama' => 'Sektor A']);
-        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama']);
+        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama', 'is_active' => 1]);
         $jenis = JenisFenomena::create(['nama' => 'Jenis 1']);
         $sumber = SumberBerita::create(['nama' => 'Sumber 1']);
 
@@ -194,7 +194,7 @@ class FenomenaTest extends TestCase
     {
         $user = $this->createProvinceUser();
         $sektor = SektorUsaha::create(['kode' => 'A', 'nama' => 'Sektor A']);
-        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama']);
+        $indikator = Indikator::create(['kode' => '01', 'nama' => 'Indikator 1', 'kelompok' => 'utama', 'is_active' => 1]);
         $jenis = JenisFenomena::create(['nama' => 'Jenis 1']);
         $sumber = SumberBerita::create(['nama' => 'Sumber 1']);
 
