@@ -400,7 +400,7 @@
                                     @endif
                                     <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                         <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                        <input type="text" name="search_bidang" class="form-control border-start-0" placeholder="Cari nama bidang..." value="{{ $searchBidang ?? '' }}" style="font-size: 0.85rem;">
+                                        <input type="text" name="search_bidang" id="search-bidang-input" class="form-control border-start-0" placeholder="Cari nama bidang..." value="{{ $searchBidang ?? '' }}" style="font-size: 0.85rem;">
                                         @if($searchBidang)
                                             <a href="{{ route('indikator-makro.kelola', ['tab' => 'bidang', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                         @endif
@@ -688,7 +688,7 @@
                                         @endif
                                         <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                            <input type="text" name="search_makro" class="form-control border-start-0" placeholder="Cari nama indikator makro..." value="{{ $searchMakro ?? '' }}" style="font-size: 0.85rem;">
+                                            <input type="text" name="search_makro" id="search-makro-input" class="form-control border-start-0" placeholder="Cari nama indikator makro..." value="{{ $searchMakro ?? '' }}" style="font-size: 0.85rem;">
                                             @if($searchMakro)
                                                 <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => $selectedFilterBidangId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                             @endif
@@ -986,7 +986,7 @@
                                     @endif
                                     <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                         <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                        <input type="text" name="search_dimensi" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                        <input type="text" name="search_dimensi" id="search-dimensi-input" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchDimensi ?? '' }}" style="font-size: 0.85rem;">
                                         @if($searchDimensi)
                                             <a href="{{ route('indikator-makro.kelola', ['tab' => 'dimensi', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                         @endif
@@ -1272,7 +1272,7 @@
                                         @endif
                                         <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                            <input type="text" name="search_ind_dimensi" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchIndDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                            <input type="text" name="search_ind_dimensi" id="search-ind-dimensi-input" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchIndDimensi ?? '' }}" style="font-size: 0.85rem;">
                                             @if($searchIndDimensi)
                                                 <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $selectedMakroId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                             @endif
@@ -1858,6 +1858,26 @@
                     const url = new URL(window.location.href);
                     url.searchParams.set('tab', targetId);
                     window.history.replaceState(null, '', url.toString());
+                });
+            });
+
+            // 8. Blur-to-submit for search inputs (submit form when user clicks outside / loses focus)
+            const blurSubmitSearchIds = [
+                'search-bidang-input',
+                'search-makro-input',
+                'search-dimensi-input',
+                'search-ind-dimensi-input'
+            ];
+            blurSubmitSearchIds.forEach(function (inputId) {
+                const el = document.getElementById(inputId);
+                if (!el) return;
+                el.addEventListener('blur', function () {
+                    const form = el.closest('form');
+                    if (!form) return;
+                    // Only submit if value changed from original
+                    if (el.value !== el.defaultValue) {
+                        form.submit();
+                    }
                 });
             });
         });

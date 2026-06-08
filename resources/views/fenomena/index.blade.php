@@ -269,14 +269,15 @@
             @auth
                 @if(auth()->user()->status === 'active')
                     <div class="fi-actions">
+                        
+                        <a href="{{ route('fenomena.create') }}" class="fi-btn-action fi-btn-orange">
+                            <i class="fas fa-plus"></i> Input Fenomena
+                        </a>
                         @if(auth()->user()->kabupaten->kode_kab === '6100')
                             <a href="{{ route('fenomena.kelola') }}" class="fi-btn-action fi-btn-blue">
                                 <i class="fas fa-cog fa-spin"></i> Kelola
                             </a>
                         @endif
-                        <a href="{{ route('fenomena.create') }}" class="fi-btn-action fi-btn-orange">
-                            <i class="fas fa-plus"></i> Input Fenomena
-                        </a>
                     </div>
                 @endif
             @endauth
