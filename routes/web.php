@@ -371,7 +371,6 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::post('/indikator-makro/bidang', [IndikatorMakroController::class, 'storeBidang'])->name('indikator-makro.bidang.store');
     Route::put('/indikator-makro/bidang/{id}', [IndikatorMakroController::class, 'updateBidang'])->name('indikator-makro.bidang.update');
     Route::patch('/indikator-makro/bidang/reorder', [IndikatorMakroController::class, 'reorderBidang'])->name('indikator-makro.bidang.reorder');
-    Route::patch('/indikator-makro/bidang/{id}/toggle', [IndikatorMakroController::class, 'toggleBidangActive'])->name('indikator-makro.bidang.toggle');
     Route::delete('/indikator-makro/bidang/{id}', [IndikatorMakroController::class, 'destroyBidang'])->name('indikator-makro.bidang.destroy');
     Route::post('/indikator-makro/makro', [IndikatorMakroController::class, 'storeMakro'])->name('indikator-makro.makro.store');
     Route::put('/indikator-makro/makro/{id}', [IndikatorMakroController::class, 'updateMakro'])->name('indikator-makro.makro.update');
