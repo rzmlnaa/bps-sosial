@@ -376,6 +376,28 @@
                             <p class="text-muted small mb-2">
                                 Copy blok data angka dari Excel (sesuai urutan baris kabupaten dan kolom dimensi di bawah), lalu paste di kotak di bawah ini dan klik tombol untuk mengisi tabel otomatis. Nilai kosong atau tanda (-) akan otomatis dikosongkan.
                             </p>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-2">Pilih Kolom Dimensi untuk Diisi:</label>
+                                <div class="d-flex flex-wrap gap-2 p-2 bg-white border rounded-3">
+                                    @foreach($indikatorDimensis as $indDim)
+                                        <div class="form-check form-check-inline mb-0 py-1">
+                                            <input class="form-check-input check-paste-dimensi" type="checkbox" 
+                                                id="chk-paste-{{ $indDim->id }}" 
+                                                value="{{ $indDim->id }}" 
+                                                {{ $indDim->is_active ? 'checked' : 'disabled' }}>
+                                            <label class="form-check-label small {{ !$indDim->is_active ? 'text-decoration-line-through text-muted' : '' }}" 
+                                                for="chk-paste-{{ $indDim->id }}">
+                                                {{ $indDim->dimensi->nama_dimensi ?? '-' }}
+                                                @if(!$indDim->is_active)
+                                                    <span class="text-danger small">(Non-aktif)</span>
+                                                @endif
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <textarea id="excel-paste-area" class="form-control mb-3" rows="5" placeholder="Paste data Excel disini... (Contoh: 115.08	82.08	98.96)"></textarea>
                             <div class="text-end">
                                 <button type="button" id="btn-parse-excel" class="btn btn-sm btn-success rounded-pill px-3">
@@ -478,6 +500,7 @@
                                             <input type="text" inputmode="decimal" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
                                                 class="bps-input-cell fw-medium" placeholder="{{ $isDisabled ? 'Non-aktif' : '-' }}" value="{{ $val }}"
                                                 {{ $isDisabled ? 'disabled' : '' }}
+                                                data-dimensi-id="{{ $indDim->id }}"
                                                 style="{{ $isDisabled ? 'background-color: #e2e8f0; color: #64748b; cursor: not-allowed;' : '' }}">
                                         </td>
                                     @empty
@@ -638,6 +661,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const rows = pastedText.split(/\r?\n/).map(r => r.trim()).filter(r => r !== '');
         if (rows.length === 0) return 0;
 
+        const checkedDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi:checked')).map(el => el.value);
+        if (checkedDimIds.length === 0) return 0;
+
         const allTrs = Array.from(table.querySelectorAll('tbody tr'));
         
         const firstRowCells = rows[0].split('\t');
@@ -654,19 +680,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = findRowByKab(cells[0], allTrs);
                 if (!targetTr) return;
 
-                const inputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
-                
-                // Fill the inputs of the matched row
-                for (let i = 1; i < cells.length; i++) {
-                    const targetTd = inputTds[i - 1];
-                    if (!targetTd) continue;
+                // Fill the inputs of the matched row based on selected columns
+                checkedDimIds.forEach((dimId, idx) => {
+                    const valIndex = idx + 1; // cells[0] is Kabupaten, cells[1] is first value, etc.
+                    if (valIndex >= cells.length) return;
 
-                    const input = targetTd.querySelector('input.bps-input-cell');
-                    if (input) {
-                        input.value = cleanNumberValue(cells[i]);
+                    const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                    if (input && !input.disabled) {
+                        input.value = cleanNumberValue(cells[valIndex]);
                         count++;
                     }
-                }
+                });
             });
         } else {
             // Grid-based Mode
@@ -677,9 +701,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const activeTd = startElement.closest('td');
                 const activeTr = activeTd.closest('tr');
                 startRowIdx = allTrs.indexOf(activeTr);
-                const allTdsInRow = Array.from(activeTr.querySelectorAll('td'));
-                const inputTds = allTdsInRow.filter(td => td.querySelector('input.bps-input-cell'));
-                startColIdx = inputTds.indexOf(activeTd);
+                
+                const activeDimId = startElement.getAttribute('data-dimensi-id');
+                startColIdx = checkedDimIds.indexOf(activeDimId);
+                if (startColIdx === -1) {
+                    startColIdx = 0;
+                }
             }
 
             rows.forEach((rowText, rowOffset) => {
@@ -687,14 +714,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = allTrs[startRowIdx + rowOffset];
                 if (!targetTr) return;
 
-                const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
-
                 cells.forEach((valText, colOffset) => {
-                    const targetTd = targetInputTds[startColIdx + colOffset];
-                    if (!targetTd) return;
+                    const targetColIdx = startColIdx + colOffset;
+                    if (targetColIdx >= checkedDimIds.length) return;
 
-                    const input = targetTd.querySelector('input.bps-input-cell');
-                    if (input) {
+                    const dimId = checkedDimIds[targetColIdx];
+                    const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                    if (input && !input.disabled) {
                         input.value = cleanNumberValue(valText);
                         count++;
                     }
@@ -741,6 +767,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnParse && textarea) {
         btnParse.addEventListener('click', function () {
+            const checkedDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi:checked')).map(el => el.value);
+            if (checkedDimIds.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kolom Kosong',
+                    text: 'Silakan pilih minimal satu kolom dimensi untuk diisi.'
+                });
+                return;
+            }
+
             const pastedText = textarea.value;
             if (!pastedText.trim()) {
                 Swal.fire({

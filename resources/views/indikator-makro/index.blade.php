@@ -326,6 +326,10 @@
                                         <input class="form-check-input chart-mode-radio" type="radio" name="chart_mode" id="mode_compare_dimensions" value="compare_dimensions">
                                         <label class="form-check-label small fw-bold text-dark" style="cursor: pointer;" for="mode_compare_dimensions">Bandingkan Dimensi (Pilih 1 Wilayah, Sumbu X: Dimensi)</label>
                                     </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input chart-mode-radio" type="radio" name="chart_mode" id="mode_compare_all" value="compare_all">
+                                        <label class="form-check-label small fw-bold text-dark" style="cursor: pointer;" for="mode_compare_all">Bandingkan Wilayah & Dimensi (Sumbu X: Wilayah, Datasets: Dimensi)</label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -815,7 +819,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 chart.data.datasets = newDatasets;
-            } else {
+            } else if (chartMode === 'compare_dimensions') {
                 // Sumbu X = Dimensi, Datasets = Tahun
                 const singleRegionId = chartSingleRegion ? parseInt(chartSingleRegion.value) : kabupatens[0]?.id;
 
@@ -852,6 +856,58 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 chart.data.datasets = newDatasets;
+            } else if (chartMode === 'compare_all') {
+                // Sumbu X = Wilayah, Datasets = Dimensi (Tahun)
+                const activeRegionIds = Array.from(regionCheckboxes)
+                    .filter(chk => chk.checked)
+                    .map(chk => parseInt(chk.value));
+
+                const activeKabupatens = kabupatens.filter(kab => activeRegionIds.includes(kab.id));
+
+                // 1. Update X-axis Labels (Regions)
+                chart.data.labels = activeKabupatens.map(kab => {
+                    const name = kab.kode_kab === '6100' ? 'Provinsi Kalbar' : (kab.kode_kab === '1' ? 'Indonesia' : kab.nama_kabupaten);
+                    if (kab.kode_kab === '1') {
+                        return name;
+                    }
+                    return `[${kab.kode_kab}] ${name}`;
+                });
+
+                // 2. Rebuild Datasets: One dataset per Dimensi (Tahun)
+                const activeDimIds = Array.from(chartDimCheckboxes)
+                    .filter(chk => chk.checked)
+                    .map(chk => parseInt(chk.value));
+                const activeDimensis = selectedDimensis.filter(d => activeDimIds.includes(d.id));
+
+                const newDatasets = [];
+                let colorIndex = 0;
+
+                activeDimensis.forEach(d => {
+                    periodes.forEach(p => {
+                        const color = colors[colorIndex % colors.length];
+                        colorIndex++;
+
+                        const labelName = periodes.length > 1 
+                            ? `${d.dimensi?.nama_dimensi ?? '-'} (${p.tahun})`
+                            : (d.dimensi?.nama_dimensi ?? '-');
+
+                        const dataPoints = activeKabupatens.map(kab => {
+                            const val = values[kab.id]?.[p.id]?.[d.id] ?? null;
+                            return val !== null ? parseFloat(val) : null;
+                        });
+
+                        newDatasets.push({
+                            label: labelName,
+                            data: dataPoints,
+                            backgroundColor: color,
+                            borderColor: color,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        });
+                    });
+                });
+
+                chart.data.datasets = newDatasets;
             }
             chart.update();
         };
@@ -865,11 +921,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (singleRegionContainer) singleRegionContainer.classList.add('d-none');
                         if (singleDimContainer) singleDimContainer.classList.remove('d-none');
                         if (multiRegionContainer) multiRegionContainer.classList.remove('d-none');
-                    } else {
+                    } else if (this.value === 'compare_dimensions') {
                         if (singleDimContainer) singleDimContainer.classList.add('d-none');
                         if (multiRegionContainer) multiRegionContainer.classList.add('d-none');
                         if (multiDimContainer) multiDimContainer.classList.remove('d-none');
                         if (singleRegionContainer) singleRegionContainer.classList.remove('d-none');
+                    } else if (this.value === 'compare_all') {
+                        if (singleDimContainer) singleDimContainer.classList.add('d-none');
+                        if (singleRegionContainer) singleRegionContainer.classList.add('d-none');
+                        if (multiDimContainer) multiDimContainer.classList.remove('d-none');
+                        if (multiRegionContainer) multiRegionContainer.classList.remove('d-none');
                     }
                     updateChartData();
                 });
