@@ -134,6 +134,26 @@ class IndikatorMakroController extends Controller
         ));
     }
 
+    public function export(Request $request)
+    {
+        $request->validate([
+            'bidang_ids' => 'required|array',
+            'indikator_makro_ids' => 'required|array',
+            'tahuns' => 'required|array',
+            'kabupatens' => 'required|array',
+        ]);
+
+        $bidangIds = $request->bidang_ids;
+        $indikatorIds = $request->indikator_makro_ids;
+        $tahunNames = $request->tahuns;
+        $kabupatenIds = $request->kabupatens;
+
+        $export = new \App\Exports\IndikatorMakroExport($bidangIds, $indikatorIds, $tahunNames, $kabupatenIds);
+
+        $fileName = "Indikator_Makro_" . date('Ymd_His') . ".xlsx";
+        return \Maatwebsite\Excel\Facades\Excel::download($export, $fileName);
+    }
+
     public function inputNilai(Request $request)
     {
         // 1. Fetch all PeriodeIndikator (ordered by tahun desc)
@@ -275,7 +295,12 @@ class IndikatorMakroController extends Controller
 
     public function katalog()
     {
-        $bidangs = IndikatorBidang::with(['indikatorMakros:id,indikator_bidang_id,nama_indikator,is_active'])
+        $bidangs = IndikatorBidang::whereHas('indikatorMakros')
+            ->with(['indikatorMakros' => function ($query) {
+                $query->select(['id', 'indikator_bidang_id', 'nama_indikator', 'is_active'])
+                    ->orderBy('urutan', 'asc')
+                    ->orderBy('created_at', 'desc');
+            }])
             ->orderBy('urutan', 'asc')
             ->get(['id', 'nama_bidang', 'is_active']);
 

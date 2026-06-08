@@ -226,18 +226,24 @@
                 <h1 class="fi-title">INDIKATOR MAKRO</h1>
                 <p class="fi-subtitle">Visualisasi Tren & Tabel Indikator Makro Sosial Ekonomi</p>
             </div>
-            @auth
-                @if(auth()->user()->status === 'active' && auth()->user()->kabupaten->kode_kab === '6100')
-                    <div class="fi-actions">
-                        <a href="{{ route('indikator-makro.kelola') }}" class="fi-btn-action">
+            <div class="fi-actions">
+                @if($selectedIndikator)
+                    <button type="button" class="btn btn-success rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
+                        id="btn-export-modal" data-bs-toggle="modal" data-bs-target="#exportModal" style="height: 38px; font-weight: 600;">
+                        <i class="fas fa-file-excel"></i> Ekspor Excel
+                    </button>
+                @endif
+                @auth
+                    @if(auth()->user()->status === 'active' && auth()->user()->kabupaten->kode_kab === '6100')
+                        <a href="{{ route('indikator-makro.kelola') }}" class="fi-btn-action" style="margin-left: 0.5rem;">
                             <i class="fas fa-cog"></i> Kelola Indikator
                         </a>
                         <a href="{{ route('indikator-makro.input-nilai') }}" class="fi-btn-action" style="background: #2ecc71; box-shadow: 0 2px 8px rgba(46, 204, 113, .3); margin-left: 0.5rem;">
                             <i class="fas fa-edit"></i> Input Nilai Indikator
                         </a>
-                    </div>
-                @endif
-            @endauth
+                    @endif
+                @endauth
+            </div>
         </div>
 
         {{-- ══ FILTERS CARD ══ --}}
@@ -587,6 +593,126 @@
                 </div>
             </div>
         </div>
+
+        {{-- ══ MODAL EKSPOR EXCEL ══ --}}
+        @if($selectedIndikator)
+        <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark" id="exportModalLabel" style="color: var(--fi-primary) !important;">
+                                <i class="fas fa-file-excel me-2"></i> Ekspor Data Indikator Makro
+                            </h5>
+                            <p class="text-muted small mb-0">Silakan pilih parameter data yang ingin diekspor ke Microsoft Excel</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 pt-3">
+                        
+                        {{-- 1. Pilihan Bidang Indikator --}}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-0">1. Pilih Bidang Indikator</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-export-bidang-all" style="font-size: 0.7rem;">Pilih Semua</button>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-export-bidang-none" style="font-size: 0.7rem;">Hapus Semua</button>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border px-3" id="export-bidang-container">
+                                {{-- Dynamically loaded via AJAX --}}
+                            </div>
+                        </div>
+
+                        {{-- 2. Pilihan Indikator Makro --}}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-0">2. Pilih Indikator Makro</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-export-ind-all" style="font-size: 0.7rem;">Pilih Semua</button>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-export-ind-none" style="font-size: 0.7rem;">Hapus Semua</button>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="input-group input-group-sm shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                                    <input type="text" id="search-export-indikator" class="form-control border-start-0" placeholder="Cari nama indikator makro..." style="font-size: 0.85rem;">
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-2 p-2 bg-light rounded border px-3" style="max-height: 200px; overflow-y: auto;" id="export-indikator-container">
+                                {{-- Dynamically loaded via AJAX --}}
+                            </div>
+                        </div>
+
+                        {{-- 3. Pilihan Tahun --}}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-0">3. Pilih Tahun / Periode</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-export-tahun-all" style="font-size: 0.7rem;">Pilih Semua</button>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-export-tahun-none" style="font-size: 0.7rem;">Hapus Semua</button>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border px-3">
+                                @foreach($allPeriodes as $p)
+                                    <div class="form-check">
+                                        <input class="form-check-input export-tahun-checkbox" type="checkbox" value="{{ $p->tahun }}" id="chk_export_year_{{ $p->tahun }}">
+                                        <label class="form-check-label small fw-semibold" for="chk_export_year_{{ $p->tahun }}">{{ $p->tahun }}</label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- 4. Pilihan Wilayah --}}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-0">4. Pilih Wilayah / Kabupaten</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-export-kab-all" style="font-size: 0.7rem;">Pilih Semua</button>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-export-kab-none" style="font-size: 0.7rem;">Hapus Semua</button>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border px-3" style="max-height: 150px; overflow-y: auto;">
+                                @foreach($kabupatens as $kab)
+                                    <div class="form-check">
+                                        <input class="form-check-input export-kab-checkbox" type="checkbox" value="{{ $kab->id }}" id="chk_export_kab_{{ $kab->id }}">
+                                        <label class="form-check-label small fw-semibold" for="chk_export_kab_{{ $kab->id }}">
+                                            {{ $kab->kode_kab === '6100' ? 'Provinsi Kalbar' : ($kab->kode_kab === '1' ? 'Indonesia' : $kab->nama_kabupaten) }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Estimasi & Ringkasan --}}
+                        <div class="alert alert-warning border-0 p-3 rounded-3 mt-4 mb-0" style="background-color: #fffbeb; color: #78350f;">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-info-circle fs-5 me-2 mt-1"></i>
+                                <div class="w-100">
+                                    <h6 class="fw-bold mb-1" style="font-size: 0.9rem;">Estimasi & Ringkasan Ekspor</h6>
+                                    <div class="row g-2 small">
+                                        <div class="col-6">
+                                            Total Data Sel: <span id="export-total-cells" class="fw-bold text-dark">0</span> sel
+                                        </div>
+                                        <div class="col-6">
+                                            Estimasi Waktu Ekspor: <span id="export-est-time" class="fw-bold text-success">2 detik</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" id="btn-submit-export" class="btn btn-success rounded-pill px-4 text-white fw-bold">
+                            <i class="fas fa-file-excel me-1"></i> Unduh Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
 
     </div>
 @endsection
@@ -1056,6 +1182,412 @@ document.addEventListener('DOMContentLoaded', function () {
                     content.style.display = 'block';
                 });
         });
+    }
+
+    // ════════ 3. EXPORT MODAL INTERACTIVE LOGIC ════════
+    const exportModal = document.getElementById('exportModal');
+    if (exportModal) {
+        let isExportDataLoaded = false;
+        const exportBidangContainer = document.getElementById('export-bidang-container');
+        const exportIndikatorContainer = document.getElementById('export-indikator-container');
+        const searchInput = document.getElementById('search-export-indikator');
+
+        const btnExportBidangAll = document.getElementById('btn-export-bidang-all');
+        const btnExportBidangNone = document.getElementById('btn-export-bidang-none');
+        const btnExportIndAll = document.getElementById('btn-export-ind-all');
+        const btnExportIndNone = document.getElementById('btn-export-ind-none');
+        const btnExportTahunAll = document.getElementById('btn-export-tahun-all');
+        const btnExportTahunNone = document.getElementById('btn-export-tahun-none');
+        const btnExportKabAll = document.getElementById('btn-export-kab-all');
+        const btnExportKabNone = document.getElementById('btn-export-kab-none');
+        const btnSubmitExport = document.getElementById('btn-submit-export');
+
+        const updateExportEstimation = () => {
+            const checkedIndikatorCount = document.querySelectorAll('.export-indikator-checkbox:checked').length;
+            const checkedTahunCount = document.querySelectorAll('.export-tahun-checkbox:checked').length;
+            const checkedKabCount = document.querySelectorAll('.export-kab-checkbox:checked').length;
+            
+            const totalCells = checkedIndikatorCount * checkedTahunCount * checkedKabCount;
+            
+            let estSeconds = 2;
+            if (totalCells > 10000) {
+                estSeconds = 30;
+            } else if (totalCells > 2000) {
+                estSeconds = 20;
+            } else if (totalCells > 500) {
+                estSeconds = 10;
+            } else if (totalCells > 100) {
+                estSeconds = 5;
+            }
+            
+            document.getElementById('export-total-cells').textContent = new Intl.NumberFormat('id-ID').format(totalCells);
+            document.getElementById('export-est-time').textContent = estSeconds + ' detik';
+        };
+
+        const toggleIndikatorByBidang = (e) => {
+            const checkedBidangIds = Array.from(document.querySelectorAll('.export-bidang-checkbox:checked')).map(el => el.value);
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            
+            const wrappers = document.querySelectorAll('.export-indikator-wrapper');
+            wrappers.forEach(wrapper => {
+                const bId = wrapper.getAttribute('data-bidang-id');
+                const chk = wrapper.querySelector('.export-indikator-checkbox');
+                const labelText = wrapper.textContent.toLowerCase();
+                
+                const matchesBidang = checkedBidangIds.includes(bId);
+                const matchesSearch = searchQuery === '' || labelText.includes(searchQuery);
+
+                // If bidang is unchecked, its indicators MUST be unchecked
+                if (!matchesBidang && chk) {
+                    chk.checked = false;
+                }
+
+                // If bidang checkbox was explicitly checked/unchecked by user interaction:
+                if (e && e.target && e.target.classList.contains('export-bidang-checkbox') && e.target.value === bId) {
+                    if (e.target.checked) {
+                        if (chk) chk.checked = true;
+                    } else {
+                        if (chk) chk.checked = false;
+                    }
+                }
+
+                if (searchQuery !== '') {
+                    // Search mode: show if it matches search query
+                    if (matchesSearch) {
+                        wrapper.classList.remove('d-none');
+                    } else {
+                        wrapper.classList.add('d-none');
+                    }
+                } else {
+                    // Normal mode: show if its bidang is checked
+                    if (matchesBidang) {
+                        wrapper.classList.remove('d-none');
+                    } else {
+                        wrapper.classList.add('d-none');
+                        // Uncheck if hidden because its bidang is unchecked
+                        if (chk) chk.checked = false;
+                    }
+                }
+            });
+            updateExportEstimation();
+        };
+
+        const loadExportData = () => {
+            if (isExportDataLoaded) return;
+
+            exportBidangContainer.innerHTML = '<div class="text-muted small py-2 w-100 text-center"><i class="fas fa-spinner fa-spin me-1"></i> Memuat Bidang...</div>';
+            exportIndikatorContainer.innerHTML = '<div class="text-muted small py-2 w-100 text-center"><i class="fas fa-spinner fa-spin me-1"></i> Memuat Indikator...</div>';
+
+            fetch('/indikator-makro/katalog')
+                .then(res => res.json())
+                .then(data => {
+                    exportBidangContainer.innerHTML = '';
+                    exportIndikatorContainer.innerHTML = '';
+
+                    const bidangs = data;
+                    if (bidangs.length === 0) {
+                        exportBidangContainer.innerHTML = '<div class="text-muted small py-2">Tidak ada bidang</div>';
+                        exportIndikatorContainer.innerHTML = '<div class="text-muted small py-2">Tidak ada indikator</div>';
+                        return;
+                    }
+
+                    bidangs.forEach(b => {
+                        // 1. Bidang Checkbox
+                        const divBidang = document.createElement('div');
+                        divBidang.className = 'form-check';
+                        divBidang.innerHTML = `
+                            <input class="form-check-input export-bidang-checkbox" type="checkbox" value="${b.id}" id="chk_export_bidang_${b.id}">
+                            <label class="form-check-label small fw-semibold" for="chk_export_bidang_${b.id}">${b.nama_bidang}</label>
+                        `;
+                        exportBidangContainer.appendChild(divBidang);
+
+                        // 2. Indikator Checkboxes
+                        const activeIndikators = b.indikator_makros || [];
+                        activeIndikators.forEach(ind => {
+                            const divInd = document.createElement('div');
+                            divInd.className = 'form-check export-indikator-wrapper d-none';
+                            divInd.setAttribute('data-bidang-id', b.id);
+                            divInd.innerHTML = `
+                                <input class="form-check-input export-indikator-checkbox" type="checkbox" value="${ind.id}" id="chk_export_ind_${ind.id}">
+                                <label class="form-check-label small fw-semibold" for="chk_export_ind_${ind.id}">
+                                    ${ind.nama_indikator}
+                                </label>
+                            `;
+                            exportIndikatorContainer.appendChild(divInd);
+                        });
+                    });
+
+                    // Set up event listeners on dynamic checkboxes
+                    const bidangCheckboxes = document.querySelectorAll('.export-bidang-checkbox');
+                    const indikatorCheckboxes = document.querySelectorAll('.export-indikator-checkbox');
+
+                    bidangCheckboxes.forEach(chk => chk.addEventListener('change', toggleIndikatorByBidang));
+                    indikatorCheckboxes.forEach(chk => {
+                        chk.addEventListener('change', function() {
+                            if (this.checked) {
+                                const wrapper = this.closest('.export-indikator-wrapper');
+                                if (wrapper) {
+                                    const bId = wrapper.getAttribute('data-bidang-id');
+                                    const bidangChk = document.getElementById(`chk_export_bidang_${bId}`);
+                                    if (bidangChk && !bidangChk.checked) {
+                                        bidangChk.checked = true;
+                                        // Run toggleIndikatorByBidang to update matchesBidang state and show this bidang's indicators if search is cleared
+                                        toggleIndikatorByBidang();
+                                    }
+                                }
+                            }
+                            updateExportEstimation();
+                        });
+                    });
+
+                    isExportDataLoaded = true;
+                    toggleIndikatorByBidang();
+                })
+                .catch(err => {
+                    console.error(err);
+                    exportBidangContainer.innerHTML = '<div class="text-danger small py-2">Gagal memuat data</div>';
+                    exportIndikatorContainer.innerHTML = '<div class="text-danger small py-2">Gagal memuat data</div>';
+                });
+        };
+
+        // Bootstrap show.bs.modal listener
+        exportModal.addEventListener('show.bs.modal', loadExportData);
+
+        // Filter / Search Indikator Makro
+        if (searchInput) {
+            searchInput.addEventListener('input', toggleIndikatorByBidang);
+        }
+
+        // Static listeners (tahun and kab change)
+        const tahunCheckboxes = document.querySelectorAll('.export-tahun-checkbox');
+        const kabCheckboxes = document.querySelectorAll('.export-kab-checkbox');
+
+        tahunCheckboxes.forEach(chk => chk.addEventListener('change', updateExportEstimation));
+        kabCheckboxes.forEach(chk => chk.addEventListener('change', updateExportEstimation));
+
+        // Select All / Deselect All Bidang
+        if (btnExportBidangAll) {
+            btnExportBidangAll.addEventListener('click', function () {
+                const bidangCheckboxes = document.querySelectorAll('.export-bidang-checkbox');
+                bidangCheckboxes.forEach(chk => chk.checked = true);
+                toggleIndikatorByBidang();
+            });
+        }
+        if (btnExportBidangNone) {
+            btnExportBidangNone.addEventListener('click', function () {
+                const bidangCheckboxes = document.querySelectorAll('.export-bidang-checkbox');
+                bidangCheckboxes.forEach(chk => chk.checked = false);
+                toggleIndikatorByBidang();
+            });
+        }
+
+        // Select All / Deselect All Indikator
+        if (btnExportIndAll) {
+            btnExportIndAll.addEventListener('click', function () {
+                const checkedBidangIds = Array.from(document.querySelectorAll('.export-bidang-checkbox:checked')).map(el => el.value);
+                const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                document.querySelectorAll('.export-indikator-wrapper').forEach(wrapper => {
+                    const bId = wrapper.getAttribute('data-bidang-id');
+                    const labelText = wrapper.textContent.toLowerCase();
+                    if (checkedBidangIds.includes(bId) && (searchQuery === '' || labelText.includes(searchQuery))) {
+                        const chk = wrapper.querySelector('.export-indikator-checkbox');
+                        if (chk) chk.checked = true;
+                    }
+                });
+                updateExportEstimation();
+            });
+        }
+        if (btnExportIndNone) {
+            btnExportIndNone.addEventListener('click', function () {
+                const checkedBidangIds = Array.from(document.querySelectorAll('.export-bidang-checkbox:checked')).map(el => el.value);
+                const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                document.querySelectorAll('.export-indikator-wrapper').forEach(wrapper => {
+                    const bId = wrapper.getAttribute('data-bidang-id');
+                    const labelText = wrapper.textContent.toLowerCase();
+                    if (checkedBidangIds.includes(bId) && (searchQuery === '' || labelText.includes(searchQuery))) {
+                        const chk = wrapper.querySelector('.export-indikator-checkbox');
+                        if (chk) chk.checked = false;
+                    }
+                });
+                updateExportEstimation();
+            });
+        }
+
+        // Select All / Deselect All Tahun
+        if (btnExportTahunAll) {
+            btnExportTahunAll.addEventListener('click', function () {
+                tahunCheckboxes.forEach(chk => chk.checked = true);
+                updateExportEstimation();
+            });
+        }
+        if (btnExportTahunNone) {
+            btnExportTahunNone.addEventListener('click', function () {
+                tahunCheckboxes.forEach(chk => chk.checked = false);
+                updateExportEstimation();
+            });
+        }
+
+        // Select All / Deselect All Kabupaten
+        if (btnExportKabAll) {
+            btnExportKabAll.addEventListener('click', function () {
+                kabCheckboxes.forEach(chk => chk.checked = true);
+                updateExportEstimation();
+            });
+        }
+        if (btnExportKabNone) {
+            btnExportKabNone.addEventListener('click', function () {
+                kabCheckboxes.forEach(chk => chk.checked = false);
+                updateExportEstimation();
+            });
+        }
+
+        // Submit Export
+        if (btnSubmitExport) {
+            btnSubmitExport.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const selectedBidangs = Array.from(document.querySelectorAll('.export-bidang-checkbox:checked')).map(el => el.value);
+                const selectedIndikatorIds = Array.from(document.querySelectorAll('.export-indikator-checkbox:checked')).map(el => el.value);
+                const selectedTahuns = Array.from(document.querySelectorAll('.export-tahun-checkbox:checked')).map(el => el.value);
+                const selectedKabs = Array.from(document.querySelectorAll('.export-kab-checkbox:checked')).map(el => el.value);
+
+                if (selectedBidangs.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Bidang Kosong',
+                        text: 'Silakan pilih minimal satu bidang indikator.'
+                    });
+                    return;
+                }
+
+                if (selectedIndikatorIds.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Indikator Kosong',
+                        text: 'Silakan pilih minimal satu indikator makro.'
+                    });
+                    return;
+                }
+
+                if (selectedTahuns.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tahun Kosong',
+                        text: 'Silakan pilih minimal satu tahun / periode.'
+                    });
+                    return;
+                }
+
+                if (selectedKabs.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Wilayah Kosong',
+                        text: 'Silakan pilih minimal satu wilayah / kabupaten.'
+                    });
+                    return;
+                }
+
+                const estTimeText = document.getElementById('export-est-time').textContent;
+                let secondsLeft = parseInt(estTimeText);
+                if (isNaN(secondsLeft)) secondsLeft = 5;
+
+                // Disable submit button during export
+                const originalContent = btnSubmitExport.innerHTML;
+                btnSubmitExport.classList.add('disabled');
+                btnSubmitExport.style.pointerEvents = 'none';
+                btnSubmitExport.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memproses...';
+
+                let timerInterval;
+
+                Swal.fire({
+                    title: 'Menyiapkan Data...',
+                    html: `Mohon tunggu sejenak (<b>${secondsLeft}</b> detik)...<br><small class="text-muted">Sedang mengekstrak dan memformat data.</small>`,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        timerInterval = setInterval(() => {
+                            secondsLeft--;
+                            if (secondsLeft > 0) {
+                                Swal.getHtmlContainer().querySelector('b').textContent = secondsLeft;
+                            } else {
+                                Swal.getHtmlContainer().innerHTML = 'Hampir selesai, sedang mengemas file...<br><small class="text-muted">Sedang mengekstrak dan memformat data.</small>';
+                            }
+                        }, 1000);
+                    },
+                    willClose: () => {
+                        clearInterval(timerInterval);
+                    }
+                });
+
+                const queryParams = new URLSearchParams();
+                selectedBidangs.forEach(b => queryParams.append('bidang_ids[]', b));
+                selectedIndikatorIds.forEach(ind => queryParams.append('indikator_makro_ids[]', ind));
+                selectedTahuns.forEach(t => queryParams.append('tahuns[]', t));
+                selectedKabs.forEach(k => queryParams.append('kabupatens[]', k));
+
+                const url = `/indikator-makro/export?` + queryParams.toString();
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Export failed');
+                        
+                        let filename = `Indikator_Makro_${new Date().toISOString().slice(0,10)}.xlsx`;
+                        const disposition = response.headers.get('Content-Disposition');
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+                        return response.blob().then(blob => ({ blob, filename }));
+                    })
+                    .then(({ blob, filename }) => {
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = downloadUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(downloadUrl);
+
+                        // Success State
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Data berhasil diexport.',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Download failed:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: 'Gagal mengunduh file. Silakan coba lagi nanti.'
+                        });
+                    })
+                    .finally(() => {
+                        clearInterval(timerInterval);
+                        btnSubmitExport.classList.remove('disabled');
+                        btnSubmitExport.style.pointerEvents = 'auto';
+                        btnSubmitExport.innerHTML = originalContent;
+
+                        // Close modal
+                        const modalEl = document.getElementById('exportModal');
+                        const bsModal = bootstrap.Modal.getInstance(modalEl);
+                        if (bsModal) {
+                            bsModal.hide();
+                        }
+                    });
+            });
+        }
     }
 });
 </script>

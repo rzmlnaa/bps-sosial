@@ -661,6 +661,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const rows = pastedText.split(/\r?\n/).map(r => r.trim()).filter(r => r !== '');
         if (rows.length === 0) return 0;
 
+        const allDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi')).map(el => el.value);
         const checkedDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi:checked')).map(el => el.value);
         if (checkedDimIds.length === 0) return 0;
 
@@ -680,17 +681,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = findRowByKab(cells[0], allTrs);
                 if (!targetTr) return;
 
-                // Fill the inputs of the matched row based on selected columns
-                checkedDimIds.forEach((dimId, idx) => {
-                    const valIndex = idx + 1; // cells[0] is Kabupaten, cells[1] is first value, etc.
-                    if (valIndex >= cells.length) return;
-
-                    const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
-                    if (input && !input.disabled) {
-                        input.value = cleanNumberValue(cells[valIndex]);
-                        count++;
-                    }
-                });
+                const valCells = cells.slice(1);
+                
+                // If cells count matches total dimensions, map 1-to-1 to allDimIds
+                if (valCells.length === allDimIds.length) {
+                    allDimIds.forEach((dimId, idx) => {
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valCells[idx]);
+                                count++;
+                            }
+                        }
+                    });
+                } else {
+                    // Otherwise, map 1-to-1 to the checked dimensions in order
+                    checkedDimIds.forEach((dimId, idx) => {
+                        if (idx < valCells.length) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valCells[idx]);
+                                count++;
+                            }
+                        }
+                    });
+                }
             });
         } else {
             // Grid-based Mode
@@ -703,7 +718,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 startRowIdx = allTrs.indexOf(activeTr);
                 
                 const activeDimId = startElement.getAttribute('data-dimensi-id');
-                startColIdx = checkedDimIds.indexOf(activeDimId);
+                startColIdx = allDimIds.indexOf(activeDimId);
                 if (startColIdx === -1) {
                     startColIdx = 0;
                 }
@@ -714,17 +729,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = allTrs[startRowIdx + rowOffset];
                 if (!targetTr) return;
 
-                cells.forEach((valText, colOffset) => {
-                    const targetColIdx = startColIdx + colOffset;
-                    if (targetColIdx >= checkedDimIds.length) return;
+                // If cells count matches total dimensions and pasted via textarea (no startElement)
+                if (cells.length === allDimIds.length && !startElement) {
+                    cells.forEach((valText, colOffset) => {
+                        const dimId = allDimIds[colOffset];
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                } else if (startElement) {
+                    // If started from a specific cell, map relative to allDimIds
+                    cells.forEach((valText, colOffset) => {
+                        const targetColIdx = startColIdx + colOffset;
+                        if (targetColIdx >= allDimIds.length) return;
 
-                    const dimId = checkedDimIds[targetColIdx];
-                    const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
-                    if (input && !input.disabled) {
-                        input.value = cleanNumberValue(valText);
-                        count++;
-                    }
-                });
+                        const dimId = allDimIds[targetColIdx];
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                } else {
+                    // Fallback: map to checked dimensions in order
+                    cells.forEach((valText, colOffset) => {
+                        if (colOffset < checkedDimIds.length) {
+                            const dimId = checkedDimIds[colOffset];
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                }
             });
         }
 
