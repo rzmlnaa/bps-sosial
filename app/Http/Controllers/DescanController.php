@@ -270,15 +270,33 @@ class DescanController extends Controller
     public function updateKegiatan(Request $request, $id)
     {
         $request->validate([
-            'nama_kegiatan' => 'required|string|max:255|unique:descan_kegiatan,nama_kegiatan,' . $id
+            'nama_kegiatan' => 'required|string|max:255|unique:descan_kegiatan,nama_kegiatan,' . $id,
+            'urutan' => 'required|integer|min:1',
         ], [
             'nama_kegiatan.unique' => 'Kegiatan dengan nama tersebut sudah ada.'
         ]);
 
         $keg = DescanKegiatan::findOrFail($id);
+        $oldUrutan = $keg->urutan;
+        $maxUrutan = DescanKegiatan::max('urutan') ?? 1;
+        $newUrutan = max(1, min($maxUrutan, (int) $request->urutan));
+
+        if ($newUrutan !== $oldUrutan) {
+            if ($newUrutan > $oldUrutan) {
+                DescanKegiatan::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$oldUrutan + 1, $newUrutan])
+                    ->decrement('urutan');
+            } else {
+                DescanKegiatan::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$newUrutan, $oldUrutan - 1])
+                    ->increment('urutan');
+            }
+        }
+
         $keg->update([
             'nama_kegiatan' => $request->nama_kegiatan,
-            'is_wajib' => $request->has('is_wajib')
+            'is_wajib' => $request->has('is_wajib'),
+            'urutan' => $newUrutan,
         ]);
 
         return back()->with('success', 'Kegiatan berhasil diperbarui.')->with('tab', 'kegiatan');
@@ -294,6 +312,10 @@ class DescanController extends Controller
         }
 
         $keg->delete();
+
+        // Resequence remaining kegiatans
+        $this->resequenceKegiatan();
+
         return back()->with('success', 'Kegiatan berhasil dihapus.')->with('tab', 'kegiatan');
     }
 
@@ -310,6 +332,17 @@ class DescanController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Urutan kegiatan berhasil diperbarui.']);
+    }
+
+    private function resequenceKegiatan()
+    {
+        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        foreach ($kegiatans as $index => $keg) {
+            $keg->update(['urutan' => $index + 1]);
+        }
     }
 
     // --- Jenis Bukti Kegiatan ---

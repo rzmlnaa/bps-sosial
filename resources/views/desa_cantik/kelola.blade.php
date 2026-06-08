@@ -282,6 +282,14 @@
                                                                         value="{{ $keg->nama_kegiatan }}" required>
                                                                 </div>
                                                                 <div class="mb-3">
+                                                                    <label class="form-label fw-medium">Urutan <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="number" name="urutan" class="form-control"
+                                                                        value="{{ $keg->urutan }}" min="1"
+                                                                        max="{{ $kegiatans->total() }}" required>
+                                                                    <div class="form-text text-muted">Urutan saat ini: <strong>{{ $keg->urutan }}</strong>. Mengubah urutan akan menggeser kegiatan lain secara otomatis.</div>
+                                                                </div>
+                                                                <div class="mb-3">
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox"
                                                                             name="is_wajib" value="1"

@@ -690,6 +690,8 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['nama_dimensi' => 'required|string|max:255']);
 
+
+
         $slug = \Illuminate\Support\Str::slug($request->nama_dimensi);
         $exists = Dimensi::get()->contains(function ($item) use ($slug) {
             return \Illuminate\Support\Str::slug($item->nama_dimensi) === $slug;
@@ -709,6 +711,13 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['nama_dimensi' => 'required|string|max:255']);
 
+        // Cegah edit dimensi 'None'
+        $dimensi = Dimensi::findOrFail($id);
+        if (strtolower(trim($dimensi->nama_dimensi)) === 'none') {
+            return back()->withErrors(['nama_dimensi' => 'Dimensi "None" tidak dapat diedit.'])->with('tab', 'dimensi');
+        }
+
+
         $slug = \Illuminate\Support\Str::slug($request->nama_dimensi);
         $exists = Dimensi::where('id', '!=', $id)->get()->contains(function ($item) use ($slug) {
             return \Illuminate\Support\Str::slug($item->nama_dimensi) === $slug;
@@ -720,17 +729,24 @@ class IndikatorMakroController extends Controller
         $data = $request->all();
         $data['updated_by'] = auth()->id();
 
-        Dimensi::findOrFail($id)->update($data);
+        $dimensi->update($data);
         return back()->with('success', 'Dimensi berhasil diperbarui')->with('tab', 'dimensi');
     }
 
     public function destroyDimensi($id)
     {
+        $dimensi = Dimensi::findOrFail($id);
+
+        // Cegah penghapusan dimensi 'None'
+        if (strtolower(trim($dimensi->nama_dimensi)) === 'none') {
+            return back()->withErrors(['error' => 'Dimensi "None" tidak dapat dihapus.'])->with('tab', 'dimensi');
+        }
+
         $count = \App\Models\IndikatorDimensi::where('dimensi_id', $id)->count();
         if ($count > 0) {
             return back()->withErrors(['error' => "Dimensi tidak dapat dihapus karena sedang digunakan oleh {$count} relasi indikator."])->with('tab', 'dimensi');
         }
-        Dimensi::findOrFail($id)->delete();
+        $dimensi->delete();
         return back()->with('success', 'Dimensi berhasil dihapus')->with('tab', 'dimensi');
     }
 

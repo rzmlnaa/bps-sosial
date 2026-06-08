@@ -1043,21 +1043,27 @@
                                                                     </div>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
-                                                                        data-bs-target="#modalEditDimensi{{ $item->id }}" title="Edit">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    @if($item->indikator_dimensis_count > 0)
-                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
-                                                                            title="Sedang digunakan oleh data relasi indikator"><i
-                                                                                class="fas fa-trash"></i></button>
+                                                                    @if(strtolower(trim($item->nama_dimensi)) === 'none')
+                                                                        <span class="badge bg-secondary px-2 py-1" title="Dimensi sistem, tidak dapat diubah">
+                                                                            <i class="fas fa-lock me-1"></i>Terkunci
+                                                                        </span>
                                                                     @else
-                                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
-                                                                            method="POST" class="d-inline delete-form">
-                                                                            @csrf @method('DELETE')
-                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                        <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                            data-bs-target="#modalEditDimensi{{ $item->id }}" title="Edit">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+                                                                        @if($item->indikator_dimensis_count > 0)
+                                                                            <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                                title="Sedang digunakan oleh data relasi indikator"><i
                                                                                     class="fas fa-trash"></i></button>
-                                                                        </form>
+                                                                        @else
+                                                                            <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                                method="POST" class="d-inline delete-form">
+                                                                                @csrf @method('DELETE')
+                                                                                <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                        class="fas fa-trash"></i></button>
+                                                                            </form>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -1101,21 +1107,27 @@
                                                             </div>
 
                                                             <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
-                                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                                    data-bs-target="#modalEditDimensi{{ $item->id }}">
-                                                                    <i class="fas fa-edit"></i> Edit
-                                                                </button>
-                                                                @if($item->indikator_dimensis_count > 0)
-                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
-                                                                        title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i>
-                                                                        Hapus</button>
+                                                                @if(strtolower(trim($item->nama_dimensi)) === 'none')
+                                                                    <span class="badge bg-secondary px-3 py-2" title="Dimensi sistem, tidak dapat diubah">
+                                                                        <i class="fas fa-lock me-1"></i>Terkunci
+                                                                    </span>
                                                                 @else
-                                                                    <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
-                                                                        method="POST" class="d-inline delete-form">
-                                                                        @csrf @method('DELETE')
-                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditDimensi{{ $item->id }}">
+                                                                        <i class="fas fa-edit"></i> Edit
+                                                                    </button>
+                                                                    @if($item->indikator_dimensis_count > 0)
+                                                                        <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                            title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i>
                                                                             Hapus</button>
-                                                                    </form>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                                Hapus</button>
+                                                                        </form>
+                                                                    @endif
                                                                 @endif
                                                             </div>
                                                         </div>
