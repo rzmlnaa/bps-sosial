@@ -231,7 +231,40 @@
         .table-bps.table-none-only thead tr.col-num th.sticky-col {
             box-shadow: inset 0 -1.5px 0 #000, 2px 0 5px rgba(0,0,0,0.05) !important;
         }
+
+        /* Select2 Styling Matching Bootstrap bg-light */
+        .select2-container--default .select2-selection--single {
+            background-color: #f8f9fa !important; /* bg-light */
+            border: 0 !important; /* border-0 */
+            border-radius: 0 8px 8px 0 !important;
+            height: 38px !important;
+            padding: 0.25rem 0.5rem;
+            box-shadow: none !important; /* shadow-none */
+            outline: none !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            background-color: #f8f9fa !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--fi-text) !important;
+            line-height: 28px !important;
+            font-size: 0.9rem !important;
+            padding-left: 0.2rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 8px !important;
+        }
+        /* Fix Select2 inside Input Group */
+        .input-group > .select2-container--default {
+            flex: 1 1 auto;
+            width: 1% !important;
+        }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 
 @section('content')
@@ -286,12 +319,17 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label text-muted small fw-bold text-uppercase">Indikator Makro</label>
+                        <label class="form-label text-muted small fw-bold text-uppercase d-flex align-items-center gap-2">
+                            Indikator Makro
+                            @if($selectedIndikator)
+                                <span class="badge bg-secondary opacity-75 fw-normal text-capitalize" style="text-transform: none;"><i class="fas fa-tag me-1"></i> Bidang: {{ $selectedIndikator->bidang->nama_bidang ?? 'Tanpa Bidang' }}</span>
+                            @endif
+                        </label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0"><i
                                     class="fas fa-chart-line text-muted"></i></span>
                             <select name="indikator_makro_id"
-                                class="form-select form-select-custom border-0 shadow-none bg-light"
+                                class="form-select form-select-custom border-0 shadow-none bg-light select2-makro"
                                 onchange="this.form.submit()">
                                 @foreach($indikatorMakros as $makro)
                                     <option value="{{ $makro->id }}" {{ $selectedIndikatorMakroId == $makro->id ? 'selected' : '' }}>
@@ -859,5 +897,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        if ($('.select2-makro').length) {
+            $('.select2-makro').select2({
+                width: '100%',
+                placeholder: "Pilih Indikator Makro..."
+            });
+            // Ensure select2 change triggers form submission correctly
+            $('.select2-makro').on('select2:select', function (e) {
+                // If form is dirty, let the generic interceptor handle it
+                // We dispatch a submit event to the form
+                const form = $(this).closest('form')[0];
+                if (form) {
+                    const event = new Event('submit', { cancelable: true, bubbles: true });
+                    form.dispatchEvent(event);
+                    if (!event.defaultPrevented) {
+                        form.submit();
+                    }
+                }
+            });
+        }
+    });
 </script>
 @endpush

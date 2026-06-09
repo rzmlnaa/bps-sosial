@@ -154,7 +154,7 @@ class WilayahController extends Controller
             return back()->with('error', 'Akses ditolak: Anda tidak dapat memanipulasi data untuk kabupaten lain.');
         }
 
-        $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
+        $kabupatenTarget = Kabupaten::withoutIndonesia()->find($request->kabupaten_id);
         if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
             return back()->with('error', 'Tidak dapat menambahkan wilayah untuk level Provinsi.');
         }
@@ -213,7 +213,7 @@ class WilayahController extends Controller
             return back()->withInput()->withErrors(['kode_kecamatan' => 'Kode Kecamatan sudah digunakan di kabupaten ini.']);
         }
 
-        $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
+        $kabupatenTarget = Kabupaten::withoutIndonesia()->find($request->kabupaten_id);
         if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
             return redirect()->back()->with('error', 'Tidak dapat menambahkan kecamatan untuk level Provinsi (6100).');
         }

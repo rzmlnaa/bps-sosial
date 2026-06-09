@@ -366,19 +366,13 @@
                         <form action="{{ route('indikator-makro.bidang.store') }}" method="POST" class="mb-4">
                             @csrf
                             <div class="row align-items-end">
-                                <div class="col-md-7 mb-3">
+                                <div class="col-md-9 mb-3">
                                     <label class="form-label fw-bold small">Nama Bidang <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="nama_bidang" required
                                         placeholder="Contoh: Ekonomi">
                                 </div>
-                                <div class="col-md-2 mb-3">
-                                    <div class="form-check form-switch pt-2">
-                                        <input class="form-check-input" type="checkbox" name="is_active" value="1"
-                                            id="isActiveBidang" checked>
-                                        <label class="form-check-label fw-bold small" for="isActiveBidang">Aktif?</label>
-                                    </div>
-                                </div>
+
                                 <div class="col-md-3 mb-3">
                                     <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah Bidang</button>
                                 </div>
@@ -427,7 +421,7 @@
                                                             <th style="width: 50px;"></th>
                                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                                             <th>Nama Bidang</th>
-                                                            <th class="text-center" width="15%">Status</th>
+
                                                             <th class="text-center" width="25%">Informasi</th>
                                                             <th class="text-center" width="15%">Aksi</th>
                                                         </tr>
@@ -442,12 +436,7 @@
                                                                     {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() + $idx + 1 }}
                                                                 </td>
                                                                 <td class="fw-bold">{{ $item->nama_bidang }}</td>
-                                                                <td class="text-center">
-                                                                    <div class="form-check form-switch d-flex justify-content-center">
-                                                                        <input class="form-check-input toggle-bidang-status" type="checkbox"
-                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
-                                                                    </div>
-                                                                </td>
+
                                                                 <td class="text-start" style="font-size: 0.85rem;">
                                                                     <div class="d-flex flex-column text-muted">
                                                                         @if($item->created_at)
@@ -1272,13 +1261,7 @@
                             </div>
                         </form>
 
-                        @if($errors->has('indikator_dimensi'))
-                            <div class="alert alert-danger alert-dismissible fade show rounded-3 py-2" role="alert">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                {{ $errors->first('indikator_dimensi') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
+
 
                         <hr class="my-4">
 

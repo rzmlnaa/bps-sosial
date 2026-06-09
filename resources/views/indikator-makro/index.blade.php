@@ -285,7 +285,13 @@
                     @if($selectedIndikator)
                         {{-- Filter Tahun --}}
                         <div class="col-md-12 mb-2">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Filter Tahun / Periode (Tabel & Grafik)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <label class="form-label text-muted small fw-bold text-uppercase mb-0">Filter Tahun / Periode (Tabel & Grafik)</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-filter-tahun-all" style="font-size: 0.75rem;">Pilih Semua</button>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-filter-tahun-none" style="font-size: 0.75rem;">Hapus Semua</button>
+                                </div>
+                            </div>
                             <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border px-3">
                                 @foreach($allPeriodes as $p)
                                     <div class="form-check">
@@ -299,7 +305,13 @@
                         {{-- Filter Dimensi / Klasifikasi untuk Tabel (Only if not none-only) --}}
                         @if(!$isNoneOnly)
                             <div class="col-md-12 mb-2">
-                                <label class="form-label text-muted small fw-bold text-uppercase">Filter Dimensi / Klasifikasi (Tabel)</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                    <label class="form-label text-muted small fw-bold text-uppercase mb-0">Filter Dimensi / Klasifikasi (Tabel)</label>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btn-filter-dim-all" style="font-size: 0.75rem;">Pilih Semua</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btn-filter-dim-none" style="font-size: 0.75rem;">Hapus Semua</button>
+                                    </div>
+                                </div>
                                 <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border px-3">
                                     @foreach($indikatorDimensis as $indDim)
                                         <div class="form-check">
@@ -807,6 +819,38 @@ document.addEventListener('DOMContentLoaded', function () {
             lastSelectedId = '';
             btnClearSearch.style.display = 'none';
             // Do NOT reload the page, just let user search again
+        });
+    }
+
+    // Filter Tahun: Pilih Semua / Hapus Semua
+    const btnFilterTahunAll = document.getElementById('btn-filter-tahun-all');
+    const btnFilterTahunNone = document.getElementById('btn-filter-tahun-none');
+    if (btnFilterTahunAll) {
+        btnFilterTahunAll.addEventListener('click', function() {
+            document.querySelectorAll('.year-filter-checkbox').forEach(cb => cb.checked = true);
+            document.getElementById('filter-form').submit();
+        });
+    }
+    if (btnFilterTahunNone) {
+        btnFilterTahunNone.addEventListener('click', function() {
+            document.querySelectorAll('.year-filter-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('filter-form').submit();
+        });
+    }
+
+    // Filter Dimensi: Pilih Semua / Hapus Semua
+    const btnFilterDimAll = document.getElementById('btn-filter-dim-all');
+    const btnFilterDimNone = document.getElementById('btn-filter-dim-none');
+    if (btnFilterDimAll) {
+        btnFilterDimAll.addEventListener('click', function() {
+            document.querySelectorAll('.dimensi-filter-checkbox').forEach(cb => cb.checked = true);
+            document.getElementById('filter-form').submit();
+        });
+    }
+    if (btnFilterDimNone) {
+        btnFilterDimNone.addEventListener('click', function() {
+            document.querySelectorAll('.dimensi-filter-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('filter-form').submit();
         });
     }
 
