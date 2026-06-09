@@ -50,20 +50,23 @@
 
 @section('content')
     <div class="mt-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 fade-in-up">
             <div>
-                @if(request('from') === 'input-nilai')
-                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
-                        class="btn btn-light btn-sm mb-2 rounded-pill">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-                @else
-                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-                @endif
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Kelola Master Indikator</h2>
                 <p class="text-muted mb-0">Pengaturan Periode, Bidang, Makro, Dimensi, dan Indikator Dimensi</p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                @if(request('from') === 'input-nilai')
+                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                        class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @else
+                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -393,16 +396,23 @@
                                         <input type="hidden" name="from" value="{{ request('from') }}">
                                     @endif
                                     @if(request('periode_indikator_id'))
-                                        <input type="hidden" name="periode_indikator_id" value="{{ request('periode_indikator_id') }}">
+                                        <input type="hidden" name="periode_indikator_id"
+                                            value="{{ request('periode_indikator_id') }}">
                                     @endif
                                     @if(request('indikator_makro_id'))
-                                        <input type="hidden" name="indikator_makro_id" value="{{ request('indikator_makro_id') }}">
+                                        <input type="hidden" name="indikator_makro_id"
+                                            value="{{ request('indikator_makro_id') }}">
                                     @endif
                                     <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
-                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                        <input type="text" name="search_bidang" id="search-bidang-input" class="form-control border-start-0" placeholder="Cari nama bidang..." value="{{ $searchBidang ?? '' }}" style="font-size: 0.85rem;">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                class="fas fa-search"></i></span>
+                                        <input type="text" name="search_bidang" id="search-bidang-input"
+                                            class="form-control border-start-0" placeholder="Cari nama bidang..."
+                                            value="{{ $searchBidang ?? '' }}" style="font-size: 0.85rem;">
                                         @if($searchBidang)
-                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'bidang', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'bidang', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                         @endif
                                     </div>
                                 </form>
@@ -597,12 +607,12 @@
 
                                             <div class="mt-3">
                                                 {{ $indikatorBidangs->appends([
-                                                    'tab' => 'bidang',
-                                                    'search_bidang' => $searchBidang,
-                                                    'from' => request('from'),
-                                                    'periode_indikator_id' => request('periode_indikator_id'),
-                                                    'indikator_makro_id' => request('indikator_makro_id')
-                                                ])->links('pagination::bootstrap-5') }}
+                                'tab' => 'bidang',
+                                'search_bidang' => $searchBidang,
+                                'from' => request('from'),
+                                'periode_indikator_id' => request('periode_indikator_id'),
+                                'indikator_makro_id' => request('indikator_makro_id')
+                            ])->links('pagination::bootstrap-5') }}
                                             </div>
                         @else
                             <div class="text-center text-muted p-3 bg-light rounded">
@@ -628,7 +638,8 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold small">Bidang <span
                                             class="text-danger">*</span></label>
-                                    <select name="indikator_bidang_id" class="form-select" onchange="filterByBidang(this.value)" required>
+                                    <select name="indikator_bidang_id" class="form-select"
+                                        onchange="filterByBidang(this.value)" required>
                                         <option value="">-- Pilih Bidang --</option>
                                         @foreach($allIndikatorBidangs as $bidang)
                                             <option value="{{ $bidang->id }}" {{ $selectedFilterBidangId == $bidang->id ? 'selected' : '' }}>
@@ -671,7 +682,9 @@
                         @if($selectedFilterBidangId)
                             <div class="row align-items-center mb-3">
                                 <div class="col-md-6">
-                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Makro Bidang {{ $selectedFilterBidang->nama_bidang ?? '' }} (Geser untuk mengatur urutan):</h6>
+                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Makro Bidang
+                                        {{ $selectedFilterBidang->nama_bidang ?? '' }} (Geser untuk mengatur urutan):
+                                    </h6>
                                 </div>
                                 <div class="col-md-6 mt-2 mt-md-0">
                                     <form action="{{ route('indikator-makro.kelola') }}" method="GET">
@@ -681,16 +694,23 @@
                                             <input type="hidden" name="from" value="{{ request('from') }}">
                                         @endif
                                         @if(request('periode_indikator_id'))
-                                            <input type="hidden" name="periode_indikator_id" value="{{ request('periode_indikator_id') }}">
+                                            <input type="hidden" name="periode_indikator_id"
+                                                value="{{ request('periode_indikator_id') }}">
                                         @endif
                                         @if(request('indikator_makro_id'))
-                                            <input type="hidden" name="indikator_makro_id" value="{{ request('indikator_makro_id') }}">
+                                            <input type="hidden" name="indikator_makro_id"
+                                                value="{{ request('indikator_makro_id') }}">
                                         @endif
                                         <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
-                                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                            <input type="text" name="search_makro" id="search-makro-input" class="form-control border-start-0" placeholder="Cari nama indikator makro..." value="{{ $searchMakro ?? '' }}" style="font-size: 0.85rem;">
+                                            <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                    class="fas fa-search"></i></span>
+                                            <input type="text" name="search_makro" id="search-makro-input"
+                                                class="form-control border-start-0" placeholder="Cari nama indikator makro..."
+                                                value="{{ $searchMakro ?? '' }}" style="font-size: 0.85rem;">
                                             @if($searchMakro)
-                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => $selectedFilterBidangId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => $selectedFilterBidangId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                    class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                    title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                             @endif
                                         </div>
                                     </form>
@@ -924,22 +944,23 @@
 
                                             <div class="mt-3">
                                                 {{ $indikatorMakros->appends([
-                                                    'tab' => 'makro',
-                                                    'search_makro' => request('search_makro'),
-                                                    'indikator_bidang_id' => request('indikator_bidang_id')
-                                                ])->links('pagination::bootstrap-5') }}
+                                    'tab' => 'makro',
+                                    'search_makro' => request('search_makro'),
+                                    'indikator_bidang_id' => request('indikator_bidang_id')
+                                ])->links('pagination::bootstrap-5') }}
                                             </div>
-                                        @else
-                                            <div class="text-center text-muted p-3 bg-light rounded">
-                                                <small>Belum ada data indikator makro untuk bidang yang dipilih.</small>
-                                            </div>
-                                        @endif
-                                    @else
-                                        <div class="text-center text-muted p-4 bg-light rounded-3 border">
-                                            <i class="fas fa-info-circle fa-2x mb-2 text-warning text-opacity-75"></i>
-                                            <p class="mb-0 fw-medium">Silakan pilih Bidang terlebih dahulu pada dropdown di atas untuk menampilkan daftar Indikator Makro.</p>
-                                        </div>
-                                    @endif
+                            @else
+                                <div class="text-center text-muted p-3 bg-light rounded">
+                                    <small>Belum ada data indikator makro untuk bidang yang dipilih.</small>
+                                </div>
+                            @endif
+                        @else
+                            <div class="text-center text-muted p-4 bg-light rounded-3 border">
+                                <i class="fas fa-info-circle fa-2x mb-2 text-warning text-opacity-75"></i>
+                                <p class="mb-0 fw-medium">Silakan pilih Bidang terlebih dahulu pada dropdown di atas untuk
+                                    menampilkan daftar Indikator Makro.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -979,16 +1000,23 @@
                                         <input type="hidden" name="from" value="{{ request('from') }}">
                                     @endif
                                     @if(request('periode_indikator_id'))
-                                        <input type="hidden" name="periode_indikator_id" value="{{ request('periode_indikator_id') }}">
+                                        <input type="hidden" name="periode_indikator_id"
+                                            value="{{ request('periode_indikator_id') }}">
                                     @endif
                                     @if(request('indikator_makro_id'))
-                                        <input type="hidden" name="indikator_makro_id" value="{{ request('indikator_makro_id') }}">
+                                        <input type="hidden" name="indikator_makro_id"
+                                            value="{{ request('indikator_makro_id') }}">
                                     @endif
                                     <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
-                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                        <input type="text" name="search_dimensi" id="search-dimensi-input" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                class="fas fa-search"></i></span>
+                                        <input type="text" name="search_dimensi" id="search-dimensi-input"
+                                            class="form-control border-start-0" placeholder="Cari nama dimensi..."
+                                            value="{{ $searchDimensi ?? '' }}" style="font-size: 0.85rem;">
                                         @if($searchDimensi)
-                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'dimensi', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'dimensi', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                         @endif
                                     </div>
                                 </form>
@@ -1044,7 +1072,8 @@
                                                                 </td>
                                                                 <td class="text-center">
                                                                     @if(strtolower(trim($item->nama_dimensi)) === 'none')
-                                                                        <span class="badge bg-secondary px-2 py-1" title="Dimensi sistem, tidak dapat diubah">
+                                                                        <span class="badge bg-secondary px-2 py-1"
+                                                                            title="Dimensi sistem, tidak dapat diubah">
                                                                             <i class="fas fa-lock me-1"></i>Terkunci
                                                                         </span>
                                                                     @else
@@ -1108,7 +1137,8 @@
 
                                                             <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
                                                                 @if(strtolower(trim($item->nama_dimensi)) === 'none')
-                                                                    <span class="badge bg-secondary px-3 py-2" title="Dimensi sistem, tidak dapat diubah">
+                                                                    <span class="badge bg-secondary px-3 py-2"
+                                                                        title="Dimensi sistem, tidak dapat diubah">
                                                                         <i class="fas fa-lock me-1"></i>Terkunci
                                                                     </span>
                                                                 @else
@@ -1255,7 +1285,9 @@
                         @if($selectedMakroId)
                             <div class="row align-items-center mb-3">
                                 <div class="col-md-6">
-                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Dimensi: {{ $selectedMakro->nama_indikator ?? '-' }}</h6>
+                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Dimensi:
+                                        {{ $selectedMakro->nama_indikator ?? '-' }}
+                                    </h6>
                                 </div>
                                 <div class="col-md-6 mt-2 mt-md-0">
                                     <form action="{{ route('indikator-makro.kelola') }}" method="GET">
@@ -1265,16 +1297,23 @@
                                             <input type="hidden" name="from" value="{{ request('from') }}">
                                         @endif
                                         @if(request('periode_indikator_id'))
-                                            <input type="hidden" name="periode_indikator_id" value="{{ request('periode_indikator_id') }}">
+                                            <input type="hidden" name="periode_indikator_id"
+                                                value="{{ request('periode_indikator_id') }}">
                                         @endif
                                         @if(request('indikator_makro_id'))
-                                            <input type="hidden" name="indikator_makro_id" value="{{ request('indikator_makro_id') }}">
+                                            <input type="hidden" name="indikator_makro_id"
+                                                value="{{ request('indikator_makro_id') }}">
                                         @endif
                                         <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
-                                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                                            <input type="text" name="search_ind_dimensi" id="search-ind-dimensi-input" class="form-control border-start-0" placeholder="Cari nama dimensi..." value="{{ $searchIndDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                            <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                    class="fas fa-search"></i></span>
+                                            <input type="text" name="search_ind_dimensi" id="search-ind-dimensi-input"
+                                                class="form-control border-start-0" placeholder="Cari nama dimensi..."
+                                                value="{{ $searchIndDimensi ?? '' }}" style="font-size: 0.85rem;">
                                             @if($searchIndDimensi)
-                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $selectedMakroId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $selectedMakroId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                    class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                    title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
                                             @endif
                                         </div>
                                     </form>
@@ -1416,10 +1455,12 @@
                                                                             title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i>
                                                                             Hapus</button>
                                                                     @else
-                                                                        <form action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
+                                                                        <form
+                                                                            action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
                                                                             method="POST" class="d-inline delete-form">
                                                                             @csrf @method('DELETE')
-                                                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                            <button type="submit" class="btn btn-danger btn-sm"><i
+                                                                                    class="fas fa-trash"></i>
                                                                                 Hapus</button>
                                                                         </form>
                                                                     @endif
@@ -1440,9 +1481,11 @@
                                                                 <h5 class="modal-title fw-bold">Edit Urutan Indikator Dimensi</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                             </div>
-                                                            <form action="{{ route('indikator-makro.indikator-dimensi.update', $item->id) }}" method="POST">
+                                                            <form action="{{ route('indikator-makro.indikator-dimensi.update', $item->id) }}"
+                                                                method="POST">
                                                                 @csrf @method('PUT')
-                                                                <input type="hidden" name="indikator_makro_id" value="{{ $item->indikator_makro_id }}">
+                                                                <input type="hidden" name="indikator_makro_id"
+                                                                    value="{{ $item->indikator_makro_id }}">
                                                                 <input type="hidden" name="dimensi_id" value="{{ $item->dimensi_id }}">
                                                                 <div class="modal-body">
                                                                     <div class="mb-3">

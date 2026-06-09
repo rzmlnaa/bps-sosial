@@ -6,11 +6,13 @@
     <div class="mt-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 fade-in-up">
             <div>
-                <a href="{{ route('desa-cantik.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Kelola Descan</h2>
                 <p class="text-muted mb-0">Pengaturan Periode, Kuota, dan Kegiatan Desa Cantik</p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <a href="{{ route('desa-cantik.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </a>
             </div>
         </div>
 

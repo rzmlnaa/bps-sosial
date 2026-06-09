@@ -6,15 +6,6 @@
     <div class="mt-2 fade-in-up pb-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <a href="{{ route('desa-cantik.progress') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
-                @if(!$peserta->periode->is_active)
-                    <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 py-2">
-                        <i class="fas fa-lock me-2"></i>
-                        Periode <strong>{{ $peserta->periode->tahun }}</strong> sudah tidak aktif. Seluruh data progress telah dikunci.
-                    </div>
-                @endif
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">
                     {{ $peserta->desa->nama_desa }}
                 </h2>
@@ -23,7 +14,19 @@
                     {{ $peserta->periode->tahun }}
                 </p>
             </div>
+            <div class="mt-2 mt-md-0">
+                <a href="{{ route('desa-cantik.progress') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </a>
+            </div>
         </div>
+        @if(!$peserta->periode->is_active)
+            <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 py-2">
+                <i class="fas fa-lock me-2"></i>
+                Periode <strong>{{ $peserta->periode->tahun }}</strong> sudah tidak aktif. Seluruh data progress telah dikunci.
+            </div>
+        @endif
+
     </div>
 
     @php
