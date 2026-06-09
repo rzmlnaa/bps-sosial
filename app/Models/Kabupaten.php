@@ -41,4 +41,10 @@ class Kabupaten extends Model
     {
         return $this->hasMany(Kecamatan::class, 'kabupaten_id');
     }
+
+    public function scopeWithoutIndonesia($query)
+    {
+        return $query->where('kode_kab', '!=', 1);
+    }
 }
+

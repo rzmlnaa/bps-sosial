@@ -55,9 +55,9 @@ class WilayahController extends Controller
         $kecamatans = $query->paginate(10)->withQueryString();
 
         if ($isProvinsi) {
-            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab', 'asc')->get();
+            $kabupatens = Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderBy('kode_kab', 'asc')->get();
         } else {
-            $kabupatens = Kabupaten::where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
+            $kabupatens = Kabupaten::withoutIndonesia()->where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
         }
 
         // Hitung total untuk statistik

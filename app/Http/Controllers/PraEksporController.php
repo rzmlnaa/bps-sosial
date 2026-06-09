@@ -9,7 +9,7 @@ class PraEksporController extends Controller
     public function index(Request $request)
     {
         // Get all kabupatens for the dropdown
-        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
         $indikators = \App\Models\Indikator::where('kelompok', 'utama')->orderBy('nama', 'asc')->get();
 
         $selectedKabupatenId = $request->input('kabupaten_id');
@@ -22,13 +22,13 @@ class PraEksporController extends Controller
         $selectedIds = [];
 
         if ($selectedKabupatenId) {
-            $kabupaten = \App\Models\Kabupaten::find($selectedKabupatenId);
+            $kabupaten = \App\Models\Kabupaten::withoutIndonesia()->find($selectedKabupatenId);
             if ($kabupaten) {
                 // Extract keyword: remove 'kab.' 'kota' 'kabupaten' and trim
                 $kataKunci = str_ireplace(['kab.', 'kabupaten', 'kota', 'provinsi'], '', strtolower($kabupaten->nama_kabupaten));
                 $kataKunci = trim($kataKunci);
 
-                $allKabupatens = \App\Models\Kabupaten::pluck('nama_kabupaten', 'id')->toArray();
+                $allKabupatens = \App\Models\Kabupaten::withoutIndonesia()->pluck('nama_kabupaten', 'id')->toArray();
                 $otherKeywords = [];
                 foreach ($allKabupatens as $id => $nama) {
                     if ($id == $selectedKabupatenId)
@@ -204,7 +204,7 @@ class PraEksporController extends Controller
             return redirect()->route('pra-ekspor.index')->with('error', 'Pilih kabupaten terlebih dahulu.');
         }
 
-        $kabupaten = \App\Models\Kabupaten::findOrFail($kabupaten_id);
+        $kabupaten = \App\Models\Kabupaten::withoutIndonesia()->findOrFail($kabupaten_id);
 
         $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators'])
             ->where('kabupaten_id', $kabupaten_id);
@@ -269,7 +269,7 @@ class PraEksporController extends Controller
             return redirect()->route('pra-ekspor.index')->with('error', 'Pilih kabupaten terlebih dahulu.');
         }
 
-        $kabupaten = \App\Models\Kabupaten::findOrFail($kabupaten_id);
+        $kabupaten = \App\Models\Kabupaten::withoutIndonesia()->findOrFail($kabupaten_id);
 
         $selectionsQuery = \App\Models\PraEksporFenomenaSelection::with(['fenomena.indikators'])
             ->where('kabupaten_id', $kabupaten_id);
@@ -361,7 +361,7 @@ class PraEksporController extends Controller
         }
 
         $selections = $selectionsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
 
         $dataPerKabupaten = [];
         foreach ($kabupatens as $kab) {
@@ -431,7 +431,7 @@ class PraEksporController extends Controller
         }
 
         $selections = $selectionsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
 
         $dataPerKabupaten = [];
         foreach ($kabupatens as $kab) {

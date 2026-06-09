@@ -102,7 +102,7 @@ class PovertyDataController extends Controller
             $variabelsQuery->where('tahun', $tahun);
         }
         $variabels = $variabelsQuery->get();
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
 
         return response()->json([
             'data' => $data,
@@ -124,7 +124,7 @@ class PovertyDataController extends Controller
 
     public function exportToCSV($kabupaten_id)
     {
-        $kabupaten = \App\Models\Kabupaten::findOrFail($kabupaten_id);
+        $kabupaten = \App\Models\Kabupaten::withoutIndonesia()->findOrFail($kabupaten_id);
         $variabels = \App\Models\VariabelKemiskinan::all();
         $data = NilaiKemiskinan::where('kabupaten_id', $kabupaten_id)
             ->get()

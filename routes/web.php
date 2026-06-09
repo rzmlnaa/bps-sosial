@@ -163,7 +163,7 @@ Route::middleware(['check.status'])->group(function () {
 
     Route::get('/poverty', function (Request $request) {
 
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
         $variabels = VariabelKemiskinan::all();
         $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
         $latestYear = VariabelKemiskinan::max('tahun') ?? date('Y');
@@ -278,7 +278,7 @@ Route::middleware(['check.status'])->group(function () {
 Route::middleware(['auth', 'check.status', 'only.province'])->group(function () {
 
     Route::get('/poverty/input', function () {
-        $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
         $variabels = VariabelKemiskinan::with('userAdd')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
         return view('poverty.input', compact('kabupatens', 'variabels'));
     })->name('poverty.input');

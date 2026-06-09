@@ -41,7 +41,7 @@ class RhNilaiController extends Controller
             return back()->with('error', 'Tidak dapat input nilai RH Kabupaten, karena Admin Provinsi belum mengaktifkan tahun RH.');
         }
 
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
         if ($user->kabupaten->kode_kab == '6100') {
             $kabupatens = $kabupatens->where('kode_kab', '!=', '6100');
         }

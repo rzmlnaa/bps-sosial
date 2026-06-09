@@ -14,7 +14,7 @@ class SerutiController extends Controller
     public function index()
     {
         $years = Period::distinct()->orderBy('year', 'desc')->pluck('year');
-        $kabupatens = Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
         $coicops = Coicop::orderBy('kode', 'asc')->get();
 
         // Get first Kabupaten that has data
@@ -29,7 +29,7 @@ class SerutiController extends Controller
     public function create()
     {
         $coicops = Coicop::with(['userAdd', 'userUpdate'])->orderBy('kode', 'asc')->get();
-        $kabupatens = Kabupaten::orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get();
         return view('seruti.input', compact('coicops', 'kabupatens'));
     }
 
