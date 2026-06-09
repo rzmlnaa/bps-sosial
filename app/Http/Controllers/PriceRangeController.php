@@ -344,6 +344,32 @@ class PriceRangeController extends Controller
         return $snapshotOutliers;
     }
 
+    public function input()
+    {
+        $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
+        $rhTahun = \App\Models\RhTahun::with([
+            'perubahanHeaders' => function ($query) {
+                $query->orderBy('tanggal_perubahan', 'asc')->withCount([
+                    'details as details_with_values_count' => function ($q) {
+                        $q->where(function ($sub) {
+                            $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
+                        });
+                    }
+                ]);
+            },
+            'perubahanHeaders.userAdd',
+            'userAdd'
+        ])->withCount([
+            'perubahanDetails as perubahan_details_with_values_count' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
+                });
+            }
+        ])->orderBy('tahun', 'desc')->get();
+
+        return view('price-range.input', compact('kategori', 'rhTahun'));
+    }
+
     public function export(Request $request)
     {
 

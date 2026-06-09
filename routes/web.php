@@ -30,7 +30,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\DescanController;
 use App\Http\Controllers\IndikatorMakroController;
-
+use App\Http\Controllers\PovertyViewController;
 
 // --- Temporary Cleanup RH Route ---
 Route::get('/cleanup-null-rh', function () {
@@ -120,17 +120,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // My Team Route
     Route::get('/my-team', [MyTeamController::class, 'index'])->name('my-team.index');
 
-    // // Wilayah (Kecamatan & Desa)
-    // Route::get('/wilayah', [WilayahController::class, 'index'])->name('wilayah.index');
-    // Route::get('/wilayah/search-kecamatan', [WilayahController::class, 'searchKecamatanAjax'])->name('wilayah.search-kecamatan');
-    // Route::post('/wilayah', [WilayahController::class, 'store'])->name('wilayah.store');
-    // Route::post('/wilayah/kecamatan', [WilayahController::class, 'storeKecamatan'])->name('wilayah.store-kecamatan');
-    // Route::put('/wilayah/kecamatan/{id}', [WilayahController::class, 'updateKecamatan'])->name('wilayah.update-kecamatan');
-    // Route::delete('/wilayah/kecamatan/{id}', [WilayahController::class, 'destroyKecamatan'])->name('wilayah.destroy-kecamatan');
-    // Route::post('/wilayah/desa', [WilayahController::class, 'storeDesa'])->name('wilayah.store-desa');
-    // Route::put('/wilayah/desa/{id}', [WilayahController::class, 'updateDesa'])->name('wilayah.update-desa');
-    // Route::delete('/wilayah/desa/{id}', [WilayahController::class, 'destroyDesa'])->name('wilayah.destroy-desa');
-
     // Peserta Desa Cantik (semua user login)
     Route::get('/desa-cantik/peserta', [DescanController::class, 'peserta'])->name('desa-cantik.peserta');
     Route::post('/desa-cantik/peserta', [DescanController::class, 'storePeserta'])->name('desa-cantik.peserta.store');
@@ -145,10 +134,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
 });
 
 
-// --- Application Routes (Applied CheckUserStatus) ---
-// These routes will check if a logged-in user is 'pending' and redirect them if so.
-// Guests (not logged in) will bypass the check and can access public pages if meant to be public.
-
 Route::middleware(['check.status'])->group(function () {
 
     Route::get('/', function () {
@@ -161,85 +146,7 @@ Route::middleware(['check.status'])->group(function () {
         return view('layouts.admin');
     })->name('layouts');
 
-    Route::get('/poverty', function (Request $request) {
-
-        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
-        $variabels = VariabelKemiskinan::all();
-        $availableYears = VariabelKemiskinan::distinct()->orderBy('tahun', 'desc')->pluck('tahun');
-        $latestYear = VariabelKemiskinan::max('tahun') ?? date('Y');
-        if (!$request->has('tahun')) {
-            $request->merge(['tahun' => 'all']);
-            //$request->merge(['tahun' => $latestYear]);
-        }
-        $selectedTahun = $request->get('tahun');
-
-        if ($selectedTahun == 'all' || $selectedTahun == null) {
-            $mainVar = $variabels->first();
-        } else {
-            $mainVar = VariabelKemiskinan::where('tahun', $selectedTahun)->latest()->first();
-        }
-        $nilaiKemiskinan = \App\Models\NilaiKemiskinan::all()->keyBy('kabupaten_id');
-
-        // $kabupatenData = [];
-        // foreach ($kabupatens as $kab) {
-        //     $ceknilai = \App\Models\NilaiKemiskinan::where('kabupaten_id', $kab->id)->first();
-        //     $kabupatenData[] = [
-        //         'id' => $kab->id,
-        //         'kode_kab' => $kab->kode_kab,
-        //         'name' => $kab->nama_kabupaten,
-        //         'nilai' => $ceknilai
-        //     ];
-        // }
-        // $kabupatenData = array_filter($kabupatenData, function ($item) {
-        //     return !is_null($item['nilai']);
-        // });
-
-        $kabupatenData = $kabupatens->map(function ($kab) use ($nilaiKemiskinan) {
-            $nilai = $nilaiKemiskinan->get($kab->id);
-
-            if (!$nilai) {
-                return null;
-            }
-
-            return [
-                'id' => $kab->id,
-                'kode_kab' => $kab->kode_kab,
-                'name' => $kab->nama_kabupaten,
-                'nilai' => $nilai
-            ];
-        })->filter()->values();
-
-        //dd($kabupatenData);
-
-        //dd($kabupatens, $kabupatenData);
-
-        // $provAvg = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'avg_nilai')) / count($kabupatenData)) : 0;
-        // $provCount = array_sum(array_column($kabupatenData, 'count'));
-        // $provGK = count($kabupatenData) > 0 ? (array_sum(array_column($kabupatenData, 'gk')) / count($kabupatenData)) : 0;
-
-        $provAvg = $kabupatenData->whereNotNull('nilai')->avg(fn($item) => $item['nilai']->avg_nilai);
-        $provCount = $kabupatenData->sum(fn($item) => $item['nilai']->count);
-        $provGK = $kabupatenData->avg(fn($item) => $item['nilai']->gk);
-
-        $bulanNama = [
-            1 => 'Januari',
-            2 => 'Februari',
-            3 => 'Maret',
-            4 => 'April',
-            5 => 'Mei',
-            6 => 'Juni',
-            7 => 'Juli',
-            8 => 'Agustus',
-            9 => 'September',
-            10 => 'Oktober',
-            11 => 'November',
-            12 => 'Desember'
-        ];
-        $latestLabel = $mainVar ? (($mainVar->bulan ? $bulanNama[$mainVar->bulan] . ' ' : '') . ($mainVar->tahun ?? '')) : '';
-
-
-        return view('poverty.index', compact('kabupatens', 'variabels', 'kabupatenData', 'mainVar', 'provAvg', 'provCount', 'provGK', 'latestLabel', 'selectedTahun', 'availableYears', 'bulanNama'));
-    })->name('poverty');
+    Route::get('/poverty', [PovertyViewController::class, 'index'])->name('poverty');
 
     Route::get('/poverty-data/get-data/{kabupaten_id}', [PovertyDataController::class, 'getData']);
 
@@ -277,11 +184,7 @@ Route::middleware(['check.status'])->group(function () {
 
 Route::middleware(['auth', 'check.status', 'only.province'])->group(function () {
 
-    Route::get('/poverty/input', function () {
-        $kabupatens = Kabupaten::withoutIndonesia()->with(['userAdd', 'userUpdate'])->orderBy('kode_kab', 'asc')->get();
-        $variabels = VariabelKemiskinan::with('userAdd')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
-        return view('poverty.input', compact('kabupatens', 'variabels'));
-    })->name('poverty.input');
+    Route::get('/poverty/input', [PovertyViewController::class, 'input'])->name('poverty.input');
 
     Route::post('/variabel', [VariabelController::class, 'store'])->name('variabel.store');
     Route::delete('/variabel/{id}', [VariabelController::class, 'destroy'])->name('variabel.destroy');
@@ -313,29 +216,7 @@ Route::middleware(['auth', 'check.status', 'only.province'])->group(function () 
     Route::delete('/rh-perubahan/{id}', [RhTahunController::class, 'destroyPerubahan'])->name('rh-perubahan.destroy');
 
     // Input Komoditas
-    Route::get('/price-range/input', function () {
-        $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
-        $rhTahun = \App\Models\RhTahun::with([
-            'perubahanHeaders' => function ($query) {
-                $query->orderBy('tanggal_perubahan', 'asc')->withCount([
-                    'details as details_with_values_count' => function ($q) {
-                        $q->where(function ($sub) {
-                            $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
-                        });
-                    }
-                ]);
-            },
-            'perubahanHeaders.userAdd',
-            'userAdd'
-        ])->withCount([
-                    'perubahanDetails as perubahan_details_with_values_count' => function ($q) {
-                        $q->where(function ($sub) {
-                            $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
-                        });
-                    }
-                ])->orderBy('tahun', 'desc')->get();
-        return view('price-range/input', compact('kategori', 'rhTahun'));
-    })->name('price-range.input');
+    Route::get('/price-range/input', [PriceRangeController::class, 'input'])->name('price-range.input');
 
 
     //RH Verification

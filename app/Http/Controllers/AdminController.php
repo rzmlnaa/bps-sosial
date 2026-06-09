@@ -79,7 +79,7 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        $users = $query->latest()->get();
+        $users = $query->latest()->paginate(10)->withQueryString();
 
         $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
         $userTidakFinalPofile = User::where('role', '!=', 'admin')->where('kabupaten_id', null)->latest()->get();
