@@ -277,9 +277,15 @@
                 <p class="fi-subtitle">Input nilai indikator makro menggunakan format tabel grid BPS</p>
             </div>
             <div>
-                <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                    <i class="fas fa-arrow-left me-2"></i>Kembali
-                </a>
+                @if(request('from') == 'kelola')
+                    <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => request('filter_bidang_id')]) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @else
+                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -301,6 +307,12 @@
             <div class="card-body p-4">
                 <form action="{{ route('indikator-makro.input-nilai') }}" method="GET" class="row g-3 align-items-end"
                     id="filter-form">
+                    @if(request()->has('from'))
+                        <input type="hidden" name="from" value="{{ request('from') }}">
+                    @endif
+                    @if(request()->has('filter_bidang_id'))
+                        <input type="hidden" name="filter_bidang_id" value="{{ request('filter_bidang_id') }}">
+                    @endif
                     <div class="col-md-6">
                         <label class="form-label text-muted small fw-bold text-uppercase">Tahun Periode</label>
                         <div class="input-group">
@@ -325,18 +337,26 @@
                                 <span class="badge bg-secondary opacity-75 fw-normal text-capitalize" style="text-transform: none;"><i class="fas fa-tag me-1"></i> Bidang: {{ $selectedIndikator->bidang->nama_bidang ?? 'Tanpa Bidang' }}</span>
                             @endif
                         </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0"><i
-                                    class="fas fa-chart-line text-muted"></i></span>
-                            <select name="indikator_makro_id"
-                                class="form-select form-select-custom border-0 shadow-none bg-light select2-makro"
-                                onchange="this.form.submit()">
-                                @foreach($indikatorMakros as $makro)
-                                    <option value="{{ $makro->id }}" {{ $selectedIndikatorMakroId == $makro->id ? 'selected' : '' }}>
-                                        {{ $makro->nama_indikator }} {{ $makro->is_active ? '' : '(Non-aktif oleh Admin)' }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div class="position-relative" id="indikator-search-wrapper">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i
+                                        class="fas fa-chart-line text-muted"></i></span>
+                                <input type="text" id="indikator-search-input"
+                                    class="form-control border-0 ps-1 bg-light shadow-none"
+                                    placeholder="Cari Indikator Makro..."
+                                    value="{{ $selectedIndikator ? $selectedIndikator->nama_indikator : '' }}"
+                                    autocomplete="off" required>
+                                <button class="btn btn-light border-0 shadow-none bg-light text-muted" type="button"
+                                    id="btn-clear-search" title="Bersihkan Pilihan" style="{{ $selectedIndikator ? '' : 'display: none;' }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="indikator_makro_id" id="indikator-search-id"
+                                value="{{ $selectedIndikatorMakroId ?? '' }}">
+                            <div id="indikator-search-results" class="dropdown-menu w-100 shadow border-0 py-1"
+                                style="max-height: 250px; overflow-y: auto; display: none; position: absolute; z-index: 1050; top: 100%;">
+                                <!-- AJAX results will be loaded here -->
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -517,8 +537,17 @@
                                     </td>
                                     @forelse($indikatorDimensis as $indDim)
                                         @php
-                                            $val = $existingValues[$kab->id][$indDim->id] ?? '';
-                                            if (is_numeric($val)) {
+                                            $record = $existingValues[$kab->id][$indDim->id] ?? null;
+                                            $val = $record ? $record->nilai : '';
+                                            $tooltip = '';
+                                            if ($record) {
+                                                $creator = $record->creator ? $record->creator->name : 'Sistem';
+                                                $updater = $record->updater ? $record->updater->name : 'Sistem';
+                                                $createdAt = $record->created_at ? $record->created_at->format('d/m/Y H:i') : '-';
+                                                $updatedAt = $record->updated_at ? $record->updated_at->format('d/m/Y H:i') : '-';
+                                                $tooltip = "Dibuat oleh: $creator ($createdAt)\nDiperbarui oleh: $updater ($updatedAt)";
+                                            }
+                                            if (is_numeric($val) && $val !== '') {
                                                 $floatVal = (float)$val;
                                                 if (floor($floatVal) == $floatVal) {
                                                     $val = number_format($floatVal, 0, '.', ',');
@@ -539,6 +568,7 @@
                                                 class="bps-input-cell fw-medium" placeholder="{{ $isDisabled ? 'Non-aktif' : '-' }}" value="{{ $val }}"
                                                 {{ $isDisabled ? 'disabled' : '' }}
                                                 data-dimensi-id="{{ $indDim->id }}"
+                                                title="{{ $tooltip }}"
                                                 style="{{ $isDisabled ? 'background-color: #e2e8f0; color: #64748b; cursor: not-allowed;' : '' }}">
                                         </td>
                                     @empty
@@ -555,6 +585,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if($selectedIndikator && $selectedIndikator->deskripsi)
+                    <div class="mt-3 text-muted small">
+                        <strong>Deskripsi:</strong> {{ $selectedIndikator->deskripsi }}
+                    </div>
+                @endif
 
                 {{-- Simpan Semua button is at the top right of the card header --}}
             </form>
@@ -901,26 +937,96 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $(document).ready(function() {
-        if ($('.select2-makro').length) {
-            $('.select2-makro').select2({
-                width: '100%',
-                placeholder: "Pilih Indikator Makro..."
-            });
-            // Ensure select2 change triggers form submission correctly
-            $('.select2-makro').on('select2:select', function (e) {
-                // If form is dirty, let the generic interceptor handle it
-                // We dispatch a submit event to the form
-                const form = $(this).closest('form')[0];
-                if (form) {
-                    const event = new Event('submit', { cancelable: true, bubbles: true });
-                    form.dispatchEvent(event);
-                    if (!event.defaultPrevented) {
-                        form.submit();
-                    }
+    // ════════ LIVE SEARCH AUTOCOMPLETE FOR INDIKATOR MAKRO ════════
+    const searchInput = document.getElementById('indikator-search-input');
+    const searchId = document.getElementById('indikator-search-id');
+    const searchResults = document.getElementById('indikator-search-results');
+    const btnClearSearch = document.getElementById('btn-clear-search');
+    let lastSelectedName = '{{ $selectedIndikator ? addslashes($selectedIndikator->nama_indikator) : "" }}';
+    let lastSelectedId = '{{ $selectedIndikator ? $selectedIndikator->id : "" }}';
+    let debounceTimer;
+
+    const performSearch = (query) => {
+        fetch('/indikator-makro/search?q=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'dropdown-item d-flex justify-content-between align-items-center py-2';
+                        btn.innerHTML = `<span>${item.nama_indikator}</span>`;
+                        btn.addEventListener('click', function () {
+                            searchInput.value = item.nama_indikator;
+                            searchId.value = item.id;
+                            searchResults.style.display = 'none';
+                            lastSelectedName = item.nama_indikator;
+                            lastSelectedId = item.id;
+                            btnClearSearch.style.display = 'inline-block';
+                            
+                            // Trigger form submit check
+                            const form = searchInput.closest('form');
+                            if (form) {
+                                const event = new Event('submit', { cancelable: true, bubbles: true });
+                                form.dispatchEvent(event);
+                                if (!event.defaultPrevented) {
+                                    form.submit();
+                                }
+                            }
+                        });
+                        searchResults.appendChild(btn);
+                    });
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Tidak ada indikator yang cocok</div>';
+                    searchResults.style.display = 'block';
                 }
             });
-        }
-    });
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            searchId.value = ''; // clear ID on input to force choosing from suggestion
+            const query = this.value;
+            if (query.trim() === '') {
+                btnClearSearch.style.display = 'none';
+            } else {
+                btnClearSearch.style.display = 'inline-block';
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('focus', function () {
+            performSearch(this.value);
+        });
+
+        document.addEventListener('click', function (e) {
+            const wrapper = document.getElementById('indikator-search-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                searchResults.style.display = 'none';
+                if (!searchId.value) {
+                    searchInput.value = lastSelectedName;
+                    searchId.value = lastSelectedId;
+                    if (lastSelectedName) {
+                        btnClearSearch.style.display = 'inline-block';
+                    }
+                }
+            }
+        });
+    }
+
+    if (btnClearSearch) {
+        btnClearSearch.addEventListener('click', function () {
+            searchInput.value = '';
+            searchId.value = '';
+            lastSelectedName = '';
+            lastSelectedId = '';
+            btnClearSearch.style.display = 'none';
+        });
+    }
 </script>
 @endpush

@@ -715,6 +715,7 @@
                                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                                             <th>Nama Indikator</th>
                                                             <th>Satuan</th>
+                                                            <th>Deskripsi</th>
                                                             <th class="text-center" width="15%">Status</th>
                                                             <th class="text-center" width="25%">Informasi</th>
                                                             <th class="text-center" width="15%">Aksi</th>
@@ -729,6 +730,7 @@
                                                                 <td class="text-center sortable-urutan fw-bold">{{ $item->urutan }}</td>
                                                                 <td class="fw-bold">{{ $item->nama_indikator }}</td>
                                                                 <td>{{ $item->satuan ?? '-' }}</td>
+                                                                <td>{{ $item->deskripsi ?? '-' }}</td>
                                                                 <td class="text-center">
                                                                     <div class="form-check form-switch d-flex justify-content-center">
                                                                         <input class="form-check-input toggle-makro-status" type="checkbox"
@@ -781,6 +783,12 @@
                                                                                     class="fas fa-trash"></i></button>
                                                                         </form>
                                                                     @endif
+                                                                    <a href="{{ route('indikator-makro.input-nilai', ['indikator_makro_id' => $item->id, 'from' => 'kelola', 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-sm btn-info mb-1" title="Input Nilai Indikator Makro">
+                                                                        <i class="fas fa-keyboard"></i> Input
+                                                                    </a>
+                                                                    <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $item->id, 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-sm btn-primary mb-1" title="Atur Indikator Dimensi">
+                                                                        <i class="fas fa-cogs"></i> Atur Dimensi
+                                                                    </a>
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -857,6 +865,12 @@
                                                                             Hapus</button>
                                                                     </form>
                                                                 @endif
+                                                                <a href="{{ route('indikator-makro.input-nilai', ['indikator_makro_id' => $item->id, 'from' => 'kelola', 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-info btn-sm">
+                                                                    <i class="fas fa-keyboard"></i> Input
+                                                                </a>
+                                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $item->id, 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-primary btn-sm">
+                                                                    <i class="fas fa-cogs"></i> Atur Dimensi
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     </div>

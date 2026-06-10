@@ -16,12 +16,7 @@ return new class extends Migration
             $table->dropColumn('is_active');
         });
 
-        // 2. Hapus unique index dan kolom slug dari tabel indikator_bidangs
-        Schema::table('indikator_bidangs', function (Blueprint $table) {
-            // Drop unique index dulu sebelum drop kolom
-            $table->dropUnique(['slug']);
-            $table->dropColumn('slug');
-        });
+
     }
 
     /**
@@ -33,8 +28,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true)->after('nama_dimensi');
         });
 
-        Schema::table('indikator_bidangs', function (Blueprint $table) {
-            $table->string('slug')->nullable()->after('nama_bidang');
-        });
+
     }
 };

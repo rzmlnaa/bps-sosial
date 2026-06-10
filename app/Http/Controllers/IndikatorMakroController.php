@@ -21,10 +21,10 @@ class IndikatorMakroController extends Controller
         $selectedId = $request->query('indikator_makro_id');
         $selectedIndikator = null;
         if ($selectedId) {
-            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])->find($selectedId);
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active', 'deskripsi'])->find($selectedId);
         }
         if (!$selectedIndikator) {
-            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active', 'deskripsi'])
                 ->orderBy('urutan', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -197,14 +197,14 @@ class IndikatorMakroController extends Controller
         // 5. Fetch existing values in nilai_indikator_makros for the selected Periode and the dimensions of this indicator
         $existingValues = [];
         if ($selectedPeriodeId && $indikatorDimensis->isNotEmpty()) {
-            $existingValues = NilaiIndikatorMakro::where('periode_indikator_id', $selectedPeriodeId)
+            $existingValues = NilaiIndikatorMakro::with(['creator', 'updater'])
+                ->where('periode_indikator_id', $selectedPeriodeId)
                 ->whereIn('indikator_dimensi_id', $indikatorDimensis->pluck('id'))
                 ->get()
                 ->groupBy('kabupaten_id')
                 ->map(function ($items) {
-                    return $items->pluck('nilai', 'indikator_dimensi_id');
-                })
-                ->toArray();
+                    return $items->keyBy('indikator_dimensi_id');
+                });
         }
 
         return view('indikator-makro.input-nilai', compact(

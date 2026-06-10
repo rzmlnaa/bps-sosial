@@ -145,6 +145,13 @@
                             @endforeach
                         </tr>
                     @endforeach
+                    @if($indicator->deskripsi)
+                        <tr>
+                            <td colspan="{{ $titleColspan }}" style="text-align: left;">
+                                Deskripsi: {{ $indicator->deskripsi }}
+                            </td>
+                        </tr>
+                    @endif
                     <!-- Spacer rows inside the table body -->
                     <tr>
                         <td colspan="{{ $colspan }}"></td>
