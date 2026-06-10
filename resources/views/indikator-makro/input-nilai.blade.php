@@ -231,7 +231,40 @@
         .table-bps.table-none-only thead tr.col-num th.sticky-col {
             box-shadow: inset 0 -1.5px 0 #000, 2px 0 5px rgba(0,0,0,0.05) !important;
         }
+
+        /* Select2 Styling Matching Bootstrap bg-light */
+        .select2-container--default .select2-selection--single {
+            background-color: #f8f9fa !important; /* bg-light */
+            border: 0 !important; /* border-0 */
+            border-radius: 0 8px 8px 0 !important;
+            height: 38px !important;
+            padding: 0.25rem 0.5rem;
+            box-shadow: none !important; /* shadow-none */
+            outline: none !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            background-color: #f8f9fa !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--fi-text) !important;
+            line-height: 28px !important;
+            font-size: 0.9rem !important;
+            padding-left: 0.2rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 8px !important;
+        }
+        /* Fix Select2 inside Input Group */
+        .input-group > .select2-container--default {
+            flex: 1 1 auto;
+            width: 1% !important;
+        }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 
 @section('content')
@@ -244,9 +277,15 @@
                 <p class="fi-subtitle">Input nilai indikator makro menggunakan format tabel grid BPS</p>
             </div>
             <div>
-                <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                    <i class="fas fa-arrow-left me-2"></i>Kembali
-                </a>
+                @if(request('from') == 'kelola')
+                    <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => request('filter_bidang_id')]) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @else
+                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -268,6 +307,12 @@
             <div class="card-body p-4">
                 <form action="{{ route('indikator-makro.input-nilai') }}" method="GET" class="row g-3 align-items-end"
                     id="filter-form">
+                    @if(request()->has('from'))
+                        <input type="hidden" name="from" value="{{ request('from') }}">
+                    @endif
+                    @if(request()->has('filter_bidang_id'))
+                        <input type="hidden" name="filter_bidang_id" value="{{ request('filter_bidang_id') }}">
+                    @endif
                     <div class="col-md-6">
                         <label class="form-label text-muted small fw-bold text-uppercase">Tahun Periode</label>
                         <div class="input-group">
@@ -286,19 +331,32 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label text-muted small fw-bold text-uppercase">Indikator Makro</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0"><i
-                                    class="fas fa-chart-line text-muted"></i></span>
-                            <select name="indikator_makro_id"
-                                class="form-select form-select-custom border-0 shadow-none bg-light"
-                                onchange="this.form.submit()">
-                                @foreach($indikatorMakros as $makro)
-                                    <option value="{{ $makro->id }}" {{ $selectedIndikatorMakroId == $makro->id ? 'selected' : '' }}>
-                                        {{ $makro->nama_indikator }} {{ $makro->is_active ? '' : '(Non-aktif oleh Admin)' }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <label class="form-label text-muted small fw-bold text-uppercase d-flex align-items-center gap-2">
+                            Indikator Makro
+                            @if($selectedIndikator)
+                                <span class="badge bg-secondary opacity-75 fw-normal text-capitalize" style="text-transform: none;"><i class="fas fa-tag me-1"></i> Bidang: {{ $selectedIndikator->bidang->nama_bidang ?? 'Tanpa Bidang' }}</span>
+                            @endif
+                        </label>
+                        <div class="position-relative" id="indikator-search-wrapper">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i
+                                        class="fas fa-chart-line text-muted"></i></span>
+                                <input type="text" id="indikator-search-input"
+                                    class="form-control border-0 ps-1 bg-light shadow-none"
+                                    placeholder="Cari Indikator Makro..."
+                                    value="{{ $selectedIndikator ? $selectedIndikator->nama_indikator : '' }}"
+                                    autocomplete="off" required>
+                                <button class="btn btn-light border-0 shadow-none bg-light text-muted" type="button"
+                                    id="btn-clear-search" title="Bersihkan Pilihan" style="{{ $selectedIndikator ? '' : 'display: none;' }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="indikator_makro_id" id="indikator-search-id"
+                                value="{{ $selectedIndikatorMakroId ?? '' }}">
+                            <div id="indikator-search-results" class="dropdown-menu w-100 shadow border-0 py-1"
+                                style="max-height: 250px; overflow-y: auto; display: none; position: absolute; z-index: 1050; top: 100%;">
+                                <!-- AJAX results will be loaded here -->
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -376,6 +434,28 @@
                             <p class="text-muted small mb-2">
                                 Copy blok data angka dari Excel (sesuai urutan baris kabupaten dan kolom dimensi di bawah), lalu paste di kotak di bawah ini dan klik tombol untuk mengisi tabel otomatis. Nilai kosong atau tanda (-) akan otomatis dikosongkan.
                             </p>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-2">Pilih Kolom Dimensi untuk Diisi:</label>
+                                <div class="d-flex flex-wrap gap-2 p-2 bg-white border rounded-3">
+                                    @foreach($indikatorDimensis as $indDim)
+                                        <div class="form-check form-check-inline mb-0 py-1">
+                                            <input class="form-check-input check-paste-dimensi" type="checkbox" 
+                                                id="chk-paste-{{ $indDim->id }}" 
+                                                value="{{ $indDim->id }}" 
+                                                {{ $indDim->is_active ? 'checked' : 'disabled' }}>
+                                            <label class="form-check-label small {{ !$indDim->is_active ? 'text-decoration-line-through text-muted' : '' }}" 
+                                                for="chk-paste-{{ $indDim->id }}">
+                                                {{ $indDim->dimensi->nama_dimensi ?? '-' }}
+                                                @if(!$indDim->is_active)
+                                                    <span class="text-danger small">(Non-aktif)</span>
+                                                @endif
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <textarea id="excel-paste-area" class="form-control mb-3" rows="5" placeholder="Paste data Excel disini... (Contoh: 115.08	82.08	98.96)"></textarea>
                             <div class="text-end">
                                 <button type="button" id="btn-parse-excel" class="btn btn-sm btn-success rounded-pill px-3">
@@ -457,8 +537,17 @@
                                     </td>
                                     @forelse($indikatorDimensis as $indDim)
                                         @php
-                                            $val = $existingValues[$kab->id][$indDim->id] ?? '';
-                                            if (is_numeric($val)) {
+                                            $record = $existingValues[$kab->id][$indDim->id] ?? null;
+                                            $val = $record ? $record->nilai : '';
+                                            $tooltip = '';
+                                            if ($record) {
+                                                $creator = $record->creator ? $record->creator->name : 'Sistem';
+                                                $updater = $record->updater ? $record->updater->name : 'Sistem';
+                                                $createdAt = $record->created_at ? $record->created_at->format('d/m/Y H:i') : '-';
+                                                $updatedAt = $record->updated_at ? $record->updated_at->format('d/m/Y H:i') : '-';
+                                                $tooltip = "Dibuat oleh: $creator ($createdAt)\nDiperbarui oleh: $updater ($updatedAt)";
+                                            }
+                                            if (is_numeric($val) && $val !== '') {
                                                 $floatVal = (float)$val;
                                                 if (floor($floatVal) == $floatVal) {
                                                     $val = number_format($floatVal, 0, '.', ',');
@@ -478,6 +567,8 @@
                                             <input type="text" inputmode="decimal" name="nilai[{{ $kab->id }}][{{ $indDim->id }}]"
                                                 class="bps-input-cell fw-medium" placeholder="{{ $isDisabled ? 'Non-aktif' : '-' }}" value="{{ $val }}"
                                                 {{ $isDisabled ? 'disabled' : '' }}
+                                                data-dimensi-id="{{ $indDim->id }}"
+                                                title="{{ $tooltip }}"
                                                 style="{{ $isDisabled ? 'background-color: #e2e8f0; color: #64748b; cursor: not-allowed;' : '' }}">
                                         </td>
                                     @empty
@@ -494,6 +585,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if($selectedIndikator && $selectedIndikator->deskripsi)
+                    <div class="mt-3 text-muted small">
+                        <strong>Deskripsi:</strong> {{ $selectedIndikator->deskripsi }}
+                    </div>
+                @endif
 
                 {{-- Simpan Semua button is at the top right of the card header --}}
             </form>
@@ -638,6 +735,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const rows = pastedText.split(/\r?\n/).map(r => r.trim()).filter(r => r !== '');
         if (rows.length === 0) return 0;
 
+        const allDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi')).map(el => el.value);
+        const checkedDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi:checked')).map(el => el.value);
+        if (checkedDimIds.length === 0) return 0;
+
         const allTrs = Array.from(table.querySelectorAll('tbody tr'));
         
         const firstRowCells = rows[0].split('\t');
@@ -654,18 +755,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = findRowByKab(cells[0], allTrs);
                 if (!targetTr) return;
 
-                const inputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+                const valCells = cells.slice(1);
                 
-                // Fill the inputs of the matched row
-                for (let i = 1; i < cells.length; i++) {
-                    const targetTd = inputTds[i - 1];
-                    if (!targetTd) continue;
-
-                    const input = targetTd.querySelector('input.bps-input-cell');
-                    if (input) {
-                        input.value = cleanNumberValue(cells[i]);
-                        count++;
-                    }
+                // If cells count matches total dimensions, map 1-to-1 to allDimIds
+                if (valCells.length === allDimIds.length) {
+                    allDimIds.forEach((dimId, idx) => {
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valCells[idx]);
+                                count++;
+                            }
+                        }
+                    });
+                } else {
+                    // Otherwise, map 1-to-1 to the checked dimensions in order
+                    checkedDimIds.forEach((dimId, idx) => {
+                        if (idx < valCells.length) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valCells[idx]);
+                                count++;
+                            }
+                        }
+                    });
                 }
             });
         } else {
@@ -677,9 +790,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const activeTd = startElement.closest('td');
                 const activeTr = activeTd.closest('tr');
                 startRowIdx = allTrs.indexOf(activeTr);
-                const allTdsInRow = Array.from(activeTr.querySelectorAll('td'));
-                const inputTds = allTdsInRow.filter(td => td.querySelector('input.bps-input-cell'));
-                startColIdx = inputTds.indexOf(activeTd);
+                
+                const activeDimId = startElement.getAttribute('data-dimensi-id');
+                startColIdx = allDimIds.indexOf(activeDimId);
+                if (startColIdx === -1) {
+                    startColIdx = 0;
+                }
             }
 
             rows.forEach((rowText, rowOffset) => {
@@ -687,18 +803,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetTr = allTrs[startRowIdx + rowOffset];
                 if (!targetTr) return;
 
-                const targetInputTds = Array.from(targetTr.querySelectorAll('td')).filter(td => td.querySelector('input.bps-input-cell'));
+                // If cells count matches total dimensions and pasted via textarea (no startElement)
+                if (cells.length === allDimIds.length && !startElement) {
+                    cells.forEach((valText, colOffset) => {
+                        const dimId = allDimIds[colOffset];
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                } else if (startElement) {
+                    // If started from a specific cell, map relative to allDimIds
+                    cells.forEach((valText, colOffset) => {
+                        const targetColIdx = startColIdx + colOffset;
+                        if (targetColIdx >= allDimIds.length) return;
 
-                cells.forEach((valText, colOffset) => {
-                    const targetTd = targetInputTds[startColIdx + colOffset];
-                    if (!targetTd) return;
-
-                    const input = targetTd.querySelector('input.bps-input-cell');
-                    if (input) {
-                        input.value = cleanNumberValue(valText);
-                        count++;
-                    }
-                });
+                        const dimId = allDimIds[targetColIdx];
+                        if (checkedDimIds.includes(dimId)) {
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                } else {
+                    // Fallback: map to checked dimensions in order
+                    cells.forEach((valText, colOffset) => {
+                        if (colOffset < checkedDimIds.length) {
+                            const dimId = checkedDimIds[colOffset];
+                            const input = targetTr.querySelector(`input.bps-input-cell[data-dimensi-id="${dimId}"]`);
+                            if (input && !input.disabled) {
+                                input.value = cleanNumberValue(valText);
+                                count++;
+                            }
+                        }
+                    });
+                }
             });
         }
 
@@ -741,6 +885,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnParse && textarea) {
         btnParse.addEventListener('click', function () {
+            const checkedDimIds = Array.from(document.querySelectorAll('.check-paste-dimensi:checked')).map(el => el.value);
+            if (checkedDimIds.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kolom Kosong',
+                    text: 'Silakan pilih minimal satu kolom dimensi untuk diisi.'
+                });
+                return;
+            }
+
             const pastedText = textarea.value;
             if (!pastedText.trim()) {
                 Swal.fire({
@@ -779,5 +933,100 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // ════════ LIVE SEARCH AUTOCOMPLETE FOR INDIKATOR MAKRO ════════
+    const searchInput = document.getElementById('indikator-search-input');
+    const searchId = document.getElementById('indikator-search-id');
+    const searchResults = document.getElementById('indikator-search-results');
+    const btnClearSearch = document.getElementById('btn-clear-search');
+    let lastSelectedName = '{{ $selectedIndikator ? addslashes($selectedIndikator->nama_indikator) : "" }}';
+    let lastSelectedId = '{{ $selectedIndikator ? $selectedIndikator->id : "" }}';
+    let debounceTimer;
+
+    const performSearch = (query) => {
+        fetch('/indikator-makro/search?q=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'dropdown-item d-flex justify-content-between align-items-center py-2';
+                        btn.innerHTML = `<span>${item.nama_indikator}</span>`;
+                        btn.addEventListener('click', function () {
+                            searchInput.value = item.nama_indikator;
+                            searchId.value = item.id;
+                            searchResults.style.display = 'none';
+                            lastSelectedName = item.nama_indikator;
+                            lastSelectedId = item.id;
+                            btnClearSearch.style.display = 'inline-block';
+                            
+                            // Trigger form submit check
+                            const form = searchInput.closest('form');
+                            if (form) {
+                                const event = new Event('submit', { cancelable: true, bubbles: true });
+                                form.dispatchEvent(event);
+                                if (!event.defaultPrevented) {
+                                    form.submit();
+                                }
+                            }
+                        });
+                        searchResults.appendChild(btn);
+                    });
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Tidak ada indikator yang cocok</div>';
+                    searchResults.style.display = 'block';
+                }
+            });
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            searchId.value = ''; // clear ID on input to force choosing from suggestion
+            const query = this.value;
+            if (query.trim() === '') {
+                btnClearSearch.style.display = 'none';
+            } else {
+                btnClearSearch.style.display = 'inline-block';
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('focus', function () {
+            performSearch(this.value);
+        });
+
+        document.addEventListener('click', function (e) {
+            const wrapper = document.getElementById('indikator-search-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                searchResults.style.display = 'none';
+                if (!searchId.value) {
+                    searchInput.value = lastSelectedName;
+                    searchId.value = lastSelectedId;
+                    if (lastSelectedName) {
+                        btnClearSearch.style.display = 'inline-block';
+                    }
+                }
+            }
+        });
+    }
+
+    if (btnClearSearch) {
+        btnClearSearch.addEventListener('click', function () {
+            searchInput.value = '';
+            searchId.value = '';
+            lastSelectedName = '';
+            lastSelectedId = '';
+            btnClearSearch.style.display = 'none';
+        });
+    }
 </script>
 @endpush

@@ -19,7 +19,7 @@ class ProfileCompletionController extends Controller
             return redirect('/dashboard');
         }
 
-        $kabupatens = Kabupaten::orderBy('nama_kabupaten', 'asc')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
 
         // If user has OTP pending (and phone verified is null), show OTP step
         $showOtpStep = !empty($user->otp_code) && is_null($user->no_hp_verified_at);

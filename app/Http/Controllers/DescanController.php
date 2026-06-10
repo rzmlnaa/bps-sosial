@@ -45,7 +45,7 @@ class DescanController extends Controller
 
         $totalPeserta = $queryPeserta->count();
 
-        $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderBy('kode_kab')->get();
 
         // Optimasi: Ambil jumlah peserta per kabupaten dalam 1 query (GROUP BY)
         $pesertaCounts = DescanPeserta::selectRaw('kabupaten_id, count(*) as count')
@@ -270,15 +270,33 @@ class DescanController extends Controller
     public function updateKegiatan(Request $request, $id)
     {
         $request->validate([
-            'nama_kegiatan' => 'required|string|max:255|unique:descan_kegiatan,nama_kegiatan,' . $id
+            'nama_kegiatan' => 'required|string|max:255|unique:descan_kegiatan,nama_kegiatan,' . $id,
+            'urutan' => 'required|integer|min:1',
         ], [
             'nama_kegiatan.unique' => 'Kegiatan dengan nama tersebut sudah ada.'
         ]);
 
         $keg = DescanKegiatan::findOrFail($id);
+        $oldUrutan = $keg->urutan;
+        $maxUrutan = DescanKegiatan::max('urutan') ?? 1;
+        $newUrutan = max(1, min($maxUrutan, (int) $request->urutan));
+
+        if ($newUrutan !== $oldUrutan) {
+            if ($newUrutan > $oldUrutan) {
+                DescanKegiatan::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$oldUrutan + 1, $newUrutan])
+                    ->decrement('urutan');
+            } else {
+                DescanKegiatan::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$newUrutan, $oldUrutan - 1])
+                    ->increment('urutan');
+            }
+        }
+
         $keg->update([
             'nama_kegiatan' => $request->nama_kegiatan,
-            'is_wajib' => $request->has('is_wajib')
+            'is_wajib' => $request->has('is_wajib'),
+            'urutan' => $newUrutan,
         ]);
 
         return back()->with('success', 'Kegiatan berhasil diperbarui.')->with('tab', 'kegiatan');
@@ -294,6 +312,10 @@ class DescanController extends Controller
         }
 
         $keg->delete();
+
+        // Resequence remaining kegiatans
+        $this->resequenceKegiatan();
+
         return back()->with('success', 'Kegiatan berhasil dihapus.')->with('tab', 'kegiatan');
     }
 
@@ -310,6 +332,17 @@ class DescanController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Urutan kegiatan berhasil diperbarui.']);
+    }
+
+    private function resequenceKegiatan()
+    {
+        $kegiatans = DescanKegiatan::orderBy('urutan', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        foreach ($kegiatans as $index => $keg) {
+            $keg->update(['urutan' => $index + 1]);
+        }
     }
 
     // --- Jenis Bukti Kegiatan ---
@@ -406,7 +439,7 @@ class DescanController extends Controller
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
 
         // Data untuk form
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
         $kecamatans = !$isProvinsi ? Kecamatan::where('kabupaten_id', $kabupaten?->id)->orderByRaw('LENGTH(kode_kecamatan) ASC')->orderBy('kode_kecamatan', 'asc')->get() : collect();
         $myKabupatenId = $isProvinsi ? null : $kabupaten?->id;
 
@@ -528,7 +561,7 @@ class DescanController extends Controller
 
         $periodes = DescanPeriode::orderBy('tahun', 'desc')->get();
         $myKabupatenId = $isProvinsi ? null : $kabupaten?->id;
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
 
         // Query peserta along with penilaian relation
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'penilaian'])
@@ -636,7 +669,7 @@ class DescanController extends Controller
         $kegiatans = DescanKegiatan::where('is_active', true)->orderBy('urutan', 'asc')->get();
 
         $myKabupatenId = $isProvinsi ? null : $user->kabupaten_id;
-        $kabupatens = $isProvinsi ? Kabupaten::where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
+        $kabupatens = $isProvinsi ? Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderByRaw('LENGTH(kode_kab) ASC')->orderBy('kode_kab', 'asc')->get() : collect();
 
         $query = DescanPeserta::with(['desa', 'kecamatan', 'kabupaten', 'periode', 'progresses.buktis', 'outputs', 'buktiDukungs'])
             ->select('descan_peserta.*')

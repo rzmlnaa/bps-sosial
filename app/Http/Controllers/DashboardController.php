@@ -43,7 +43,7 @@ class DashboardController extends Controller
                             $q->whereJsonLength('meta', '>', 0);
                         });
                 })->count(),
-            'kabupaten_count' => Kabupaten::where('kode_kab', '!=', '6100')->count(),
+            'kabupaten_count' => Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->count(),
             'kecamatan_count' => Kecamatan::count(),
             'desa_count' => Desa::count(),
         ];

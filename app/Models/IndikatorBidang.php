@@ -11,10 +11,6 @@ class IndikatorBidang extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
     /**
      * Get the user who created this record.
      */

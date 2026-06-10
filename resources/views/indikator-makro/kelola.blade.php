@@ -50,20 +50,23 @@
 
 @section('content')
     <div class="mt-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 fade-in-up">
             <div>
-                @if(request('from') === 'input-nilai')
-                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
-                        class="btn btn-light btn-sm mb-2 rounded-pill">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-                @else
-                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-                @endif
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Kelola Master Indikator</h2>
                 <p class="text-muted mb-0">Pengaturan Periode, Bidang, Makro, Dimensi, dan Indikator Dimensi</p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                @if(request('from') === 'input-nilai')
+                    <a href="{{ route('indikator-makro.input-nilai', ['periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                        class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @else
+                    <a href="{{ route('indikator-makro.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -363,26 +366,52 @@
                         <form action="{{ route('indikator-makro.bidang.store') }}" method="POST" class="mb-4">
                             @csrf
                             <div class="row align-items-end">
-                                <div class="col-md-7 mb-3">
+                                <div class="col-md-9 mb-3">
                                     <label class="form-label fw-bold small">Nama Bidang <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="nama_bidang" required
                                         placeholder="Contoh: Ekonomi">
                                 </div>
-                                <div class="col-md-2 mb-3">
-                                    <div class="form-check form-switch pt-2">
-                                        <input class="form-check-input" type="checkbox" name="is_active" value="1"
-                                            id="isActiveBidang" checked>
-                                        <label class="form-check-label fw-bold small" for="isActiveBidang">Aktif?</label>
-                                    </div>
-                                </div>
+
                                 <div class="col-md-3 mb-3">
                                     <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah Bidang</button>
                                 </div>
                             </div>
                         </form>
                         <hr class="my-4">
-                        <h6 class="fw-bold text-muted small mb-3">Daftar Bidang (Geser untuk mengatur urutan):</h6>
+                        <div class="row align-items-center mb-3">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted small mb-0">Daftar Bidang (Geser untuk mengatur urutan):</h6>
+                            </div>
+                            <div class="col-md-6 mt-2 mt-md-0">
+                                <form action="{{ route('indikator-makro.kelola') }}" method="GET">
+                                    <input type="hidden" name="tab" value="bidang">
+                                    @if(request('from'))
+                                        <input type="hidden" name="from" value="{{ request('from') }}">
+                                    @endif
+                                    @if(request('periode_indikator_id'))
+                                        <input type="hidden" name="periode_indikator_id"
+                                            value="{{ request('periode_indikator_id') }}">
+                                    @endif
+                                    @if(request('indikator_makro_id'))
+                                        <input type="hidden" name="indikator_makro_id"
+                                            value="{{ request('indikator_makro_id') }}">
+                                    @endif
+                                    <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                class="fas fa-search"></i></span>
+                                        <input type="text" name="search_bidang" id="search-bidang-input"
+                                            class="form-control border-start-0" placeholder="Cari nama bidang..."
+                                            value="{{ $searchBidang ?? '' }}" style="font-size: 0.85rem;">
+                                        @if($searchBidang)
+                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'bidang', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                         @if($indikatorBidangs->count() > 0)
                                             <!-- Desktop Table View -->
                                             <div class="table-responsive d-none d-md-block">
@@ -392,7 +421,7 @@
                                                             <th style="width: 50px;"></th>
                                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                                             <th>Nama Bidang</th>
-                                                            <th class="text-center" width="15%">Status</th>
+
                                                             <th class="text-center" width="25%">Informasi</th>
                                                             <th class="text-center" width="15%">Aksi</th>
                                                         </tr>
@@ -407,12 +436,7 @@
                                                                     {{ ($indikatorBidangs->currentPage() - 1) * $indikatorBidangs->perPage() + $idx + 1 }}
                                                                 </td>
                                                                 <td class="fw-bold">{{ $item->nama_bidang }}</td>
-                                                                <td class="text-center">
-                                                                    <div class="form-check form-switch d-flex justify-content-center">
-                                                                        <input class="form-check-input toggle-bidang-status" type="checkbox"
-                                                                            role="switch" data-id="{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }} style="cursor: pointer; transform: scale(1.2);">
-                                                                    </div>
-                                                                </td>
+
                                                                 <td class="text-start" style="font-size: 0.85rem;">
                                                                     <div class="d-flex flex-column text-muted">
                                                                         @if($item->created_at)
@@ -551,6 +575,12 @@
                                                                         <input type="text" name="nama_bidang" class="form-control"
                                                                             value="{{ $item->nama_bidang }}" required>
                                                                     </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Urutan <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="number" name="urutan" class="form-control"
+                                                                            value="{{ $item->urutan }}" required min="1">
+                                                                    </div>
                                                                 </div>
                                                                 <div class="modal-footer pb-2 border-0">
                                                                     <button type="button" class="btn btn-light rounded-pill px-4"
@@ -567,6 +597,7 @@
                                             <div class="mt-3">
                                                 {{ $indikatorBidangs->appends([
                                 'tab' => 'bidang',
+                                'search_bidang' => $searchBidang,
                                 'from' => request('from'),
                                 'periode_indikator_id' => request('periode_indikator_id'),
                                 'indikator_makro_id' => request('indikator_makro_id')
@@ -596,10 +627,13 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold small">Bidang <span
                                             class="text-danger">*</span></label>
-                                    <select name="indikator_bidang_id" class="form-select" required>
+                                    <select name="indikator_bidang_id" class="form-select"
+                                        onchange="filterByBidang(this.value)" required>
                                         <option value="">-- Pilih Bidang --</option>
                                         @foreach($allIndikatorBidangs as $bidang)
-                                            <option value="{{ $bidang->id }}">{{ $bidang->nama_bidang }}</option>
+                                            <option value="{{ $bidang->id }}" {{ $selectedFilterBidangId == $bidang->id ? 'selected' : '' }}>
+                                                {{ $bidang->nama_bidang }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -607,16 +641,16 @@
                                     <label class="form-label fw-bold small">Nama Indikator <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="nama_indikator" required
-                                        placeholder="Contoh: Pertumbuhan Ekonomi">
+                                        placeholder="Contoh: Pertumbuhan Ekonomi" {{ !$selectedFilterBidangId ? 'disabled' : '' }}>
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label fw-bold small">Satuan</label>
-                                    <input type="text" class="form-control" name="satuan" placeholder="Contoh: %">
+                                    <input type="text" class="form-control" name="satuan" placeholder="Contoh: %" {{ !$selectedFilterBidangId ? 'disabled' : '' }}>
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <div class="form-check pt-2">
                                         <input class="form-check-input" type="checkbox" name="is_active" value="1"
-                                            id="isActiveMakro" checked>
+                                            id="isActiveMakro" checked {{ !$selectedFilterBidangId ? 'disabled' : '' }}>
                                         <label class="form-check-label fw-bold small" for="isActiveMakro">Aktif?</label>
                                     </div>
                                 </div>
@@ -626,16 +660,52 @@
                                     <label class="form-label fw-bold small">Deskripsi <span
                                             class="text-muted">(opsional)</span></label>
                                     <textarea class="form-control" name="deskripsi" rows="2"
-                                        placeholder="Deskripsi singkat indikator..."></textarea>
+                                        placeholder="Deskripsi singkat indikator..." {{ !$selectedFilterBidangId ? 'disabled' : '' }}></textarea>
                                 </div>
                                 <div class="col-md-3 mb-3 d-flex align-items-end">
-                                    <button class="btn btn-orange rounded-pill w-100" type="submit">Tambah Makro</button>
+                                    <button class="btn btn-orange rounded-pill w-100" type="submit" {{ !$selectedFilterBidangId ? 'disabled' : '' }}>Tambah Makro</button>
                                 </div>
                             </div>
                         </form>
                         <hr class="my-4">
-                        <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Makro (Geser untuk mengatur urutan):</h6>
-                        @if($indikatorMakros->count() > 0)
+                        @if($selectedFilterBidangId)
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Makro Bidang
+                                        {{ $selectedFilterBidang->nama_bidang ?? '' }} (Geser untuk mengatur urutan):
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mt-2 mt-md-0">
+                                    <form action="{{ route('indikator-makro.kelola') }}" method="GET">
+                                        <input type="hidden" name="tab" value="makro">
+                                        <input type="hidden" name="filter_bidang_id" value="{{ $selectedFilterBidangId }}">
+                                        @if(request('from'))
+                                            <input type="hidden" name="from" value="{{ request('from') }}">
+                                        @endif
+                                        @if(request('periode_indikator_id'))
+                                            <input type="hidden" name="periode_indikator_id"
+                                                value="{{ request('periode_indikator_id') }}">
+                                        @endif
+                                        @if(request('indikator_makro_id'))
+                                            <input type="hidden" name="indikator_makro_id"
+                                                value="{{ request('indikator_makro_id') }}">
+                                        @endif
+                                        <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                            <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                    class="fas fa-search"></i></span>
+                                            <input type="text" name="search_makro" id="search-makro-input"
+                                                class="form-control border-start-0" placeholder="Cari nama indikator makro..."
+                                                value="{{ $searchMakro ?? '' }}" style="font-size: 0.85rem;">
+                                            @if($searchMakro)
+                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'makro', 'filter_bidang_id' => $selectedFilterBidangId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                    class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                    title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                            @endif
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            @if($indikatorMakros->count() > 0)
                                             <!-- Desktop Table View -->
                                             <div class="table-responsive d-none d-md-block">
                                                 <table class="table table-hover align-middle table-bordered">
@@ -644,8 +714,8 @@
                                                             <th style="width: 50px;"></th>
                                                             <th style="width: 80px;" class="text-center">Urutan</th>
                                                             <th>Nama Indikator</th>
-                                                            <th>Bidang</th>
                                                             <th>Satuan</th>
+                                                            <th>Deskripsi</th>
                                                             <th class="text-center" width="15%">Status</th>
                                                             <th class="text-center" width="25%">Informasi</th>
                                                             <th class="text-center" width="15%">Aksi</th>
@@ -659,8 +729,8 @@
                                                                 </td>
                                                                 <td class="text-center sortable-urutan fw-bold">{{ $item->urutan }}</td>
                                                                 <td class="fw-bold">{{ $item->nama_indikator }}</td>
-                                                                <td>{{ $item->bidang->nama_bidang ?? '-' }}</td>
                                                                 <td>{{ $item->satuan ?? '-' }}</td>
+                                                                <td>{{ $item->deskripsi ?? '-' }}</td>
                                                                 <td class="text-center">
                                                                     <div class="form-check form-switch d-flex justify-content-center">
                                                                         <input class="form-check-input toggle-makro-status" type="checkbox"
@@ -713,6 +783,12 @@
                                                                                     class="fas fa-trash"></i></button>
                                                                         </form>
                                                                     @endif
+                                                                    <a href="{{ route('indikator-makro.input-nilai', ['indikator_makro_id' => $item->id, 'from' => 'kelola', 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-sm btn-info mb-1" title="Input Nilai Indikator Makro">
+                                                                        <i class="fas fa-keyboard"></i> Input
+                                                                    </a>
+                                                                    <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $item->id, 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-sm btn-primary mb-1" title="Atur Indikator Dimensi">
+                                                                        <i class="fas fa-cogs"></i> Atur Dimensi
+                                                                    </a>
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -732,9 +808,6 @@
                                                                     <span class="badge bg-light text-dark border p-2 fw-bold badge-sequence"
                                                                         style="font-size: 0.9rem;">
                                                                         #{{ $item->urutan }}
-                                                                    </span>
-                                                                    <span class="badge bg-info text-dark">
-                                                                        {{ $item->bidang->nama_bidang ?? '-' }}
                                                                     </span>
                                                                     @if($item->satuan)
                                                                         <span class="badge bg-secondary text-white">
@@ -792,6 +865,12 @@
                                                                             Hapus</button>
                                                                     </form>
                                                                 @endif
+                                                                <a href="{{ route('indikator-makro.input-nilai', ['indikator_makro_id' => $item->id, 'from' => 'kelola', 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-info btn-sm">
+                                                                    <i class="fas fa-keyboard"></i> Input
+                                                                </a>
+                                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $item->id, 'filter_bidang_id' => $selectedFilterBidangId]) }}" class="btn btn-primary btn-sm">
+                                                                    <i class="fas fa-cogs"></i> Atur Dimensi
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -840,6 +919,12 @@
                                                                             rows="2">{{ $item->deskripsi }}</textarea>
                                                                     </div>
                                                                     <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Urutan <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="number" name="urutan" class="form-control"
+                                                                            value="{{ $item->urutan }}" required min="1">
+                                                                    </div>
+                                                                    <div class="mb-3">
                                                                         <div class="form-check">
                                                                             <input class="form-check-input" type="checkbox" name="is_active"
                                                                                 value="1" id="editIsActiveMakro{{ $item->id }}" {{ $item->is_active ? 'checked' : '' }}>
@@ -862,15 +947,21 @@
 
                                             <div class="mt-3">
                                                 {{ $indikatorMakros->appends([
-                                'tab' => 'makro',
-                                'from' => request('from'),
-                                'periode_indikator_id' => request('periode_indikator_id'),
-                                'indikator_makro_id' => request('indikator_makro_id')
-                            ])->links('pagination::bootstrap-5') }}
+                                    'tab' => 'makro',
+                                    'search_makro' => request('search_makro'),
+                                    'indikator_bidang_id' => request('indikator_bidang_id')
+                                ])->links('pagination::bootstrap-5') }}
                                             </div>
+                            @else
+                                <div class="text-center text-muted p-3 bg-light rounded">
+                                    <small>Belum ada data indikator makro untuk bidang yang dipilih.</small>
+                                </div>
+                            @endif
                         @else
-                            <div class="text-center text-muted p-3 bg-light rounded">
-                                <small>Belum ada data indikator makro.</small>
+                            <div class="text-center text-muted p-4 bg-light rounded-3 border">
+                                <i class="fas fa-info-circle fa-2x mb-2 text-warning text-opacity-75"></i>
+                                <p class="mb-0 fw-medium">Silakan pilih Bidang terlebih dahulu pada dropdown di atas untuk
+                                    menampilkan daftar Indikator Makro.</p>
                             </div>
                         @endif
                     </div>
@@ -901,7 +992,39 @@
                             </div>
                         </form>
                         <hr class="my-4">
-                        <h6 class="fw-bold text-muted small mb-3">Daftar Dimensi:</h6>
+                        <div class="row align-items-center mb-3">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted small mb-0">Daftar Dimensi:</h6>
+                            </div>
+                            <div class="col-md-6 mt-2 mt-md-0">
+                                <form action="{{ route('indikator-makro.kelola') }}" method="GET">
+                                    <input type="hidden" name="tab" value="dimensi">
+                                    @if(request('from'))
+                                        <input type="hidden" name="from" value="{{ request('from') }}">
+                                    @endif
+                                    @if(request('periode_indikator_id'))
+                                        <input type="hidden" name="periode_indikator_id"
+                                            value="{{ request('periode_indikator_id') }}">
+                                    @endif
+                                    @if(request('indikator_makro_id'))
+                                        <input type="hidden" name="indikator_makro_id"
+                                            value="{{ request('indikator_makro_id') }}">
+                                    @endif
+                                    <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                class="fas fa-search"></i></span>
+                                        <input type="text" name="search_dimensi" id="search-dimensi-input"
+                                            class="form-control border-start-0" placeholder="Cari nama dimensi..."
+                                            value="{{ $searchDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                        @if($searchDimensi)
+                                            <a href="{{ route('indikator-makro.kelola', ['tab' => 'dimensi', 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                         @if($dimensis->count() > 0)
                                             <!-- Desktop Table View -->
                                             <div class="table-responsive d-none d-md-block">
@@ -951,21 +1074,28 @@
                                                                     </div>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
-                                                                        data-bs-target="#modalEditDimensi{{ $item->id }}" title="Edit">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    @if($item->indikator_dimensis_count > 0)
-                                                                        <button type="button" class="btn btn-sm btn-danger mb-1" disabled
-                                                                            title="Sedang digunakan oleh data relasi indikator"><i
-                                                                                class="fas fa-trash"></i></button>
+                                                                    @if(strtolower(trim($item->nama_dimensi)) === 'none')
+                                                                        <span class="badge bg-secondary px-2 py-1"
+                                                                            title="Dimensi sistem, tidak dapat diubah">
+                                                                            <i class="fas fa-lock me-1"></i>Terkunci
+                                                                        </span>
                                                                     @else
-                                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
-                                                                            method="POST" class="d-inline delete-form">
-                                                                            @csrf @method('DELETE')
-                                                                            <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                        <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                            data-bs-target="#modalEditDimensi{{ $item->id }}" title="Edit">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+                                                                        @if($item->indikator_dimensis_count > 0)
+                                                                            <button type="button" class="btn btn-sm btn-danger mb-1" disabled
+                                                                                title="Sedang digunakan oleh data relasi indikator"><i
                                                                                     class="fas fa-trash"></i></button>
-                                                                        </form>
+                                                                        @else
+                                                                            <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                                method="POST" class="d-inline delete-form">
+                                                                                @csrf @method('DELETE')
+                                                                                <button type="submit" class="btn btn-sm btn-danger mb-1"><i
+                                                                                        class="fas fa-trash"></i></button>
+                                                                            </form>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -1009,21 +1139,28 @@
                                                             </div>
 
                                                             <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
-                                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                                    data-bs-target="#modalEditDimensi{{ $item->id }}">
-                                                                    <i class="fas fa-edit"></i> Edit
-                                                                </button>
-                                                                @if($item->indikator_dimensis_count > 0)
-                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
-                                                                        title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i>
-                                                                        Hapus</button>
+                                                                @if(strtolower(trim($item->nama_dimensi)) === 'none')
+                                                                    <span class="badge bg-secondary px-3 py-2"
+                                                                        title="Dimensi sistem, tidak dapat diubah">
+                                                                        <i class="fas fa-lock me-1"></i>Terkunci
+                                                                    </span>
                                                                 @else
-                                                                    <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
-                                                                        method="POST" class="d-inline delete-form">
-                                                                        @csrf @method('DELETE')
-                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditDimensi{{ $item->id }}">
+                                                                        <i class="fas fa-edit"></i> Edit
+                                                                    </button>
+                                                                    @if($item->indikator_dimensis_count > 0)
+                                                                        <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                            title="Sedang digunakan oleh data relasi indikator"><i class="fas fa-trash"></i>
                                                                             Hapus</button>
-                                                                    </form>
+                                                                    @else
+                                                                        <form action="{{ route('indikator-makro.dimensi.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                                Hapus</button>
+                                                                        </form>
+                                                                    @endif
                                                                 @endif
                                                             </div>
                                                         </div>
@@ -1066,6 +1203,7 @@
                                             <div class="mt-3">
                                                 {{ $dimensis->appends([
                                 'tab' => 'dimensi',
+                                'search_dimensi' => $searchDimensi,
                                 'from' => request('from'),
                                 'periode_indikator_id' => request('periode_indikator_id'),
                                 'indikator_makro_id' => request('indikator_makro_id')
@@ -1137,19 +1275,47 @@
                             </div>
                         </form>
 
-                        @if($errors->has('indikator_dimensi'))
-                            <div class="alert alert-danger alert-dismissible fade show rounded-3 py-2" role="alert">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                {{ $errors->first('indikator_dimensi') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
+
 
                         <hr class="my-4">
 
                         @if($selectedMakroId)
-                            <h6 class="fw-bold text-muted small mb-3">Daftar Indikator Dimensi:
-                                {{ $selectedMakro->nama_indikator ?? '-' }}</h6>
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-muted small mb-0">Daftar Indikator Dimensi:
+                                        {{ $selectedMakro->nama_indikator ?? '-' }}
+                                    </h6>
+                                </div>
+                                <div class="col-md-6 mt-2 mt-md-0">
+                                    <form action="{{ route('indikator-makro.kelola') }}" method="GET">
+                                        <input type="hidden" name="tab" value="indikator-dimensi">
+                                        <input type="hidden" name="filter_makro_id" value="{{ $selectedMakroId }}">
+                                        @if(request('from'))
+                                            <input type="hidden" name="from" value="{{ request('from') }}">
+                                        @endif
+                                        @if(request('periode_indikator_id'))
+                                            <input type="hidden" name="periode_indikator_id"
+                                                value="{{ request('periode_indikator_id') }}">
+                                        @endif
+                                        @if(request('indikator_makro_id'))
+                                            <input type="hidden" name="indikator_makro_id"
+                                                value="{{ request('indikator_makro_id') }}">
+                                        @endif
+                                        <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                                            <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                                    class="fas fa-search"></i></span>
+                                            <input type="text" name="search_ind_dimensi" id="search-ind-dimensi-input"
+                                                class="form-control border-start-0" placeholder="Cari nama dimensi..."
+                                                value="{{ $searchIndDimensi ?? '' }}" style="font-size: 0.85rem;">
+                                            @if($searchIndDimensi)
+                                                <a href="{{ route('indikator-makro.kelola', ['tab' => 'indikator-dimensi', 'filter_makro_id' => $selectedMakroId, 'from' => request('from'), 'periode_indikator_id' => request('periode_indikator_id'), 'indikator_makro_id' => request('indikator_makro_id')]) }}"
+                                                    class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                                                    title="Bersihkan Pencarian"><i class="fas fa-times"></i></a>
+                                            @endif
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                             @if($indikatorDimensis->count() > 0)
                                             <!-- Desktop Table View -->
                                             <div class="table-responsive d-none d-md-block">
@@ -1210,6 +1376,10 @@
                                                                     </div>
                                                                 </td>
                                                                 <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditIndDim{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
                                                                     @if($item->nilai_indikator_makros_count > 0)
                                                                         <button type="button" class="btn btn-sm btn-danger mb-1" disabled
                                                                             title="Sedang digunakan oleh data nilai"><i
@@ -1272,31 +1442,78 @@
                                                                     <i class="fas fa-link me-1"></i>Digunakan: <span
                                                                         class="fw-bold">{{ $item->nilai_indikator_makros_count }}</span> data nilai
                                                                 </div>
-                                                            </div>
-
-                                                            <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
-                                                                @if($item->nilai_indikator_makros_count > 0)
-                                                                    <button type="button" class="btn btn-danger btn-sm" disabled
-                                                                        title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i>
-                                                                        Hapus</button>
-                                                                @else
-                                                                    <form action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
-                                                                        method="POST" class="d-inline delete-form">
-                                                                        @csrf @method('DELETE')
-                                                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i>
+                                                                <div class="d-flex justify-content-end gap-2 mt-2 border-top pt-2">
+                                                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                                        data-bs-target="#modalEditIndDim{{ $item->id }}" title="Edit">
+                                                                        <i class="fas fa-edit"></i> Edit
+                                                                    </button>
+                                                                    @if($item->nilai_indikator_makros_count > 0)
+                                                                        <button type="button" class="btn btn-danger btn-sm" disabled
+                                                                            title="Sedang digunakan oleh data nilai"><i class="fas fa-trash"></i>
                                                                             Hapus</button>
-                                                                    </form>
-                                                                @endif
+                                                                    @else
+                                                                        <form
+                                                                            action="{{ route('indikator-makro.indikator-dimensi.destroy', $item->id) }}"
+                                                                            method="POST" class="d-inline delete-form">
+                                                                            @csrf @method('DELETE')
+                                                                            <button type="submit" class="btn btn-danger btn-sm"><i
+                                                                                    class="fas fa-trash"></i>
+                                                                                Hapus</button>
+                                                                        </form>
+                                                                    @endif
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 @endforeach
                                             </div>
 
+                                            <!-- Edit Modals -->
+                                            @foreach($indikatorDimensis as $item)
+                                                <div class="modal fade" id="modalEditIndDim{{ $item->id }}" tabindex="-1" aria-hidden="true"
+                                                    style="text-align: left;">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content rounded-4 border-0">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fw-bold">Edit Urutan Indikator Dimensi</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form action="{{ route('indikator-makro.indikator-dimensi.update', $item->id) }}"
+                                                                method="POST">
+                                                                @csrf @method('PUT')
+                                                                <input type="hidden" name="indikator_makro_id"
+                                                                    value="{{ $item->indikator_makro_id }}">
+                                                                <input type="hidden" name="dimensi_id" value="{{ $item->dimensi_id }}">
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Dimensi</label>
+                                                                        <input type="text" class="form-control bg-light"
+                                                                            value="{{ $item->dimensi->nama_dimensi ?? '-' }}" readonly>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Urutan <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="number" name="urutan" class="form-control"
+                                                                            value="{{ $item->urutan }}" min="1" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer pb-2 border-0">
+                                                                    <button type="button" class="btn btn-light rounded-pill px-4"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-orange rounded-pill px-4">Simpan
+                                                                        Perubahan</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+
                                             <div class="mt-3">
                                                 {{ $indikatorDimensis->appends([
                                     'tab' => 'indikator-dimensi',
                                     'filter_makro_id' => $selectedMakroId,
+                                    'search_ind_dimensi' => $searchIndDimensi,
                                     'from' => request('from'),
                                     'periode_indikator_id' => request('periode_indikator_id'),
                                     'indikator_makro_id' => request('indikator_makro_id')
@@ -1378,7 +1595,7 @@
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
-                                body: JSON.stringify({ order: order })
+                                body: JSON.stringify({ order: order, start_idx: startIdx })
                             }).then(function (response) {
                                 if (response.ok) {
                                     updateSequenceNumbers(desktopElId, mobileElId, startIdx, numberSelector);
@@ -1414,7 +1631,7 @@
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
-                                body: JSON.stringify({ order: order })
+                                body: JSON.stringify({ order: order, start_idx: startIdx })
                             }).then(function (response) {
                                 if (response.ok) {
                                     updateSequenceNumbers(desktopElId, mobileElId, startIdx, numberSelector);
@@ -1561,6 +1778,18 @@
                 window.location.href = url.toString();
             };
 
+            window.filterByBidang = function (val) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', 'makro');
+                if (val) {
+                    url.searchParams.set('filter_bidang_id', val);
+                } else {
+                    url.searchParams.delete('filter_bidang_id');
+                }
+                url.searchParams.delete('makro_page');
+                window.location.href = url.toString();
+            };
+
             // 7. Live AJAX Search Autocomplete for Indikator Makro Selection
             const searchInput = document.getElementById('indikator-search-input');
             const searchId = document.getElementById('indikator-search-id');
@@ -1658,6 +1887,37 @@
                             form.submit();
                         }
                     });
+                });
+            });
+
+            // 7. Active Tab Tracker (history.replaceState)
+            const tabButtons = document.querySelectorAll('#kelolaTab button[data-bs-toggle="tab"]');
+            tabButtons.forEach(function (button) {
+                button.addEventListener('shown.bs.tab', function (event) {
+                    const targetId = event.target.getAttribute('data-bs-target').replace('#', '');
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', targetId);
+                    window.history.replaceState(null, '', url.toString());
+                });
+            });
+
+            // 8. Blur-to-submit for search inputs (submit form when user clicks outside / loses focus)
+            const blurSubmitSearchIds = [
+                'search-bidang-input',
+                'search-makro-input',
+                'search-dimensi-input',
+                'search-ind-dimensi-input'
+            ];
+            blurSubmitSearchIds.forEach(function (inputId) {
+                const el = document.getElementById(inputId);
+                if (!el) return;
+                el.addEventListener('blur', function () {
+                    const form = el.closest('form');
+                    if (!form) return;
+                    // Only submit if value changed from original
+                    if (el.value !== el.defaultValue) {
+                        form.submit();
+                    }
                 });
             });
         });

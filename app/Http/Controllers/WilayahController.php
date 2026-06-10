@@ -55,9 +55,9 @@ class WilayahController extends Controller
         $kecamatans = $query->paginate(10)->withQueryString();
 
         if ($isProvinsi) {
-            $kabupatens = Kabupaten::where('kode_kab', '!=', '6100')->orderBy('kode_kab', 'asc')->get();
+            $kabupatens = Kabupaten::withoutIndonesia()->where('kode_kab', '!=', '6100')->orderBy('kode_kab', 'asc')->get();
         } else {
-            $kabupatens = Kabupaten::where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
+            $kabupatens = Kabupaten::withoutIndonesia()->where('id', $user->kabupaten_id)->where('kode_kab', '!=', '6100')->get();
         }
 
         // Hitung total untuk statistik
@@ -154,7 +154,7 @@ class WilayahController extends Controller
             return back()->with('error', 'Akses ditolak: Anda tidak dapat memanipulasi data untuk kabupaten lain.');
         }
 
-        $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
+        $kabupatenTarget = Kabupaten::withoutIndonesia()->find($request->kabupaten_id);
         if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
             return back()->with('error', 'Tidak dapat menambahkan wilayah untuk level Provinsi.');
         }
@@ -213,7 +213,7 @@ class WilayahController extends Controller
             return back()->withInput()->withErrors(['kode_kecamatan' => 'Kode Kecamatan sudah digunakan di kabupaten ini.']);
         }
 
-        $kabupatenTarget = Kabupaten::find($request->kabupaten_id);
+        $kabupatenTarget = Kabupaten::withoutIndonesia()->find($request->kabupaten_id);
         if ($kabupatenTarget && $kabupatenTarget->kode_kab == '6100') {
             return redirect()->back()->with('error', 'Tidak dapat menambahkan kecamatan untuk level Provinsi (6100).');
         }

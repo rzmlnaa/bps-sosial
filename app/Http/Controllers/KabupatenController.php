@@ -63,10 +63,24 @@ class KabupatenController extends Controller
 
     public function destroy($id)
     {
-        $kabupaten = Kabupaten::withCount('nilaiKemiskinan')->findOrFail($id);
+        $kabupaten = Kabupaten::withCount([
+            'nilaiKemiskinan',
+            'praEksporSelections',
+            'kecamatans',
+            'nilaiIndikatorMakros'
+        ])->findOrFail($id);
 
-        if ($kabupaten->nilai_kemiskinan_count > 0) {
-            return redirect()->back()->with('error', 'Kabupaten tidak dapat dihapus karena sudah memiliki data nilai kemiskinan!');
+        if (
+            $kabupaten->nilai_kemiskinan_count > 0 ||
+            $kabupaten->pra_ekspor_selections_count > 0 ||
+            $kabupaten->kecamatans_count > 0 ||
+            $kabupaten->nilai_indikator_makros_count > 0
+        ) {
+            return redirect()->back()->with('error', 'Kabupaten tidak dapat dihapus karena sudah memiliki data terkait di tabel lain!');
+        }
+
+        if ($kabupaten->kode_kab == 1) {
+            return redirect()->back()->with('error', 'Kabupaten default/Pusat tidak boleh dihapus!');
         }
 
         $kabupaten->delete();

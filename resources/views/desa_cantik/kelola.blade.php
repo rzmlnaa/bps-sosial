@@ -6,11 +6,13 @@
     <div class="mt-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 fade-in-up">
             <div>
-                <a href="{{ route('desa-cantik.index') }}" class="btn btn-light btn-sm mb-2 rounded-pill">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
                 <h2 class="fw-bold mb-1" style="color: var(--bps-orange);">Kelola Descan</h2>
                 <p class="text-muted mb-0">Pengaturan Periode, Kuota, dan Kegiatan Desa Cantik</p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <a href="{{ route('desa-cantik.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </a>
             </div>
         </div>
 
@@ -280,6 +282,14 @@
                                                                             class="text-danger">*</span></label>
                                                                     <input type="text" name="nama_kegiatan" class="form-control"
                                                                         value="{{ $keg->nama_kegiatan }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-medium">Urutan <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="number" name="urutan" class="form-control"
+                                                                        value="{{ $keg->urutan }}" min="1"
+                                                                        max="{{ $kegiatans->total() }}" required>
+                                                                    <div class="form-text text-muted">Urutan saat ini: <strong>{{ $keg->urutan }}</strong>. Mengubah urutan akan menggeser kegiatan lain secara otomatis.</div>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <div class="form-check">

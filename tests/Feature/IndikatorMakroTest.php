@@ -89,7 +89,6 @@ class IndikatorMakroTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('indikator-makro.bidang.store'), [
             'nama_bidang' => 'Sosial Budaya',
-            'is_active' => '1'
         ]);
 
         $response->assertRedirect();
@@ -98,7 +97,6 @@ class IndikatorMakroTest extends TestCase
         $this->assertDatabaseHas('indikator_bidangs', [
             'nama_bidang' => 'Sosial Budaya',
             'created_by' => $user->id,
-            'is_active' => true
         ]);
     }
 
@@ -108,35 +106,15 @@ class IndikatorMakroTest extends TestCase
 
         IndikatorBidang::create([
             'nama_bidang' => 'Sosial Budaya',
-            'is_active' => true,
             'created_by' => $user->id
         ]);
 
         // Attempting with exact same name which generates the same slug
         $response = $this->actingAs($user)->post(route('indikator-makro.bidang.store'), [
             'nama_bidang' => 'Sosial Budaya',
-            'is_active' => '1'
         ]);
 
         $response->assertSessionHasErrors(['nama_bidang']);
-    }
-
-    public function test_can_toggle_bidang_active_status()
-    {
-        $user = $this->createProvinceUser();
-        $bidang = IndikatorBidang::create([
-            'nama_bidang' => 'Sosial Budaya',
-            'is_active' => true,
-            'created_by' => $user->id
-        ]);
-
-        $response = $this->actingAs($user)->patch(route('indikator-makro.bidang.toggle', $bidang->id));
-
-        $response->assertStatus(200);
-        $response->assertJson(['success' => true, 'is_active' => false]);
-        
-        $this->assertFalse($bidang->refresh()->is_active);
-        $this->assertEquals($user->id, $bidang->updated_by);
     }
 
     public function test_can_reorder_bidangs()
@@ -251,6 +229,118 @@ class IndikatorMakroTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('Silakan pilih Indikator Makro terlebih dahulu');
         $response->assertSee('id="sortable-ind-dimensi"', false);
+    }
+
+    public function test_kelola_indikator_makro_filtered_by_bidang()
+    {
+        $user = $this->createProvinceUser();
+
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'IPM', 'indikator_bidang_id' => $bidang->id]);
+
+        // Access without filter
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', ['tab' => 'makro']));
+        $response->assertStatus(200);
+        $response->assertSee('Silakan pilih Bidang terlebih dahulu');
+        $response->assertDontSee('id="sortable-makro"', false);
+
+        // Access with filter
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'makro',
+            'filter_bidang_id' => $bidang->id
+        ]));
+        $response->assertStatus(200);
+        $response->assertDontSee('Silakan pilih Bidang terlebih dahulu');
+        $response->assertSee('id="sortable-makro"', false);
+    }
+
+    public function test_cannot_store_duplicate_makro_in_same_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        IndikatorMakro::create([
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang->id
+        ]);
+
+        $response = $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang->id,
+            'nama_indikator' => 'IPM',
+        ]);
+
+        $response->assertSessionHasErrors(['nama_indikator']);
+    }
+
+    public function test_can_store_duplicate_makro_in_different_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidang1 = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $bidang2 = IndikatorBidang::create(['nama_bidang' => 'Ekonomi']);
+        IndikatorMakro::create([
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang1->id
+        ]);
+
+        $response = $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang2->id,
+            'nama_indikator' => 'IPM',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('indikator_makros', [
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang2->id
+        ]);
+    }
+
+    public function test_cannot_update_makro_to_duplicate_in_same_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $makro1 = IndikatorMakro::create([
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang->id,
+            'urutan' => 1
+        ]);
+        $makro2 = IndikatorMakro::create([
+            'nama_indikator' => 'PDRB',
+            'indikator_bidang_id' => $bidang->id,
+            'urutan' => 2
+        ]);
+
+        $response = $this->actingAs($user)->put(route('indikator-makro.makro.update', $makro2->id), [
+            'indikator_bidang_id' => $bidang->id,
+            'nama_indikator' => 'IPM',
+            'urutan' => 2
+        ]);
+
+        $response->assertSessionHasErrors(['nama_indikator']);
+    }
+
+    public function test_can_update_makro_to_duplicate_in_different_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidang1 = IndikatorBidang::create(['nama_bidang' => 'Sosial']);
+        $bidang2 = IndikatorBidang::create(['nama_bidang' => 'Ekonomi']);
+        $makro1 = IndikatorMakro::create([
+            'nama_indikator' => 'IPM',
+            'indikator_bidang_id' => $bidang1->id,
+            'urutan' => 1
+        ]);
+        $makro2 = IndikatorMakro::create([
+            'nama_indikator' => 'PDRB',
+            'indikator_bidang_id' => $bidang2->id,
+            'urutan' => 1
+        ]);
+
+        $response = $this->actingAs($user)->put(route('indikator-makro.makro.update', $makro2->id), [
+            'indikator_bidang_id' => $bidang2->id,
+            'nama_indikator' => 'IPM',
+            'urutan' => 1
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertEquals('IPM', $makro2->refresh()->nama_indikator);
     }
 
     public function test_can_toggle_makro_active_status()
@@ -576,6 +666,287 @@ class IndikatorMakroTest extends TestCase
         ]);
 
         $this->assertFalse((bool)$indDim->refresh()->is_active);
+    }
+
+    public function test_makro_urutan_scoped_by_bidang_and_resequenced_on_delete()
+    {
+        $user = $this->createProvinceUser();
+        $bidang4 = IndikatorBidang::create(['nama_bidang' => 'Bidang 4']);
+        $bidang5 = IndikatorBidang::create(['nama_bidang' => 'Bidang 5']);
+
+        // 1. Add data for bidang 4: should be 1, 2, 3
+        $makro1 = IndikatorMakro::create([
+            'nama_indikator' => 'Indikator 1 Bidang 4',
+            'indikator_bidang_id' => $bidang4->id,
+            'urutan' => 1
+        ]);
+        $makro2 = IndikatorMakro::create([
+            'nama_indikator' => 'Indikator 2 Bidang 4',
+            'indikator_bidang_id' => $bidang4->id,
+            'urutan' => 2
+        ]);
+        $makro3 = IndikatorMakro::create([
+            'nama_indikator' => 'Indikator 3 Bidang 4',
+            'indikator_bidang_id' => $bidang4->id,
+            'urutan' => 3
+        ]);
+
+        // 2. Add data for bidang 5: should be 1, 2, 3
+        $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang5->id,
+            'nama_indikator' => 'Indikator 1 Bidang 5',
+            'is_active' => '1'
+        ]);
+        $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang5->id,
+            'nama_indikator' => 'Indikator 2 Bidang 5',
+            'is_active' => '1'
+        ]);
+        $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang5->id,
+            'nama_indikator' => 'Indikator 3 Bidang 5',
+            'is_active' => '1'
+        ]);
+
+        // Verify bidang 5 orders are 1, 2, 3
+        $b5Makros = IndikatorMakro::where('indikator_bidang_id', $bidang5->id)->orderBy('id', 'asc')->get();
+        $this->assertEquals(1, $b5Makros[0]->urutan);
+        $this->assertEquals(2, $b5Makros[1]->urutan);
+        $this->assertEquals(3, $b5Makros[2]->urutan);
+
+        // 3. Add more data for bidang 4: should be 4
+        $this->actingAs($user)->post(route('indikator-makro.makro.store'), [
+            'indikator_bidang_id' => $bidang4->id,
+            'nama_indikator' => 'Indikator 4 Bidang 4',
+            'is_active' => '1'
+        ]);
+        $makro4 = IndikatorMakro::where('nama_indikator', 'Indikator 4 Bidang 4')->first();
+        $this->assertEquals(4, $makro4->urutan);
+
+        // 4. Delete bidang 4 at order 2 (makro2)
+        $this->actingAs($user)->delete(route('indikator-makro.makro.destroy', $makro2->id));
+
+        // The remaining should be reordered to 1, 2, 3
+        $this->assertEquals(1, $makro1->refresh()->urutan);
+        $this->assertEquals(2, $makro3->refresh()->urutan);
+        $this->assertEquals(3, $makro4->refresh()->urutan);
+    }
+
+    public function test_kelola_search_features()
+    {
+        $user = $this->createProvinceUser();
+
+        // 1. Setup Bidang & Makro & Dimensi & IndikatorDimensi
+        $bidangA = IndikatorBidang::create(['nama_bidang' => 'Bidang Ekonomi']);
+        $bidangB = IndikatorBidang::create(['nama_bidang' => 'Bidang Sosial']);
+
+        $makroA = IndikatorMakro::create([
+            'nama_indikator' => 'Laju Inflasi',
+            'indikator_bidang_id' => $bidangA->id,
+            'urutan' => 1
+        ]);
+        $makroB = IndikatorMakro::create([
+            'nama_indikator' => 'Tingkat Kemiskinan',
+            'indikator_bidang_id' => $bidangB->id,
+            'urutan' => 1
+        ]);
+
+        $dimensiA = Dimensi::create(['nama_dimensi' => 'Perkotaan']);
+        $dimensiB = Dimensi::create(['nama_dimensi' => 'Pedesaan']);
+
+        $indDimA = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makroB->id,
+            'dimensi_id' => $dimensiA->id,
+            'urutan' => 1,
+            'is_active' => true
+        ]);
+        $indDimB = \App\Models\IndikatorDimensi::create([
+            'indikator_makro_id' => $makroB->id,
+            'dimensi_id' => $dimensiB->id,
+            'urutan' => 2,
+            'is_active' => true
+        ]);
+
+        // 2. Test Bidang Search
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'bidang',
+            'search_bidang' => 'Ekonomi'
+        ]));
+        $response->assertStatus(200);
+        $response->assertViewHas('indikatorBidangs', function ($items) {
+            return $items->count() === 1 && $items->first()->nama_bidang === 'Bidang Ekonomi';
+        });
+
+        // 3. Test Makro Search
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'makro',
+            'filter_bidang_id' => $bidangA->id,
+            'search_makro' => 'Inflasi'
+        ]));
+        $response->assertStatus(200);
+        $response->assertViewHas('indikatorMakros', function ($items) {
+            return $items->count() === 1 && $items->first()->nama_indikator === 'Laju Inflasi';
+        });
+
+        // 4. Test Dimensi Search
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'dimensi',
+            'search_dimensi' => 'Pedesaan'
+        ]));
+        $response->assertStatus(200);
+        $response->assertViewHas('dimensis', function ($items) {
+            return $items->count() === 1 && $items->first()->nama_dimensi === 'Pedesaan';
+        });
+
+        // 5. Test Indikator Dimensi Search
+        $response = $this->actingAs($user)->get(route('indikator-makro.kelola', [
+            'tab' => 'indikator-dimensi',
+            'filter_makro_id' => $makroB->id,
+            'search_ind_dimensi' => 'Perkotaan'
+        ]));
+        $response->assertStatus(200);
+        $response->assertViewHas('indikatorDimensis', function ($items) {
+            return $items->count() === 1 && $items->first()->dimensi->nama_dimensi === 'Perkotaan';
+        });
+    }
+
+    public function test_manual_urutan_shifting_bidang()
+    {
+        $user = $this->createProvinceUser();
+
+        $bidang1 = IndikatorBidang::create(['nama_bidang' => 'Bidang 1', 'urutan' => 1]);
+        $bidang2 = IndikatorBidang::create(['nama_bidang' => 'Bidang 2', 'urutan' => 2]);
+        $bidang3 = IndikatorBidang::create(['nama_bidang' => 'Bidang 3', 'urutan' => 3]);
+
+        // Shift Bidang 3 to urutan 1 (should shift 1 & 2 down)
+        $response = $this->actingAs($user)->put(route('indikator-makro.bidang.update', $bidang3->id), [
+            'nama_bidang' => 'Bidang 3 Baru',
+            'urutan' => 1
+        ]);
+
+        $response->assertRedirect();
+        $this->assertEquals(1, $bidang3->refresh()->urutan);
+        $this->assertEquals(2, $bidang1->refresh()->urutan);
+        $this->assertEquals(3, $bidang2->refresh()->urutan);
+    }
+
+    public function test_manual_urutan_shifting_makro_same_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Bidang X']);
+
+        $makro1 = IndikatorMakro::create(['nama_indikator' => 'M1', 'indikator_bidang_id' => $bidang->id, 'urutan' => 1]);
+        $makro2 = IndikatorMakro::create(['nama_indikator' => 'M2', 'indikator_bidang_id' => $bidang->id, 'urutan' => 2]);
+        $makro3 = IndikatorMakro::create(['nama_indikator' => 'M3', 'indikator_bidang_id' => $bidang->id, 'urutan' => 3]);
+
+        // Shift M3 to urutan 2 (should shift M2 to 3)
+        $response = $this->actingAs($user)->put(route('indikator-makro.makro.update', $makro3->id), [
+            'indikator_bidang_id' => $bidang->id,
+            'nama_indikator' => 'M3 Updated',
+            'urutan' => 2
+        ]);
+
+        $response->assertRedirect();
+        $this->assertEquals(1, $makro1->refresh()->urutan);
+        $this->assertEquals(2, $makro3->refresh()->urutan);
+        $this->assertEquals(3, $makro2->refresh()->urutan);
+    }
+
+    public function test_manual_urutan_shifting_makro_change_bidang()
+    {
+        $user = $this->createProvinceUser();
+        $bidangA = IndikatorBidang::create(['nama_bidang' => 'Bidang A']);
+        $bidangB = IndikatorBidang::create(['nama_bidang' => 'Bidang B']);
+
+        $makroA1 = IndikatorMakro::create(['nama_indikator' => 'MA1', 'indikator_bidang_id' => $bidangA->id, 'urutan' => 1]);
+        $makroA2 = IndikatorMakro::create(['nama_indikator' => 'MA2', 'indikator_bidang_id' => $bidangA->id, 'urutan' => 2]);
+
+        $makroB1 = IndikatorMakro::create(['nama_indikator' => 'MB1', 'indikator_bidang_id' => $bidangB->id, 'urutan' => 1]);
+        $makroB2 = IndikatorMakro::create(['nama_indikator' => 'MB2', 'indikator_bidang_id' => $bidangB->id, 'urutan' => 2]);
+
+        // Move MA2 to Bidang B at urutan 1
+        $response = $this->actingAs($user)->put(route('indikator-makro.makro.update', $makroA2->id), [
+            'indikator_bidang_id' => $bidangB->id,
+            'nama_indikator' => 'MA2 moved',
+            'urutan' => 1
+        ]);
+
+        $response->assertRedirect();
+        
+        // MA2 should be at urutan 1 in Bidang B
+        $this->assertEquals($bidangB->id, $makroA2->refresh()->indikator_bidang_id);
+        $this->assertEquals(1, $makroA2->urutan);
+        
+        // MB1 and MB2 should be shifted down to 2 and 3
+        $this->assertEquals(2, $makroB1->refresh()->urutan);
+        $this->assertEquals(3, $makroB2->refresh()->urutan);
+
+        // Bidang A should be resequenced (MA1 stays at 1)
+        $this->assertEquals(1, $makroA1->refresh()->urutan);
+    }
+
+    public function test_manual_urutan_shifting_indikator_dimensi_same_makro()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Bidang Test']);
+        $makro = IndikatorMakro::create(['nama_indikator' => 'Makro Test', 'indikator_bidang_id' => $bidang->id, 'urutan' => 1]);
+
+        $dimensi1 = Dimensi::create(['nama_dimensi' => 'Dimensi 1']);
+        $dimensi2 = Dimensi::create(['nama_dimensi' => 'Dimensi 2']);
+        $dimensi3 = Dimensi::create(['nama_dimensi' => 'Dimensi 3']);
+
+        $indDim1 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makro->id, 'dimensi_id' => $dimensi1->id, 'urutan' => 1]);
+        $indDim2 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makro->id, 'dimensi_id' => $dimensi2->id, 'urutan' => 2]);
+        $indDim3 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makro->id, 'dimensi_id' => $dimensi3->id, 'urutan' => 3]);
+
+        // Shift IndikatorDimensi 3 to urutan 2 (should shift IndikatorDimensi 2 to 3)
+        $response = $this->actingAs($user)->put(route('indikator-makro.indikator-dimensi.update', $indDim3->id), [
+            'indikator_makro_id' => $makro->id,
+            'dimensi_id' => $dimensi3->id,
+            'urutan' => 2
+        ]);
+
+        $response->assertRedirect();
+        $this->assertEquals(1, $indDim1->refresh()->urutan);
+        $this->assertEquals(2, $indDim3->refresh()->urutan);
+        $this->assertEquals(3, $indDim2->refresh()->urutan);
+    }
+
+    public function test_manual_urutan_shifting_indikator_dimensi_change_makro()
+    {
+        $user = $this->createProvinceUser();
+        $bidang = IndikatorBidang::create(['nama_bidang' => 'Bidang Test']);
+        
+        $makroA = IndikatorMakro::create(['nama_indikator' => 'Makro A', 'indikator_bidang_id' => $bidang->id, 'urutan' => 1]);
+        $makroB = IndikatorMakro::create(['nama_indikator' => 'Makro B', 'indikator_bidang_id' => $bidang->id, 'urutan' => 2]);
+
+        $dimensi1 = Dimensi::create(['nama_dimensi' => 'Dimensi 1']);
+        $dimensi2 = Dimensi::create(['nama_dimensi' => 'Dimensi 2']);
+        $dimensi3 = Dimensi::create(['nama_dimensi' => 'Dimensi 3']);
+
+        $indDimA1 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makroA->id, 'dimensi_id' => $dimensi1->id, 'urutan' => 1]);
+        $indDimA2 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makroA->id, 'dimensi_id' => $dimensi2->id, 'urutan' => 2]);
+
+        $indDimB1 = \App\Models\IndikatorDimensi::create(['indikator_makro_id' => $makroB->id, 'dimensi_id' => $dimensi3->id, 'urutan' => 1]);
+
+        // Move indDimA2 to Makro B at urutan 1
+        $response = $this->actingAs($user)->put(route('indikator-makro.indikator-dimensi.update', $indDimA2->id), [
+            'indikator_makro_id' => $makroB->id,
+            'dimensi_id' => $dimensi2->id,
+            'urutan' => 1
+        ]);
+
+        $response->assertRedirect();
+        
+        // indDimA2 should be at urutan 1 in Makro B
+        $this->assertEquals($makroB->id, $indDimA2->refresh()->indikator_makro_id);
+        $this->assertEquals(1, $indDimA2->urutan);
+        
+        // indDimB1 should be shifted to urutan 2
+        $this->assertEquals(2, $indDimB1->refresh()->urutan);
+
+        // Makro A should be resequenced (indDimA1 stays at 1)
+        $this->assertEquals(1, $indDimA1->refresh()->urutan);
     }
 }
 

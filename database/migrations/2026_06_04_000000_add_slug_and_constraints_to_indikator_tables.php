@@ -36,29 +36,7 @@ return new class extends Migration
             $table->unique('tahun');
         });
 
-        // 2. Add `slug` column to `indikator_bidangs`
-        Schema::table('indikator_bidangs', function (Blueprint $table) {
-            $table->string('slug')->nullable()->after('nama_bidang');
-        });
 
-        // Populate existing records with slugs
-        $bidangs = DB::table('indikator_bidangs')->get();
-        foreach ($bidangs as $b) {
-            $slug = Str::slug($b->nama_bidang);
-            $originalSlug = $slug;
-            $count = 1;
-            while (DB::table('indikator_bidangs')->where('slug', $slug)->where('id', '!=', $b->id)->exists()) {
-                $slug = $originalSlug . '-' . $count;
-                $count++;
-            }
-            DB::table('indikator_bidangs')->where('id', $b->id)->update(['slug' => $slug]);
-        }
-
-        // Make slug unique and non-nullable now that all records have slugs
-        Schema::table('indikator_bidangs', function (Blueprint $table) {
-            $table->string('slug')->nullable(false)->change();
-            $table->unique('slug');
-        });
     }
 
     /**
@@ -66,13 +44,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('periode_indikators', function (Blueprint $table) {
-            $table->dropUnique(['tahun']);
-        });
+        try {
+            Schema::table('periode_indikators', function (Blueprint $table) {
+                $table->dropUnique(['tahun']);
+            });
+        } catch (\Exception $e) {}
 
-        Schema::table('indikator_bidangs', function (Blueprint $table) {
-            $table->dropUnique(['slug']);
-            $table->dropColumn('slug');
-        });
+
     }
 };

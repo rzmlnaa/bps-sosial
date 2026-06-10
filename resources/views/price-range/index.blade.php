@@ -297,7 +297,7 @@
                                 multiple form="filter-form" placeholder="Cari kabupaten..." onchange="this.form.submit()">
                                 @foreach($kabupatens as $kab)
                                     <option value="{{ $kab->id }}" {{ in_array($kab->id, $selectedAnalysisKabupatenIds) ? 'selected' : '' }}>
-                                        {{ $kab->nama_kabupaten }}
+                                        [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                                     </option>
                                 @endforeach
                             </select>

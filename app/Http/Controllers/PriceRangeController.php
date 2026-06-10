@@ -19,7 +19,7 @@ class PriceRangeController extends Controller
     {
         $years = RhTahun::orderBy('tahun', 'desc')->get();
 
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
         $allKomoditas = \App\Models\Komoditas::orderBy('order_number', 'asc')->get(); // Needed for full mapping
 
         $selectedYearId = $request->year_id ?? ($years->where('is_active', true)->first()->id ?? $years->first()->id ?? null);
@@ -342,6 +342,32 @@ class PriceRangeController extends Controller
         }
 
         return $snapshotOutliers;
+    }
+
+    public function input()
+    {
+        $kategori = KategoriKomoditas::with(['userAdd', 'userUpdate'])->withCount('komoditas')->get();
+        $rhTahun = \App\Models\RhTahun::with([
+            'perubahanHeaders' => function ($query) {
+                $query->orderBy('tanggal_perubahan', 'asc')->withCount([
+                    'details as details_with_values_count' => function ($q) {
+                        $q->where(function ($sub) {
+                            $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
+                        });
+                    }
+                ]);
+            },
+            'perubahanHeaders.userAdd',
+            'userAdd'
+        ])->withCount([
+            'perubahanDetails as perubahan_details_with_values_count' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('min_edit')->orWhereNotNull('max_edit');
+                });
+            }
+        ])->orderBy('tahun', 'desc')->get();
+
+        return view('price-range.input', compact('kategori', 'rhTahun'));
     }
 
     public function export(Request $request)

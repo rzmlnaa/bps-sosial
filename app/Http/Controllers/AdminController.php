@@ -14,7 +14,7 @@ class AdminController extends Controller
         $stats = [
             'users_count' => User::where('role', '!=', 'admin')->count(),
             'admins_count' => User::where('role', 'admin')->count(),
-            'kabupatens_count' => Kabupaten::count(),
+            'kabupatens_count' => Kabupaten::withoutIndonesia()->count(),
             'menus_count' => DynamicMenu::where('is_active', true)
                 ->whereNotIn('type', ['logo', 'panduan_pengguna', 'video_panduan'])
                 ->whereNotIn('id', function ($query) {
@@ -47,7 +47,7 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
-        $kabupatens = Kabupaten::with(['userAdd', 'userUpdate'])
+        $kabupatens = Kabupaten::withoutIndonesia()->with(['userAdd', 'userUpdate'])
             ->orderBy('kode_kab', 'asc')
             ->take(10)
             ->get();
@@ -79,9 +79,9 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        $users = $query->latest()->get();
+        $users = $query->latest()->paginate(10)->withQueryString();
 
-        $kabupatens = \App\Models\Kabupaten::orderBy('kode_kab', 'asc')->get();
+        $kabupatens = \App\Models\Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->get();
         $userTidakFinalPofile = User::where('role', '!=', 'admin')->where('kabupaten_id', null)->latest()->get();
 
 

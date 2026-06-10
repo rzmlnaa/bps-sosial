@@ -71,7 +71,7 @@ class VerificationController extends Controller
             $kabupatenStats[$item->kabupaten_id]['rejected'] += $item->count;
         }
 
-        $kabupatens = Kabupaten::whereIn('id', array_keys($kabupatenStats))
+        $kabupatens = Kabupaten::withoutIndonesia()->whereIn('id', array_keys($kabupatenStats))
             ->orderByRaw('LENGTH(kode_kab) ASC')
             ->orderBy('kode_kab', 'asc')
             ->get();
@@ -88,7 +88,7 @@ class VerificationController extends Controller
 
     public function show($kabupatenId)
     {
-        $kabupaten = Kabupaten::findOrFail($kabupatenId);
+        $kabupaten = Kabupaten::withoutIndonesia()->findOrFail($kabupatenId);
 
         // Map min_edit/max_edit to min_nilai/max_nilai via select alias for consistent view usage if needed,
         // OR update the VIEW to use min_edit/max_edit for master too.

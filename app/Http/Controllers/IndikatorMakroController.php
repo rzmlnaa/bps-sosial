@@ -21,10 +21,10 @@ class IndikatorMakroController extends Controller
         $selectedId = $request->query('indikator_makro_id');
         $selectedIndikator = null;
         if ($selectedId) {
-            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])->find($selectedId);
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active', 'deskripsi'])->find($selectedId);
         }
         if (!$selectedIndikator) {
-            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active'])
+            $selectedIndikator = IndikatorMakro::select(['id', 'nama_indikator', 'satuan', 'is_active', 'deskripsi'])
                 ->orderBy('urutan', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -134,6 +134,26 @@ class IndikatorMakroController extends Controller
         ));
     }
 
+    public function export(Request $request)
+    {
+        $request->validate([
+            'bidang_ids' => 'required|array',
+            'indikator_makro_ids' => 'required|array',
+            'tahuns' => 'required|array',
+            'kabupatens' => 'required|array',
+        ]);
+
+        $bidangIds = $request->bidang_ids;
+        $indikatorIds = $request->indikator_makro_ids;
+        $tahunNames = $request->tahuns;
+        $kabupatenIds = $request->kabupatens;
+
+        $export = new \App\Exports\IndikatorMakroExport($bidangIds, $indikatorIds, $tahunNames, $kabupatenIds);
+
+        $fileName = "Indikator_Makro_" . date('Ymd_His') . ".xlsx";
+        return \Maatwebsite\Excel\Facades\Excel::download($export, $fileName);
+    }
+
     public function inputNilai(Request $request)
     {
         // 1. Fetch all PeriodeIndikator (ordered by tahun desc)
@@ -177,14 +197,14 @@ class IndikatorMakroController extends Controller
         // 5. Fetch existing values in nilai_indikator_makros for the selected Periode and the dimensions of this indicator
         $existingValues = [];
         if ($selectedPeriodeId && $indikatorDimensis->isNotEmpty()) {
-            $existingValues = NilaiIndikatorMakro::where('periode_indikator_id', $selectedPeriodeId)
+            $existingValues = NilaiIndikatorMakro::with(['creator', 'updater'])
+                ->where('periode_indikator_id', $selectedPeriodeId)
                 ->whereIn('indikator_dimensi_id', $indikatorDimensis->pluck('id'))
                 ->get()
                 ->groupBy('kabupaten_id')
                 ->map(function ($items) {
-                    return $items->pluck('nilai', 'indikator_dimensi_id');
-                })
-                ->toArray();
+                    return $items->keyBy('indikator_dimensi_id');
+                });
         }
 
         return view('indikator-makro.input-nilai', compact(
@@ -275,9 +295,16 @@ class IndikatorMakroController extends Controller
 
     public function katalog()
     {
-        $bidangs = IndikatorBidang::with(['indikatorMakros:id,indikator_bidang_id,nama_indikator,is_active'])
+        $bidangs = IndikatorBidang::whereHas('indikatorMakros')
+            ->with([
+                'indikatorMakros' => function ($query) {
+                    $query->select(['id', 'indikator_bidang_id', 'nama_indikator', 'is_active'])
+                        ->orderBy('urutan', 'asc')
+                        ->orderBy('created_at', 'desc');
+                }
+            ])
             ->orderBy('urutan', 'asc')
-            ->get(['id', 'nama_bidang', 'is_active']);
+            ->get(['id', 'nama_bidang']);
 
         return response()->json($bidangs);
     }
@@ -288,32 +315,65 @@ class IndikatorMakroController extends Controller
             ->orderBy('tahun', 'desc')
             ->paginate(10, ['*'], 'periode_page');
 
-        $indikatorBidangs = IndikatorBidang::with(['creator', 'updater'])
-            ->withCount('indikatorMakros')
-            ->orderBy('urutan', 'asc')
+        // Bidang Search
+        $searchBidang = $request->query('search_bidang');
+        $queryBidang = IndikatorBidang::with(['creator', 'updater'])
+            ->withCount('indikatorMakros');
+        if ($searchBidang) {
+            $queryBidang->where('nama_bidang', 'like', '%' . $searchBidang . '%');
+        }
+        $indikatorBidangs = $queryBidang->orderBy('urutan', 'asc')
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'bidang_page');
 
-        $indikatorMakros = IndikatorMakro::with(['bidang', 'creator', 'updater'])
-            ->withCount('indikatorDimensis')
-            ->orderBy('urutan', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'makro_page');
+        // Filter Indikator Makro by selected Bidang
+        $selectedFilterBidangId = $request->query('filter_bidang_id');
+        $selectedFilterBidang = null;
 
-        $dimensis = Dimensi::with(['creator', 'updater'])
-            ->withCount('indikatorDimensis')
-            ->orderBy('created_at', 'desc')
+        // Makro Search
+        $searchMakro = $request->query('search_makro');
+        if ($selectedFilterBidangId) {
+            $selectedFilterBidang = IndikatorBidang::find($selectedFilterBidangId);
+            $queryMakro = IndikatorMakro::with(['bidang', 'creator', 'updater'])
+                ->withCount('indikatorDimensis')
+                ->where('indikator_bidang_id', $selectedFilterBidangId);
+            if ($searchMakro) {
+                $queryMakro->where('nama_indikator', 'like', '%' . $searchMakro . '%');
+            }
+            $indikatorMakros = $queryMakro->orderBy('urutan', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10, ['*'], 'makro_page');
+        } else {
+            $indikatorMakros = IndikatorMakro::whereNull('id')
+                ->paginate(10, ['*'], 'makro_page');
+        }
+
+        // Dimensi Search
+        $searchDimensi = $request->query('search_dimensi');
+        $queryDimensi = Dimensi::with(['creator', 'updater'])
+            ->withCount('indikatorDimensis');
+        if ($searchDimensi) {
+            $queryDimensi->where('nama_dimensi', 'like', '%' . $searchDimensi . '%');
+        }
+        $dimensis = $queryDimensi->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'dimensi_page');
 
+        // Indikator Dimensi Search
+        $searchIndDimensi = $request->query('search_ind_dimensi');
         $selectedMakroId = $request->query('filter_makro_id');
         $selectedMakro = null;
 
         if ($selectedMakroId) {
             $selectedMakro = IndikatorMakro::find($selectedMakroId);
-            $indikatorDimensis = IndikatorDimensi::where('indikator_makro_id', $selectedMakroId)
+            $queryIndDimensi = IndikatorDimensi::where('indikator_makro_id', $selectedMakroId)
                 ->with(['indikatorMakro', 'dimensi', 'creator', 'updater'])
-                ->withCount('nilaiIndikatorMakros')
-                ->orderBy('urutan', 'asc')
+                ->withCount('nilaiIndikatorMakros');
+            if ($searchIndDimensi) {
+                $queryIndDimensi->whereHas('dimensi', function ($q) use ($searchIndDimensi) {
+                    $q->where('nama_dimensi', 'like', '%' . $searchIndDimensi . '%');
+                });
+            }
+            $indikatorDimensis = $queryIndDimensi->orderBy('urutan', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'ind_dimensi_page');
         } else {
@@ -321,7 +381,7 @@ class IndikatorMakroController extends Controller
                 ->paginate(10, ['*'], 'ind_dimensi_page');
         }
 
-        $allIndikatorBidangs = IndikatorBidang::orderBy('urutan', 'asc')->get();
+        $allIndikatorBidangs = IndikatorBidang::orderBy('id', 'asc')->get();
         $allDimensis = Dimensi::all();
 
         return view('indikator-makro.kelola', compact(
@@ -333,7 +393,13 @@ class IndikatorMakroController extends Controller
             'allIndikatorBidangs',
             'allDimensis',
             'selectedMakroId',
-            'selectedMakro'
+            'selectedMakro',
+            'selectedFilterBidangId',
+            'selectedFilterBidang',
+            'searchBidang',
+            'searchMakro',
+            'searchDimensi',
+            'searchIndDimensi'
         ));
     }
 
@@ -394,9 +460,10 @@ class IndikatorMakroController extends Controller
             return back()->withErrors(['nama_bidang' => 'Nama bidang sudah terdaftar.'])->withInput()->with('tab', 'bidang');
         }
 
-        $data = $request->only(['nama_bidang', 'is_active']);
-        $data['created_by'] = auth()->id();
-        $data['is_active'] = $request->has('is_active');
+        $data = [
+            'nama_bidang' => $request->nama_bidang,
+            'created_by' => auth()->id(),
+        ];
 
         $maxUrutan = IndikatorBidang::max('urutan') ?? 0;
         $data['urutan'] = $maxUrutan + 1;
@@ -409,6 +476,7 @@ class IndikatorMakroController extends Controller
     {
         $request->validate([
             'nama_bidang' => 'required|string|max:100',
+            'urutan' => 'required|integer|min:1',
         ]);
 
         // Cek duplikat nama bidang via slug, kecuali record yang sedang diedit
@@ -420,33 +488,38 @@ class IndikatorMakroController extends Controller
             return back()->withErrors(['nama_bidang' => 'Nama bidang sudah terdaftar.'])->withInput()->with('tab', 'bidang');
         }
 
-        $data = $request->only(['nama_bidang', 'is_active']);
-        $data['updated_by'] = auth()->id();
-        $data['is_active'] = $request->has('is_active');
-
-        IndikatorBidang::findOrFail($id)->update($data);
-        return back()->with('success', 'Indikator Bidang berhasil diperbarui')->with('tab', 'bidang');
-    }
-
-    public function toggleBidangActive($id)
-    {
         $bidang = IndikatorBidang::findOrFail($id);
-        $bidang->is_active = !$bidang->is_active;
+        $oldUrutan = $bidang->urutan;
+        $maxUrutan = IndikatorBidang::max('urutan') ?? 1;
+        $newUrutan = max(1, min($maxUrutan, (int) $request->urutan));
+
+        if ($newUrutan !== $oldUrutan) {
+            if ($newUrutan > $oldUrutan) {
+                IndikatorBidang::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$oldUrutan + 1, $newUrutan])
+                    ->decrement('urutan');
+            } else {
+                IndikatorBidang::where('id', '!=', $id)
+                    ->whereBetween('urutan', [$newUrutan, $oldUrutan - 1])
+                    ->increment('urutan');
+            }
+            $bidang->urutan = $newUrutan;
+        }
+
+        $bidang->nama_bidang = $request->nama_bidang;
         $bidang->updated_by = auth()->id();
         $bidang->save();
 
-        return response()->json([
-            'success' => true,
-            'is_active' => $bidang->is_active
-        ]);
+        return back()->with('success', 'Indikator Bidang berhasil diperbarui')->with('tab', 'bidang');
     }
 
     public function reorderBidang(Request $request)
     {
         $request->validate(['order' => 'required|array']);
+        $startIdx = $request->input('start_idx', 0);
         foreach ($request->order as $index => $id) {
             IndikatorBidang::where('id', $id)->update([
-                'urutan' => $index + 1,
+                'urutan' => $startIdx + $index + 1,
                 'updated_by' => auth()->id()
             ]);
         }
@@ -475,18 +548,21 @@ class IndikatorMakroController extends Controller
         ]);
 
         $slug = \Illuminate\Support\Str::slug($request->nama_indikator);
-        $exists = IndikatorMakro::get()->contains(function ($item) use ($slug) {
-            return \Illuminate\Support\Str::slug($item->nama_indikator) === $slug;
-        });
+        $exists = IndikatorMakro::where('indikator_bidang_id', $request->indikator_bidang_id)
+            ->get()
+            ->contains(function ($item) use ($slug) {
+                return \Illuminate\Support\Str::slug($item->nama_indikator) === $slug;
+            });
         if ($exists) {
-            return back()->withErrors(['nama_indikator' => 'Nama indikator makro sudah terdaftar.'])->withInput()->with('tab', 'makro');
+            return back()->withErrors(['nama_indikator' => 'Nama indikator makro sudah terdaftar di bidang yang sama.'])->withInput()->with('tab', 'makro');
         }
 
         $data = $request->all();
         $data['created_by'] = auth()->id();
         $data['is_active'] = $request->has('is_active');
 
-        $maxUrutan = IndikatorMakro::max('urutan') ?? 0;
+        // Scoped by bidang
+        $maxUrutan = IndikatorMakro::where('indikator_bidang_id', $request->indikator_bidang_id)->max('urutan') ?? 0;
         $data['urutan'] = $maxUrutan + 1;
 
         IndikatorMakro::create($data);
@@ -500,30 +576,80 @@ class IndikatorMakroController extends Controller
             'nama_indikator' => 'required|string|max:255',
             'satuan' => 'nullable|string|max:100',
             'deskripsi' => 'nullable|string',
+            'urutan' => 'required|integer|min:1',
         ]);
 
         $slug = \Illuminate\Support\Str::slug($request->nama_indikator);
-        $exists = IndikatorMakro::where('id', '!=', $id)->get()->contains(function ($item) use ($slug) {
-            return \Illuminate\Support\Str::slug($item->nama_indikator) === $slug;
-        });
+        $exists = IndikatorMakro::where('indikator_bidang_id', $request->indikator_bidang_id)
+            ->where('id', '!=', $id)
+            ->get()
+            ->contains(function ($item) use ($slug) {
+                return \Illuminate\Support\Str::slug($item->nama_indikator) === $slug;
+            });
         if ($exists) {
-            return back()->withErrors(['nama_indikator' => 'Nama indikator makro sudah terdaftar.'])->withInput()->with('tab', 'makro');
+            return back()->withErrors(['nama_indikator' => 'Nama indikator makro sudah terdaftar di bidang yang sama.'])->withInput()->with('tab', 'makro');
         }
 
-        $data = $request->all();
-        $data['updated_by'] = auth()->id();
-        $data['is_active'] = $request->has('is_active');
+        $makro = IndikatorMakro::findOrFail($id);
+        $oldBidangId = $makro->indikator_bidang_id;
+        $newBidangId = (int) $request->indikator_bidang_id;
 
-        IndikatorMakro::findOrFail($id)->update($data);
+        $makro->nama_indikator = $request->nama_indikator;
+        $makro->satuan = $request->satuan;
+        $makro->deskripsi = $request->deskripsi;
+        $makro->is_active = $request->has('is_active');
+        $makro->updated_by = auth()->id();
+
+        if ($oldBidangId === $newBidangId) {
+            // Urutan shifting within same bidang
+            $oldUrutan = $makro->urutan;
+            $maxUrutan = IndikatorMakro::where('indikator_bidang_id', $newBidangId)->max('urutan') ?? 1;
+            $newUrutan = max(1, min($maxUrutan, (int) $request->urutan));
+
+            if ($newUrutan !== $oldUrutan) {
+                if ($newUrutan > $oldUrutan) {
+                    IndikatorMakro::where('indikator_bidang_id', $newBidangId)
+                        ->where('id', '!=', $id)
+                        ->whereBetween('urutan', [$oldUrutan + 1, $newUrutan])
+                        ->decrement('urutan');
+                } else {
+                    IndikatorMakro::where('indikator_bidang_id', $newBidangId)
+                        ->where('id', '!=', $id)
+                        ->whereBetween('urutan', [$newUrutan, $oldUrutan - 1])
+                        ->increment('urutan');
+                }
+                $makro->urutan = $newUrutan;
+            }
+            $makro->save();
+        } else {
+            // Bidang changed!
+            // Move to the new bidang at the specified urutan (or end of new bidang), then shift items in new bidang
+            $maxUrutanNewBidang = IndikatorMakro::where('indikator_bidang_id', $newBidangId)->max('urutan') ?? 0;
+            $targetUrutan = max(1, min($maxUrutanNewBidang + 1, (int) $request->urutan));
+
+            // Shift new bidang items up to make room
+            IndikatorMakro::where('indikator_bidang_id', $newBidangId)
+                ->where('urutan', '>=', $targetUrutan)
+                ->increment('urutan');
+
+            $makro->indikator_bidang_id = $newBidangId;
+            $makro->urutan = $targetUrutan;
+            $makro->save();
+
+            // Resequence the old bidang
+            $this->resequenceMakro($oldBidangId);
+        }
+
         return back()->with('success', 'Indikator Makro berhasil diperbarui')->with('tab', 'makro');
     }
 
     public function reorderMakro(Request $request)
     {
         $request->validate(['order' => 'required|array']);
+        $startIdx = $request->input('start_idx', 0);
         foreach ($request->order as $index => $id) {
             IndikatorMakro::where('id', $id)->update([
-                'urutan' => $index + 1,
+                'urutan' => $startIdx + $index + 1,
                 'updated_by' => auth()->id()
             ]);
         }
@@ -545,11 +671,17 @@ class IndikatorMakroController extends Controller
 
     public function destroyMakro($id)
     {
+        $makro = IndikatorMakro::findOrFail($id);
         $count = \App\Models\IndikatorDimensi::where('indikator_makro_id', $id)->count();
         if ($count > 0) {
             return back()->withErrors(['error' => "Indikator Makro tidak dapat dihapus karena sedang digunakan oleh {$count} relasi dimensi."])->with('tab', 'makro');
         }
-        IndikatorMakro::findOrFail($id)->delete();
+        $bidangId = $makro->indikator_bidang_id;
+        $makro->delete();
+
+        // Resequence remaining makros in the bidang
+        $this->resequenceMakro($bidangId);
+
         return back()->with('success', 'Indikator Makro berhasil dihapus')->with('tab', 'makro');
     }
 
@@ -557,6 +689,8 @@ class IndikatorMakroController extends Controller
     public function storeDimensi(Request $request)
     {
         $request->validate(['nama_dimensi' => 'required|string|max:255']);
+
+
 
         $slug = \Illuminate\Support\Str::slug($request->nama_dimensi);
         $exists = Dimensi::get()->contains(function ($item) use ($slug) {
@@ -577,6 +711,13 @@ class IndikatorMakroController extends Controller
     {
         $request->validate(['nama_dimensi' => 'required|string|max:255']);
 
+        // Cegah edit dimensi 'None'
+        $dimensi = Dimensi::findOrFail($id);
+        if (strtolower(trim($dimensi->nama_dimensi)) === 'none') {
+            return back()->withErrors(['nama_dimensi' => 'Dimensi "None" tidak dapat diedit.'])->with('tab', 'dimensi');
+        }
+
+
         $slug = \Illuminate\Support\Str::slug($request->nama_dimensi);
         $exists = Dimensi::where('id', '!=', $id)->get()->contains(function ($item) use ($slug) {
             return \Illuminate\Support\Str::slug($item->nama_dimensi) === $slug;
@@ -588,17 +729,24 @@ class IndikatorMakroController extends Controller
         $data = $request->all();
         $data['updated_by'] = auth()->id();
 
-        Dimensi::findOrFail($id)->update($data);
+        $dimensi->update($data);
         return back()->with('success', 'Dimensi berhasil diperbarui')->with('tab', 'dimensi');
     }
 
     public function destroyDimensi($id)
     {
+        $dimensi = Dimensi::findOrFail($id);
+
+        // Cegah penghapusan dimensi 'None'
+        if (strtolower(trim($dimensi->nama_dimensi)) === 'none') {
+            return back()->withErrors(['error' => 'Dimensi "None" tidak dapat dihapus.'])->with('tab', 'dimensi');
+        }
+
         $count = \App\Models\IndikatorDimensi::where('dimensi_id', $id)->count();
         if ($count > 0) {
             return back()->withErrors(['error' => "Dimensi tidak dapat dihapus karena sedang digunakan oleh {$count} relasi indikator."])->with('tab', 'dimensi');
         }
-        Dimensi::findOrFail($id)->delete();
+        $dimensi->delete();
         return back()->with('success', 'Dimensi berhasil dihapus')->with('tab', 'dimensi');
     }
 
@@ -648,7 +796,7 @@ class IndikatorMakroController extends Controller
         $data['created_by'] = auth()->id();
         $data['is_active'] = true;
 
-        $maxUrutan = IndikatorDimensi::max('urutan') ?? 0;
+        $maxUrutan = IndikatorDimensi::where('indikator_makro_id', $request->indikator_makro_id)->max('urutan') ?? 0;
         $data['urutan'] = $maxUrutan + 1;
 
         IndikatorDimensi::create($data);
@@ -660,6 +808,7 @@ class IndikatorMakroController extends Controller
         $request->validate([
             'indikator_makro_id' => 'required|exists:indikator_makros,id',
             'dimensi_id' => 'required|exists:dimensis,id',
+            'urutan' => 'required|integer|min:1',
         ]);
 
         // Cegah kombinasi indikator + dimensi yang sudah ada (kecuali record saat ini)
@@ -700,19 +849,63 @@ class IndikatorMakroController extends Controller
             }
         }
 
-        $data = $request->all();
-        $data['updated_by'] = auth()->id();
+        $indDim = IndikatorDimensi::findOrFail($id);
+        $oldMakroId = $indDim->indikator_makro_id;
+        $newMakroId = (int) $request->indikator_makro_id;
 
-        IndikatorDimensi::findOrFail($id)->update($data);
+        $indDim->dimensi_id = $request->dimensi_id;
+        $indDim->updated_by = auth()->id();
+
+        if ($oldMakroId === $newMakroId) {
+            // Urutan shifting within same makro
+            $oldUrutan = $indDim->urutan;
+            $maxUrutan = IndikatorDimensi::where('indikator_makro_id', $newMakroId)->max('urutan') ?? 1;
+            $newUrutan = max(1, min($maxUrutan, (int) $request->urutan));
+
+            if ($newUrutan !== $oldUrutan) {
+                if ($newUrutan > $oldUrutan) {
+                    IndikatorDimensi::where('indikator_makro_id', $newMakroId)
+                        ->where('id', '!=', $id)
+                        ->whereBetween('urutan', [$oldUrutan + 1, $newUrutan])
+                        ->decrement('urutan');
+                } else {
+                    IndikatorDimensi::where('indikator_makro_id', $newMakroId)
+                        ->where('id', '!=', $id)
+                        ->whereBetween('urutan', [$newUrutan, $oldUrutan - 1])
+                        ->increment('urutan');
+                }
+                $indDim->urutan = $newUrutan;
+            }
+            $indDim->save();
+        } else {
+            // Makro changed!
+            // Move to the new makro at the specified urutan (or end of new makro), then shift items in new makro
+            $maxUrutanNewMakro = IndikatorDimensi::where('indikator_makro_id', $newMakroId)->max('urutan') ?? 0;
+            $targetUrutan = max(1, min($maxUrutanNewMakro + 1, (int) $request->urutan));
+
+            // Shift new makro items up to make room
+            IndikatorDimensi::where('indikator_makro_id', $newMakroId)
+                ->where('urutan', '>=', $targetUrutan)
+                ->increment('urutan');
+
+            $indDim->indikator_makro_id = $newMakroId;
+            $indDim->urutan = $targetUrutan;
+            $indDim->save();
+
+            // Resequence the old makro
+            $this->resequenceIndikatorDimensi($oldMakroId);
+        }
+
         return back()->with('success', 'Indikator Dimensi berhasil diperbarui')->with('tab', 'indikator-dimensi');
     }
 
     public function reorderIndikatorDimensi(Request $request)
     {
         $request->validate(['order' => 'required|array']);
+        $startIdx = $request->input('start_idx', 0);
         foreach ($request->order as $index => $id) {
             IndikatorDimensi::where('id', $id)->update([
-                'urutan' => $index + 1,
+                'urutan' => $startIdx + $index + 1,
                 'updated_by' => auth()->id()
             ]);
         }
@@ -738,8 +931,35 @@ class IndikatorMakroController extends Controller
         if ($count > 0) {
             return back()->withErrors(['error' => "Indikator Dimensi tidak dapat dihapus karena sedang digunakan oleh {$count} data nilai."])->with('tab', 'indikator-dimensi');
         }
-        IndikatorDimensi::findOrFail($id)->delete();
+        $indDim = IndikatorDimensi::findOrFail($id);
+        $indikatorMakroId = $indDim->indikator_makro_id;
+        $indDim->delete();
+        $this->resequenceIndikatorDimensi($indikatorMakroId);
         return back()->with('success', 'Indikator Dimensi berhasil dihapus')->with('tab', 'indikator-dimensi');
+    }
+
+    private function resequenceMakro($bidangId)
+    {
+        $makros = IndikatorMakro::where('indikator_bidang_id', $bidangId)
+            ->orderBy('urutan', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($makros as $index => $makro) {
+            $makro->update(['urutan' => $index + 1]);
+        }
+    }
+
+    private function resequenceIndikatorDimensi($indikatorMakroId)
+    {
+        $indDims = IndikatorDimensi::where('indikator_makro_id', $indikatorMakroId)
+            ->orderBy('urutan', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($indDims as $index => $indDim) {
+            $indDim->update(['urutan' => $index + 1]);
+        }
     }
 
     private function cleanFloatValue($val)

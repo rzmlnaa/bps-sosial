@@ -16,7 +16,8 @@ class MyTeamController extends Controller
         $teamMembers = User::where('role', 'user')
             ->where('kabupaten_id', $user->kabupaten_id)
             ->whereNotNull('no_hp_verified_at')
-            ->orderBy('name', 'asc')
+            ->orderBy('last_login_at', 'desc')
+            ->where('status', 'active')
             ->get();
 
         $totalMembers = $teamMembers->count();

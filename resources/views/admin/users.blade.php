@@ -34,7 +34,7 @@
                         <option value="">-- Semua Kabupaten --</option>
                         @foreach($kabupatens as $kab)
                             <option value="{{ $kab->id }}" {{ request('kabupaten_id') == $kab->id ? 'selected' : '' }}>
-                                {{ $kab->nama_kabupaten }}
+                                [{{ $kab->kode_kab }}] {{ $kab->nama_kabupaten }}
                             </option>
                         @endforeach
                     </select>
@@ -89,7 +89,7 @@
                                     <div class="d-flex align-items-center text-muted">
                                         <i class="fas fa-building me-2 fa-fw"></i>
                                         @if($user->kabupaten)
-                                            {{ $user->kabupaten->nama_kabupaten }}
+                                            [{{ $user->kabupaten->kode_kab }}] {{ $user->kabupaten->nama_kabupaten }}
                                         @else
                                             {{ $user->team ?? '-' }}
                                         @endif
@@ -178,6 +178,10 @@
         @endforelse
     </div>
 
+    <!-- Pagination for Users -->
+    <div class="mt-4 d-flex justify-content-end">
+        {{ $users->links('pagination::bootstrap-5') }}
+    </div>
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3 mt-5">
         <h2 class="fw-bold text-navy mb-0">Profil Pengguna Belum Diselesaikan</h2>

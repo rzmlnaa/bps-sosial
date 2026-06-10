@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Hapus kolom is_active dari tabel dimensis
-        Schema::table('dimensis', function (Blueprint $table) {
+        Schema::table('indikator_bidangs', function (Blueprint $table) {
             $table->dropColumn('is_active');
         });
-
-
     }
 
     /**
@@ -24,10 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('dimensis', function (Blueprint $table) {
-            $table->boolean('is_active')->default(true)->after('nama_dimensi');
+        Schema::table('indikator_bidangs', function (Blueprint $table) {
+            $table->boolean('is_active')->default(true);
         });
-
-
     }
 };
