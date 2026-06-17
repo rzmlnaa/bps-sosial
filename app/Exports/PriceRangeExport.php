@@ -23,7 +23,7 @@ class PriceRangeExport implements WithMultipleSheets
     public function sheets(): array
     {
         $year = RhTahun::findOrFail($this->yearId);
-        $kabupatens = Kabupaten::orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
+        $kabupatens = Kabupaten::withoutIndonesia()->orderBy('kode_kab', 'asc')->where('kode_kab', '!=', '6100')->get();
         $kabIds = $kabupatens->pluck('id')->toArray();
 
         // 1. Bulk fetch categories and commodities
